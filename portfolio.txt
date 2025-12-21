@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PORTFOLIO - 디자인 지그</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* [디자인지그 전용 스타일] */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; color: #1a1a1a; line-height: 1.6; background: #fff; }
+        .header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1.5rem 3rem; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; text-decoration: none; }
+        .nav-list { display: flex; gap: 2.5rem; list-style: none; }
+        .nav-link { color: #1a1a1a; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.3s ease; }
+        .nav-link:hover, .nav-link.active { color: #B4956F; }
+        
+        .page-hero { padding: 160px 3rem 60px; background: linear-gradient(135deg, #f8f6f3 0%, #fff 100%); text-align: center; }
+        .portfolio-section { max-width: 1400px; margin: 0 auto; padding: 40px 3rem 80px; }
+        .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px; }
+        
+        /* 카드 디자인 */
+        .portfolio-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; background: #f0f0f0; }
+        .portfolio-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .portfolio-card:hover img { transform: scale(1.05); }
+        .portfolio-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 30px 24px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: #fff; }
+        
+        /* 라이트박스(상세보기) */
+        .lightbox { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 3000; padding: 40px; }
+        .lightbox.show { display: flex; align-items: center; justify-content: center; }
+        .lightbox-content { max-width: 90%; max-height: 90%; position: relative; }
+        .lightbox-content img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
+        .lightbox-close { position: absolute; top: -50px; right: 0; color: #fff; font-size: 2rem; background: none; border: none; cursor: pointer; }
+        
+        .footer { background: #1a1a1a; color: #fff; padding: 40px; text-align: center; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">디자인 지그</a>
+            <nav><ul class="nav-list">
+                <li><a href="portfolio.html" class="nav-link active">PORTFOLIO</a></li>
+                <li><a href="quote.html" class="nav-link">ASK A QUOTE</a></li>
+            </ul></nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <h1>PORTFOLIO</h1>
+            <p>디자인 지그가 완성한 공간들을 소개합니다</p>
+        </section>
+        
+        <section class="portfolio-section">
+            <div id="portfolioGrid" class="portfolio-grid">
+                </div>
+        </section>
+    </main>
+
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <div class="lightbox-content">
+            <button class="lightbox-close">×</button>
+            <img id="lightboxImage" src="">
+            <h2 id="lightboxTitle" style="color:#fff; margin-top:20px;"></h2>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 design jig. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // [노션 데이터 연동 엔진]
+        async function loadPortfolio() {
+            const grid = document.getElementById('portfolioGrid');
+            try {
+                // 1. 넷리파이 함수 호출
+                const response = await fetch('/.netlify/functions/portfolio');
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    grid.innerHTML = '<p>등록된 포트폴리오가 없습니다.</p>';
+                    return;
+                }
+
+                grid.innerHTML = ''; // 기존 메시지 삭제
+
+                // 2. 데이터 화면에 그리기
+                data.forEach(item => {
+                    const props = item.properties;
+                    const title = props.이름.title[0]?.plain_text || "제목 없음";
+                    const category = props.카테고리.select?.name || "기타";
+                    const images = props.URL.files;
+                    const mainImg = images.length > 0 ? images[0].external.url : 'https://via.placeholder.com/800x600?text=No+Image';
+
+                    const card = document.createElement('article');
+                    card.className = 'portfolio-card';
+                    card.onclick = () => openLightbox(mainImg, title);
+                    card.innerHTML = `
+                        <img src="${mainImg}" alt="${title}">
+                        <div class="portfolio-overlay">
+                            <h3>${title}</h3>
+                            <p>${category}</p>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                console.error('로드 실패:', e);
+                grid.innerHTML = '<p>데이터를 불러오지 못했습니다.</p>';
+            }
+        }
+
+        function openLightbox(src, title) {
+            document.getElementById('lightboxImage').src = src;
+            document.getElementById('lightboxTitle').textContent = title;
+            document.getElementById('lightbox').classList.add('show');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('show');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPortfolio);
+    </script>
+</body>
+</html>
