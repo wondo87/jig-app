@@ -9,7 +9,7 @@ export async function handler() {
           "Notion-Version": "2022-06-28",
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({}) // 오류 방지를 위해 정렬 조건을 비워둡니다.
+        body: JSON.stringify({}) // 정렬 조건을 비워서 오류를 방지합니다.
       }
     );
 
@@ -17,7 +17,7 @@ export async function handler() {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" }, // 브라우저가 JSON임을 알게 합니다.
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data.results)
     };
   } catch (error) {
