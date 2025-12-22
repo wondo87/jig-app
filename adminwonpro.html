@@ -933,76 +933,69 @@
 
         /* 인쇄 스타일 */
         @media print {
-            body * {
-                visibility: hidden;
-            }
 
-            /* 인쇄 모드일 때 특정 섹션만 보이기 */
-            body.print-mode .print-visible * {
-                visibility: visible;
-            }
-
-            body.print-mode .print-visible {
-                visibility: visible;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-
-            /* 페이지 넘김 설정 */
-            .print-section {
-                break-after: page;
-                page-break-after: always;
-                display: none !important;
-                /* 기본적으로 숨김 */
-            }
-
-            .print-section.show-print {
-                display: block !important;
-                position: relative !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 20px !important;
-                height: auto !important;
-                overflow: visible !important;
-            }
-
-            /* 인쇄 시 탭 패널 강제 표시 */
-            .tab-panel {
-                display: none;
-            }
-
-            /* 인쇄 시 버튼 등 숨김 */
-            .no-print,
+            /* 기본적으로 모든 것 숨기기 */
+            .sidebar,
+            .header-bar,
             .header-actions,
             .customer-tabs,
             .pdf-btn,
             .add-row-btn,
             .delete-btn,
-            .category-memo {
+            .print-btn-header,
+            .adminBadge,
+            .admin-login-btn,
+            .status-filter,
+            .date-filter,
+            .sidebar-stats-btn,
+            .print-modal,
+            .admin-modal-overlay,
+            .stats-modal-overlay,
+            #emptyState,
+            .no-print {
                 display: none !important;
             }
 
-            /* 인쇄 시 스타일 보정 */
-            body {
-                background: #fff;
-            }
-
-            .document-wrapper {
-                box-shadow: none;
-                margin: 0;
-                border: none;
+            /* 메인 컨텐츠 레이아웃 수정 */
+            .main-layout {
+                display: block !important;
             }
 
             .main-content {
-                overflow: visible;
+                margin-left: 0 !important;
+                width: 100% !important;
             }
 
-            /* 각 섹션별 display 제어는 JS에서 클래스 추가로 처리 */
-            /* 예: .print-info-section, .print-contract-section 등 */
+            /* 탭 패널 기본 숨김 */
+            .tab-panel {
+                display: none !important;
+            }
+
+            /* 인쇄 대상 패널만 보이기 */
+            .print-section.show-print {
+                display: block !important;
+                position: relative !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                visibility: visible !important;
+                page-break-after: always;
+            }
+
+            .print-section.show-print * {
+                visibility: visible !important;
+            }
+
+            /* 인쇄 시 배경 및 그림자 제거 */
+            body {
+                background: #fff !important;
+            }
+
+            .document-wrapper {
+                box-shadow: none !important;
+                margin: 0 !important;
+                border: none !important;
+            }
         }
 
         /* 문서 래퍼 */
@@ -2928,8 +2921,13 @@
                                     </div>
                                     <div class="info-item">
                                         <label>공사기간</label>
-                                        <input type="text" class="customer-field" data-field="constructionPeriod"
-                                            placeholder="0000.00.00 ~ 0000.00.00" oninput="updateCustomerField(this)">
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <input type="date" class="customer-field" data-field="constructionStartDate"
+                                                style="flex:1;" oninput="updateConstructionPeriod()">
+                                            <span style="color:#86868b;">~</span>
+                                            <input type="date" class="customer-field" data-field="constructionEndDate"
+                                                style="flex:1;" oninput="updateConstructionPeriod()">
+                                        </div>
                                     </div>
                                     <div class="info-item">
                                         <label>이사예정일</label>
@@ -4660,6 +4658,31 @@
             // 평형 변경 시 견적서 수량 업데이트
             if (field === 'area') {
                 updateEstimateQuantities(value);
+            }
+
+            syncAllFields();
+        }
+
+        // 공사기간 시작/종료일을 합쳐서 저장
+        function updateConstructionPeriod() {
+            const startInput = document.querySelector('.customer-field[data-field="constructionStartDate"]');
+            const endInput = document.querySelector('.customer-field[data-field="constructionEndDate"]');
+
+            const startVal = startInput ? startInput.value : '';
+            const endVal = endInput ? endInput.value : '';
+
+            currentData.constructionStartDate = startVal;
+            currentData.constructionEndDate = endVal;
+
+            // 합쳐서 constructionPeriod에 저장 (YYYY.MM.DD ~ YYYY.MM.DD)
+            if (startVal && endVal) {
+                currentData.constructionPeriod = `${startVal.replace(/-/g, '.')} ~ ${endVal.replace(/-/g, '.')}`;
+            } else if (startVal) {
+                currentData.constructionPeriod = `${startVal.replace(/-/g, '.')} ~`;
+            } else if (endVal) {
+                currentData.constructionPeriod = `~ ${endVal.replace(/-/g, '.')}`;
+            } else {
+                currentData.constructionPeriod = '';
             }
 
             syncAllFields();
