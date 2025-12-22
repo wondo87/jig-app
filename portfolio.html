@@ -98,33 +98,84 @@
             padding: 40px 3rem 80px;
         }
 
+        /* 필터 탭 */
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 4px;
+        }
+
+        .filter-tab:hover {
+            color: #1a1a1a;
+        }
+
+        .filter-tab.active {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
         .portfolio-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
         }
 
         .portfolio-card {
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 0;
             overflow: hidden;
+            position: relative;
         }
 
         .portfolio-card img {
             width: 100%;
-            aspect-ratio: 1/1;
+            aspect-ratio: 4/3;
             object-fit: cover;
-            transition: 0.5s;
+            transition: transform 0.5s;
         }
 
         .portfolio-card:hover img {
-            transform: scale(1.03);
+            transform: scale(1.05);
         }
 
-        .portfolio-card h3 {
-            margin-top: 15px;
-            font-size: 1rem;
+        /* 호버 오버레이 */
+        .portfolio-card .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .portfolio-card:hover .overlay {
+            opacity: 1;
+        }
+
+        .portfolio-card .overlay h3 {
+            color: #fff;
+            font-size: 1.2rem;
             font-weight: 500;
+            text-align: center;
+            padding: 1rem;
         }
 
         /* 로딩 */
@@ -455,6 +506,15 @@
         </section>
 
         <section class="portfolio-section">
+            <!-- 필터 탭 -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All</button>
+                <button class="filter-tab" data-filter="20py">20py</button>
+                <button class="filter-tab" data-filter="30py">30py</button>
+                <button class="filter-tab" data-filter="40py">40py</button>
+                <button class="filter-tab" data-filter="50py+">50py+</button>
+            </div>
+
             <div id="portfolioGrid" class="portfolio-grid">
                 <div class="loading">데이터를 불러오는 중입니다...</div>
             </div>
@@ -614,34 +674,67 @@
             displayPortfolio();
         }
 
-        function displayPortfolio() {
+        let currentFilter = 'all';
+
+        function displayPortfolio(filter = 'all') {
+            currentFilter = filter;
             const grid = document.getElementById('portfolioGrid');
 
-            if (PORTFOLIO_DATA.length === 0) {
-                grid.innerHTML = '<div class="loading">등록된 포트폴리오가 없습니다.</div>';
+            // 필터 탭 active 상태 업데이트
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+
+            // 이미지가 있는 항목만 필터링
+            let filteredData = PORTFOLIO_DATA.filter(p => {
+                const hasImage = p.properties.URL?.files?.length > 0;
+                return hasImage;
+            });
+
+            // 평수 필터 적용
+            if (filter !== 'all') {
+                filteredData = filteredData.filter(p => {
+                    const area = p.properties.면적?.select?.name || '';
+                    if (filter === '50py+') {
+                        // 50py 이상
+                        const num = parseInt(area);
+                        return num >= 50;
+                    }
+                    return area.toLowerCase().includes(filter.replace('py', ''));
+                });
+            }
+
+            if (filteredData.length === 0) {
+                grid.innerHTML = '<div class="loading">해당 조건의 포트폴리오가 없습니다.</div>';
                 return;
             }
 
-            grid.innerHTML = PORTFOLIO_DATA
-                .filter(p => {
-                    // 이미지가 없는 항목 필터링 (design_jig_web_conn 같은 테스트 항목 제외)
-                    const hasImage = p.properties.URL?.files?.length > 0;
-                    return hasImage;
-                })
-                .map((p, i) => {
-                    const imgUrl = p.properties.URL?.files?.[0]?.external?.url ||
-                        p.properties.URL?.files?.[0]?.file?.url || "";
-                    const title = p.properties.이름?.title?.[0]?.plain_text || "Project";
-                    // 원본 데이터에서의 인덱스를 찾아 openLightbox에 전달
-                    const originalIndex = PORTFOLIO_DATA.indexOf(p);
-                    return `
+            grid.innerHTML = filteredData.map((p, i) => {
+                const imgUrl = p.properties.URL?.files?.[0]?.external?.url ||
+                    p.properties.URL?.files?.[0]?.file?.url || "";
+                const title = p.properties.이름?.title?.[0]?.plain_text || "Project";
+                const area = p.properties.면적?.select?.name || "";
+                // 원본 데이터에서의 인덱스를 찾아 openLightbox에 전달
+                const originalIndex = PORTFOLIO_DATA.indexOf(p);
+                return `
                     <article class="portfolio-card" onclick="openLightbox(${originalIndex})">
                         <img src="${imgUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/600x600?text=Design+Jig'">
-                        <h3>${title}</h3>
+                        <div class="overlay">
+                            <h3>${title}${area ? ' ' + area : ''}</h3>
+                        </div>
                     </article>
                 `;
-                }).join('');
+            }).join('');
         }
+
+        // 필터 탭 클릭 이벤트
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    displayPortfolio(tab.dataset.filter);
+                });
+            });
+        });
 
         function openLightbox(i) {
             curIdx = i;
