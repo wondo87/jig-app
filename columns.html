@@ -652,6 +652,11 @@
                         const caption = value.caption?.[0]?.plain_text || '';
                         const imageUrl = value.type === 'external' ? value.external.url : value.file.url;
                         return `<figure><img src="${imageUrl}" alt="${caption}"><figcaption>${caption}</figcaption></figure>`;
+                    case 'code':
+                        const codeContent = renderRichText(value.rich_text);
+                        // 프로그래밍 언어 표시 (예: javascript, html 등)
+                        const language = value.language || 'text';
+                        return `<pre class="notion-code"><code class="language-${language}">${codeContent}</code></pre>`;
                     default:
                         return '';
                 }
