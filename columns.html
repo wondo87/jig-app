@@ -563,11 +563,15 @@
                 const tags = p.태그?.multi_select?.map(t => t.name).join(', ') || p.태그?.select?.name || '인테리어';
 
                 // 썸네일: cover, 썸네일, URL 순서로 찾음
+                // 썸네일 우선순위: 1.커버 2.속성(Thumbnail) 3.아이콘 4.기본이미지
                 const thumbnail = col.cover?.external?.url ||
                     col.cover?.file?.url ||
                     p.썸네일?.files?.[0]?.external?.url ||
                     p.썸네일?.files?.[0]?.file?.url ||
-                    p.URL?.files?.[0]?.external?.url ||
+                    p.Thumbnail?.files?.[0]?.external?.url ||
+                    p.Thumbnail?.files?.[0]?.file?.url ||
+                    (col.icon?.type === 'file' ? col.icon.file.url : null) ||
+                    (col.icon?.type === 'external' ? col.icon.external.url : null) ||
                     'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
 
                 return `
@@ -596,11 +600,18 @@
             const p = column.properties;
             const title = p.제목?.title?.[0]?.plain_text || p.이름?.title?.[0]?.plain_text || '제목 없음';
             const date = p.작성일?.date?.start || p.날짜?.date?.start || '';
+
+            // 썸네일 우선순위: 1.커버 2.속성(Thumbnail) 3.아이콘 4.기본이미지
             const thumbnail = column.cover?.external?.url ||
                 column.cover?.file?.url ||
                 p.썸네일?.files?.[0]?.external?.url ||
                 p.썸네일?.files?.[0]?.file?.url ||
+                p.Thumbnail?.files?.[0]?.external?.url ||
+                p.Thumbnail?.files?.[0]?.file?.url ||
+                (column.icon?.type === 'file' ? column.icon.file.url : null) ||
+                (column.icon?.type === 'external' ? column.icon.external.url : null) ||
                 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
             const category = p.카테고리?.select?.name || '';
             const tags = p.태그?.multi_select?.map(t => t.name).join(', ') || p.태그?.select?.name || '인테리어';
 
