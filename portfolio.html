@@ -4,135 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PORTFOLIO - 디자인 지그</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* [디자인지그 스크롤 뷰 스타일] */
+        /* [림디자인 스타일 미니멀리즘 디자인] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; color: #1a1a1a; background: #fff; line-height: 1.6; }
-        .header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1.5rem 3rem; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        .header-container { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
-        .logo { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; text-decoration: none; letter-spacing: -0.02em; }
-        .nav-link { color: #1a1a1a; text-decoration: none; font-size: 0.9rem; font-weight: 500; margin-left: 2.5rem; transition: 0.3s; }
-        .nav-link:hover, .nav-link.active { color: #B4956F; }
+        body { font-family: 'Noto Sans KR', sans-serif; color: #333; background: #fff; }
+        
+        /* 헤더 */
+        .header { padding: 2rem 4rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .logo { font-size: 1.2rem; font-weight: 700; text-decoration: none; color: #000; letter-spacing: -0.05em; }
+        .nav-link { margin-left: 2rem; text-decoration: none; color: #666; font-size: 0.9rem; }
 
-        .page-hero { padding: 180px 3rem 60px; text-align: center; background: #fbfbfb; }
-        .page-hero h1 { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; }
-        
-        .portfolio-section { max-width: 1400px; margin: 0 auto; padding: 60px 3rem 120px; }
-        .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 40px; }
-        
-        /* 카드 디자인 */
-        .portfolio-card { position: relative; border-radius: 16px; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; }
-        .portfolio-card img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s cubic-bezier(0.33, 1, 0.68, 1); }
-        .portfolio-card:hover img { transform: scale(1.08); }
-        .portfolio-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 30px; background: linear-gradient(transparent, rgba(0,0,0,0.7)); color: #fff; }
-        
-        /* [핵심] 스크롤형 라이트박스 */
-        .lightbox { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 3000; overflow-y: auto; }
-        .lightbox.show { display: block; }
-        .lightbox-content { max-width: 1000px; margin: 0 auto; padding: 100px 20px; }
-        .lightbox-image-list { display: flex; flex-direction: column; gap: 20px; width: 100%; }
-        .lightbox-image-list img { width: 100%; height: auto; border-radius: 8px; }
-        
-        .lightbox-info { text-align: center; margin-bottom: 50px; }
-        .lightbox-info h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; }
-        .lightbox-info p { color: #B4956F; font-weight: 500; }
-        
-        .lightbox-close { position: fixed; top: 30px; right: 30px; color: #1a1a1a; font-size: 3rem; cursor: pointer; background: #eee; border: none; width: 60px; height: 60px; border-radius: 50%; z-index: 3100; display: flex; align-items: center; justify-content: center; }
+        /* 포트폴리오 그리드 (목록) */
+        .portfolio-section { max-width: 1600px; margin: 0 auto; padding: 4rem; }
+        .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 30px; }
+        .portfolio-card { cursor: pointer; margin-bottom: 2rem; }
+        .portfolio-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; transition: 0.4s; }
+        .portfolio-card:hover img { opacity: 0.8; }
+        .portfolio-card h3 { font-size: 1rem; margin-top: 1rem; font-weight: 500; }
 
-        .footer { padding: 80px 3rem; background: #1a1a1a; color: #fff; text-align: center; }
+        /* [핵심] 프로젝트 상세 페이지 (라이트박스) */
+        .detail-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 2000; overflow-y: auto; }
+        .detail-view.show { display: block; }
+        
+        .detail-container { display: flex; max-width: 1600px; margin: 0 auto; padding: 8rem 4rem; min-height: 100vh; }
+        
+        /* 왼쪽: 슬라이더 */
+        .detail-slider { flex: 1.2; position: relative; display: flex; align-items: center; justify-content: center; background: #f9f9f9; height: 70vh; }
+        .detail-slider img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 2rem; color: #ccc; cursor: pointer; padding: 20px; }
+        .prev-btn { left: 0; } .next-btn { right: 0; }
+
+        /* 오른쪽: 정보창 */
+        .detail-info { flex: 0.8; padding-left: 5rem; padding-top: 2rem; }
+        .detail-info h2 { font-size: 1.8rem; font-weight: 400; margin-bottom: 2rem; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; border-top: 1px solid #eee; padding-top: 2rem; }
+        .info-item h4 { font-size: 0.8rem; color: #999; font-weight: 400; margin-bottom: 0.5rem; }
+        .info-item p { font-size: 0.9rem; color: #333; }
+
+        .close-btn { position: fixed; top: 40px; right: 40px; font-size: 2rem; cursor: pointer; border: none; background: none; z-index: 2100; }
+
+        /* 하단 네비게이션 (이전/다음 프로젝트) */
+        .detail-nav { display: flex; justify-content: space-between; padding: 4rem; border-top: 1px solid #eee; max-width: 1600px; margin: 0 auto; }
+        .nav-link-item { color: #999; text-decoration: none; font-size: 0.8rem; }
+
+        @media (max-width: 1024px) {
+            .detail-container { flex-direction: column; padding: 4rem 2rem; }
+            .detail-info { padding-left: 0; margin-top: 3rem; }
+            .detail-slider { height: 50vh; }
+        }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="header-container">
-            <a href="index.html" class="logo">DESIGN JIG</a>
-            <nav>
-                <a href="portfolio.html" class="nav-link active">PORTFOLIO</a>
-                <a href="quote.html" class="nav-link">ASK A QUOTE</a>
-            </nav>
-        </div>
+        <a href="index.html" class="logo">DESIGN JIG</a>
+        <nav>
+            <a href="portfolio.html" class="nav-link">Project</a>
+            <a href="#" class="nav-link">Contact</a>
+        </nav>
     </header>
 
-    <main>
-        <section class="page-hero">
-            <h1>PORTFOLIO</h1>
-            <p>디자인지그가 세심하게 완성한 공간들입니다</p>
-        </section>
-        
-        <section class="portfolio-section">
-            <div id="portfolioGrid" class="portfolio-grid"></div>
-        </section>
-    </main>
+    <div class="portfolio-section">
+        <div id="portfolioGrid" class="portfolio-grid"></div>
+    </div>
 
-    <div id="lightbox" class="lightbox">
-        <button class="lightbox-close" onclick="closeLightbox()">×</button>
-        <div class="lightbox-content">
-            <div class="lightbox-info">
-                <h2 id="lightboxTitle"></h2>
-                <p id="lightboxCategory"></p>
+    <div id="detailView" class="detail-view">
+        <button class="close-btn" onclick="closeDetail()">×</button>
+        <div class="detail-container">
+            <div class="detail-slider">
+                <button class="slide-btn prev-btn" onclick="changeImg(-1)">‹</button>
+                <img id="mainImg" src="">
+                <button class="slide-btn next-btn" onclick="changeImg(1)">›</button>
             </div>
-            <div id="imageList" class="lightbox-image-list">
+            <div class="detail-info">
+                <h2 id="projTitle"></h2>
+                <div class="info-grid">
+                    <div class="info-item"><h4>면적</h4><p id="infoArea">-</p></div>
+                    <div class="info-item"><h4>주거형태</h4><p id="infoType">-</p></div>
+                    <div class="info-item"><h4>바닥</h4><p id="infoFloor">-</p></div>
+                    <div class="info-item"><h4>가구</h4><p id="infoFurniture">-</p></div>
                 </div>
+            </div>
+        </div>
+        <div class="detail-nav">
+            <a href="#" class="nav-link-item" onclick="navProject(-1)">← 이전 프로젝트</a>
+            <a href="#" class="nav-link-item" onclick="navProject(1)">다음 프로젝트 →</a>
         </div>
     </div>
 
-    <footer class="footer">
-        <p>© 2026 design jig. All rights reserved.</p>
-    </footer>
-
     <script>
-        let allProjects = [];
+        let projects = [];
+        let curProjIdx = 0;
+        let curImgIdx = 0;
 
-        async function loadPortfolio() {
-            try {
-                const response = await fetch('/.netlify/functions/portfolio');
-                const data = await response.json();
-                allProjects = data;
-                
-                const grid = document.getElementById('portfolioGrid');
-                grid.innerHTML = data.map((item, idx) => {
-                    const props = item.properties;
-                    const title = props.이름.title[0]?.plain_text || "Untitled";
-                    const mainImg = props.URL.files[0]?.external.url || "";
-                    
-                    return `
-                        <article class="portfolio-card" onclick="openGallery(${idx})">
-                            <img src="${mainImg}" alt="${title}">
-                            <div class="portfolio-overlay">
-                                <h3>${title}</h3>
-                                <p>${props.카테고리.select?.name || ""}</p>
-                            </div>
-                        </article>
-                    `;
-                }).join('');
-            } catch (e) { console.error("Load failed", e); }
-        }
-
-        // 스크롤 방식으로 사진들 띄우기
-        function openGallery(projIdx) {
-            const project = allProjects[projIdx];
-            const images = project.properties.URL.files;
-            
-            document.getElementById('lightboxTitle').textContent = project.properties.이름.title[0].plain_text;
-            document.getElementById('lightboxCategory').textContent = project.properties.카테고리.select?.name || "";
-            
-            // 핵심: 모든 사진을 <img> 태그로 만들어 리스트에 넣음
-            const imageList = document.getElementById('imageList');
-            imageList.innerHTML = images.map(img => `
-                <img src="${img.external.url}" alt="portfolio detail">
+        async function loadData() {
+            const res = await fetch('/.netlify/functions/portfolio');
+            projects = await res.json();
+            const grid = document.getElementById('portfolioGrid');
+            grid.innerHTML = projects.map((p, i) => `
+                <div class="portfolio-card" onclick="openDetail(${i})">
+                    <img src="${p.properties.URL.files[0]?.external.url}">
+                    <h3>${p.properties.이름.title[0]?.plain_text}</h3>
+                </div>
             `).join('');
+        }
+
+        function openDetail(idx) {
+            curProjIdx = idx; curImgIdx = 0;
+            updateDetail();
+            document.getElementById('detailView').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function updateDetail() {
+            const p = projects[curProjIdx].properties;
+            document.getElementById('mainImg').src = p.URL.files[curImgIdx].external.url;
+            document.getElementById('projTitle').textContent = p.이름.title[0].plain_text;
             
-            document.getElementById('lightbox').classList.add('show');
-            document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+            // 노션 속성 매핑 (이름이 정확해야 함)
+            document.getElementById('infoArea').textContent = p.면적?.rich_text[0]?.plain_text || "-";
+            document.getElementById('infoType').textContent = p.주거형태?.select?.name || p.주거형태?.rich_text[0]?.plain_text || "-";
+            document.getElementById('infoFloor').textContent = p.바닥?.rich_text[0]?.plain_text || "-";
+            document.getElementById('infoFurniture').textContent = p.가구?.rich_text[0]?.plain_text || "-";
         }
 
-        function closeLightbox() { 
-            document.getElementById('lightbox').classList.remove('show');
-            document.body.style.overflow = 'auto'; 
+        function changeImg(dir) {
+            const imgs = projects[curProjIdx].properties.URL.files;
+            curImgIdx = (curImgIdx + dir + imgs.length) % imgs.length;
+            document.getElementById('mainImg').src = imgs[curImgIdx].external.url;
         }
 
-        document.addEventListener('DOMContentLoaded', loadPortfolio);
+        function navProject(dir) {
+            curProjIdx = (curProjIdx + dir + projects.length) % projects.length;
+            curImgIdx = 0;
+            updateDetail();
+        }
+
+        function closeDetail() {
+            document.getElementById('detailView').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        loadData();
     </script>
 </body>
 </html>
