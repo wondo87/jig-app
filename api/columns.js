@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     }
 
     // 환경변수 문제로 인해 임시로 ID 하드코딩
-    const databaseId = 'd116b5df7b380dcb0ebc5e97f6f9332';
+    const databaseId = '2d116b5df7b380dcb0ebc5e97f6f9332';
 
     // if (!databaseId) { ... } 체크 제거
 
