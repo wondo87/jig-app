@@ -502,10 +502,14 @@
                     COLUMNS_DATA = data;
                     displayColumns(COLUMNS_DATA);
                     return;
+                } else {
+                    const errData = await response.json();
+                    throw new Error(errData.error || response.statusText);
                 }
             } catch (e) {
                 console.warn('Notion API 연동 실패, 샘플 데이터 사용:', e.message);
-                // alert('칼럼 데이터를 불러오는 데 실패했습니다. 샘플 데이터를 표시합니다.');
+                // 에러 내용을 사용자에게 알림 (디버깅용)
+                alert('Notion 연동 에러: ' + e.message + '\n콘솔(F12)을 확인해주세요.');
             }
 
             // API 실패 시 샘플 데이터 표시
