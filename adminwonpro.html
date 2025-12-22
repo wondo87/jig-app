@@ -2569,13 +2569,36 @@
         </div>
     </div>
 
+    <!-- 견적문의 불러오기 모달 -->
+    <div class="admin-modal" id="quoteImportModal">
+        <div class="admin-modal-content"
+            style="max-width:700px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
+            <h3>📥 견적문의 불러오기</h3>
+            <p>웹사이트 견적문의 폼에서 접수된 문의 목록입니다. 선택하면 고객정보가 자동으로 입력됩니다.</p>
+            <div id="quoteImportList"
+                style="flex:1; overflow-y:auto; margin:16px 0; border:1px solid #e8e8ed; border-radius:8px;">
+                <div style="padding:40px; text-align:center; color:#86868b;">
+                    <span style="font-size:24px;">⏳</span>
+                    <p style="margin-top:8px;">불러오는 중...</p>
+                </div>
+            </div>
+            <div class="admin-modal-btns">
+                <button class="cancel-btn" onclick="closeQuoteImportModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 메인 레이아웃 -->
     <div class="main-layout">
         <!-- 사이드바: 고객 목록 -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <h3>고객 목록</h3>
-                <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
+                <div style="display:flex; gap:4px;">
+                    <button class="btn btn-secondary btn-sm" onclick="openQuoteImportModal()" title="견적문의 불러오기">📥
+                        문의</button>
+                    <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
+                </div>
             </div>
             <div class="sidebar-search">
                 <input type="text" placeholder="이름, 연락처 검색..." id="searchInput" oninput="filterCustomers()">
@@ -4054,6 +4077,156 @@
                 document.querySelectorAll('.company-sync').forEach(f => f.value = rep.value);
             }
         }
+
+        // ========== 견적문의 불러오기 기능 ==========
+        function openQuoteImportModal() {
+            document.getElementById('quoteImportModal').style.display = 'flex';
+            loadQuotesFromSheet();
+        }
+
+        function closeQuoteImportModal() {
+            document.getElementById('quoteImportModal').style.display = 'none';
+        }
+
+        async function loadQuotesFromSheet() {
+            const listContainer = document.getElementById('quoteImportList');
+            listContainer.innerHTML = `
+                <div style="padding:40px; text-align:center; color:#86868b;">
+                    <span style="font-size:24px;">⏳</span>
+                    <p style="margin-top:8px;">불러오는 중...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/quotes');
+                if (!response.ok) throw new Error('API 응답 오류');
+
+                const quotes = await response.json();
+
+                if (quotes.length === 0) {
+                    listContainer.innerHTML = `
+                        <div style="padding:40px; text-align:center; color:#86868b;">
+                            <span style="font-size:24px;">📭</span>
+                            <p style="margin-top:8px;">접수된 견적문의가 없습니다.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<table style="width:100%; border-collapse:collapse; font-size:12px;">';
+                html += '<thead><tr style="background:#f5f5f7;">';
+                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">No.</th>';
+                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">접수일</th>';
+                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">이름</th>';
+                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">연락처</th>';
+                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">공사위치</th>';
+                html += '<th style="padding:10px 8px; text-align:center; border-bottom:1px solid #e8e8ed;">선택</th>';
+                html += '</tr></thead><tbody>';
+
+                quotes.forEach((q, idx) => {
+                    const dateStr = q.date ? new Date(q.date).toLocaleDateString('ko-KR') : '-';
+                    html += `<tr style="border-bottom:1px solid #f5f5f7; ${idx % 2 === 1 ? 'background:#fbfbfd;' : ''}">`;
+                    html += `<td style="padding:8px;">${q.no || idx + 1}</td>`;
+                    html += `<td style="padding:8px;">${dateStr}</td>`;
+                    html += `<td style="padding:8px; font-weight:600;">${q.name || '-'}</td>`;
+                    html += `<td style="padding:8px;">${q.phone || '-'}</td>`;
+                    html += `<td style="padding:8px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${q.location || '-'}</td>`;
+                    html += `<td style="padding:8px; text-align:center;">
+                        <button onclick='importQuoteAsCustomer(${JSON.stringify(q).replace(/'/g, "&#39;")})' 
+                            style="padding:4px 12px; background:#0071e3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:11px;">
+                            불러오기
+                        </button>
+                    </td>`;
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                listContainer.innerHTML = html;
+
+            } catch (error) {
+                console.error('Quote load error:', error);
+                listContainer.innerHTML = `
+                    <div style="padding:40px; text-align:center; color:#ff3b30;">
+                        <span style="font-size:24px;">⚠️</span>
+                        <p style="margin-top:8px;">데이터를 불러오는데 실패했습니다.</p>
+                        <p style="font-size:11px; color:#86868b; margin-top:4px;">${error.message}</p>
+                        <p style="font-size:11px; color:#86868b; margin-top:8px;">
+                            Vercel 환경변수에 GOOGLE_SHEETS_API_KEY가 설정되어 있는지 확인하세요.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function importQuoteAsCustomer(quote) {
+            // 모달 닫기
+            closeQuoteImportModal();
+
+            // 신규 고객 생성
+            const now = new Date();
+            const yy = now.getFullYear().toString().slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const seq = String(Math.floor(Math.random() * 900) + 100);
+            currentCustomerId = `${yy}${mm}${dd}-${seq}`;
+
+            // 공사유형 매핑
+            const typeMap = {
+                'full': '전체 인테리어',
+                'partial': '부분 인테리어',
+                'remodel': '리모델링',
+                'other': '기타'
+            };
+
+            currentData = {
+                customerId: currentCustomerId,
+                status: 'consulting',
+                createdAt: new Date().toISOString().split('T')[0],
+                profitRate: '15%',
+                // 견적문의 데이터 매핑
+                clientName: quote.name || '',
+                clientPhone: quote.phone || '',
+                clientEmail: quote.email || '',
+                siteAddress: quote.location || '',
+                area: quote.size || '',
+                buildingType: typeMap[quote.type] || quote.type || '',
+                customerRequest: quote.message || '',
+                clientSource: '홈페이지 견적문의'
+            };
+
+            // UI 업데이트
+            document.querySelectorAll('.customer-field').forEach(f => {
+                const field = f.dataset.field;
+                if (currentData[field] !== undefined) {
+                    f.value = currentData[field];
+                } else if (field === 'profitRate') {
+                    f.value = '15%';
+                } else {
+                    f.value = '';
+                }
+            });
+
+            document.getElementById('customerStatus').value = 'consulting';
+            document.getElementById('asEndDateDisplay').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('customerView').style.display = 'block';
+            document.getElementById('headerCustomerName').textContent = quote.name || '신규 고객';
+            document.getElementById('headerCustomerId').textContent = currentCustomerId;
+
+            clearCostData();
+            currentData.estimateData = {};
+            currentData.estimateProfitRate = 15;
+            categories.forEach(cat => {
+                delete currentData[`estMemo_${cat.no}`];
+            });
+
+            loadEstimateData();
+            syncAllFields();
+            showCustomerTab('info');
+
+            showToast(`${quote.name || '고객'} 정보를 불러왔습니다`, 'success');
+        }
+        // ========== 견적문의 불러오기 기능 끝 ==========
 
         function newCustomer() {
             const now = new Date();
