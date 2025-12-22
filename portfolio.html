@@ -4,175 +4,598 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PORTFOLIO - 디자인 지그</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* [기본 스타일] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans KR', sans-serif; color: #111; background: #fff; line-height: 1.5; }
-        
-        /* 헤더 고정 (z-index 3000) */
-        .header { 
-            padding: 2rem 4rem; display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid #eee; position: sticky; top: 0; background: #fff; z-index: 3000; 
+        body {
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+            background: #fff;
         }
-        .logo { font-size: 1.2rem; font-weight: 700; text-decoration: none; color: #000; }
-        .nav-link { text-decoration: none; color: #666; font-size: 0.9rem; margin-left: 2rem; }
-
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.5rem 3rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+        .nav-list {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+        .nav-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+        .nav-link:hover { color: #B4956F; }
+        .nav-link-cta { color: #B4956F; }
+        .nav-link.active { color: #B4956F; border-bottom: 2px solid #B4956F; padding-bottom: 4px; }
+        
+        .page-hero {
+            padding: 160px 3rem 60px;
+            background: linear-gradient(135deg, #f8f6f3 0%, #fff 100%);
+            text-align: center;
+        }
+        .page-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+        .page-hero p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* 필터 탭 */
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 30px 3rem;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 10px 24px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            background: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-tab:hover, .filter-tab.active {
+            background: #1a1a1a;
+            color: #fff;
+            border-color: #1a1a1a;
+        }
+        
         /* 포트폴리오 그리드 */
-        .portfolio-section { max-width: 1600px; margin: 0 auto; padding: 4rem; }
-        .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 40px; }
-        .portfolio-card { cursor: pointer; }
-        .portfolio-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border: 1px solid #f0f0f0; }
-        .portfolio-card h3 { margin-top: 15px; font-size: 1rem; font-weight: 400; }
-
-        /* 상세 보기 레이어 (z-index 2000) */
-        #detailView { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #fff; z-index: 2000; overflow-y: auto; padding-top: 100px; 
+        .portfolio-section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 3rem 80px;
         }
-        #detailView.active { display: block; }
         
-        .detail-container { display: flex; max-width: 1600px; margin: 0 auto; padding: 4rem; gap: 60px; min-height: 100vh; }
-        .detail-slider { flex: 1.2; position: relative; background: #fbfbfb; height: 70vh; display: flex; align-items: center; justify-content: center; }
-        .detail-slider img { max-width: 100%; max-height: 100%; object-fit: contain; transition: opacity 0.4s; }
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 24px;
+        }
         
-        .detail-info { flex: 0.8; }
-        .detail-info h2 { font-size: 1.8rem; font-weight: 400; margin-bottom: 30px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; border-top: 1px solid #eee; padding-top: 30px; }
+        .portfolio-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 4/3;
+            background: #f0f0f0;
+        }
         
-        /* 라벨 스타일 고정 */
-        .info-item h4 { font-size: 0.8rem; color: #999; margin-bottom: 5px; font-weight: 400; }
-        .info-item p { font-size: 0.95rem; color: #333; }
-
-        .close-btn { position: fixed; top: 120px; right: 60px; font-size: 2.5rem; border: none; background: none; cursor: pointer; z-index: 2500; }
-        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 3rem; color: #eee; cursor: pointer; padding: 20px; }
-
-        @media (max-width: 1100px) { .detail-container { flex-direction: column; } .detail-info { padding-left: 0; } }
+        .portfolio-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .portfolio-card:hover img {
+            transform: scale(1.05);
+        }
+        
+        .portfolio-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 24px 24px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: #fff;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .portfolio-card:hover .portfolio-overlay {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .portfolio-overlay h3 {
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+        }
+        .portfolio-overlay p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        /* 로딩 */
+        .loading {
+            text-align: center;
+            padding: 80px 20px;
+            grid-column: 1 / -1;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #B4956F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 라이트박스 */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 3000;
+            padding: 20px;
+        }
+        .lightbox.show { display: flex; }
+        
+        .lightbox-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 30px;
+        }
+        
+        .lightbox-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .lightbox-main img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .lightbox-sidebar {
+            width: 350px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .lightbox-sidebar h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .lightbox-sidebar .meta {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .lightbox-sidebar .description {
+            color: #444;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+        
+        .lightbox-sidebar .specs {
+            background: #f8f8f8;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .lightbox-sidebar .specs h4 {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .lightbox-sidebar .specs p {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+        
+        .lightbox-thumbnails {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .lightbox-thumbnails img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+        .lightbox-thumbnails img:hover,
+        .lightbox-thumbnails img.active {
+            opacity: 1;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .lightbox-nav.prev { left: 20px; }
+        .lightbox-nav.next { right: 20px; }
+        .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+        
+        /* Notion 배지 */
+        .notion-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 20px;
+        }
+        .notion-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .footer {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 60px 3rem;
+            text-align: center;
+        }
+        .footer p { color: #888; font-size: 0.9rem; }
+        .footer a { color: #B4956F; text-decoration: none; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            grid-column: 1 / -1;
+        }
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        .empty-state p {
+            color: #888;
+        }
+        
+        @media (max-width: 1024px) {
+            .lightbox-sidebar { display: none; }
+        }
+        
+        @media (max-width: 768px) {
+            .header { padding: 1rem 1.5rem; }
+            .nav-list { display: none; }
+            .page-hero { padding: 120px 1.5rem 40px; }
+            .page-hero h1 { font-size: 1.8rem; }
+            .portfolio-section { padding: 20px 1.5rem 60px; }
+            .portfolio-grid { grid-template-columns: 1fr; }
+            .filter-tabs { padding: 20px 1.5rem; }
+        }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="index.html" class="logo">디자인 지그</a>
-        <nav><a href="portfolio.html" class="nav-link">프로젝트</a></nav>
+        <div class="header-container">
+            <a href="index.html" class="logo">디자인 지그</a>
+            <nav>
+                <ul class="nav-list">
+                    <li><a href="columns.html" class="nav-link">COLUMNS</a></li>
+                    <li><a href="portfolio.html" class="nav-link active">PORTFOLIO</a></li>
+                    <li><a href="quote.html" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
 
-    <main class="portfolio-section">
-        <div id="portfolioGrid" class="portfolio-grid">
-            <p id="loading">데이터를 불러오는 중입니다...</p>
+    <main>
+        <section class="page-hero">
+            <h1>PORTFOLIO</h1>
+            <p>디자인 지그가 완성한 공간들을 소개합니다</p>
+        </section>
+        
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">전체</button>
+            <button class="filter-tab" data-filter="apartment">아파트</button>
+            <button class="filter-tab" data-filter="villa">빌라/주택</button>
+            <button class="filter-tab" data-filter="partial">부분 시공</button>
         </div>
-    </main>
-
-    <div id="detailView">
-        <button class="close-btn" onclick="closeDetail()">×</button>
-        <div class="detail-container">
-            <div class="detail-slider">
-                <button class="slide-btn" style="left:0" onclick="changeImg(-1)">‹</button>
-                <img id="mainImg" src="">
-                <button class="slide-btn" style="right:0" onclick="changeImg(1)">›</button>
+        
+        <section class="portfolio-section">
+            <div id="portfolioGrid" class="portfolio-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Notion에서 포트폴리오를 불러오는 중...</p>
+                </div>
             </div>
-            <div class="detail-info">
-                <h2 id="projTitle"></h2>
-                <div class="info-grid">
-                    <div class="info-item"><h4>면적</h4><p id="infoArea">-</p></div>
-                    <div class="info-item"><h4>주거형태</h4><p id="infoType">-</p></div>
-                    <div class="info-item"><h4>바닥</h4><p id="infoFloor">-</p></div>
-                    <div class="info-item"><h4>가구</h4><p id="infoFurniture">-</p></div>
+        </section>
+    </main>
+    
+    <!-- 라이트박스 -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" onclick="closeLightbox()">×</button>
+        <div class="lightbox-container">
+            <div class="lightbox-main">
+                <button class="lightbox-nav prev" onclick="navLightbox(-1)">‹</button>
+                <img id="lightboxImage" src="" alt="">
+                <button class="lightbox-nav next" onclick="navLightbox(1)">›</button>
+            </div>
+            <div class="lightbox-sidebar">
+                <h2 id="lightboxTitle"></h2>
+                <div class="meta" id="lightboxMeta"></div>
+                <div class="description" id="lightboxDesc"></div>
+                <div class="specs">
+                    <h4>시공 정보</h4>
+                    <div id="lightboxSpecs"></div>
+                </div>
+                <div class="lightbox-thumbnails" id="lightboxThumbs"></div>
+                <div class="notion-badge">
+                    <svg viewBox="0 0 100 100" fill="currentColor">
+                        <path d="M6.017 4.313l55.333 -4.087c6.797 -0.583 8.543 -0.19 12.817 2.917l17.663 12.443c2.913 2.14 3.883 2.723 3.883 5.053v68.243c0 4.277 -1.553 6.807 -6.99 7.193L24.467 99.967c-4.08 0.193 -6.023 -0.39 -8.16 -3.113L3.3 79.94c-2.333 -3.113 -3.3 -5.443 -3.3 -8.167V11.113c0 -3.497 1.553 -6.413 6.017 -6.8z"/>
+                    </svg>
+                    Notion 연동
                 </div>
             </div>
         </div>
     </div>
 
+    <footer class="footer">
+        <p>© 2024 디자인 지그. All rights reserved.</p>
+        <p style="margin-top: 10px;">경기도 용인시 수지구 보정동 | <a href="tel:031-000-0000">031-000-0000</a></p>
+    </footer>
+    
     <script>
-        let projects = [];
-        let curIdx = 0;
-        let imgIdx = 0;
-        let slideTimer = null;
-
-        // [긴급 대응] 넷리파이 차단 시 보여줄 고화질 샘플 데이터
-        const fallbackData = [{
-            properties: {
-                이름: { title: [{ plain_text: "반포 자이 거실 인테리어" }] },
-                면적: { select: { name: "32평" } },
-                카테고리: { select: { name: "아파트" } },
-                바닥: { select: { name: "강마루" } },
-                가구: { select: { name: "제작 가구" } },
-                URL: { files: [
-                    { external: { url: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80" } },
-                    { external: { url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80" } }
-                ]}
-            }
-        }];
-
-        async function init() {
+        // =============================================
+        // Notion 연동 포트폴리오
+        // =============================================
+        let PORTFOLIO_DATA = [];
+        let currentProject = null;
+        let currentImageIndex = 0;
+        
+        // 페이지 로드
+        document.addEventListener('DOMContentLoaded', loadPortfolio);
+        
+        // Notion에서 포트폴리오 로드
+        async function loadPortfolio() {
             const grid = document.getElementById('portfolioGrid');
+            
             try {
-                const res = await fetch('/.netlify/functions/portfolio');
-                if (!res.ok) throw new Error("Netlify Limit Exceeded");
+                // Netlify Function 호출
+                const response = await fetch('/.netlify/functions/notion-portfolio');
                 
-                const data = await res.json();
-                projects = data.results || data;
-                if (!projects || projects.length === 0) projects = fallbackData;
-            } catch (err) {
-                console.warn("로컬 테스트 모드 가동 (Netlify 차단됨)");
-                projects = fallbackData;
-            }
-            renderGrid();
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('portfolioGrid');
-            grid.innerHTML = projects.map((p, i) => {
-                const img = p.properties.URL?.files?.[0]?.external?.url || "";
-                return `
-                    <div class="portfolio-card" onclick="openDetail(${i})">
-                        <img src="${img}" onerror="this.src='https://via.placeholder.com/600x600?text=Design+Jig'">
-                        <h3>${p.properties.이름?.title?.[0]?.plain_text || "프로젝트"}</h3>
+                if (!response.ok) {
+                    throw new Error('API 호출 실패');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.projects) {
+                    PORTFOLIO_DATA = data.projects;
+                    displayPortfolio(PORTFOLIO_DATA);
+                    setupFilters();
+                } else {
+                    throw new Error(data.error || '데이터 로드 실패');
+                }
+                
+            } catch (error) {
+                console.error('Notion 로드 오류:', error);
+                
+                // 로컬 JSON 폴백
+                try {
+                    const localResponse = await fetch('portfolio-data.json');
+                    if (localResponse.ok) {
+                        const localData = await localResponse.json();
+                        PORTFOLIO_DATA = localData.projects || [];
+                        displayPortfolio(PORTFOLIO_DATA);
+                        setupFilters();
+                        console.log('로컬 데이터 사용');
+                        return;
+                    }
+                } catch (e) {
+                    console.log('로컬 데이터도 없음');
+                }
+                
+                // 빈 상태 표시
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>🏠 포트폴리오 준비 중</h3>
+                        <p>곧 멋진 시공 사례로 찾아뵙겠습니다</p>
                     </div>
                 `;
-            }).join('');
+            }
         }
-
-        function openDetail(i) {
-            curIdx = i; imgIdx = 0;
-            updateDetail();
-            document.getElementById('detailView').classList.add('active');
+        
+        // 포트폴리오 표시
+        function displayPortfolio(projects, filter = 'all') {
+            const grid = document.getElementById('portfolioGrid');
+            const filtered = filter === 'all' ? projects : projects.filter(p => p.category === filter);
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>해당 카테고리의 프로젝트가 없습니다</h3>
+                        <p>다른 카테고리를 선택해보세요</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(project => `
+                <article class="portfolio-card" onclick="openLightbox(${project.id})">
+                    ${project.thumbnail 
+                        ? `<img src="${project.thumbnail}" alt="${project.title}" loading="lazy">`
+                        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;">이미지 없음</div>`
+                    }
+                    <div class="portfolio-overlay">
+                        <h3>${project.title}</h3>
+                        <p>${project.categoryRaw || ''} ${project.size ? '· ' + project.size : ''}</p>
+                    </div>
+                </article>
+            `).join('');
+        }
+        
+        // 필터 설정
+        function setupFilters() {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    displayPortfolio(PORTFOLIO_DATA, this.dataset.filter);
+                });
+            });
+        }
+        
+        // 라이트박스 열기
+        function openLightbox(id) {
+            currentProject = PORTFOLIO_DATA.find(p => p.id === id);
+            if (!currentProject || currentProject.images.length === 0) {
+                alert('이미지가 없습니다');
+                return;
+            }
+            
+            currentImageIndex = 0;
+            updateLightbox();
+            document.getElementById('lightbox').classList.add('show');
             document.body.style.overflow = 'hidden';
-            if (slideTimer) clearInterval(slideTimer);
-            slideTimer = setInterval(() => changeImg(1), 4000);
         }
-
-        function updateDetail() {
-            const p = projects[curIdx].properties;
-            const images = p.URL?.files || [];
+        
+        // 라이트박스 업데이트
+        function updateLightbox() {
+            const p = currentProject;
+            document.getElementById('lightboxImage').src = p.images[currentImageIndex];
+            document.getElementById('lightboxTitle').textContent = p.title;
+            document.getElementById('lightboxMeta').textContent = `${p.categoryRaw || ''} · ${p.year || ''}`;
+            document.getElementById('lightboxDesc').textContent = p.description || '';
             
-            document.getElementById('mainImg').src = images[imgIdx]?.external?.url || "";
-            document.getElementById('projTitle').textContent = p.이름?.title?.[0]?.plain_text || "-";
+            let specsHtml = '';
+            if (p.location) specsHtml += `<p><strong>위치:</strong> ${p.location}</p>`;
+            if (p.size) specsHtml += `<p><strong>면적:</strong> ${p.size}</p>`;
+            if (p.furniture) specsHtml += `<p><strong>가구:</strong> ${p.furniture}</p>`;
+            if (p.floor) specsHtml += `<p><strong>바닥:</strong> ${p.floor}</p>`;
+            if (p.duration) specsHtml += `<p><strong>공사기간:</strong> ${p.duration}</p>`;
             
-            // [수정] 벨라/신형태 오타 제거 및 정확한 매핑
-            document.getElementById('infoArea').textContent = p.면적?.select?.name || "-";
-            document.getElementById('infoType').textContent = p.카테고리?.select?.name || "-";
-            document.getElementById('infoFloor').textContent = p.바닥?.select?.name || "-";
-            document.getElementById('infoFurniture').textContent = p.가구?.select?.name || "-";
+            document.getElementById('lightboxSpecs').innerHTML = specsHtml || '<p>정보 없음</p>';
+            
+            // 썸네일
+            document.getElementById('lightboxThumbs').innerHTML = p.images.map((img, i) => `
+                <img src="${img}" onclick="showImage(${i})" class="${i === currentImageIndex ? 'active' : ''}" alt="">
+            `).join('');
         }
-
-        function changeImg(dir) {
-            const imgs = projects[curIdx].properties.URL?.files || [];
-            imgIdx = (imgIdx + dir + imgs.length) % imgs.length;
-            const imgTag = document.getElementById('mainImg');
-            imgTag.style.opacity = 0;
-            setTimeout(() => {
-                imgTag.src = imgs[imgIdx]?.external?.url || "";
-                imgTag.style.opacity = 1;
-            }, 200);
+        
+        // 이미지 표시
+        function showImage(index) {
+            currentImageIndex = index;
+            updateLightbox();
         }
-
-        function closeDetail() {
-            if (slideTimer) clearInterval(slideTimer);
-            document.getElementById('detailView').classList.remove('active');
-            document.body.style.overflow = 'auto';
+        
+        // 이전/다음
+        function navLightbox(dir) {
+            if (!currentProject) return;
+            const total = currentProject.images.length;
+            currentImageIndex = (currentImageIndex + dir + total) % total;
+            updateLightbox();
         }
-
-        window.onload = init;
+        
+        // 라이트박스 닫기
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        // ESC, 배경 클릭으로 닫기
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this) closeLightbox();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') navLightbox(-1);
+            if (e.key === 'ArrowRight') navLightbox(1);
+        });
     </script>
 </body>
 </html>

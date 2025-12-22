@@ -1,0 +1,27 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[functions]
+  node_bundler = "esbuild"
+
+# Pretty URLs (확장자 없이 접근 가능)
+[[redirects]]
+  from = "/adminwonpro"
+  to = "/adminwonpro.html"
+  status = 200
+
+[[redirects]]
+  from = "/columns"
+  to = "/columns.html"
+  status = 200
+
+[[redirects]]
+  from = "/portfolio"
+  to = "/portfolio.html"
+  status = 200
+
+[[redirects]]
+  from = "/quote"
+  to = "/quote.html"
+  status = 200
