@@ -4366,8 +4366,7 @@
             try {
                 await fetch(CUSTOMER_API_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    redirect: 'follow',
                     body: JSON.stringify({ customers: customers })
                 });
             } catch (error) {
@@ -4471,8 +4470,7 @@
             try {
                 await fetch(CUSTOMER_API_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    redirect: 'follow',
                     body: JSON.stringify({ customers: customers })
                 });
                 console.log('Google Sheets 저장 완료');
