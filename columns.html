@@ -485,91 +485,101 @@
         <p class="footer-copyright">© 2024 디자인 지그. All rights reserved.</p>
     </footer>
 
-    <script src="config.js"></script>
     <script>
-        // =============================================
-        // 칼럼 데이터 (Notion 연동 시 자동 교체됨)
-        // columns-data.json 파일로 관리
-        // =============================================
+        // 칼럼 데이터
         let COLUMNS_DATA = [];
 
         // 페이지 로드
         document.addEventListener('DOMContentLoaded', loadColumns);
 
-        // 칼럼 로드
+        // 칼럼 로드 (Notion API 연동)
         async function loadColumns() {
             try {
-                // columns-data.json에서 데이터 로드 시도
-                const response = await fetch('columns-data.json');
+                // Vercel API에서 Notion 데이터 로드
+                const response = await fetch('/api/columns');
                 if (response.ok) {
                     const data = await response.json();
-                    COLUMNS_DATA = data.posts || [];
+                    COLUMNS_DATA = data;
+                    displayColumns(COLUMNS_DATA);
+                    return;
                 }
             } catch (e) {
-                console.log('columns-data.json 없음, 샘플 데이터 사용');
+                console.warn('Notion API 연동 실패, 샘플 데이터 사용:', e.message);
             }
 
-            // 데이터가 없으면 샘플 표시
-            if (COLUMNS_DATA.length === 0) {
-                COLUMNS_DATA = getSampleData();
-            }
-
+            // API 실패 시 샘플 데이터 표시
+            COLUMNS_DATA = getSampleData();
             displayColumns(COLUMNS_DATA);
         }
 
-        // 샘플 데이터
+        // 샘플 데이터 (API 연동 전 테스트용)
         function getSampleData() {
             return [
                 {
-                    id: 1,
-                    title: '아파트 인테리어 비용, 얼마가 적당할까?',
-                    date: '2024-12-20',
-                    thumbnail: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600',
-                    summary: '32평 아파트 기준 실제 견적 사례와 함께 적정 예산을 알려드립니다.',
-                    tag: '비용안내',
-                    content: '<p>인테리어를 준비하시면서 가장 먼저 궁금한 것이 바로 비용입니다.</p><h2>평형대별 인테리어 비용</h2><p>• 20평대: 2,500만원 ~ 4,000만원<br>• 30평대: 3,500만원 ~ 6,000만원<br>• 40평대: 5,000만원 ~ 8,000만원</p><h2>비용에 영향을 주는 요소</h2><p>1. 철거 범위<br>2. 자재 등급<br>3. 시스템 교체 (샤시, 보일러, 에어컨)<br>4. 가구 공사</p>'
+                    id: '1',
+                    properties: {
+                        이름: { title: [{ plain_text: '아파트 인테리어 비용, 얼마가 적당할까?' }] },
+                        날짜: { date: { start: '2024-12-20' } },
+                        썸네일: { files: [{ external: { url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600' } }] },
+                        요약: { rich_text: [{ plain_text: '32평 아파트 기준 실제 견적 사례와 함께 적정 예산을 알려드립니다.' }] },
+                        태그: { select: { name: '비용안내' } },
+                        본문: { rich_text: [{ plain_text: '인테리어를 준비하시면서 가장 먼저 궁금한 것이 바로 비용입니다.\n\n평형대별 인테리어 비용\n• 20평대: 2,500만원 ~ 4,000만원\n• 30평대: 3,500만원 ~ 6,000만원\n• 40평대: 5,000만원 ~ 8,000만원' }] }
+                    }
                 },
                 {
-                    id: 2,
-                    title: '주방 리모델링 전 꼭 알아야 할 5가지',
-                    date: '2024-12-18',
-                    thumbnail: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',
-                    summary: '주방 공사 전 반드시 체크해야 할 사항들을 정리했습니다.',
-                    tag: '시공가이드',
-                    content: '<p>주방은 인테리어에서 가장 신경 써야 할 공간입니다.</p><h2>1. 배관 상태 확인</h2><p>오래된 아파트의 경우 배관 교체가 필요할 수 있습니다.</p><h2>2. 환기 시스템</h2><p>레인지후드의 배기 경로를 확인하세요.</p><h2>3. 전기 용량</h2><p>인덕션, 식기세척기 등을 위한 전용 회로가 필요합니다.</p>'
-                },
-                {
-                    id: 3,
-                    title: '인테리어 계약 전 체크리스트',
-                    date: '2024-12-15',
-                    thumbnail: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600',
-                    summary: '계약서 작성 시 꼭 확인해야 할 항목들을 안내합니다.',
-                    tag: '계약안내',
-                    content: '<p>인테리어 계약은 큰 금액이 오가는 만큼 신중해야 합니다.</p><h2>필수 확인 사항</h2><p>1. 공사 범위와 세부 내역<br>2. 총 공사비와 지불 일정<br>3. 공사 기간<br>4. A/S 기간과 범위<br>5. 추가 공사 발생 시 처리 방법</p>'
+                    id: '2',
+                    properties: {
+                        이름: { title: [{ plain_text: '주방 리모델링 전 꼭 알아야 할 5가지' }] },
+                        날짜: { date: { start: '2024-12-18' } },
+                        썸네일: { files: [{ external: { url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600' } }] },
+                        요약: { rich_text: [{ plain_text: '주방 공사 전 반드시 체크해야 할 사항들을 정리했습니다.' }] },
+                        태그: { select: { name: '시공가이드' } },
+                        본문: { rich_text: [{ plain_text: '주방은 인테리어에서 가장 신경 써야 할 공간입니다.' }] }
+                    }
                 }
             ];
         }
 
-        // 칼럼 표시
+        // 칼럼 표시 (Notion 데이터 구조 지원)
         function displayColumns(columns) {
             const container = document.getElementById('columnsContainer');
 
-            if (columns.length === 0) {
+            // 이미지가 있는 항목만 필터링
+            const validColumns = columns.filter(col => {
+                const hasImage = col.properties?.썸네일?.files?.length > 0 ||
+                    col.properties?.URL?.files?.length > 0;
+                return hasImage;
+            });
+
+            if (validColumns.length === 0) {
                 container.innerHTML = '<p style="text-align:center;color:#888;padding:60px;">준비된 칼럼이 없습니다.</p>';
                 return;
             }
 
-            container.innerHTML = columns.map(col => `
-                <article class="column-card" onclick="openColumn(${col.id})">
-                    <img class="column-thumbnail" src="${col.thumbnail}" alt="${col.title}" loading="lazy">
-                    <div class="column-content">
-                        <div class="column-date">${formatDate(col.date)}</div>
-                        <h2 class="column-title">${col.title}</h2>
-                        <p class="column-summary">${col.summary}</p>
-                        <span class="column-tag">${col.tag || '인테리어'}</span>
-                    </div>
-                </article>
-            `).join('');
+            container.innerHTML = validColumns.map((col, index) => {
+                const p = col.properties;
+                const title = p.이름?.title?.[0]?.plain_text || '제목 없음';
+                const date = p.날짜?.date?.start || new Date().toISOString().split('T')[0];
+                const thumbnail = p.썸네일?.files?.[0]?.external?.url ||
+                    p.썸네일?.files?.[0]?.file?.url ||
+                    p.URL?.files?.[0]?.external?.url ||
+                    p.URL?.files?.[0]?.file?.url ||
+                    'https://via.placeholder.com/600x400?text=Column';
+                const summary = p.요약?.rich_text?.[0]?.plain_text || '';
+                const tag = p.태그?.select?.name || '인테리어';
+
+                return `
+                    <article class="column-card" onclick="openColumn(${index})">
+                        <img class="column-thumbnail" src="${thumbnail}" alt="${title}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x400?text=Design+Jig'">
+                        <div class="column-content">
+                            <div class="column-date">${formatDate(date)}</div>
+                            <h2 class="column-title">${title}</h2>
+                            <p class="column-summary">${summary}</p>
+                            <span class="column-tag">${tag}</span>
+                        </div>
+                    </article>
+                `;
+            }).join('');
         }
 
         function formatDate(dateStr) {
@@ -577,14 +587,24 @@
             return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
         }
 
-        function openColumn(id) {
-            const column = COLUMNS_DATA.find(c => c.id === id);
+        function openColumn(index) {
+            const column = COLUMNS_DATA[index];
             if (!column) return;
 
-            document.getElementById('modalImage').src = column.thumbnail;
-            document.getElementById('modalTitle').textContent = column.title;
-            document.getElementById('modalMeta').textContent = formatDate(column.date) + ' · ' + (column.tag || '인테리어');
-            document.getElementById('modalContent').innerHTML = column.content;
+            const p = column.properties;
+            const title = p.이름?.title?.[0]?.plain_text || '제목 없음';
+            const date = p.날짜?.date?.start || '';
+            const thumbnail = p.썸네일?.files?.[0]?.external?.url ||
+                p.썸네일?.files?.[0]?.file?.url ||
+                p.URL?.files?.[0]?.external?.url ||
+                p.URL?.files?.[0]?.file?.url || '';
+            const tag = p.태그?.select?.name || '인테리어';
+            const content = p.본문?.rich_text?.map(t => t.plain_text).join('\n') || p.요약?.rich_text?.[0]?.plain_text || '';
+
+            document.getElementById('modalImage').src = thumbnail;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMeta').textContent = formatDate(date) + ' · ' + tag;
+            document.getElementById('modalContent').innerHTML = content.replace(/\n/g, '<br>');
             document.getElementById('columnModal').classList.add('show');
             document.body.style.overflow = 'hidden';
         }
