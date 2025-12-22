@@ -271,22 +271,7 @@
             transition: opacity 0.5s;
         }
 
-        .lightbox-close {
-            position: fixed;
-            top: 25px;
-            right: 40px;
-            font-size: 2.5rem;
-            border: none;
-            background: none;
-            cursor: pointer;
-            z-index: 2700;
-            font-weight: 100;
-            color: #333;
-        }
 
-        .lightbox-close:hover {
-            color: #B4956F;
-        }
 
         .nav-btn {
             position: absolute;
@@ -488,7 +473,6 @@
                         <li><a href="quote.html" class="lightbox-nav-link lightbox-nav-cta">ASK A QUOTE</a></li>
                     </ul>
                 </nav>
-                <button class="lightbox-close" onclick="closeLightbox()">×</button>
             </div>
         </header>
 
@@ -523,6 +507,39 @@
                 <button class="nav-btn next" onclick="changeImg(1)">›</button>
             </div>
         </div>
+
+        <!-- 라이트박스 내 푸터 -->
+        <footer class="footer lightbox-footer">
+            <h2 class="footer-brand">디자인 지그</h2>
+            <p class="footer-tagline">깔끔하고 시대를 초월한 인테리어 경험을 만들어갑니다.</p>
+            <div class="footer-info">
+                <p>경기도 용인시 수지구 보정동</p>
+                <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+                <p>이메일: <a href="mailto:info@designjig.com">info@designjig.com</a></p>
+            </div>
+            <div class="footer-sns">
+                <a href="#" title="네이버 블로그" aria-label="네이버 블로그">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                    </svg>
+                </a>
+                <a href="#" title="인스타그램" aria-label="인스타그램">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="#" title="유튜브" aria-label="유튜브">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                </a>
+            </div>
+            <p class="footer-copyright">© 2024 디자인 지그. All rights reserved.</p>
+        </footer>
     </div>
 
     <footer class="footer">
