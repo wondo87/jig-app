@@ -856,6 +856,155 @@
             font-weight: 400;
         }
 
+        /* 프린트 선택 모달 */
+        .print-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .print-modal.show {
+            display: flex;
+        }
+
+        .print-modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .print-modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .print-modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .print-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .print-option-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #fbfbfd;
+            border: 1px solid #e8e8ed;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .print-option-item:hover {
+            background: #f5f5f7;
+            border-color: #d2d2d7;
+        }
+
+        .print-option-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .print-option-item label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1d1d1f;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* 인쇄 스타일 */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            /* 인쇄 모드일 때 특정 섹션만 보이기 */
+            body.print-mode .print-visible * {
+                visibility: visible;
+            }
+
+            body.print-mode .print-visible {
+                visibility: visible;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            /* 페이지 넘김 설정 */
+            .print-section {
+                break-after: page;
+                page-break-after: always;
+                display: none !important;
+                /* 기본적으로 숨김 */
+            }
+
+            .print-section.show-print {
+                display: block !important;
+                position: relative !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            /* 인쇄 시 탭 패널 강제 표시 */
+            .tab-panel {
+                display: none;
+            }
+
+            /* 인쇄 시 버튼 등 숨김 */
+            .no-print,
+            .header-actions,
+            .customer-tabs,
+            .pdf-btn,
+            .add-row-btn,
+            .delete-btn,
+            .category-memo {
+                display: none !important;
+            }
+
+            /* 인쇄 시 스타일 보정 */
+            body {
+                background: #fff;
+            }
+
+            .document-wrapper {
+                box-shadow: none;
+                margin: 0;
+                border: none;
+            }
+
+            .main-content {
+                overflow: visible;
+            }
+
+            /* 각 섹션별 display 제어는 JS에서 클래스 추가로 처리 */
+            /* 예: .print-info-section, .print-contract-section 등 */
+        }
+
         /* 문서 래퍼 */
         .document-wrapper {
             background: #ffffff;
@@ -1585,7 +1734,7 @@
 
         .estimate-select-table input[type="number"] {
             width: 100%;
-            padding: 6px 4px;
+            padding: 6px 0;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
             font-size: var(--font-size-md);
@@ -2702,6 +2851,9 @@
                         <span id="asEndDateDisplay"
                             style="display:none; padding:8px 12px; background:rgba(255,255,255,0.2); border-radius:6px; font-size:11px;">A/S
                             ~</span>
+                        <button class="pdf-btn" onclick="openPrintSelectionModal()"
+                            style="background:#424245; border:2px solid rgba(255,255,255,0.3); font-size:13px; font-weight:600; padding:10px 16px; border-radius:8px;">🖨️
+                            인쇄/PDF</button>
                         <button class="delete-btn" onclick="deleteCurrentCustomer()">🗑️ 삭제</button>
                     </div>
                 </div>
@@ -2717,7 +2869,7 @@
                 </div>
 
                 <!-- 고객정보 패널 -->
-                <div class="tab-panel active" id="panel-info">
+                <div class="tab-panel active print-section print-info" id="panel-info">
                     <div class="document-wrapper" id="customerInfoDoc">
                         <div class="doc-header">
                             <div>
@@ -2887,7 +3039,7 @@
                 </div>
 
                 <!-- 도급계약서 패널 -->
-                <div class="tab-panel" id="panel-contract">
+                <div class="tab-panel print-section print-contract" id="panel-contract">
                     <div class="document-wrapper" id="contractDoc">
                         <div class="doc-header">
                             <div>
@@ -3030,7 +3182,7 @@
                 </div>
 
                 <!-- 표지계약서 패널 -->
-                <div class="tab-panel" id="panel-cover">
+                <div class="tab-panel print-section print-cover" id="panel-cover">
                     <div class="document-wrapper" id="coverDoc">
                         <div class="doc-header">
                             <div>
@@ -3109,7 +3261,7 @@
                 </div>
 
                 <!-- 계약견적서 패널 -->
-                <div class="tab-panel" id="panel-estimate">
+                <div class="tab-panel print-section print-estimate" id="panel-estimate">
                     <div class="document-wrapper" id="estimateDoc">
                         <div class="doc-header">
                             <div>
@@ -3154,7 +3306,7 @@
                 </div>
 
                 <!-- 원가관리표 패널 -->
-                <div class="tab-panel" id="panel-cost">
+                <div class="tab-panel print-section print-cost" id="panel-cost">
                     <div class="document-wrapper" id="costDoc">
                         <div class="doc-header">
                             <div>
@@ -3213,7 +3365,7 @@
                 </div>
 
                 <!-- 통계분석 패널 -->
-                <div class="tab-panel" id="panel-stats">
+                <div class="tab-panel print-section print-stats" id="panel-stats">
                     <h3 style="font-size:16px; font-weight:700; color:#1d1d1f; margin-bottom:16px;">📈 고객 통계</h3>
                     <div class="stats-grid">
                         <div class="stat-card highlight"><label>계약금액</label>
@@ -3968,6 +4120,116 @@
             document.getElementById('adminPassword').focus();
         }
 
+        // 비밀번호 확인 프라미스
+        function requestPassword(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('passwordPromptModal');
+                const title = document.getElementById('passwordPromptTitle');
+                const input = document.getElementById('passwordPromptInput');
+                const confirmBtn = document.getElementById('passwordPromptConfirm');
+                const cancelBtn = document.getElementById('passwordPromptCancel');
+
+                title.textContent = message || '비밀번호 확인';
+                input.value = '';
+                modal.classList.add('show');
+                input.focus();
+
+                const handleConfirm = () => {
+                    const pw = input.value;
+                    cleanup();
+                    resolve(pw);
+                };
+
+                const handleCancel = () => {
+                    cleanup();
+                    resolve(null);
+                };
+
+                const handleKeyup = (e) => {
+                    if (e.key === 'Enter') handleConfirm();
+                    if (e.key === 'Escape') handleCancel();
+                };
+
+                const cleanup = () => {
+                    modal.classList.remove('show');
+                    confirmBtn.removeEventListener('click', handleConfirm);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                    input.removeEventListener('keyup', handleKeyup);
+                };
+
+                confirmBtn.addEventListener('click', handleConfirm);
+                cancelBtn.addEventListener('click', handleCancel);
+                input.addEventListener('keyup', handleKeyup);
+            });
+        }
+
+        // 인쇄 선택 모달 열기
+        function openPrintSelectionModal() {
+            document.getElementById('printSelectionModal').classList.add('show');
+            // 기본값: 현재 보고 있는 탭만 선택할 수도 있고, 전체 해제할 수도 있음. 
+            // 여기서는 전체 해제 상태로 시작 (사용자가 선택하도록)
+            document.querySelectorAll('.print-check').forEach(chk => chk.checked = false);
+
+            // 현재 활성화된 탭 자동 체크
+            const activeTab = document.querySelector('.customer-tab.active');
+            if (activeTab) {
+                const tabId = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1]; // info, contract, etc.
+                const checkbox = document.querySelector(`.print-check[data-target="print-${tabId}"]`);
+                if (checkbox) checkbox.checked = true;
+            }
+        }
+
+        function closePrintSelectionModal() {
+            document.getElementById('printSelectionModal').classList.remove('show');
+        }
+
+        // 선택 항목 인쇄
+        function printSelectedDocs() {
+            const checks = document.querySelectorAll('.print-check:checked');
+            if (checks.length === 0) {
+                showToast('인쇄할 항목을 선택해주세요', 'error');
+                return;
+            }
+
+            // 인쇄 모드 준비
+            document.body.classList.add('print-mode');
+
+            // 모든 인쇄 섹션 숨김 (기본 CSS로 처리되지만 확실하게)
+            document.querySelectorAll('.print-section').forEach(el => {
+                el.classList.remove('show-print');
+            });
+
+            // 선택된 섹션만 표시
+            checks.forEach(chk => {
+                const targetClass = chk.dataset.target;
+                const targetEl = document.querySelector(`.${targetClass}`);
+                if (targetEl) {
+                    targetEl.classList.add('show-print');
+                }
+            });
+
+            closePrintSelectionModal();
+
+            // 인쇄 실행
+            setTimeout(() => {
+                window.print();
+
+                // 인쇄 후 복구
+                document.body.classList.remove('print-mode');
+                document.querySelectorAll('.print-section').forEach(el => {
+                    el.classList.remove('show-print');
+                });
+
+                // 원래 탭 상태 복구 (탭 로직에 의해 자동 처리되지만 명시적으로)
+                const activePanel = document.querySelector('.tab-panel.active');
+                if (activePanel) {
+                    // active 클래스가 있어도 display:none이 될 수 있으므로 remove가 아니라 
+                    // 인쇄 종료 시 스타일이 원래대로 돌아오는지 확인 필요.
+                    // @media print 밖에서는 .tab-panel.active가 display:block이므로 문제없음.
+                }
+            }, 500);
+        }
+
         function closeAdminModal() {
             document.getElementById('adminModal').classList.remove('show');
         }
@@ -4360,11 +4622,81 @@
         }
 
         function updateCustomerField(el) {
-            currentData[el.dataset.field] = el.value;
-            if (el.dataset.field === 'clientName') {
-                document.getElementById('headerCustomerName').textContent = el.value || '고객명 없음';
+            let value = el.value;
+            const field = el.dataset.field;
+
+            // 날짜 필드 자동 포맷팅 (YYYY.MM.DD)
+            // contractDate, movingDate, finalPaymentDate
+            if (['contractDate', 'movingDate', 'finalPaymentDate', 'constructionPeriod'].includes(field)) {
+                // 숫자만 추출
+                const nums = value.replace(/[^0-9]/g, '');
+                // 8자리인 경우에만 포맷팅 (YYYYMMDD -> YYYY.MM.DD)
+                // 공사기간은 일단 단순 숫자만 있고 8자리일때만 변환 (범위 입력 등은 허용)
+                if (nums.length === 8) {
+                    value = `${nums.slice(0, 4)}.${nums.slice(4, 6)}.${nums.slice(6, 8)}`;
+                }
             }
+
+            // 평형 (py) 자동 포맷팅
+            if (field === 'area') {
+                const num = value.replace(/[^0-9]/g, '');
+                if (num) {
+                    value = `${num}py`;
+                }
+            }
+
+            el.value = value;
+            currentData[field] = value;
+
+            if (field === 'clientName') {
+                document.getElementById('headerCustomerName').textContent = value || '고객명 없음';
+            }
+
+            // 평형 변경 시 견적서 수량 업데이트
+            if (field === 'area') {
+                updateEstimateQuantities(value);
+            }
+
             syncAllFields();
+        }
+
+        // 평형 변경 시 견적서/원가관리표의 'py' 단위 항목 수량 자동 업데이트
+        function updateEstimateQuantities(areaStr) {
+            if (!areaStr) return;
+            const pyeong = parseInt(areaStr.replace(/[^0-9]/g, ''));
+            if (isNaN(pyeong)) return;
+
+            // 모든 카테고리 순회
+            categories.forEach(cat => {
+                const tbody = document.getElementById(`estBody${cat.no}`);
+                if (!tbody) return;
+
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(tr => {
+                    const unitCell = tr.querySelector('.unit-cell');
+                    const qtyInput = tr.querySelector('.qty-input');
+
+                    if (unitCell && qtyInput) {
+                        const unit = unitCell.textContent.trim().toLowerCase();
+                        // 단위가 'py' 또는 '평'인 경우 수량 업데이트
+                        if (unit === 'py' || unit === '평') {
+                            // 기존 값과 다를 경우에만 업데이트
+                            if (parseInt(qtyInput.value) !== pyeong) {
+                                qtyInput.value = pyeong;
+                                // 변경 이벤트 트리거 (계산 로직 실행)
+                                onEstQtyChange(qtyInput, cat.no);
+                            }
+                        }
+                    }
+                });
+
+                // 원가관리표에도 적용 여부? 
+                // 견적서 데이터(currentData.estimateData)는 onEstQtyChange에서 업데이트됨.
+                // 원가관리표는? 'costData'는 별도임.
+                // 원가관리표는 견적서 로직과 유사하게 처리해야 할 수도 있음.
+                // 일단 견적서(계약견적서)만 요청사항에 명시된 것으로 보임 ("계약견적서 작업시...").
+            });
+            showToast('평형 변경에 따라 견적서 수량이 업데이트되었습니다', 'success');
         }
 
         function updateStatus() {
@@ -4401,8 +4733,10 @@
         async function deleteCurrentCustomer() {
             if (!currentCustomerId) return;
 
-            // 비밀번호 확인
-            const password = prompt('삭제하려면 관리자 비밀번호를 입력하세요:');
+            // 비밀번호 확인 (커스텀 모달)
+            const password = await requestPassword('삭제하려면 관리자 비밀번호를 입력하세요:');
+            if (password === null) return; // 취소됨
+
             const savedPassword = localStorage.getItem('dz_admin_password_new') || DEFAULT_PASSWORD;
             if (password !== savedPassword) {
                 showToast('비밀번호가 틀렸습니다', 'error');
@@ -4471,8 +4805,11 @@
         }
 
         // 휴지통에서 영구 삭제
-        function permanentDeleteFromTrash(customerId) {
-            const password = prompt('영구 삭제하려면 관리자 비밀번호를 입력하세요:');
+        async function permanentDeleteFromTrash(customerId) {
+            // 비밀번호 확인 (커스텀 모달)
+            const password = await requestPassword('영구 삭제하려면 관리자 비밀번호를 입력하세요:');
+            if (password === null) return; // 취소됨
+
             const savedPassword = localStorage.getItem('dz_admin_password_new') || DEFAULT_PASSWORD;
             if (password !== savedPassword) {
                 showToast('비밀번호가 틀렸습니다', 'error');
