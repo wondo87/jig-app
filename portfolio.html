@@ -1,137 +1,113 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PORTFOLIO - 디자인 지그</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans KR', sans-serif; color: #111; background: #fff; }
+let projects = [];
+let curIdx = 0;
+let imgIdx = 0;
+let slideTimer = null;
+
+async function init() {
+    try {
+        const res = await fetch('/.netlify/functions/portfolio');
+        const data = await res.json();
+        // Notion API 응답 구조 확인
+        projects = data.results || data;
         
-        /* [수정] 헤더를 가장 위로 (z-index: 3000) */
-        .header { 
-            padding: 2.5rem 4rem; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid #eee;
-            position: sticky; top: 0; 
-            background: #fff;
-            z-index: 3000; 
-        }
-        .logo { font-size: 1.2rem; font-weight: 700; text-decoration: none; color: #000; }
-        .nav-link { margin-left: 2rem; text-decoration: none; color: #666; font-size: 0.9rem; }
-
-        .portfolio-section { max-width: 1600px; margin: 0 auto; padding: 4rem; }
-        .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 40px; }
-        .portfolio-card { cursor: pointer; }
-        .portfolio-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
-
-        /* [수정] 상세 뷰가 헤더 아래에 오도록 설정 */
-        #detailView { 
-            display: none; position: fixed; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            background: #fff; z-index: 2000; /* 헤더(3000)보다 낮게 */
-            overflow-y: auto; 
-            padding-top: 100px; /* 헤더 높이만큼 여백 */
-        }
-        #detailView.active { display: block; }
-        
-        .detail-container { display: flex; max-width: 1600px; margin: 0 auto; padding: 4rem; gap: 60px; }
-        .detail-slider { flex: 1.2; position: relative; background: #fbfbfb; height: 70vh; display: flex; align-items: center; justify-content: center; }
-        .detail-slider img { max-width: 100%; max-height: 100%; object-fit: contain; transition: opacity 0.5s; }
-        
-        .detail-info { flex: 0.8; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; border-top: 1px solid #eee; padding-top: 30px; margin-top: 30px; }
-        .info-item h4 { font-size: 0.8rem; color: #999; margin-bottom: 5px; font-weight: 400; }
-        .info-item p { font-size: 0.95rem; color: #333; }
-
-        .close-btn { position: fixed; top: 120px; right: 60px; font-size: 2.5rem; border: none; background: none; cursor: pointer; z-index: 2100; font-weight: 100; }
-        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 3rem; color: #eee; cursor: pointer; padding: 20px; }
-    </style>
-</head>
-<body>
-    <header class="header">
-        <a href="index.html" class="logo">DESIGN JIG</a>
-        <nav><a href="portfolio.html" class="nav-link">Project</a></nav>
-    </header>
-
-    <div class="portfolio-section">
-        <div id="portfolioGrid" class="portfolio-grid"></div>
-    </div>
-
-    <div id="detailView">
-        <button class="close-btn" onclick="closeDetail()">×</button>
-        <div class="detail-container">
-            <div class="detail-slider">
-                <button class="slide-btn" style="left:0" onclick="changeImg(-1)">‹</button>
-                <img id="mainImg" src="">
-                <button class="slide-btn" style="right:0" onclick="changeImg(1)">›</button>
-            </div>
-            <div class="detail-info">
-                <h2 id="projTitle" style="font-size: 1.8rem; font-weight: 400; margin-bottom: 20px;"></h2>
-                <div class="info-grid" id="infoGrid"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let projects = [];
-        let curIdx = 0;
-        let imgIdx = 0;
-        let slideTimer = null;
-
-        async function init() {
-            try {
-                const res = await fetch('/.netlify/functions/portfolio');
-                projects = await res.json();
-                document.getElementById('portfolioGrid').innerHTML = projects.map((p, i) => `
-                    <div class="portfolio-card" onclick="openDetail(${i})">
-                        <img src="${p.properties.URL?.files?.[0]?.external?.url || ""}">
-                        <h3>${p.properties.이름?.title?.[0]?.plain_text || ""}</h3>
-                    </div>
-                `).join('');
-            } catch (err) { console.error(err); }
-        }
-
-        function openDetail(i) {
-            curIdx = i; imgIdx = 0;
-            updateContent();
-            document.getElementById('detailView').classList.add('active');
-            document.body.style.overflow = 'hidden';
-            startAutoSlide();
-        }
-
-        function updateContent() {
-            const p = projects[curIdx].properties;
-            const images = p.URL?.files || [];
-            document.getElementById('mainImg').src = images[imgIdx]?.external?.url || "";
-            document.getElementById('projTitle').textContent = p.이름?.title?.[0]?.plain_text || "-";
-            document.getElementById('infoGrid').innerHTML = `
-                <div class="info-item"><h4>면적</h4><p>${p.면적?.select?.name || "-"}</p></div>
-                <div class="info-item"><h4>주거형태</h4><p>${p.카테고리?.select?.name || "-"}</p></div>
-                <div class="info-item"><h4>바닥</h4><p>${p.바닥?.select?.name || "-"}</p></div>
-                <div class="info-item"><h4>가구</h4><p>${p.가구?.select?.name || "-"}</p></div>
+        document.getElementById('portfolioGrid').innerHTML = projects.map((p, i) => {
+            const firstImg = getImageUrl(p.properties.URL?.files?.[0]);
+            const title = p.properties.이름?.title?.[0]?.plain_text || "제목 없음";
+            return `
+                <div class="portfolio-card" onclick="openDetail(${i})">
+                    <img src="${firstImg}" alt="${title}">
+                    <h3>${title}</h3>
+                </div>
             `;
-        }
+        }).join('');
+    } catch (err) { 
+        console.error('포트폴리오 로드 실패:', err); 
+        document.getElementById('portfolioGrid').innerHTML = 
+            '<p style="text-align:center; padding:60px;">프로젝트를 불러올 수 없습니다.</p>';
+    }
+}
 
-        function changeImg(dir) {
-            const imgs = projects[curIdx].properties.URL?.files || [];
-            imgIdx = (imgIdx + dir + imgs.length) % imgs.length;
-            updateContent();
-        }
+// 이미지 URL 추출 헬퍼 함수
+function getImageUrl(file) {
+    if (!file) return '/images/placeholder.jpg'; // 기본 이미지
+    return file.external?.url || file.file?.url || '';
+}
 
-        function startAutoSlide() {
-            if (slideTimer) clearInterval(slideTimer);
-            slideTimer = setInterval(() => changeImg(1), 3000);
-        }
+function openDetail(i) {
+    curIdx = i;
+    imgIdx = 0;
+    updateContent();
+    document.getElementById('detailView').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    startAutoSlide();
+}
 
-        function closeDetail() {
-            if (slideTimer) clearInterval(slideTimer);
-            document.getElementById('detailView').classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
+function updateContent() {
+    const p = projects[curIdx].properties;
+    const images = p.URL?.files || [];
+    
+    // 이미지가 있을 때만 표시
+    if (images.length > 0) {
+        document.getElementById('mainImg').src = getImageUrl(images[imgIdx]);
+    } else {
+        document.getElementById('mainImg').src = '/images/placeholder.jpg';
+    }
+    
+    document.getElementById('projTitle').textContent = 
+        p.이름?.title?.[0]?.plain_text || "제목 없음";
+    
+    document.getElementById('infoGrid').innerHTML = `
+        <div class="info-item"><h4>면적</h4><p>${p.면적?.select?.name || "-"}</p></div>
+        <div class="info-item"><h4>주거형태</h4><p>${p.카테고리?.select?.name || "-"}</p></div>
+        <div class="info-item"><h4>바닥</h4><p>${p.바닥?.select?.name || "-"}</p></div>
+        <div class="info-item"><h4>가구</h4><p>${p.가구?.select?.name || "-"}</p></div>
+    `;
+}
 
-        window.onload = init;
-    </script>
-</body>
-</html>
+function changeImg(dir) {
+    const imgs = projects[curIdx].properties.URL?.files || [];
+    
+    // 이미지가 없으면 리턴
+    if (imgs.length === 0) return;
+    
+    // 이미지가 1개만 있으면 슬라이드 불필요
+    if (imgs.length === 1) return;
+    
+    imgIdx = (imgIdx + dir + imgs.length) % imgs.length;
+    
+    // 페이드 효과
+    const img = document.getElementById('mainImg');
+    img.style.opacity = '0';
+    setTimeout(() => {
+        updateContent();
+        img.style.opacity = '1';
+    }, 250);
+}
+
+function startAutoSlide() {
+    if (slideTimer) clearInterval(slideTimer);
+    
+    const imgs = projects[curIdx].properties.URL?.files || [];
+    // 이미지가 2개 이상일 때만 자동 슬라이드
+    if (imgs.length > 1) {
+        slideTimer = setInterval(() => changeImg(1), 4000); // 4초로 변경
+    }
+}
+
+function closeDetail() {
+    if (slideTimer) {
+        clearInterval(slideTimer);
+        slideTimer = null;
+    }
+    document.getElementById('detailView').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+// ESC 키로 상세 뷰 닫기
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('detailView').classList.contains('active')) {
+        closeDetail();
+    }
+});
+
+window.onload = init;
