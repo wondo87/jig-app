@@ -1,0 +1,95 @@
+<script>
+    let PORTFOLIO_DATA = [];
+    let curIdx = 0;
+    let imgIdx = 0;
+    let slideTimer = null;
+
+    // [중요] Vercel로 옮기기 전까지 디자인을 확인하기 위한 '진짜 같은' 샘플 데이터입니다.
+    // 벨라/신형태 오타를 지우고 노션과 똑같은 항목명(면적, 바닥 등)으로 고쳤습니다.
+    const fallbackData = [{
+        properties: {
+            이름: { title: [{ plain_text: "반포 자이 거실 인테리어 (샘플)" }] },
+            면적: { select: { name: "32py" } },
+            카테고리: { select: { name: "아파트" } },
+            바닥: { select: { name: "lx 에디톤" } },
+            가구: { select: { name: "패트 제품" } },
+            URL: { files: [
+                { external: { url: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80" } },
+                { external: { url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80" } }
+            ]}
+        }
+    }];
+
+    async function loadPortfolio() {
+        try {
+            // [수정] 넷리파이 주소 대신 버셀 전용 API 주소로 변경했습니다.
+            const res = await fetch('/api/portfolio');
+            if (!res.ok) throw new Error("Vercel 연결 전입니다.");
+            const data = await res.json();
+            PORTFOLIO_DATA = data; // Vercel API는 바로 배열을 줍니다.
+        } catch (error) {
+            console.warn("현재 서버가 차단되어 샘플 모드로 작동합니다.");
+            PORTFOLIO_DATA = fallbackData;
+        }
+        displayPortfolio();
+    }
+
+    function displayPortfolio() {
+        const grid = document.getElementById('portfolioGrid');
+        grid.innerHTML = PORTFOLIO_DATA.map((p, i) => {
+            const imgUrl = p.properties.URL?.files?.[0]?.external?.url || p.properties.URL?.files?.[0]?.file?.url || "";
+            return `
+                <article class="portfolio-card" onclick="openLightbox(${i})">
+                    <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/600x600?text=Design+Jig'">
+                    <div class="portfolio-overlay">
+                        <h3>${p.properties.이름?.title?.[0]?.plain_text || "Project"}</h3>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function openLightbox(i) {
+        curIdx = i; imgIdx = 0;
+        updateLightbox();
+        document.getElementById('lightbox').classList.add('show');
+        document.body.style.overflow = 'hidden';
+        startAutoSlide();
+    }
+
+    function updateLightbox() {
+        const p = PORTFOLIO_DATA[curIdx].properties;
+        const images = p.URL?.files || [];
+        
+        document.getElementById('lightboxImage').src = images[imgIdx]?.external?.url || images[imgIdx]?.file?.url || "";
+        document.getElementById('lightboxTitle').textContent = p.이름?.title?.[0]?.plain_text || "-";
+        
+        // [수정] 노션 캡처 화면과 1:1로 일치하게 라벨을 고정했습니다.
+        document.getElementById('lightboxSpecs').innerHTML = `
+            <p><strong>면적:</strong> ${p.면적?.select?.name || "-"}</p>
+            <p><strong>주거형태:</strong> ${p.카테고리?.select?.name || "-"}</p>
+            <p><strong>바닥:</strong> ${p.바닥?.select?.name || "-"}</p>
+            <p><strong>가구:</strong> ${p.가구?.select?.name || "-"}</p>
+        `;
+    }
+
+    function changeImg(dir) {
+        const imgs = PORTFOLIO_DATA[curIdx].properties.URL?.files || [];
+        if (imgs.length <= 1) return;
+        imgIdx = (imgIdx + dir + imgs.length) % imgs.length;
+        updateLightbox();
+    }
+
+    function startAutoSlide() {
+        if (slideTimer) clearInterval(slideTimer);
+        slideTimer = setInterval(() => changeImg(1), 4000);
+    }
+
+    function closeLightbox() {
+        if (slideTimer) clearInterval(slideTimer);
+        document.getElementById('lightbox').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    window.onload = loadPortfolio;
+</script>

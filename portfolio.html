@@ -146,8 +146,9 @@
 
         async function loadPortfolio() {
             try {
-                const res = await fetch('/.netlify/functions/portfolio');
-                if (!res.ok) throw new Error("Netlify Function Error");
+                // Vercel API 경로
+                const res = await fetch('/api/portfolio');
+                if (!res.ok) throw new Error("API Error");
                 const data = await res.json();
                 PORTFOLIO_DATA = data.results || data;
             } catch (error) {
