@@ -3889,6 +3889,30 @@
         let currentStatusFilter = 'all';
         let isAdminMode = false;
 
+        // Google Sheets 고객관리 API URL
+        const CUSTOMER_API_URL = 'https://script.google.com/macros/s/AKfycbx-QJ2Jl1q-SWNl84v3oaQAh0urb72HJjR_EelKDT0UaDtCAOmvZ3UF9OT8HXhbs2CXyQ/exec';
+
+        // 페이지 로드 시 Google Sheets에서 고객 데이터 불러오기
+        async function loadCustomersFromSheet() {
+            try {
+                const response = await fetch(CUSTOMER_API_URL);
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    customers = data;
+                    localStorage.setItem('dz_customers', JSON.stringify(customers));
+                    updateCustomerList();
+                    console.log('Google Sheets에서 고객 데이터 로드 완료:', customers.length, '명');
+                }
+            } catch (error) {
+                console.error('Google Sheets 로드 실패, localStorage 사용:', error);
+            }
+        }
+
+        // 페이지 로드 시 실행
+        window.addEventListener('load', () => {
+            setTimeout(loadCustomersFromSheet, 500);
+        });
+
         // 기본 비밀번호
         const DEFAULT_PASSWORD = '6454';
 
@@ -4333,10 +4357,23 @@
             }
         }
 
-        function deleteCurrentCustomer() {
+        async function deleteCurrentCustomer() {
             if (!currentCustomerId || !confirm('이 고객을 삭제하시겠습니까?')) return;
             customers = customers.filter(c => c.customerId !== currentCustomerId);
             localStorage.setItem('dz_customers', JSON.stringify(customers));
+
+            // Google Sheets에도 동기화
+            try {
+                await fetch(CUSTOMER_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customers: customers })
+                });
+            } catch (error) {
+                console.error('Google Sheets 동기화 실패:', error);
+            }
+
             currentCustomerId = null;
             currentData = {};
             document.getElementById('emptyState').style.display = 'block';
@@ -4415,7 +4452,7 @@
 
         function filterCustomers() { updateCustomerList(); }
 
-        function saveData() {
+        async function saveData() {
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
             // 관리자 모드일 때만 원가관리표 저장
@@ -4430,6 +4467,19 @@
             else customers.push({ ...currentData });
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
+            // Google Sheets에도 저장
+            try {
+                await fetch(CUSTOMER_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customers: customers })
+                });
+                console.log('Google Sheets 저장 완료');
+            } catch (error) {
+                console.error('Google Sheets 저장 실패:', error);
+            }
+
             // 저장 후 고객 목록으로 이동
             currentCustomerId = null;
             currentData = {};
@@ -4439,7 +4489,7 @@
             updateCustomerList();
 
             if (isAdminMode) {
-                showToast('저장되었습니다 (원가관리표 포함)', 'success');
+                showToast('저장되었습니다 (Google Sheets 동기화)', 'success');
             } else {
                 showToast('저장되었습니다', 'success');
             }
