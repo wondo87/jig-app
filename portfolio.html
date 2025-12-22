@@ -1,32 +1,173 @@
+let projects = [];
+let curIdx = 0;
+let imgIdx = 0;
+let slideTimer = null;
+
+// 테스트 데이터
+const testData = [
+    {
+        properties: {
+            이름: { title: [{ plain_text: "테스트 프로젝트 1" }] },
+            면적: { select: { name: "24평" } },
+            카테고리: { select: { name: "아파트" } },
+            바닥: { select: { name: "강마루" } },
+            가구: { select: { name: "붙박이장" } },
+            URL: { 
+                files: [
+                    { external: { url: "https://via.placeholder.com/800x800/e0e0e0/666?text=Image+1" } },
+                    { external: { url: "https://via.placeholder.com/800x800/d0d0d0/666?text=Image+2" } }
+                ] 
+            }
+        }
+    },
+    {
+        properties: {
+            이름: { title: [{ plain_text: "테스트 프로젝트 2" }] },
+            면적: { select: { name: "32평" } },
+            카테고리: { select: { name: "빌라" } },
+            바닥: { select: { name: "타일" } },
+            가구: { select: { name: "시스템가구" } },
+            URL: { 
+                files: [
+                    { external: { url: "https://via.placeholder.com/800x800/c0c0c0/666?text=Image+1" } }
+                ] 
+            }
+        }
+    }
+];
+
 async function init() {
     try {
+        // 실제 API 호출 시도
         const res = await fetch('/.netlify/functions/portfolio');
+        
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
+        console.log('API 응답:', data);
+        
+        // Notion API 응답 구조에 따라 처리
         projects = data.results || data;
         
-        const portfolioHTML = projects.map((p, i) => {
-            const firstImg = getImageUrl(p.properties.URL?.files?.[0]);
-            const title = p.properties.이름?.title?.[0]?.plain_text || "제목 없음";
-            
-            return `
-                <div class="portfolio-card" onclick="openDetail(${i})">
-                    <img src="${firstImg}" alt="${title}">
-                    <h3 style="margin-top: 15px; font-size: 1.1rem; font-weight: 400;">${title}</h3>
-                </div>
-            `;
-        }).join('');
-        
-        document.getElementById('portfolioGrid').innerHTML = portfolioHTML;
+        if (!projects || projects.length === 0) {
+            console.warn('프로젝트 데이터가 없습니다. 테스트 데이터 사용');
+            projects = testData;
+        }
         
     } catch (err) { 
-        console.error('포트폴리오 로드 실패:', err); 
-        document.getElementById('portfolioGrid').innerHTML = 
-            '<p style="text-align:center; padding:60px; color:#999;">프로젝트를 불러올 수 없습니다.</p>';
+        console.error('API 호출 실패:', err); 
+        console.log('테스트 데이터로 대체합니다');
+        projects = testData; // 테스트 데이터 사용
+    }
+    
+    renderPortfolio();
+}
+
+function renderPortfolio() {
+    const grid = document.getElementById('portfolioGrid');
+    
+    if (!grid) {
+        console.error('portfolioGrid 요소를 찾을 수 없습니다');
+        return;
+    }
+    
+    const html = projects.map((p, i) => {
+        const files = p.properties.URL?.files || [];
+        const firstImg = files.length > 0 
+            ? (files[0].external?.url || files[0].file?.url || '') 
+            : 'https://via.placeholder.com/800x800/f5f5f5/999?text=No+Image';
+        
+        const title = p.properties.이름?.title?.[0]?.plain_text || '제목 없음';
+        
+        console.log(`프로젝트 ${i}:`, title, firstImg);
+        
+        return `
+            <div class="portfolio-card" onclick="openDetail(${i})">
+                <img src="${firstImg}" alt="${title}" onerror="this.src='https://via.placeholder.com/800x800/f5f5f5/999?text=Error'">
+                <h3 style="margin-top: 15px; font-size: 1.1rem; font-weight: 400;">${title}</h3>
+            </div>
+        `;
+    }).join('');
+    
+    grid.innerHTML = html;
+    console.log('포트폴리오 렌더링 완료:', projects.length, '개');
+}
+
+function getImageUrl(file) {
+    if (!file) return 'https://via.placeholder.com/800x800/f5f5f5/999?text=No+Image';
+    return file.external?.url || file.file?.url || 'https://via.placeholder.com/800x800/f5f5f5/999?text=Error';
+}
+
+function openDetail(i) {
+    curIdx = i;
+    imgIdx = 0;
+    updateContent();
+    document.getElementById('detailView').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    startAutoSlide();
+}
+
+function updateContent() {
+    const p = projects[curIdx].properties;
+    const images = p.URL?.files || [];
+    
+    const mainImg = document.getElementById('mainImg');
+    if (images.length > 0) {
+        mainImg.src = getImageUrl(images[imgIdx]);
+    } else {
+        mainImg.src = 'https://via.placeholder.com/800x800/f5f5f5/999?text=No+Image';
+    }
+    
+    document.getElementById('projTitle').textContent = 
+        p.이름?.title?.[0]?.plain_text || '제목 없음';
+    
+    document.getElementById('infoGrid').innerHTML = `
+        <div class="info-item"><h4>면적</h4><p>${p.면적?.select?.name || '-'}</p></div>
+        <div class="info-item"><h4>주거형태</h4><p>${p.카테고리?.select?.name || '-'}</p></div>
+        <div class="info-item"><h4>바닥</h4><p>${p.바닥?.select?.name || '-'}</p></div>
+        <div class="info-item"><h4>가구</h4><p>${p.가구?.select?.name || '-'}</p></div>
+    `;
+}
+
+function changeImg(dir) {
+    const imgs = projects[curIdx].properties.URL?.files || [];
+    
+    if (imgs.length === 0 || imgs.length === 1) return;
+    
+    imgIdx = (imgIdx + dir + imgs.length) % imgs.length;
+    
+    const img = document.getElementById('mainImg');
+    img.style.opacity = '0';
+    setTimeout(() => {
+        updateContent();
+        img.style.opacity = '1';
+    }, 250);
+}
+
+function startAutoSlide() {
+    if (slideTimer) clearInterval(slideTimer);
+    
+    const imgs = projects[curIdx].properties.URL?.files || [];
+    if (imgs.length > 1) {
+        slideTimer = setInterval(() => changeImg(1), 4000);
     }
 }
 
-// 이미지 URL 헬퍼 함수
-function getImageUrl(file) {
-    if (!file) return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f5f5f5" width="400" height="400"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
-    return file.external?.url || file.file?.url || '';
+function closeDetail() {
+    if (slideTimer) {
+        clearInterval(slideTimer);
+        slideTimer = null;
+    }
+    document.getElementById('detailView').classList.remove('active');
+    document.body.style.overflow = 'auto';
 }
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('detailView').classList.contains('active')) {
+        closeDetail();
+    }
+});
+
+window.onload = init;
