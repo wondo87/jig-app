@@ -1,5 +1,6 @@
 // Google Sheets에서 견적 문의 데이터를 가져오는 API
 // 스프레드시트 ID: 1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw
+// Updated: 2024-12-22 22:59
 
 export default async function handler(req, res) {
     // CORS 허용
