@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
     <meta name="description" content="디자인 지그는 아름답고 기능적인 공간을 만듭니다. 포트폴리오를 둘러보고, 인테리어 인사이트를 확인하거나, 견적을 요청하세요.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -470,45 +473,40 @@
             line-height: 1.6;
         }
 
-        /* Footer */
+        /* 푸터 */
         .footer {
-            padding: 4rem 2rem;
-            background: white;
-            border-top: 1px solid #eee;
-        }
-
-        .footer-container {
-            max-width: 1200px;
-            margin: 0 auto;
+            background: #f8f8f8;
+            color: #333;
+            padding: 30px 2rem;
             text-align: center;
         }
 
         .footer-brand {
-            margin-bottom: 2rem;
-        }
-
-        .footer-logo {
-            font-size: 1.5rem;
+            font-size: 1rem;
             font-weight: 700;
+            margin-bottom: 0.2rem;
             color: #1a1a1a;
         }
 
         .footer-tagline {
+            font-size: 0.7rem;
             color: #666;
-            margin-top: 0.5rem;
+            margin-bottom: 1rem;
         }
 
         .footer-info {
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-info p {
             color: #666;
-            font-size: 0.95rem;
-            line-height: 2;
+            font-size: 0.7rem;
+            margin: 0.2rem 0;
         }
 
         .footer-info a {
             color: #666;
             text-decoration: none;
-            transition: color 0.3s ease;
         }
 
         .footer-info a:hover {
@@ -517,24 +515,32 @@
 
         .footer-sns {
             display: flex;
-            gap: 1.5rem;
+            gap: 0.8rem;
             justify-content: center;
-            margin-bottom: 2rem;
+            margin: 1rem 0;
         }
 
-        .sns-link {
+        .footer-sns a {
             color: #666;
-            transition: color 0.3s ease, transform 0.3s ease;
+            transition: color 0.3s, transform 0.3s;
         }
 
-        .sns-link:hover {
+        .footer-sns a:hover {
             color: #B4956F;
-            transform: translateY(-3px);
+            transform: translateY(-2px);
+        }
+
+        .footer-sns svg {
+            width: 18px;
+            height: 18px;
         }
 
         .footer-copyright {
             color: #999;
-            font-size: 0.85rem;
+            font-size: 0.65rem;
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
         }
 
         /* Responsive */
@@ -584,6 +590,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header class="header" id="header">
@@ -657,12 +664,14 @@
 
             <!-- Navigation Arrows -->
             <button class="slider-arrow prev" id="prevSlide">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
             </button>
             <button class="slider-arrow next" id="nextSlide">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </button>
@@ -680,7 +689,8 @@
             <div class="feature-container reverse">
                 <div class="feature-content">
                     <div class="feature-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                             <polyline points="9 22 9 12 15 12 15 22"></polyline>
                         </svg>
@@ -688,25 +698,28 @@
                     </div>
                     <h2 class="feature-title">당신만의 안식처를<br>완성합니다</h2>
                     <p class="feature-description">
-                        편안하고 스타일리시한 나만의 공간으로 변화시켜 드립니다. 
-                        생활 동선부터 수납, 조명까지 세심하게 설계하여 
+                        편안하고 스타일리시한 나만의 공간으로 변화시켜 드립니다.
+                        생활 동선부터 수납, 조명까지 세심하게 설계하여
                         매일 돌아가고 싶은 집을 만들어 드립니다.
                     </p>
                     <ul class="feature-list">
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             생활 동선 최적화 설계
                         </li>
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             맞춤형 수납 솔루션
                         </li>
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             프리미엄 자재 사용
@@ -728,32 +741,36 @@
                 </div>
                 <div class="feature-content">
                     <div class="feature-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
                         시공 품질 보증
                     </div>
                     <h2 class="feature-title">기본에 충실한<br>시공 품질</h2>
                     <p class="feature-description">
-                        화려한 포트폴리오보다 튼튼하고 오래가는 시공을 약속합니다. 
-                        현장 경험에서 쌓은 노하우로 보이지 않는 곳까지 
+                        화려한 포트폴리오보다 튼튼하고 오래가는 시공을 약속합니다.
+                        현장 경험에서 쌓은 노하우로 보이지 않는 곳까지
                         꼼꼼하게 마감합니다.
                     </p>
                     <ul class="feature-list">
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             현장 경력 10년+ 전문가
                         </li>
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             투명한 공정 관리
                         </li>
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             시공 후 A/S 보장
@@ -769,7 +786,8 @@
             <div class="feature-container reverse">
                 <div class="feature-content">
                     <div class="feature-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
                         </svg>
@@ -777,25 +795,28 @@
                     </div>
                     <h2 class="feature-title">고객 맞춤<br>토탈 솔루션</h2>
                     <p class="feature-description">
-                        고객님의 예산, 취향, 라이프스타일에 맞춘 
-                        최적의 인테리어 솔루션을 제안합니다. 
+                        고객님의 예산, 취향, 라이프스타일에 맞춘
+                        최적의 인테리어 솔루션을 제안합니다.
                         상담부터 시공, 사후관리까지 원스톱으로 진행됩니다.
                     </p>
                     <ul class="feature-list">
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             무료 현장 상담
                         </li>
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             합리적인 견적 시스템
                         </li>
                         <li>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                             원스톱 프로젝트 관리
@@ -848,45 +869,39 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <span class="footer-logo">디자인 지그</span>
-                <p class="footer-tagline">깔끔하고 시대를 초월한 인테리어 경험을 만들어갑니다.</p>
-            </div>
-            
-            <div class="footer-info">
-                <p>경기도 용인시 수지구 보정동</p>
-                <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
-                <p>이메일: <a href="/cdn-cgi/l/email-protection#34575b5a40555740745051475d535a5e5d531a575b1a5f46"><span class="__cf_email__" data-cfemail="bad9d5d4cedbd9cefadedfc9d3ddd4d0d3dd94d9d594d1c8">[email&#160;protected]</span></a></p>
-            </div>
-
-            <div class="footer-sns">
-                <a href="#" class="sns-link" target="_blank" rel="noopener noreferrer" title="네이버 블로그">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
-                    </svg>
-                </a>
-                <a href="#" class="sns-link" target="_blank" rel="noopener noreferrer" title="인스타그램">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                    </svg>
-                </a>
-                <a href="#" class="sns-link" target="_blank" rel="noopener noreferrer" title="유튜브">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
-                </a>
-            </div>
-
-            <div class="footer-copyright">
-                <p>&copy; 2024 디자인 지그. All rights reserved.</p>
-            </div>
+        <h2 class="footer-brand">디자인 지그</h2>
+        <p class="footer-tagline">깔끔하고 시대를 초월한 인테리어 경험을 만들어갑니다.</p>
+        <div class="footer-info">
+            <p>경기도 용인시 수지구 보정동</p>
+            <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+            <p>이메일: <a href="mailto:info@designjig.com">info@designjig.com</a></p>
         </div>
+        <div class="footer-sns">
+            <a href="#" title="네이버 블로그" aria-label="네이버 블로그">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                </svg>
+            </a>
+            <a href="#" title="인스타그램" aria-label="인스타그램">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </a>
+            <a href="#" title="유튜브" aria-label="유튜브">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copyright">© 2024 디자인 지그. All rights reserved.</p>
     </footer>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
         // Slider functionality
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
