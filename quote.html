@@ -507,9 +507,54 @@
     </footer>
 
     <script>
+        // [중요] 여기에 구글 앱스 스크립트 배포 후 생성된 URL을 넣어주세요!
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyFXFZaj-by00-jn6Zoyz9g-LmVcJMMa19iqusON2UgzNGXc3pcFXhH7LjeFjkDg2cBLg/exec';
+
         function handleSubmit(e) {
             e.preventDefault();
-            alert('문의가 접수되었습니다.\n빠른 시일 내에 연락드리겠습니다.\n\n※ 실제 운영 시 이메일/카카오톡 연동이 필요합니다.');
+
+            const form = e.target;
+            const btn = form.querySelector('.btn-submit');
+            const originalBtnText = btn.textContent;
+
+            // 유효성 검사 (HTML5 required가 1차로 막아주지만 안전장치)
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // 버튼 로딩 상태
+            btn.textContent = '전송 중...';
+            btn.disabled = true;
+
+            // 데이터 수집
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => data[key] = value);
+
+            // 구글 시트로 전송
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // 구글 스크립트는 no-cors 모드로 보내야 함 (단, 응답 내용 확인 불가)
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(() => {
+                    // 성공 간주 (no-cors라 응답 상태 확인 불가하므로 성공으로 처리)
+                    alert('문의가 접수되었습니다.\n빠른 시일 내에 연락드리겠습니다.');
+                    form.reset();
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('전송 중 오류가 발생했습니다.\n다시 시도해주시거나 전화로 문의해주세요.');
+                })
+                .finally(() => {
+                    // 버튼 복구
+                    btn.textContent = originalBtnText;
+                    btn.disabled = false;
+                });
         }
 
         // 모바일 메뉴 토글

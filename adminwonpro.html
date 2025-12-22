@@ -3867,11 +3867,11 @@
         let isAdminMode = false;
 
         // 기본 비밀번호
-        const DEFAULT_PASSWORD = 'Dufan170531!@';
+        const DEFAULT_PASSWORD = '6454';
 
         // 초기화 시 기본 비밀번호 설정
-        if (!localStorage.getItem('dz_admin_password')) {
-            localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
+        if (!localStorage.getItem('dz_admin_password_new')) {
+            localStorage.setItem('dz_admin_password_new', DEFAULT_PASSWORD);
         }
 
         // 관리자 모달 표시
@@ -3904,7 +3904,7 @@
                 return;
             }
 
-            localStorage.setItem('dz_admin_password', newPw);
+            localStorage.setItem('dz_admin_password_new', newPw);
             closePasswordModal();
             showToast('관리자 비밀번호가 설정되었습니다', 'success');
 
@@ -3915,7 +3915,7 @@
         // 관리자 로그인
         function loginAdmin() {
             const inputPw = document.getElementById('adminPassword').value;
-            const savedPw = localStorage.getItem('dz_admin_password') || DEFAULT_PASSWORD;
+            const savedPw = localStorage.getItem('dz_admin_password_new') || DEFAULT_PASSWORD;
 
             if (inputPw === savedPw) {
                 closeAdminModal();
@@ -3974,7 +3974,7 @@
                 return;
             }
 
-            localStorage.setItem('dz_admin_password', newPw);
+            localStorage.setItem('dz_admin_password_new', newPw);
             document.getElementById('changePassword').value = '';
             showToast('비밀번호가 변경되었습니다', 'success');
         }
