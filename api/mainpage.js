@@ -22,19 +22,11 @@ export default async function handler(req, res) {
             database_id: databaseId,
         };
 
-        // 카테고리 필터 추가 (선택 속성 이름이 '선택'일 수 있음)
+        // 카테고리 필터 추가 ('선택' 속성 사용)
         if (category) {
             queryOptions.filter = {
-                or: [
-                    {
-                        property: '선택',
-                        select: { equals: category }
-                    },
-                    {
-                        property: '카테고리',
-                        select: { equals: category }
-                    }
-                ]
+                property: '선택',
+                select: { equals: category }
             };
         }
 
