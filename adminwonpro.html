@@ -939,6 +939,7 @@
             .header-bar,
             .header-actions,
             .customer-tabs,
+            .customer-header-bar,
             .pdf-btn,
             .add-row-btn,
             .delete-btn,
@@ -957,18 +958,38 @@
             }
 
             /* 메인 컨텐츠 레이아웃 수정 */
+            html,
+            body {
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .main-layout {
                 display: block !important;
+                height: auto !important;
+                overflow: visible !important;
             }
 
             .main-content {
                 margin-left: 0 !important;
                 width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+            }
+
+            .customer-panel {
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
             }
 
             /* 탭 패널 기본 숨김 */
             .tab-panel {
                 display: none !important;
+                height: auto !important;
             }
 
             /* 인쇄 대상 패널만 보이기 */
@@ -976,15 +997,10 @@
                 display: block !important;
                 position: relative !important;
                 width: 100% !important;
+                height: auto !important;
                 margin: 0 !important;
-                padding: 20px !important;
+                padding: 10px !important;
                 visibility: visible !important;
-                page-break-inside: avoid;
-            }
-
-            /* 마지막 인쇄 섹션 뒤에는 페이지 나눔 없음 */
-            .print-section.show-print:not(:last-of-type) {
-                page-break-after: always;
             }
 
             .print-section.show-print * {
@@ -1000,6 +1016,8 @@
                 box-shadow: none !important;
                 margin: 0 !important;
                 border: none !important;
+                height: auto !important;
+                overflow: visible !important;
             }
         }
 
@@ -1870,11 +1888,21 @@
 
         .estimate-table .qty-input {
             width: 100%;
+            min-width: 40px;
             padding: 5px 3px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
             font-size: var(--font-size-md);
             text-align: center;
+            -moz-appearance: textfield;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .estimate-table .qty-input::-webkit-outer-spin-button,
+        .estimate-table .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .estimate-table .spec-cell,
@@ -6125,13 +6153,13 @@
             setTimeout(() => {
                 window.print();
 
-                // 인쇄 후 복구
+                // 인쇄 후 복구 (인쇄 완료/취소 상관없이 실행됨)
                 document.querySelectorAll('.print-section').forEach(el => {
                     el.classList.remove('show-print');
                 });
                 element.classList.remove('show-print');
 
-                showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
+                // 참고: 브라우저는 인쇄 취소 여부를 감지할 수 없으므로 토스트 표시하지 않음
             }, 300);
         }
 
