@@ -6084,6 +6084,7 @@
             });
         }
 
+        // 문서별 인쇄 (새 창 열지 않고 현재 창에서 인쇄)
         function downloadPDF(elementId, filename) {
             const element = document.getElementById(elementId);
             if (!element) {
@@ -6091,256 +6092,47 @@
                 return;
             }
 
-            const customerName = currentData.clientName || '고객';
-            const today = new Date().toISOString().split('T')[0];
-            const pdfFilename = `${customerName}_${filename}_${today}`;
+            // elementId를 print-section 클래스명으로 매핑
+            const printSectionMap = {
+                'customerInfoDoc': 'print-info',
+                'contractDoc': 'print-contract',
+                'coverDoc': 'print-cover',
+                'estimateDoc': 'print-estimate',
+                'costDoc': 'print-cost'
+            };
 
-            // 새 창에서 인쇄
-            const printWindow = window.open('', '_blank');
-
-            if (!printWindow) {
-                showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+            const printClass = printSectionMap[elementId];
+            if (!printClass) {
+                showToast('인쇄할 수 없는 문서입니다', 'error');
                 return;
             }
 
-            // 스타일 복사
-            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-            let styleHTML = '';
-            styles.forEach(s => styleHTML += s.outerHTML);
-
-            // element 복제
-            const clonedElement = element.cloneNode(true);
-
-            // 모든 input을 텍스트로 변환
-            clonedElement.querySelectorAll('input').forEach(input => {
-                let val = input.value || '-';
-                if (input.type === 'date' && val !== '-') {
-                    val = val.replace(/-/g, '.');
-                }
-                const span = document.createElement('span');
-                span.textContent = val;
-                span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
-                input.parentNode.replaceChild(span, input);
+            // 모든 인쇄 섹션 숨기기
+            document.querySelectorAll('.print-section').forEach(el => {
+                el.classList.remove('show-print');
             });
 
-            // 모든 textarea를 텍스트로 변환 (스크롤 없이 전체 표시)
-            clonedElement.querySelectorAll('textarea').forEach(textarea => {
-                const div = document.createElement('div');
-                div.textContent = textarea.value || '';
-                div.style.cssText = 'white-space:pre-wrap; padding:6px 0; font-size:inherit; line-height:1.5;';
-                textarea.parentNode.replaceChild(div, textarea);
-            });
-
-            // 모든 select를 텍스트로 변환
-            clonedElement.querySelectorAll('select').forEach(select => {
-                const span = document.createElement('span');
-                const selectedOption = select.options[select.selectedIndex];
-                span.textContent = selectedOption ? selectedOption.text : '-';
-                span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
-                select.parentNode.replaceChild(span, select);
-            });
-
-            // 견적서인 경우 추가 처리
-            if (elementId === 'estimateDoc') {
-                // 품명이 선택되지 않은 행 제거 (금액이 '-'인 행)
-                clonedElement.querySelectorAll('.estimate-table tbody tr').forEach(tr => {
-                    const amountCell = tr.querySelector('.amount-cell');
-                    if (amountCell && (amountCell.textContent === '-' || amountCell.textContent === '0')) {
-                        tr.remove();
-                    }
-                });
-
-                // 각 카테고리별 번호 재정렬
-                clonedElement.querySelectorAll('.estimate-table tbody').forEach(tbody => {
-                    tbody.querySelectorAll('tr').forEach((tr, i) => {
-                        const cells = tr.querySelectorAll('td');
-                        if (cells[0]) cells[0].textContent = i + 1;
-                    });
-                });
-
-                // 빈 카테고리 숨기기 (항목이 없는 카테고리)
-                clonedElement.querySelectorAll('.category-section').forEach(section => {
-                    const tbody = section.querySelector('.estimate-table tbody');
-                    if (tbody && tbody.querySelectorAll('tr').length === 0) {
-                        section.style.display = 'none';
-                    }
-                });
+            // 해당 문서만 인쇄 표시
+            const targetSection = document.querySelector(`.${printClass}`);
+            if (targetSection) {
+                targetSection.classList.add('show-print');
+            } else {
+                // fallback: element 자체에 show-print 추가
+                element.classList.add('show-print');
             }
 
-            // 인쇄용 HTML 생성
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${pdfFilename}</title>
-                    ${styleHTML}
-                    <style>
-                        @page {
-                            size: A4;
-                            margin: 8mm 5mm 10mm 5mm; /* 좌우 최소화 */
-                        }
-                        
-                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        
-                        html, body { 
-                            margin: 0 !important; 
-                            padding: 0 !important; 
-                            width: 100% !important;
-                            background: white !important;
-                        }
-                        
-                        .document-wrapper {
-                            box-shadow: none !important;
-                            border: none !important;
-                            margin: 0 !important;
-                            padding: 10px !important;
-                            width: 100% !important;
-                            max-width: none !important;
-                        }
-                        
-                        .doc-content {
-                            padding: 0 !important;
-                        }
-                        
-                        .pdf-btn, .no-print, .add-row-btn, .estimate-actions { display: none !important; }
-                        
-                        /* 테이블 전체 너비 */
-                        .data-table, .estimate-table, .summary-table, .estimate-select-table {
-                            width: 100% !important;
-                            table-layout: fixed !important;
-                            font-size: 10px !important;
-                        }
-                        
-                        /* 테이블 헤더 */
-                        .data-table th, .estimate-table th, .summary-table th {
-                            padding: 5px 3px !important;
-                            font-size: 9px !important;
-                            white-space: nowrap !important;
-                        }
-                        
-                        /* 테이블 셀 */
-                        .data-table td, .estimate-table td, .summary-table td {
-                            padding: 4px 3px !important;
-                            font-size: 10px !important;
-                            white-space: nowrap !important;
-                            overflow: hidden !important;
-                            text-overflow: ellipsis !important;
-                        }
-                        
-                        /* 품명/규격 열은 줄바꿈 허용 및 자동 확장 */
-                        .data-table .col-name, .estimate-table td:nth-child(2) {
-                            white-space: normal !important;
-                            word-break: keep-all !important;
-                            width: auto !important;
-                        }
-                        
-                        /* 원가관리표 컬럼 너비 */
-                        .data-table colgroup col:nth-child(1) { width: 18px; } /* No */
-                        .data-table colgroup col:nth-child(2) { width: 32px; } /* 구분 */
-                        .data-table colgroup col:nth-child(3) { width: auto; } /* 품명 */
-                        .data-table colgroup col:nth-child(4) { width: 70px; } /* 규격 */
-                        .data-table colgroup col:nth-child(5) { width: 28px; } /* 단위 */
-                        .data-table colgroup col:nth-child(6) { width: 28px; } /* 수량 */
-                        .data-table colgroup col:nth-child(7) { width: 50px; } /* 단가 */
-                        .data-table colgroup col:nth-child(8) { width: 60px; } /* 금액 */
-                        .data-table colgroup col:nth-child(9) { width: 45px; } /* 비고 */
-                        
-                        /* 견적서 컬럼 너비 */
-                        .estimate-table colgroup col:nth-child(1) { width: 18px; } /* No */
-                        .estimate-table colgroup col:nth-child(2) { width: auto; } /* 품명 */
-                        .estimate-table colgroup col:nth-child(3) { width: 70px; } /* 규격 */
-                        .estimate-table colgroup col:nth-child(4) { width: 28px; } /* 단위 */
-                        .estimate-table colgroup col:nth-child(5) { width: 28px; } /* 수량 */
-                        .estimate-table colgroup col:nth-child(6) { width: 50px; } /* 단가 */
-                        .estimate-table colgroup col:nth-child(7) { width: 60px; } /* 금액 */
-                        
-                        /* 구분 열 숨기기 */
-                        .col-div, th.col-div { display: none !important; }
-                        
-                        /* 체크박스 숨기기 */
-                        input[type="checkbox"] { display: none !important; }
-                        
-                        /* 행 스타일 정리 */
-                        tr { opacity: 1 !important; text-decoration: none !important; }
-                        
-                        /* 카테고리 헤더 */
-                        .category-header { padding: 5px 8px !important; }
-                        .category-header h3 { font-size: 10px !important; }
-                        .category-header .subtotal { font-size: 10px !important; }
-                        
-                        /* 총합계 */
-                        .grand-total { padding: 8px !important; margin-top: 6px !important; }
-                        .total-row { padding: 3px 0 !important; }
-                        .total-row label { font-size: 9px !important; }
-                        .total-row .amount { font-size: 10px !important; }
-                        .total-row.main .amount { font-size: 12px !important; }
-                        
-                        /* 정보 그리드 */
-                        .info-grid { gap: 5px !important; }
-                        .info-item { padding: 5px 6px !important; }
-                        .info-item label { font-size: 7px !important; }
-                        .info-item input, .info-item select, .info-item span { font-size: 9px !important; }
-                        
-                        /* 메모 전체 표시 */
-                        .estimate-memo, .category-memo {
-                            overflow: visible !important;
-                            max-height: none !important;
-                        }
-                        .estimate-memo .memo-content, .category-memo textarea {
-                            white-space: pre-wrap !important;
-                            word-break: break-word !important;
-                            font-size: 8px !important;
-                        }
-                        
-                        /* 서명 영역 */
-                        .signature-card h4 { font-size: 9px !important; }
-                        .sig-field label { font-size: 7px !important; }
-                        .sig-field input, .sig-field span { font-size: 8px !important; }
-                        
-                        /* 조항 */
-                        .clause { padding: 6px !important; margin-bottom: 3px !important; }
-                        .clause-title { font-size: 9px !important; }
-                        .clause-content { font-size: 8px !important; line-height: 1.4 !important; }
-                        
-                        /* 대금지급 */
-                        .payment-item { padding: 5px !important; }
-                        .payment-item label { font-size: 7px !important; }
-                        .payment-item input, .payment-item span { font-size: 9px !important; }
-                        
-                        /* 페이지 번호 */
-                        .page-number {
-                            position: fixed;
-                            bottom: 3mm;
-                            left: 0;
-                            right: 0;
-                            text-align: center;
-                            font-size: 8px;
-                            color: #86868b;
-                        }
-                        .page-number::after { content: counter(page); }
-                        
-                        @media screen { .page-number { display: none; } }
-                        @media print { .page-number { display: block; } }
-                    </style>
-                </head>
-                <body>
-                    ${clonedElement.outerHTML}
-                    <div class="page-number"></div>
-                    <script>
-                        window.onload = function() {
-                            setTimeout(function() {
-                                window.print();
-                                window.onafterprint = function() { window.close(); };
-                            }, 500);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
+            // 인쇄 실행
+            setTimeout(() => {
+                window.print();
 
-            printWindow.document.close();
-            showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
+                // 인쇄 후 복구
+                document.querySelectorAll('.print-section').forEach(el => {
+                    el.classList.remove('show-print');
+                });
+                element.classList.remove('show-print');
+
+                showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
+            }, 300);
         }
 
         function exportAllData() {
