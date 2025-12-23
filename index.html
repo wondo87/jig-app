@@ -1009,7 +1009,7 @@
 
             for (const feature of featureCategories) {
                 try {
-                    const response = await fetch(`/api/columns?category=${encodeURIComponent(feature.category)}&limit=1`);
+                    const response = await fetch(`/api/mainpage?category=${encodeURIComponent(feature.category)}`);
                     if (!response.ok) continue;
 
                     const articles = await response.json();
