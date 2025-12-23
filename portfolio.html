@@ -683,7 +683,7 @@
                     </svg>
                 </a>
             </div>
-            <p class="footer-copyright">© 2024 디자인 지그. All rights reserved.</p>
+            <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
         </footer>
     </div>
 
@@ -719,7 +719,7 @@
             </a>
         </div>
 
-        <p class="footer-copyright">© 2024 디자인 지그. All rights reserved.</p>
+        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
     </footer>
 
     <script>
@@ -896,26 +896,11 @@
                 document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
             });
         }
+
+        // 페이지 로드 시 포트폴리오 불러오기
+        window.onload = loadPortfolio;
     </script>
-<script src="/js/coming-soon.js"></script>
-</body>
-if (document.getElementById('lightbox').classList.contains('show')) {
-if (slideTimer) clearInterval(slideTimer);
-document.getElementById('lightbox').classList.remove('show');
-document.body.style.overflow = '';
-}
-});
-
-// ESC 키, 방향키로 제어
-document.addEventListener('keydown', function (e) {
-if (e.key === 'Escape') closeLightbox();
-if (e.key === 'ArrowLeft') changeImg(-1);
-if (e.key === 'ArrowRight') changeImg(1);
-});
-
-window.onload = loadPortfolio;
-</script>
-<script src="/js/coming-soon.js"></script>
+    <script src="/js/coming-soon.js"></script>
 </body>
 
 </html>
