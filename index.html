@@ -500,6 +500,108 @@
             font-size: 0.85rem;
         }
 
+        /* Guide Modal */
+        .guide-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .guide-modal-overlay.show {
+            display: block;
+        }
+
+        .guide-modal-content {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .guide-modal-header {
+            position: relative;
+        }
+
+        .guide-modal-header img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .guide-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .guide-modal-body {
+            padding: 40px;
+        }
+
+        .guide-modal-body h1 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .guide-modal-body .meta {
+            color: #888;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .guide-modal-body .content {
+            font-size: 1.05rem;
+            line-height: 1.9;
+            color: #333;
+        }
+
+        .guide-modal-body .content p {
+            margin-bottom: 1.5em;
+        }
+
+        .guide-modal-body .content h2 {
+            margin: 2em 0 1em;
+            font-size: 1.4rem;
+        }
+
+        .guide-modal-body .content img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1.5em 0;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #B4956F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header {
@@ -778,6 +880,21 @@
         </section>
     </main>
 
+    <!-- Guide Modal -->
+    <div class="guide-modal-overlay" id="guideModal">
+        <div class="guide-modal-content">
+            <div class="guide-modal-header">
+                <img id="guideModalImage" src="" alt="">
+                <button class="guide-modal-close" onclick="closeGuideModal()">×</button>
+            </div>
+            <div class="guide-modal-body">
+                <h1 id="guideModalTitle"></h1>
+                <div class="meta" id="guideModalMeta"></div>
+                <div class="content" id="guideModalContent"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
@@ -879,6 +996,9 @@
         });
     </script>
     <script>
+        // 가이드 데이터 저장
+        let GUIDE_DATA = [];
+
         // 인테리어 가이드 로드 (Notion에서 '가이드' 카테고리 글 가져오기)
         async function loadGuides() {
             const guideGrid = document.getElementById('guideGrid');
@@ -888,13 +1008,14 @@
                 if (!response.ok) throw new Error('API 오류');
 
                 const articles = await response.json();
+                GUIDE_DATA = articles;
 
                 if (articles.length === 0) {
                     guideGrid.innerHTML = '<p style="color:#666; text-align:center; grid-column:1/-1;">등록된 가이드가 없습니다.</p>';
                     return;
                 }
 
-                guideGrid.innerHTML = articles.map(article => {
+                guideGrid.innerHTML = articles.map((article, index) => {
                     const props = article.properties;
                     const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
                     const category = props['카테고리']?.select?.name || '가이드';
@@ -909,7 +1030,7 @@
                         'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
 
                     return `
-                        <article class="column-card" onclick="window.location.href='/columns'">
+                        <article class="column-card" onclick="openGuideModal(${index})">
                             <img class="column-card-image" src="${coverUrl}" alt="${title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600'">
                             <div class="column-card-content">
                                 <span class="column-card-category">${category}</span>
@@ -923,6 +1044,105 @@
                 guideGrid.innerHTML = '<p style="color:#999; text-align:center; grid-column:1/-1;">가이드를 불러올 수 없습니다.</p>';
             }
         }
+
+        // 가이드 모달 열기
+        async function openGuideModal(index) {
+            const article = GUIDE_DATA[index];
+            if (!article) return;
+
+            const props = article.properties;
+            const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
+            const date = props['작성일']?.date?.start || '';
+            const category = props['카테고리']?.select?.name || '가이드';
+
+            const coverUrl = article.cover?.external?.url ||
+                article.cover?.file?.url ||
+                props.썸네일?.files?.[0]?.external?.url ||
+                props.썸네일?.files?.[0]?.file?.url ||
+                'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+            document.getElementById('guideModalImage').src = coverUrl;
+            document.getElementById('guideModalTitle').textContent = title;
+            document.getElementById('guideModalMeta').textContent = formatGuideDate(date) + ' · ' + category;
+
+            const contentDiv = document.getElementById('guideModalContent');
+            contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
+
+            document.getElementById('guideModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // 내용 불러오기
+            try {
+                const res = await fetch(`/api/content?id=${article.id}`);
+                if (!res.ok) throw new Error('Failed to fetch content');
+                const blocks = await res.json();
+                contentDiv.innerHTML = renderGuideBlocks(blocks);
+            } catch (e) {
+                console.error('Content Load Error:', e);
+                contentDiv.innerHTML = '<p>내용을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
+            }
+        }
+
+        function formatGuideDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
+
+        function renderGuideBlocks(blocks) {
+            if (!blocks || blocks.length === 0) return '<p>내용이 없습니다.</p>';
+
+            return blocks.map(block => {
+                const type = block.type;
+                const value = block[type];
+
+                switch (type) {
+                    case 'paragraph':
+                        return `<p>${renderGuideRichText(value.rich_text)}</p>`;
+                    case 'heading_1':
+                        return `<h2>${renderGuideRichText(value.rich_text)}</h2>`;
+                    case 'heading_2':
+                        return `<h3>${renderGuideRichText(value.rich_text)}</h3>`;
+                    case 'heading_3':
+                        return `<h4>${renderGuideRichText(value.rich_text)}</h4>`;
+                    case 'bulleted_list_item':
+                        return `<ul><li>${renderGuideRichText(value.rich_text)}</li></ul>`;
+                    case 'numbered_list_item':
+                        return `<ol><li>${renderGuideRichText(value.rich_text)}</li></ol>`;
+                    case 'image':
+                        const imageUrl = value.type === 'external' ? value.external.url : value.file.url;
+                        return `<img src="${imageUrl}" alt="">`;
+                    default:
+                        return '';
+                }
+            }).join('');
+        }
+
+        function renderGuideRichText(richText) {
+            if (!richText || richText.length === 0) return '';
+            return richText.map(text => {
+                let content = text.plain_text.replace(/\n/g, '<br>');
+                if (text.annotations.bold) content = `<strong>${content}</strong>`;
+                if (text.annotations.italic) content = `<em>${content}</em>`;
+                if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
+                return content;
+            }).join('');
+        }
+
+        function closeGuideModal() {
+            document.getElementById('guideModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // 모달 외부 클릭시 닫기
+        document.getElementById('guideModal').addEventListener('click', function (e) {
+            if (e.target === this) closeGuideModal();
+        });
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeGuideModal();
+        });
 
         // 페이지 로드 시 가이드 불러오기
         loadGuides();
