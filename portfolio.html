@@ -44,7 +44,7 @@
             padding: 1.5rem 3rem;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid #f0f0f0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
         }
 
         .header-container {
@@ -72,14 +72,20 @@
         .nav-link {
             color: #1a1a1a;
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
-            transition: 0.3s;
+            transition: color 0.3s ease;
+            letter-spacing: 0.05em;
         }
 
-        .nav-link:hover,
+        .nav-link:hover {
+            color: #B4956F;
+        }
+
         .nav-link.active {
             color: #B4956F;
+            border-bottom: 2px solid #B4956F;
+            padding-bottom: 4px;
         }
 
         .nav-link-cta {
