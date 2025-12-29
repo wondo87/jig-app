@@ -2756,6 +2756,48 @@
 </head>
 
 <body>
+    <script>
+        // 관리자 페이지 비밀번호 확인
+        (function () {
+            const ACCESS_PASSWORD = '6454';
+            const SESSION_KEY = 'designzig_admin_access';
+
+            // 이미 인증된 세션인지 확인
+            if (sessionStorage.getItem(SESSION_KEY) === 'authenticated') {
+                return; // 이미 인증됨
+            }
+
+            // 비밀번호 입력 요청
+            let attempts = 0;
+            const maxAttempts = 3;
+
+            while (attempts < maxAttempts) {
+                const input = prompt('관리자 페이지입니다.\n비밀번호를 입력하세요:');
+
+                if (input === null) {
+                    // 취소 버튼 클릭
+                    window.location.href = '/';
+                    return;
+                }
+
+                if (input === ACCESS_PASSWORD) {
+                    // 비밀번호 일치 - 세션 저장
+                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
+                    return;
+                }
+
+                attempts++;
+                if (attempts < maxAttempts) {
+                    alert('비밀번호가 틀렸습니다. (' + attempts + '/' + maxAttempts + ' 시도)');
+                }
+            }
+
+            // 3회 실패 시 홈으로 이동
+            alert('비밀번호 입력 실패. 홈페이지로 이동합니다.');
+            window.location.href = '/';
+        })();
+    </script>
+
     <!-- 토스트 알림 -->
     <div class="toast" id="toast">
         <span id="toastIcon">✓</span>
