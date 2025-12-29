@@ -29,7 +29,7 @@
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #1a1a1a;
             line-height: 1.6;
             background: #fff;
@@ -60,7 +60,6 @@
             font-weight: 700;
             color: #1a1a1a;
             text-decoration: none;
-            letter-spacing: -0.02em;
         }
 
         .nav-list {
@@ -156,6 +155,10 @@
         }
 
         @media (max-width: 768px) {
+            .nav-list {
+                display: none;
+            }
+
             .mobile-menu-btn {
                 display: block;
             }
