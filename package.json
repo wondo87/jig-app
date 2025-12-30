@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "node scripts/build-content.js",
+    "prebuild": "mkdir -p public/data/content"
+  },
   "dependencies": {
     "@notionhq/client": "^2.2.15"
   }

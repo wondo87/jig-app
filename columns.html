@@ -980,14 +980,32 @@
     <script>
         // 칼럼 데이터
         let COLUMNS_DATA = [];
+        // 미리 로드된 콘텐츠 캐시
+        let CONTENT_CACHE = {};
 
         // 페이지 로드
         document.addEventListener('DOMContentLoaded', loadColumns);
 
-        // 칼럼 로드 (Notion API 연동)
+        // 칼럼 로드 (정적 JSON 우선, API fallback)
         async function loadColumns() {
             try {
-                // Vercel API에서 Notion 데이터 로드
+                // 1. 정적 빌드된 JSON 시도 (즉시 로딩)
+                const staticResponse = await fetch('/data/columns.json');
+                if (staticResponse.ok) {
+                    const data = await staticResponse.json();
+                    COLUMNS_DATA = data;
+                    displayColumns(COLUMNS_DATA);
+                    console.log('✅ 정적 데이터 로드 완료');
+                    // 콘텐츠도 미리 로드
+                    preloadContent();
+                    return;
+                }
+            } catch (e) {
+                console.log('정적 데이터 없음, API로 fallback');
+            }
+
+            // 2. API fallback
+            try {
                 const response = await fetch('/api/columns');
                 if (response.ok) {
                     const data = await response.json();
@@ -999,14 +1017,27 @@
                     throw new Error(errData.error || response.statusText);
                 }
             } catch (e) {
-                console.warn('Notion API 연동 실패, 샘플 데이터 사용:', e.message);
-                // 에러 내용을 사용자에게 알림 (디버깅용)
-                alert('Notion 연동 에러: ' + e.message + '\n콘솔(F12)을 확인해주세요.');
+                console.warn('API 연동 실패:', e.message);
             }
 
             // API 실패 시 샘플 데이터 표시
             COLUMNS_DATA = getSampleData();
             displayColumns(COLUMNS_DATA);
+        }
+
+        // 콘텐츠 미리 로드 (백그라운드)
+        async function preloadContent() {
+            for (const column of COLUMNS_DATA) {
+                try {
+                    const res = await fetch(`/data/content/${column.id}.json`);
+                    if (res.ok) {
+                        CONTENT_CACHE[column.id] = await res.json();
+                    }
+                } catch (e) {
+                    // 개별 콘텐츠 로드 실패는 무시
+                }
+            }
+            console.log(`✅ ${Object.keys(CONTENT_CACHE).length}개 콘텐츠 미리 로드 완료`);
         }
 
         // 샘플 데이터 (API 연동 전 테스트용)
@@ -1112,16 +1143,38 @@
             document.getElementById('modalMeta').textContent = formatDate(date) + ' · ' + category + (category ? ' · ' : '') + tags;
 
             const contentDiv = document.getElementById('modalContent');
-            contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
 
             document.getElementById('columnModal').classList.add('show');
             document.body.style.overflow = 'hidden';
 
-            // 내용 불러오기
+            // 1. 캐시된 콘텐츠 확인 (즉시 표시)
+            if (CONTENT_CACHE[column.id]) {
+                contentDiv.innerHTML = renderNotionBlocks(CONTENT_CACHE[column.id]);
+                return;
+            }
+
+            // 로딩 표시
+            contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
+
+            // 2. 정적 JSON 시도
+            try {
+                const staticRes = await fetch(`/data/content/${column.id}.json`);
+                if (staticRes.ok) {
+                    const blocks = await staticRes.json();
+                    CONTENT_CACHE[column.id] = blocks;
+                    contentDiv.innerHTML = renderNotionBlocks(blocks);
+                    return;
+                }
+            } catch (e) {
+                console.log('정적 콘텐츠 없음, API로 fallback');
+            }
+
+            // 3. API fallback
             try {
                 const res = await fetch(`/api/content?id=${column.id}`);
                 if (!res.ok) throw new Error('Failed to fetch content');
                 const blocks = await res.json();
+                CONTENT_CACHE[column.id] = blocks;
                 contentDiv.innerHTML = renderNotionBlocks(blocks);
             } catch (e) {
                 console.error('Content Load Error:', e);
