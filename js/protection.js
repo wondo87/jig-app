@@ -1,97 +1,81 @@
-/**
- * Content Protection Script
- * 
- * 기능:
- * 1. 우클릭 방지
- * 2. 텍스트 선택/복사 방지
- * 3. 개발자 도구(F12) 방지
- * 4. 인쇄(Ctrl+P) 방지
- * 
- * 예외:
- * - localStorage에 'isAdmin'이 'true'로 설정된 경우 모든 제한 해제
- */
+// 콘텐츠 보호 스크립트 - 메인/칼럼/포트폴리오 페이지용
+// 문의 페이지(quote.html)에서는 이 스크립트를 포함하지 않음
 
 (function () {
-    // 관리자 여부 확인
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    'use strict';
 
-    // 관리자면 아무 제한 없이 종료
-    if (isAdmin) {
-        console.log('DesignJig Admin Mode Active: Content Protection Disabled');
-        // 관리자임을 알리는 작은 표시 (선택사항)
-        // const badge = document.createElement('div');
-        // badge.style.position = 'fixed';
-        // badge.style.bottom = '10px';
-        // badge.style.left = '10px';
-        // badge.style.padding = '5px 10px';
-        // badge.style.background = 'rgba(0,0,0,0.5)';
-        // badge.style.color = '#fff';
-        // badge.style.fontSize = '10px';
-        // badge.style.borderRadius = '5px';
-        // badge.style.zIndex = '9999';
-        // badge.innerText = 'Admin Mode';
-        // document.body.appendChild(badge);
-        return;
-    }
-
-    // --- 비관리자 제한 적용 ---
-
-    // 1. 우클릭 방지
+    // 우클릭 방지
     document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
-        // alert('콘텐츠 보호를 위해 마우스 우클릭이 제한됩니다.');
+        return false;
     });
 
-    // 2. 드래그/선택 방지 (CSS 주입)
-    const style = document.createElement('style');
-    style.innerHTML = `
-        body {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        /* 인쇄 시 화면 숨김 */
-        @media print {
-            body { 
-                display: none !important; 
-            }
-            html::after {
-                content: "이 페이지는 인쇄할 수 없습니다.";
-                display: block;
-                padding: 20px;
-                text-align: center;
-                font-size: 20px;
-            }
-        }
-    `;
-    document.head.appendChild(style);
+    // 텍스트 선택 방지
+    document.addEventListener('selectstart', function (e) {
+        e.preventDefault();
+        return false;
+    });
 
-    // 3. 키보드 단축키 방지 (복사, 인쇄, 개발자도구 등)
+    // 드래그 방지
+    document.addEventListener('dragstart', function (e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // 키보드 단축키 방지
     document.addEventListener('keydown', function (e) {
-        // F12 (개발자 도구)
+        // Ctrl+C (복사), Ctrl+U (소스보기), Ctrl+S (저장), Ctrl+A (전체선택)
+        if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'a')) {
+            e.preventDefault();
+            return false;
+        }
+        // Cmd key for Mac
+        if (e.metaKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'a')) {
+            e.preventDefault();
+            return false;
+        }
+        // F12 (개발자도구)
         if (e.key === 'F12') {
             e.preventDefault();
             return false;
         }
-
-        // Ctrl(Cmd) 키 조합
-        if (e.ctrlKey || e.metaKey) {
-            const key = e.key.toUpperCase();
-
-            // C (복사), P (인쇄), S (저장), U (소스보기), A (전체선택)
-            if (['C', 'P', 'S', 'U', 'A'].includes(key)) {
-                e.preventDefault();
-                return false;
-            }
-
-            // Shift 키 조합 (개발자 도구 Ctrl+Shift+I / C / J)
-            if (e.shiftKey && ['I', 'C', 'J'].includes(key)) {
-                e.preventDefault();
-                return false;
-            }
+        // Ctrl+Shift+I (개발자도구)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+Shift+J (콘솔)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+Shift+C (요소 검사)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+            e.preventDefault();
+            return false;
         }
     });
 
-    console.log('Content Protection Active');
+    // CSS 보호 스타일 주입
+    const style = document.createElement('style');
+    style.textContent = `
+        body {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+        }
+        img {
+            -webkit-user-drag: none !important;
+            -khtml-user-drag: none !important;
+            -moz-user-drag: none !important;
+            -o-user-drag: none !important;
+            pointer-events: none !important;
+        }
+        /* 링크와 버튼은 클릭 가능하도록 유지 */
+        a, button, input, .btn, .nav-link, .column-card, .portfolio-card {
+            pointer-events: auto !important;
+        }
+    `;
+    document.head.appendChild(style);
 })();
