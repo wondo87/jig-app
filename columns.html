@@ -982,18 +982,56 @@
         let COLUMNS_DATA = [];
         // 미리 로드된 콘텐츠 캐시
         let CONTENT_CACHE = {};
+        // localStorage 키
+        const CACHE_KEY = 'designjig_columns';
+        const CACHE_EXPIRY = 30 * 60 * 1000; // 30분
 
         // 페이지 로드
         document.addEventListener('DOMContentLoaded', loadColumns);
 
-        // 칼럼 로드 (API 연동)
+        // 칼럼 로드 (캐시 우선, API 백그라운드 업데이트)
         async function loadColumns() {
+            // 1. localStorage에서 캐시된 데이터 즉시 표시
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (data && data.length > 0) {
+                        COLUMNS_DATA = data;
+                        displayColumns(COLUMNS_DATA);
+                        console.log('⚡ 캐시에서 즉시 로드');
+
+                        // 캐시가 30분 이내면 백그라운드에서만 업데이트
+                        if (Date.now() - timestamp < CACHE_EXPIRY) {
+                            preloadAllContent();
+                            refreshInBackground();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('캐시 파싱 실패:', e);
+                }
+            }
+
+            // 2. API에서 새 데이터 로드
+            await fetchAndDisplayColumns();
+        }
+
+        // API에서 칼럼 가져와서 표시
+        async function fetchAndDisplayColumns() {
             try {
                 const response = await fetch('/api/columns');
                 if (response.ok) {
                     const data = await response.json();
                     COLUMNS_DATA = data;
                     displayColumns(COLUMNS_DATA);
+
+                    // localStorage에 캐시 저장
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data: data,
+                        timestamp: Date.now()
+                    }));
+
                     // 백그라운드에서 콘텐츠 미리 로드
                     preloadAllContent();
                     return;
@@ -1005,9 +1043,28 @@
                 console.warn('API 연동 실패:', e.message);
             }
 
-            // API 실패 시 샘플 데이터 표시
-            COLUMNS_DATA = getSampleData();
-            displayColumns(COLUMNS_DATA);
+            // API 실패 시 (캐시도 없으면) 샘플 데이터 표시
+            if (COLUMNS_DATA.length === 0) {
+                COLUMNS_DATA = getSampleData();
+                displayColumns(COLUMNS_DATA);
+            }
+        }
+
+        // 백그라운드에서 데이터 새로고침
+        async function refreshInBackground() {
+            try {
+                const response = await fetch('/api/columns');
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data: data,
+                        timestamp: Date.now()
+                    }));
+                    console.log('🔄 백그라운드 새로고침 완료');
+                }
+            } catch (e) {
+                // 백그라운드 실패는 무시
+            }
         }
 
         // 모든 콘텐츠 미리 로드 (백그라운드에서 병렬 실행)
