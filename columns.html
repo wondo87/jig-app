@@ -1218,20 +1218,23 @@
 
                 case 'video':
                     const videoUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const videoCaption = value.caption ? renderRichText(value.caption) : '';
                     if (videoUrl && videoUrl.includes('youtube')) {
                         const videoId = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1];
-                        return videoId ? `<div class="notion-video"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe></div>` : '';
+                        return videoId ? `<figure class="notion-video"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>${videoCaption ? `<figcaption>${videoCaption}</figcaption>` : ''}</figure>` : '';
                     }
-                    return videoUrl ? `<div class="notion-video"><video controls src="${videoUrl}"></video></div>` : '';
+                    return videoUrl ? `<figure class="notion-video"><video controls src="${videoUrl}"></video>${videoCaption ? `<figcaption>${videoCaption}</figcaption>` : ''}</figure>` : '';
 
                 case 'audio':
                     const audioUrl = value.type === 'external' ? value.external?.url : value.file?.url;
-                    return audioUrl ? `<div class="notion-audio"><audio controls src="${audioUrl}"></audio></div>` : '';
+                    const audioCaption = value.caption ? renderRichText(value.caption) : '';
+                    return audioUrl ? `<figure class="notion-audio"><audio controls src="${audioUrl}"></audio>${audioCaption ? `<figcaption>${audioCaption}</figcaption>` : ''}</figure>` : '';
 
                 case 'file':
                     const fileUrl = value.type === 'external' ? value.external?.url : value.file?.url;
                     const fileName = value.name || value.caption?.[0]?.plain_text || '파일 다운로드';
-                    return fileUrl ? `<div class="notion-file"><a href="${fileUrl}" target="_blank" download>📎 ${fileName}</a></div>` : '';
+                    const fileCaption = value.caption ? renderRichText(value.caption) : '';
+                    return fileUrl ? `<div class="notion-file"><a href="${fileUrl}" target="_blank" download>📎 ${fileName}</a>${fileCaption ? `<div class="notion-file-caption">${fileCaption}</div>` : ''}</div>` : '';
 
                 case 'pdf':
                     const pdfUrl = value.type === 'external' ? value.external?.url : value.file?.url;
@@ -1239,8 +1242,9 @@
 
                 case 'bookmark':
                     const bookmarkUrl = value.url;
-                    const bookmarkCaption = value.caption?.[0]?.plain_text || bookmarkUrl;
-                    return `<div class="notion-bookmark"><a href="${bookmarkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${bookmarkCaption}</a></div>`;
+                    const bookmarkCaption = value.caption ? renderRichText(value.caption) : '';
+                    const bookmarkDisplay = bookmarkCaption || bookmarkUrl;
+                    return `<div class="notion-bookmark"><a href="${bookmarkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${bookmarkDisplay}</a></div>`;
 
                 case 'embed':
                     const embedUrl = value.url;
