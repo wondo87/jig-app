@@ -384,6 +384,373 @@
             padding: 0;
         }
 
+        /* Notion 텍스트 색상 */
+        .notion-color-gray {
+            color: #9B9A97;
+        }
+
+        .notion-color-brown {
+            color: #64473A;
+        }
+
+        .notion-color-orange {
+            color: #D9730D;
+        }
+
+        .notion-color-yellow {
+            color: #DFAB01;
+        }
+
+        .notion-color-green {
+            color: #0F7B6C;
+        }
+
+        .notion-color-blue {
+            color: #0B6E99;
+        }
+
+        .notion-color-purple {
+            color: #6940A5;
+        }
+
+        .notion-color-pink {
+            color: #AD1A72;
+        }
+
+        .notion-color-red {
+            color: #E03E3E;
+        }
+
+        /* Notion 배경 색상 */
+        .notion-color-gray_background {
+            background: #EBECED;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-brown_background {
+            background: #E9E5E3;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-orange_background {
+            background: #FAEBDD;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-yellow_background {
+            background: #FBF3DB;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-green_background {
+            background: #DDEDEA;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-blue_background {
+            background: #DDEBF1;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-purple_background {
+            background: #EAE4F2;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-pink_background {
+            background: #F4DFEB;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .notion-color-red_background {
+            background: #FBE4E4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        /* Notion 인용 (Quote) */
+        .notion-quote {
+            border-left: 3px solid #B4956F;
+            padding-left: 16px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+
+        /* Notion 콜아웃 (Callout) */
+        .notion-callout {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 16px 16px 12px;
+            border-radius: 8px;
+            margin: 16px 0;
+            background: #f7f6f3;
+        }
+
+        .notion-callout .callout-icon {
+            font-size: 1.4em;
+            margin-right: 10px;
+            line-height: 1.3;
+        }
+
+        .notion-callout-gray_background {
+            background: #EBECED;
+        }
+
+        .notion-callout-brown_background {
+            background: #E9E5E3;
+        }
+
+        .notion-callout-orange_background {
+            background: #FAEBDD;
+        }
+
+        .notion-callout-yellow_background {
+            background: #FBF3DB;
+        }
+
+        .notion-callout-green_background {
+            background: #DDEDEA;
+        }
+
+        .notion-callout-blue_background {
+            background: #DDEBF1;
+        }
+
+        .notion-callout-purple_background {
+            background: #EAE4F2;
+        }
+
+        .notion-callout-pink_background {
+            background: #F4DFEB;
+        }
+
+        .notion-callout-red_background {
+            background: #FBE4E4;
+        }
+
+        /* Notion 구분선 (Divider) */
+        .notion-divider {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 24px 0;
+        }
+
+        /* Notion 토글 */
+        .notion-toggle {
+            margin: 10px 0;
+        }
+
+        .notion-toggle summary {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* Notion 리스트 */
+        .notion-list {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+
+        .notion-list li {
+            margin: 4px 0;
+        }
+
+        /* Notion 체크리스트 */
+        .notion-todo-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 8px 0;
+        }
+
+        .notion-todo-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 4px 0;
+        }
+
+        .notion-todo-list input[type="checkbox"] {
+            margin-top: 4px;
+        }
+
+        .notion-todo-checked {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        /* Notion 이미지 */
+        .notion-image {
+            margin: 20px 0;
+        }
+
+        .notion-image img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        .notion-image figcaption {
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        /* Notion 비디오 */
+        .notion-video {
+            margin: 20px 0;
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+
+        .notion-video iframe,
+        .notion-video video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        /* Notion 오디오 */
+        .notion-audio {
+            margin: 16px 0;
+        }
+
+        .notion-audio audio {
+            width: 100%;
+        }
+
+        /* Notion 파일 */
+        .notion-file {
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: #f7f6f3;
+            border-radius: 8px;
+        }
+
+        .notion-file a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .notion-file a:hover {
+            color: #B4956F;
+        }
+
+        /* Notion PDF */
+        .notion-pdf {
+            margin: 20px 0;
+        }
+
+        .notion-pdf iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        /* Notion 북마크 */
+        .notion-bookmark {
+            margin: 12px 0;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .notion-bookmark a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .notion-bookmark a:hover {
+            color: #B4956F;
+        }
+
+        /* Notion 임베드 */
+        .notion-embed {
+            margin: 20px 0;
+        }
+
+        .notion-embed iframe {
+            width: 100%;
+            min-height: 400px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        /* Notion 링크 미리보기 */
+        .notion-link-preview {
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: #f7f6f3;
+            border-radius: 8px;
+        }
+
+        .notion-link-preview a {
+            color: #0B6E99;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        /* Notion 수식 */
+        .notion-equation {
+            margin: 16px 0;
+            padding: 16px;
+            background: #f7f6f3;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1em;
+        }
+
+        /* Notion 테이블 */
+        .notion-table-wrapper {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        .notion-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .notion-table td,
+        .notion-table th {
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .notion-table th {
+            background: #f7f6f3;
+        }
+
+        /* Notion 목차 */
+        .notion-toc {
+            padding: 16px;
+            background: #f7f6f3;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        /* 콜아웃 아이콘 이미지 */
+        .callout-icon-img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
         /* 푸터 */
         .footer {
             background: #f8f8f8;
@@ -744,49 +1111,176 @@
         function renderNotionBlocks(blocks) {
             if (!blocks || blocks.length === 0) return '<p>내용이 없습니다.</p>';
 
-            return blocks.map(block => {
+            // 연속된 리스트 아이템 그룹화
+            let result = '';
+            let i = 0;
+
+            while (i < blocks.length) {
+                const block = blocks[i];
                 const type = block.type;
                 const value = block[type];
 
-                switch (type) {
-                    case 'paragraph':
-                        return `<p>${renderRichText(value.rich_text)}</p>`;
-                    case 'heading_1':
-                        return `<h2>${renderRichText(value.rich_text)}</h2>`;
-                    case 'heading_2':
-                        return `<h3>${renderRichText(value.rich_text)}</h3>`;
-                    case 'heading_3':
-                        return `<h4>${renderRichText(value.rich_text)}</h4>`;
-                    case 'bulleted_list_item':
-                        return `<ul><li>${renderRichText(value.rich_text)}</li></ul>`;
-                    case 'numbered_list_item':
-                        return `<ol><li>${renderRichText(value.rich_text)}</li></ol>`;
-                    case 'quote':
-                        return `<blockquote>${renderRichText(value.rich_text)}</blockquote>`;
-                    case 'image':
-                        const caption = value.caption?.[0]?.plain_text || '';
-                        const imageUrl = value.type === 'external' ? value.external.url : value.file.url;
-                        return `<figure><img src="${imageUrl}" alt="${caption}"><figcaption>${caption}</figcaption></figure>`;
-                    case 'code':
-                        const codeContent = renderRichText(value.rich_text);
-                        // 프로그래밍 언어 표시 (예: javascript, html 등)
-                        const language = value.language || 'text';
-                        return `<pre class="notion-code"><code class="language-${language}">${codeContent}</code></pre>`;
-                    default:
-                        return '';
+                // 글머리 기호 리스트 그룹화
+                if (type === 'bulleted_list_item') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'bulleted_list_item') {
+                        items += `<li>${renderRichText(blocks[i].bulleted_list_item.rich_text)}</li>`;
+                        i++;
+                    }
+                    result += `<ul class="notion-list">${items}</ul>`;
+                    continue;
                 }
-            }).join('');
+
+                // 번호 리스트 그룹화
+                if (type === 'numbered_list_item') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'numbered_list_item') {
+                        items += `<li>${renderRichText(blocks[i].numbered_list_item.rich_text)}</li>`;
+                        i++;
+                    }
+                    result += `<ol class="notion-list">${items}</ol>`;
+                    continue;
+                }
+
+                // 체크리스트 그룹화
+                if (type === 'to_do') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'to_do') {
+                        const todo = blocks[i].to_do;
+                        const checked = todo.checked ? 'checked' : '';
+                        const checkedClass = todo.checked ? 'notion-todo-checked' : '';
+                        items += `<li class="${checkedClass}"><input type="checkbox" ${checked} disabled> ${renderRichText(todo.rich_text)}</li>`;
+                        i++;
+                    }
+                    result += `<ul class="notion-todo-list">${items}</ul>`;
+                    continue;
+                }
+
+                result += renderSingleBlock(block);
+                i++;
+            }
+
+            return result;
+        }
+
+        function renderSingleBlock(block) {
+            const type = block.type;
+            const value = block[type];
+
+            switch (type) {
+                case 'paragraph':
+                    const pText = renderRichText(value.rich_text);
+                    return pText ? `<p>${pText}</p>` : '<p><br></p>';
+
+                case 'heading_1':
+                    return `<h2 class="notion-h1">${renderRichText(value.rich_text)}</h2>`;
+                case 'heading_2':
+                    return `<h3 class="notion-h2">${renderRichText(value.rich_text)}</h3>`;
+                case 'heading_3':
+                    return `<h4 class="notion-h3">${renderRichText(value.rich_text)}</h4>`;
+
+                case 'quote':
+                    return `<blockquote class="notion-quote">${renderRichText(value.rich_text)}</blockquote>`;
+
+                case 'callout':
+                    const icon = value.icon?.emoji || value.icon?.external?.url ? `<img src="${value.icon.external.url}" class="callout-icon-img">` : '💡';
+                    const bgColor = value.color || 'gray_background';
+                    const iconHtml = typeof icon === 'string' && icon.startsWith('<img') ? icon : `<span class="callout-icon">${icon}</span>`;
+                    return `<div class="notion-callout notion-callout-${bgColor}">${iconHtml}<div>${renderRichText(value.rich_text)}</div></div>`;
+
+                case 'divider':
+                    return `<hr class="notion-divider">`;
+
+                case 'toggle':
+                    return `<details class="notion-toggle"><summary>${renderRichText(value.rich_text)}</summary><div class="toggle-content"><!-- 하위 내용은 별도 API 호출 필요 --></div></details>`;
+
+                case 'image':
+                    const imgCaption = value.caption?.[0]?.plain_text || '';
+                    const imageUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return imageUrl ? `<figure class="notion-image"><img src="${imageUrl}" alt="${imgCaption}" loading="lazy"><figcaption>${imgCaption}</figcaption></figure>` : '';
+
+                case 'video':
+                    const videoUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    if (videoUrl && videoUrl.includes('youtube')) {
+                        const videoId = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1];
+                        return videoId ? `<div class="notion-video"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe></div>` : '';
+                    }
+                    return videoUrl ? `<div class="notion-video"><video controls src="${videoUrl}"></video></div>` : '';
+
+                case 'audio':
+                    const audioUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return audioUrl ? `<div class="notion-audio"><audio controls src="${audioUrl}"></audio></div>` : '';
+
+                case 'file':
+                    const fileUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const fileName = value.name || value.caption?.[0]?.plain_text || '파일 다운로드';
+                    return fileUrl ? `<div class="notion-file"><a href="${fileUrl}" target="_blank" download>📎 ${fileName}</a></div>` : '';
+
+                case 'pdf':
+                    const pdfUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return pdfUrl ? `<div class="notion-pdf"><iframe src="${pdfUrl}" frameborder="0"></iframe></div>` : '';
+
+                case 'bookmark':
+                    const bookmarkUrl = value.url;
+                    const bookmarkCaption = value.caption?.[0]?.plain_text || bookmarkUrl;
+                    return `<div class="notion-bookmark"><a href="${bookmarkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${bookmarkCaption}</a></div>`;
+
+                case 'embed':
+                    const embedUrl = value.url;
+                    return embedUrl ? `<div class="notion-embed"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : '';
+
+                case 'link_preview':
+                    const linkUrl = value.url;
+                    return `<div class="notion-link-preview"><a href="${linkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${linkUrl}</a></div>`;
+
+                case 'equation':
+                    const expression = value.expression;
+                    return `<div class="notion-equation"><code>${expression}</code></div>`;
+
+                case 'code':
+                    const codeContent = value.rich_text?.map(t => t.plain_text).join('') || '';
+                    const language = value.language || 'text';
+                    const escapedCode = codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<pre class="notion-code"><code class="language-${language}">${escapedCode}</code></pre>`;
+
+                case 'table':
+                    // 테이블은 하위 블록에 row가 있어 별도 처리 필요
+                    return `<div class="notion-table-wrapper"><table class="notion-table"><tbody><!-- 테이블 내용 --></tbody></table></div>`;
+
+                case 'table_of_contents':
+                    return `<div class="notion-toc">📋 목차 (Table of Contents)</div>`;
+
+                case 'breadcrumb':
+                    return `<div class="notion-breadcrumb">🏠 경로</div>`;
+
+                case 'column_list':
+                    return `<div class="notion-columns"><!-- 컬럼 레이아웃 --></div>`;
+
+                case 'synced_block':
+                    return `<div class="notion-synced"><!-- 동기화된 블록 --></div>`;
+
+                default:
+                    console.log('Unsupported block type:', type);
+                    return '';
+            }
         }
 
         function renderRichText(richText) {
             if (!richText || richText.length === 0) return '';
             return richText.map(text => {
                 let content = text.plain_text.replace(/\n/g, '<br>');
-                if (text.annotations.bold) content = `<strong>${content}</strong>`;
-                if (text.annotations.italic) content = `<em>${content}</em>`;
-                if (text.annotations.strikethrough) content = `<del>${content}</del>`;
-                if (text.annotations.underline) content = `<u>${content}</u>`;
-                if (text.annotations.code) content = `<code>${content}</code>`;
+                const ann = text.annotations;
+
+                // 텍스트 색상 처리
+                if (ann.color && ann.color !== 'default') {
+                    content = `<span class="notion-color-${ann.color}">${content}</span>`;
+                }
+
+                if (ann.bold) content = `<strong>${content}</strong>`;
+                if (ann.italic) content = `<em>${content}</em>`;
+                if (ann.strikethrough) content = `<del>${content}</del>`;
+                if (ann.underline) content = `<u>${content}</u>`;
+                if (ann.code) content = `<code>${content}</code>`;
                 if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
                 return content;
             }).join('');
