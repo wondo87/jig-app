@@ -29,11 +29,26 @@
             box-sizing: border-box;
         }
 
+        /* 콘텐츠 보호: 텍스트 선택 방지 */
         body {
             font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #1a1a1a;
             line-height: 1.6;
             background: #fff;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* 이미지 드래그 방지 */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
         }
 
         .header {
@@ -1330,6 +1345,38 @@
                 document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
             });
         }
+
+        // 콘텐츠 보호: 우클릭 방지
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // 콘텐츠 보호: 텍스트 선택 방지
+        document.addEventListener('selectstart', function (e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // 콘텐츠 보호: 드래그 방지
+        document.addEventListener('dragstart', function (e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // 콘텐츠 보호: 키보드 단축키 방지 (Ctrl+C, Ctrl+U, F12 등)
+        document.addEventListener('keydown', function (e) {
+            // Ctrl+C (복사), Ctrl+U (소스보기), Ctrl+S (저장)
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'u' || e.key === 's' || e.key === 'a')) {
+                e.preventDefault();
+                return false;
+            }
+            // F12 (개발자도구)
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+        });
     </script>
 </body>
 
