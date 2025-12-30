@@ -986,31 +986,16 @@
         // 페이지 로드
         document.addEventListener('DOMContentLoaded', loadColumns);
 
-        // 칼럼 로드 (정적 JSON 우선, API fallback)
+        // 칼럼 로드 (API 연동)
         async function loadColumns() {
-            try {
-                // 1. 정적 빌드된 JSON 시도 (즉시 로딩)
-                const staticResponse = await fetch('/data/columns.json');
-                if (staticResponse.ok) {
-                    const data = await staticResponse.json();
-                    COLUMNS_DATA = data;
-                    displayColumns(COLUMNS_DATA);
-                    console.log('✅ 정적 데이터 로드 완료');
-                    // 콘텐츠도 미리 로드
-                    preloadContent();
-                    return;
-                }
-            } catch (e) {
-                console.log('정적 데이터 없음, API로 fallback');
-            }
-
-            // 2. API fallback
             try {
                 const response = await fetch('/api/columns');
                 if (response.ok) {
                     const data = await response.json();
                     COLUMNS_DATA = data;
                     displayColumns(COLUMNS_DATA);
+                    // 백그라운드에서 콘텐츠 미리 로드
+                    preloadAllContent();
                     return;
                 } else {
                     const errData = await response.json();
@@ -1025,19 +1010,21 @@
             displayColumns(COLUMNS_DATA);
         }
 
-        // 콘텐츠 미리 로드 (백그라운드)
-        async function preloadContent() {
-            for (const column of COLUMNS_DATA) {
+        // 모든 콘텐츠 미리 로드 (백그라운드에서 병렬 실행)
+        async function preloadAllContent() {
+            console.log('📥 콘텐츠 미리 로드 시작...');
+            const promises = COLUMNS_DATA.map(async (column) => {
                 try {
-                    const res = await fetch(`/data/content/${column.id}.json`);
+                    const res = await fetch(`/api/content?id=${column.id}`);
                     if (res.ok) {
                         CONTENT_CACHE[column.id] = await res.json();
                     }
                 } catch (e) {
-                    // 개별 콘텐츠 로드 실패는 무시
+                    // 개별 실패는 무시
                 }
-            }
-            console.log(`✅ ${Object.keys(CONTENT_CACHE).length}개 콘텐츠 미리 로드 완료`);
+            });
+            await Promise.all(promises);
+            console.log(`✅ ${Object.keys(CONTENT_CACHE).length}개 콘텐츠 로드 완료`);
         }
 
         // 샘플 데이터 (API 연동 전 테스트용)
@@ -1156,20 +1143,7 @@
             // 로딩 표시
             contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
 
-            // 2. 정적 JSON 시도
-            try {
-                const staticRes = await fetch(`/data/content/${column.id}.json`);
-                if (staticRes.ok) {
-                    const blocks = await staticRes.json();
-                    CONTENT_CACHE[column.id] = blocks;
-                    contentDiv.innerHTML = renderNotionBlocks(blocks);
-                    return;
-                }
-            } catch (e) {
-                console.log('정적 콘텐츠 없음, API로 fallback');
-            }
-
-            // 3. API fallback
+            // 2. API에서 로드
             try {
                 const res = await fetch(`/api/content?id=${column.id}`);
                 if (!res.ok) throw new Error('Failed to fetch content');
