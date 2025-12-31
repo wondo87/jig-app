@@ -39,10 +39,10 @@ export default async function handler(req, res) {
                 "프로젝트": {
                     select: { name: project }
                 },
-                "시작-종료": item.start && item.end ? {
+                "시작-종료": (item.start || item.end) ? {
                     date: {
-                        start: item.start,
-                        end: item.end
+                        start: item.start || item.end,
+                        end: item.end || item.start || null
                     }
                 } : undefined,
                 "담당자": {
