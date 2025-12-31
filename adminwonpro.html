@@ -4114,43 +4114,38 @@
 
         // ========== 스케줄 관리 기능 ==========
         let scheduleRows = [];
+        let draggedRow = null;
         const defaultScheduleSteps = [
-            { name: "민원 접수", inCharge: "" },
-            { name: "보존 상태", inCharge: "" },
-            { name: "마루 철거", inCharge: "" },
-            { name: "철거", inCharge: "" },
-            { name: "창호", inCharge: "" },
-            { name: "2차 보수", inCharge: "" },
-            { name: "시스템 에어컨", inCharge: "" },
-            { name: "전기 배선", inCharge: "" },
-            { name: "타일", inCharge: "" },
-            { name: "욕창실 산창", inCharge: "" },
-            { name: "콘크리트", inCharge: "" },
-            { name: "도어락 설치", inCharge: "" },
-            { name: "청소", inCharge: "" },
-            { name: "준공청소", inCharge: "" },
-            { name: "디자인 상담", inCharge: "" },
-            { name: "가구 상담", inCharge: "" },
+            { name: "디자인 상담 및 설계", inCharge: "" },
+            { name: "민원 접수 및 보양", inCharge: "" },
+            { name: "보존 상태 확인", inCharge: "" },
             { name: "가구 철거", inCharge: "" },
+            { name: "마루 철거", inCharge: "" },
             { name: "일반 철거", inCharge: "" },
             { name: "설비", inCharge: "" },
-            { name: "1차 방수", inCharge: "" },
-            { name: "2차 목수", inCharge: "" },
-            { name: "타일 시공", inCharge: "" },
-            { name: "욕실/도어", inCharge: "" },
-            { name: "3차 보수", inCharge: "" },
-            { name: "현장점검", inCharge: "" },
-            { name: "욕실점검", inCharge: "" },
-            { name: "반점검", inCharge: "" },
-            { name: "하드코팅", inCharge: "" },
+            { name: "창호 시공", inCharge: "" },
+            { name: "시스템 에어컨", inCharge: "" },
+            { name: "전기 배선", inCharge: "" },
+            { name: "목공/도어", inCharge: "" },
+            { name: "현장정리", inCharge: "" },
+            { name: "타일", inCharge: "" },
+            { name: "화장실 천장 돔", inCharge: "" },
+            { name: "필름", inCharge: "" },
+            { name: "도어락 설치", inCharge: "" },
+            { name: "바닥재 시공", inCharge: "" },
             { name: "도배", inCharge: "" },
-            { name: "현장정리/청소", inCharge: "" },
-            { name: "인테리어", inCharge: "" },
+            { name: "인터폰 설치", inCharge: "" },
+            { name: "도장(탄성)", inCharge: "" },
             { name: "가구(주방)", inCharge: "" },
-            { name: "가구(붙박이장)(싱크탑)", inCharge: "" },
-            { name: "전기/가구", inCharge: "" },
+            { name: "가구(붙박이장/신발장)", inCharge: "" },
+            { name: "전기 (기구설치)", inCharge: "" },
+            { name: "온도조절기", inCharge: "" },
             { name: "도기/수전", inCharge: "" },
-            { name: "최종 점검", inCharge: "" },
+            { name: "시스템 에어컨 기계 설치", inCharge: "" },
+            { name: "중문", inCharge: "" },
+            { name: "최종마감/검수", inCharge: "" },
+            { name: "준공청소", inCharge: "" },
+            { name: "최종마감", inCharge: "" },
             { name: "인수인계", inCharge: "" }
         ];
 
@@ -4200,6 +4195,49 @@
             currentData.schedules = [...scheduleRows];
         }
 
+        // 드래그 앤 드롭 순서 변경
+        function handleDragStart(e, index) {
+            draggedRow = index;
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedRow = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e, dropIndex) {
+            e.preventDefault();
+            if (draggedRow === null || draggedRow === dropIndex) return;
+
+            const draggedItem = scheduleRows[draggedRow];
+            scheduleRows.splice(draggedRow, 1);
+            scheduleRows.splice(dropIndex, 0, draggedItem);
+
+            renderScheduleTable();
+            saveScheduleToCustomer();
+            showToast('순서가 변경되었습니다', 'success');
+        }
+
+        // 위/아래 버튼으로 순서 변경
+        function moveRowUp(index) {
+            if (index <= 0) return;
+            [scheduleRows[index], scheduleRows[index - 1]] = [scheduleRows[index - 1], scheduleRows[index]];
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        function moveRowDown(index) {
+            if (index >= scheduleRows.length - 1) return;
+            [scheduleRows[index], scheduleRows[index + 1]] = [scheduleRows[index + 1], scheduleRows[index]];
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
             const emptyState = document.getElementById('scheduleEmptyState');
@@ -4215,13 +4253,22 @@
             if (emptyState) emptyState.style.display = 'none';
 
             tbody.innerHTML = scheduleRows.map((row, index) => `
-                <tr>
-                    <td style="text-align:center; color:#86868b;">${index + 1}</td>
+                <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${index})" style="cursor:grab;">
+                    <td style="text-align:center; color:#86868b;">
+                        <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
+                            <span style="cursor:grab; color:#ccc;">☰</span>
+                            ${index + 1}
+                        </div>
+                    </td>
                     <td><input type="text" value="${row.name || ''}" onchange="updateScheduleRow(${row.id}, 'name', this.value)" placeholder="공정명" style="width:100%; border:none; background:transparent;"></td>
                     <td><input type="date" value="${row.start || ''}" onchange="updateScheduleRow(${row.id}, 'start', this.value)" style="width:100%; border:none; background:transparent;"></td>
                     <td><input type="date" value="${row.end || ''}" onchange="updateScheduleRow(${row.id}, 'end', this.value)" style="width:100%; border:none; background:transparent;"></td>
                     <td><input type="text" value="${row.inCharge || ''}" onchange="updateScheduleRow(${row.id}, 'inCharge', this.value)" placeholder="담당자" style="width:100%; border:none; background:transparent;"></td>
-                    <td style="text-align:center;"><button onclick="removeScheduleRow(${row.id})" style="border:none; background:#ff3b30; color:white; width:24px; height:24px; border-radius:4px; cursor:pointer;">✕</button></td>
+                    <td style="text-align:center;">
+                        <button onclick="moveRowUp(${index})" style="border:none; background:#f0f0f0; width:20px; height:20px; border-radius:3px; cursor:pointer; margin-right:2px;" title="위로">▲</button>
+                        <button onclick="moveRowDown(${index})" style="border:none; background:#f0f0f0; width:20px; height:20px; border-radius:3px; cursor:pointer; margin-right:4px;" title="아래로">▼</button>
+                        <button onclick="removeScheduleRow(${row.id})" style="border:none; background:#ff3b30; color:white; width:20px; height:20px; border-radius:3px; cursor:pointer;" title="삭제">✕</button>
+                    </td>
                 </tr>
             `).join('');
         }
