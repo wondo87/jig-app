@@ -661,15 +661,13 @@
         }
 
         .delete-btn {
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: #ff3b30;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255, 59, 48, 0.8);
             color: #fff;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 11px;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4);
         }
 
         .delete-btn:hover {
@@ -854,238 +852,6 @@
         .info-item input::placeholder {
             color: #c7c7cc;
             font-weight: 400;
-        }
-
-        /* 프린트 선택 모달 */
-        .print-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .print-modal.show {
-            display: flex;
-        }
-
-        .print-modal-content {
-            background: #fff;
-            border-radius: 16px;
-            padding: 32px;
-            width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .print-modal-header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .print-modal-header h3 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1d1d1f;
-        }
-
-        .print-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .print-option-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px;
-            background: #fbfbfd;
-            border: 1px solid #e8e8ed;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .print-option-item:hover {
-            background: #f5f5f7;
-            border-color: #d2d2d7;
-        }
-
-        .print-option-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .print-option-item label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #1d1d1f;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        /* 인쇄 스타일 */
-        @media print {
-
-            /* 기본적으로 모든 것 숨기기 */
-            .sidebar,
-            .header-bar,
-            .header-actions,
-            .customer-tabs,
-            .customer-header-bar,
-            .pdf-btn,
-            .add-row-btn,
-            .delete-btn,
-            .print-btn-header,
-            .adminBadge,
-            .admin-login-btn,
-            .status-filter,
-            .date-filter,
-            .sidebar-stats-btn,
-            .print-modal,
-            .admin-modal-overlay,
-            .stats-modal-overlay,
-            #emptyState,
-            .no-print {
-                display: none !important;
-            }
-
-            /* 메인 컨텐츠 레이아웃 수정 */
-            html,
-            body {
-                height: auto !important;
-                overflow: visible !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .main-layout {
-                display: block !important;
-                height: auto !important;
-                overflow: visible !important;
-            }
-
-            .main-content {
-                margin-left: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                overflow: visible !important;
-                padding: 0 !important;
-            }
-
-            .customer-panel {
-                height: auto !important;
-                overflow: visible !important;
-                padding: 0 !important;
-            }
-
-            /* 탭 패널 기본 숨김 */
-            .tab-panel {
-                display: none !important;
-                height: auto !important;
-            }
-
-            /* 인쇄 대상 패널만 보이기 */
-            .print-section.show-print {
-                display: block !important;
-                position: relative !important;
-                width: 100% !important;
-                height: auto !important;
-                margin: 0 !important;
-                padding: 10px !important;
-                visibility: visible !important;
-            }
-
-            .print-section.show-print * {
-                visibility: visible !important;
-            }
-
-            /* 인쇄 시 배경 및 그림자 제거 */
-            body {
-                background: #fff !important;
-            }
-
-            .document-wrapper {
-                box-shadow: none !important;
-                margin: 0 !important;
-                border: none !important;
-                height: auto !important;
-                overflow: visible !important;
-            }
-
-            /* 표지계약서: 한 페이지에 맞추기 */
-            .print-cover.show-print {
-                transform: scale(0.75);
-                transform-origin: top left;
-                width: 133% !important;
-            }
-
-            .print-cover .document-wrapper {
-                padding: 5px !important;
-            }
-
-            .print-cover .doc-header {
-                padding: 10px 15px !important;
-            }
-
-            .print-cover .doc-content {
-                padding: 10px !important;
-            }
-
-            .print-cover .info-grid {
-                gap: 3px !important;
-            }
-
-            .print-cover .info-item {
-                padding: 3px 5px !important;
-            }
-
-            .print-cover .info-item label {
-                font-size: 8px !important;
-            }
-
-            .print-cover .info-item input,
-            .print-cover .info-item span {
-                font-size: 10px !important;
-            }
-
-            .print-cover table {
-                font-size: 9px !important;
-            }
-
-            .print-cover table th,
-            .print-cover table td {
-                padding: 3px 5px !important;
-            }
-
-            .print-cover .signature-section {
-                margin-top: 10px !important;
-                gap: 10px !important;
-            }
-
-            .print-cover .signature-card {
-                padding: 8px !important;
-            }
-
-            .print-cover .sig-field {
-                margin-bottom: 3px !important;
-            }
-
-            .print-cover .sig-field label {
-                font-size: 8px !important;
-            }
-
-            .print-cover .sig-field input {
-                font-size: 9px !important;
-                padding: 3px !important;
-            }
         }
 
         /* 문서 래퍼 */
@@ -1817,7 +1583,7 @@
 
         .estimate-select-table input[type="number"] {
             width: 100%;
-            padding: 6px 0;
+            padding: 6px 4px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
             font-size: var(--font-size-md);
@@ -1955,21 +1721,11 @@
 
         .estimate-table .qty-input {
             width: 100%;
-            min-width: 40px;
             padding: 5px 3px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
             font-size: var(--font-size-md);
             text-align: center;
-            -moz-appearance: textfield;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        .estimate-table .qty-input::-webkit-outer-spin-button,
-        .estimate-table .qty-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
         }
 
         .estimate-table .spec-cell,
@@ -2491,16 +2247,11 @@
             .document-wrapper {
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                page-break-inside: avoid;
+                page-break-after: always;
                 margin: 0 !important;
                 padding: 10px !important;
                 width: 100% !important;
                 max-width: none !important;
-            }
-
-            /* 마지막 문서 뒤에는 페이지 나눔 없음 */
-            .document-wrapper:not(:last-child) {
-                page-break-after: always;
             }
 
             /* 테이블 전체 너비 사용 */
@@ -2756,48 +2507,6 @@
 </head>
 
 <body>
-    <script>
-        // 관리자 페이지 비밀번호 확인
-        (function () {
-            const ACCESS_PASSWORD = 'WONPRO6454';
-            const SESSION_KEY = 'designzig_admin_access';
-
-            // 이미 인증된 세션인지 확인
-            if (sessionStorage.getItem(SESSION_KEY) === 'authenticated') {
-                return; // 이미 인증됨
-            }
-
-            // 비밀번호 입력 요청
-            let attempts = 0;
-            const maxAttempts = 3;
-
-            while (attempts < maxAttempts) {
-                const input = prompt('관리자 페이지입니다.\n비밀번호를 입력하세요:');
-
-                if (input === null) {
-                    // 취소 버튼 클릭
-                    window.location.href = '/';
-                    return;
-                }
-
-                if (input === ACCESS_PASSWORD) {
-                    // 비밀번호 일치 - 세션 저장
-                    sessionStorage.setItem(SESSION_KEY, 'authenticated');
-                    return;
-                }
-
-                attempts++;
-                if (attempts < maxAttempts) {
-                    alert('비밀번호가 틀렸습니다. (' + attempts + '/' + maxAttempts + ' 시도)');
-                }
-            }
-
-            // 3회 실패 시 홈으로 이동
-            alert('비밀번호 입력 실패. 홈페이지로 이동합니다.');
-            window.location.href = '/';
-        })();
-    </script>
-
     <!-- 토스트 알림 -->
     <div class="toast" id="toast">
         <span id="toastIcon">✓</span>
@@ -2831,6 +2540,19 @@
         </div>
     </header>
 
+    <!-- 페이지 접근 비밀번호 모달 -->
+    <div class="admin-modal show" id="pageAccessModal">
+        <div class="admin-modal-content">
+            <h3>🔒 페이지 접근</h3>
+            <p>관리 시스템에 접근하려면 비밀번호를 입력하세요</p>
+            <input type="password" id="pageAccessPassword" placeholder="비밀번호"
+                onkeypress="if(event.key==='Enter')checkPageAccess()">
+            <div class="admin-modal-btns">
+                <button class="confirm-btn" onclick="checkPageAccess()">확인</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 관리자 로그인 모달 -->
     <div class="admin-modal" id="adminModal">
         <div class="admin-modal-content">
@@ -2860,55 +2582,13 @@
         </div>
     </div>
 
-    <!-- 견적문의 불러오기 모달 -->
-    <div class="admin-modal" id="quoteImportModal">
-        <div class="admin-modal-content"
-            style="max-width:900px; width:90%; max-height:85vh; overflow:hidden; display:flex; flex-direction:column;">
-            <h3>📥 견적문의 불러오기</h3>
-            <p>웹사이트 견적문의 폼에서 접수된 문의 목록입니다. 선택하면 고객정보가 자동으로 입력됩니다.</p>
-            <div id="quoteImportList"
-                style="flex:1; overflow-y:auto; margin:16px 0; border:1px solid #e8e8ed; border-radius:8px;">
-                <div style="padding:40px; text-align:center; color:#86868b;">
-                    <span style="font-size:24px;">⏳</span>
-                    <p style="margin-top:8px;">불러오는 중...</p>
-                </div>
-            </div>
-            <div class="admin-modal-btns">
-                <button class="cancel-btn" onclick="closeQuoteImportModal()">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 휴지통 모달 -->
-    <div class="admin-modal" id="trashModal">
-        <div class="admin-modal-content"
-            style="max-width:800px; width:90%; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
-            <h3>🗑️ 휴지통</h3>
-            <p>삭제된 고객 데이터입니다. <span style="color:#ff3b30;">30일 후 자동으로 영구 삭제됩니다.</span></p>
-            <div id="trashList"
-                style="flex:1; overflow-y:auto; margin:16px 0; border:1px solid #e8e8ed; border-radius:8px;">
-                <div style="padding:40px; text-align:center; color:#86868b;">
-                    휴지통이 비어있습니다
-                </div>
-            </div>
-            <div class="admin-modal-btns">
-                <button class="cancel-btn" onclick="closeTrashModal()">닫기</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 메인 레이아웃 -->
     <div class="main-layout">
         <!-- 사이드바: 고객 목록 -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <h3>고객 목록</h3>
-                <div style="display:flex; gap:4px;">
-                    <button class="btn btn-secondary btn-sm" onclick="openTrashModal()" title="휴지통">🗑️</button>
-                    <button class="btn btn-secondary btn-sm" onclick="openQuoteImportModal()" title="견적문의 불러오기">📥
-                        문의</button>
-                    <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
-                </div>
+                <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
             </div>
             <div class="sidebar-search">
                 <input type="text" placeholder="이름, 연락처 검색..." id="searchInput" oninput="filterCustomers()">
@@ -2991,10 +2671,7 @@
                         <span id="asEndDateDisplay"
                             style="display:none; padding:8px 12px; background:rgba(255,255,255,0.2); border-radius:6px; font-size:11px;">A/S
                             ~</span>
-                        <button class="pdf-btn" onclick="openPrintSelectionModal()"
-                            style="background:#424245; border:2px solid rgba(255,255,255,0.3); font-size:13px; font-weight:600; padding:10px 16px; border-radius:8px;">🖨️
-                            인쇄/PDF</button>
-                        <button class="delete-btn" onclick="deleteCurrentCustomer()">🗑️ 삭제</button>
+                        <button class="delete-btn" onclick="deleteCurrentCustomer()">🗑️</button>
                     </div>
                 </div>
 
@@ -3009,7 +2686,7 @@
                 </div>
 
                 <!-- 고객정보 패널 -->
-                <div class="tab-panel active print-section print-info" id="panel-info">
+                <div class="tab-panel active" id="panel-info">
                     <div class="document-wrapper" id="customerInfoDoc">
                         <div class="doc-header">
                             <div>
@@ -3068,18 +2745,13 @@
                                     </div>
                                     <div class="info-item">
                                         <label>공사기간</label>
-                                        <div style="display:flex; align-items:center; gap:6px;">
-                                            <input type="date" class="customer-field" data-field="constructionStartDate"
-                                                style="flex:1;" oninput="updateConstructionPeriod()">
-                                            <span style="color:#86868b;">~</span>
-                                            <input type="date" class="customer-field" data-field="constructionEndDate"
-                                                style="flex:1;" oninput="updateConstructionPeriod()">
-                                        </div>
+                                        <input type="text" class="customer-field" data-field="constructionPeriod"
+                                            placeholder="0000.00.00 ~ 0000.00.00" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>이사예정일</label>
-                                        <input type="date" class="customer-field" data-field="movingDate"
-                                            oninput="updateCustomerField(this)">
+                                        <input type="text" class="customer-field" data-field="movingDate"
+                                            placeholder="0000.00.00" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>평형</label>
@@ -3093,8 +2765,8 @@
                                     </div>
                                     <div class="info-item">
                                         <label>계약일</label>
-                                        <input type="date" class="customer-field" data-field="contractDate"
-                                            oninput="updateCustomerField(this)">
+                                        <input type="text" class="customer-field" data-field="contractDate"
+                                            placeholder="0000.00.00" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>총 계약금액 (VAT 포함)</label>
@@ -3184,7 +2856,7 @@
                 </div>
 
                 <!-- 도급계약서 패널 -->
-                <div class="tab-panel print-section print-contract" id="panel-contract">
+                <div class="tab-panel" id="panel-contract">
                     <div class="document-wrapper" id="contractDoc">
                         <div class="doc-header">
                             <div>
@@ -3327,7 +2999,7 @@
                 </div>
 
                 <!-- 표지계약서 패널 -->
-                <div class="tab-panel print-section print-cover" id="panel-cover">
+                <div class="tab-panel" id="panel-cover">
                     <div class="document-wrapper" id="coverDoc">
                         <div class="doc-header">
                             <div>
@@ -3406,7 +3078,7 @@
                 </div>
 
                 <!-- 계약견적서 패널 -->
-                <div class="tab-panel print-section print-estimate" id="panel-estimate">
+                <div class="tab-panel" id="panel-estimate">
                     <div class="document-wrapper" id="estimateDoc">
                         <div class="doc-header">
                             <div>
@@ -3451,7 +3123,7 @@
                 </div>
 
                 <!-- 원가관리표 패널 -->
-                <div class="tab-panel print-section print-cost" id="panel-cost">
+                <div class="tab-panel" id="panel-cost">
                     <div class="document-wrapper" id="costDoc">
                         <div class="doc-header">
                             <div>
@@ -3510,7 +3182,7 @@
                 </div>
 
                 <!-- 통계분석 패널 -->
-                <div class="tab-panel print-section print-stats" id="panel-stats">
+                <div class="tab-panel" id="panel-stats">
                     <h3 style="font-size:16px; font-weight:700; color:#1d1d1f; margin-bottom:16px;">📈 고객 통계</h3>
                     <div class="stats-grid">
                         <div class="stat-card highlight"><label>계약금액</label>
@@ -4116,181 +3788,7 @@
                 { div: '거실/주방/방', name: '폴리싱 타일 600*600', spec: '기본 바닥 수평+자재비+시공비 - 600*600 (줄눈 별도)', unit: 'py', qty: '1', price: '265000' },
                 { div: '거실/주방/방', name: '폴리싱 타일 800*800', spec: '기본 바닥 수평+자재비+시공비 - 800*800 (줄눈 별도)', unit: 'py', qty: '1', price: '300000' }
             ],
-            '11': [
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (덧방)', spec: '타일 300*300 덧방 기준', unit: 'm2', qty: '1', price: '70000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (올철거)', spec: '타일 300*300 벽/바닥 올 철거 기준', unit: 'm2', qty: '1', price: '80000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (덧방)', spec: '타일 600*600 덧방 기준', unit: 'm2', qty: '1', price: '80000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (올철거)', spec: '타일 600*600 벽/바닥 올 철거 기준', unit: 'm2', qty: '1', price: '90000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (덧방)', spec: '타일 800*800 덧방 기준', unit: 'm2', qty: '1', price: '95000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (올철거)', spec: '타일 800*800 벽/바닥 올 철거 기준', unit: 'm2', qty: '1', price: '100000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (덧방)', spec: '타일 1200*1200 덧방 기준', unit: 'm2', qty: '1', price: '150000' },
-                { div: '타일-면적당 계산', name: '벽/바닥 타일 (올철거)', spec: '타일 1200*1200 벽/바닥 올 철거 기준', unit: 'm2', qty: '1', price: '160000' },
-                { div: '참고-타일', name: '타일자재', spec: '300*300', unit: 'm2', qty: '1', price: '20000' },
-                { div: '참고-타일', name: '타일자재', spec: '300*600', unit: 'm2', qty: '1', price: '22000' },
-                { div: '참고-타일', name: '타일자재', spec: '600*600', unit: 'm2', qty: '1', price: '25000' },
-                { div: '참고-타일', name: '타일자재', spec: '800*800', unit: 'm2', qty: '1', price: '35000' },
-                { div: '참고-타일', name: '타일자재', spec: '600*1200', unit: 'm2', qty: '1', price: '60000' },
-                { div: '참고-타일-부자재', name: '부자재-전체(덧방기준)', spec: '덧방 기준 (벽/바닥)', unit: 'm2', qty: '1', price: '15000' },
-                { div: '참고-타일-부자재', name: '부자재-전체(올철거기준)', spec: '올철거 기준 (벽/바닥)', unit: 'm2', qty: '1', price: '20000' },
-                { div: '참고-타일-부자재', name: '에폭시(타일용, 석재용)', spec: '본드 (덧방시공시 사용)', unit: '개', qty: '1', price: '55000' },
-                { div: '참고-타일-부자재', name: '미장레미탈 25KG', spec: '미장재', unit: '포', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '미장레미탈 40KG', spec: '미장재', unit: '포', qty: '1', price: '8000' },
-                { div: '참고-타일-부자재', name: '드라이픽스1 [20KG]', spec: '접착제', unit: '포', qty: '1', price: '12000' },
-                { div: '참고-타일-부자재', name: '드라이픽스(난방용) [20KG]', spec: '접착제', unit: '포', qty: '1', price: '13000' },
-                { div: '참고-타일-부자재', name: '케라플랙스맥시S1 [20KG]', spec: '접착제', unit: '포', qty: '1', price: '22000' },
-                { div: '참고-타일-부자재', name: '아데실렉스P9 [20KG]', spec: '접착제', unit: '포', qty: '1', price: '16000' },
-                { div: '참고-타일-부자재', name: '압착시멘트 [20KG]', spec: '접착제', unit: '포', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '홈멘트(비둘기색) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '2000' },
-                { div: '참고-타일-부자재', name: '홈멘트(백색) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '2000' },
-                { div: '참고-타일-부자재', name: '아덱스(아이보리) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '아덱스(라이트그레이) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '아덱스(다크그레이) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '아덱스(시멘트) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '아덱스(볼케이노) [2KG]', spec: '줄눈재', unit: 'ea', qty: '1', price: '6000' },
-                { div: '참고-타일-부자재', name: '아덱스EG15에폭시줄눈(시멘트) [6.5KG]', spec: '에폭시줄눈', unit: 'ea', qty: '1', price: '135000' },
-                { div: '참고-타일-부자재', name: '아덱스EG15에폭시줄눈(차콜) [6.5KG]', spec: '에폭시줄눈', unit: 'ea', qty: '1', price: '135000' },
-                { div: '참고-타일-부자재', name: '아덱스x18 [15KG]', spec: '접착제', unit: '포', qty: '1', price: '21000' },
-                { div: '참고-타일-부자재', name: '노보플랜DA 자동수평몰탈 [25KG]', spec: '바닥레벨링', unit: '포', qty: '1', price: '16000' },
-                { div: '참고-타일-부자재', name: '벽돌', spec: '조적재', unit: 'ea', qty: '1', price: '200' },
-                { div: '참고-타일-부자재', name: 'AL - 코너비드', spec: 'AL-L12T [2.4M]', unit: 'ea', qty: '1', price: '5000' },
-                { div: '참고-타일-부자재', name: 'AL - 코너비드', spec: 'AL-L10T [2.4M]', unit: 'ea', qty: '1', price: '5000' },
-                { div: '참고-타일-부자재', name: 'PVC - 코너비드', spec: 'PVC-L12T(GRAY) [2.4M]', unit: 'ea', qty: '1', price: '2000' },
-                { div: '참고-타일-부자재', name: 'PVC - 코너비드', spec: 'PVC-L12T(L.GRAY) [2.4M]', unit: 'ea', qty: '1', price: '2000' },
-                { div: '참고-타일-부자재', name: 'PVC - 코너비드', spec: 'PVC-L12T(IV) [2.4M]', unit: 'ea', qty: '1', price: '2000' },
-                { div: '참고-타일-부자재', name: 'PVC - 코너비드', spec: 'PVC-L10T(GRAY) [2.4M]', unit: 'ea', qty: '1', price: '2000' },
-                { div: '참고-타일-부자재', name: '단열재', spec: '폼세라믹 600*1220*30T', unit: '장', qty: '1', price: '25000' },
-                { div: '참고-타일-부자재', name: '도막방수', spec: 'WPM003 아덱스도막방수제 [16KG]', unit: '통', qty: '1', price: '117000' },
-                { div: '참고-타일-부자재', name: '도막방수', spec: '에코디펜스 [16KG]', unit: '통', qty: '1', price: '110000' },
-                { div: '참고-타일-부자재', name: '프라이머', spec: '아덱스멀티프라이머660V [15L]', unit: '통', qty: '1', price: '54000' },
-                { div: '참고-타일-부자재', name: '프라이머', spec: '에코프림그립 (다용도프라이머) [5KG]', unit: '통', qty: '1', price: '40000' },
-                { div: '도기', name: '양변기', spec: '웨이브라운드 초절수 투피스양변기', unit: '조', qty: '1', price: '258000' },
-                { div: '도기', name: '양변기', spec: '웨이브스퀘어 초절수 투피스양변기', unit: '조', qty: '1', price: '264000' },
-                { div: '도기', name: '양변기', spec: '웨이브라운드 투피스양변기', unit: '조', qty: '1', price: '224000' },
-                { div: '도기', name: '양변기', spec: '웨이브스퀘어 투피스양변기', unit: '조', qty: '1', price: '231000' },
-                { div: '도기', name: '세면기', spec: '플랫R F515 일체형세면기', unit: '조', qty: '1', price: '215000' },
-                { div: '도기', name: '세면기', spec: '플랫 F516 일체형세면기', unit: '조', qty: '1', price: '218000' },
-                { div: '도기', name: '세면기', spec: 'BW201 일체형세면기 R사각', unit: '조', qty: '1', price: '150000' },
-                { div: '도기', name: '세면기', spec: '웨이브라운드 일체형세면기', unit: '조', qty: '1', price: '185000' },
-                { div: '도기', name: '세면기', spec: 'CC3000 일체형세면기', unit: '조', qty: '1', price: '140000' },
-                { div: '도기', name: '세면기', spec: '씬엣지F513 언더볼세면기 [600*410]', unit: '조', qty: '1', price: '120000' },
-                { div: '도기-욕조', name: '욕조', spec: '아크릴욕조 1400*750 - 시공비 별도', unit: '조', qty: '1', price: '200000' },
-                { div: '도기-욕조', name: '욕조', spec: '아크릴욕조 1400*800 - 시공비 별도', unit: '조', qty: '1', price: '220000' },
-                { div: '도기-욕조', name: '욕조', spec: '아크릴욕조 1500*750 - 시공비 별도', unit: '조', qty: '1', price: '200000' },
-                { div: '도기-욕조', name: '욕조', spec: '아크릴욕조 1500*800 - 시공비 별도', unit: '조', qty: '1', price: '220000' },
-                { div: '도기-욕조', name: '욕조', spec: '아크릴욕조 1700*700 - 시공비 별도', unit: '조', qty: '1', price: '200000' },
-                { div: '도기-욕조', name: '욕조', spec: '아크릴욕조 1700*750 - 시공비 별도', unit: '조', qty: '1', price: '200000' },
-                { div: '도기부자재', name: '배수구', spec: '특대시드 C6285 (아메스)', unit: 'ea', qty: '1', price: '16000' },
-                { div: '도기부자재', name: '배관부속', spec: '장직편심후렌치 BOX_48 [30MM]', unit: 'ea', qty: '1', price: '5000' },
-                { div: '도기부자재', name: '배관부속', spec: '앵글밸브 [스텐304_50mm]', unit: 'ea', qty: '1', price: '3500' },
-                { div: '도기부자재', name: '배수트랩', spec: '자바라P트랩 (주름관450)', unit: 'ea', qty: '1', price: '8000' },
-                { div: '도기부자재', name: '배수구', spec: '자동폽업 FJ9190 (아메스)', unit: 'ea', qty: '1', price: '13000' },
-                { div: '도기부자재', name: '배수구', spec: '자동POPUP (오링RD)', unit: 'ea', qty: '1', price: '9000' },
-                { div: '도기부자재', name: '배수구', spec: '비토116흰색 오바 40파이 자동폽업', unit: 'ea', qty: '1', price: '24000' },
-                { div: '도기부자재', name: '배수구', spec: 'DL-310(WH) 화이트자동폽업 [36파이]', unit: 'ea', qty: '1', price: '20000' },
-                { div: '도기부자재', name: '배수구', spec: '화이트자동폽업 멍/유광 (니켈기리깡400)', unit: 'ea', qty: '1', price: '42000' },
-                { div: '도기부자재', name: '배수트랩', spec: 'BT-011N 니켈 직관P트랩 바노스', unit: 'ea', qty: '1', price: '50000' },
-                { div: '도기부자재', name: '세면대 - 설치부속', spec: '세면기앙카볼트', unit: 'ea', qty: '1', price: '3000' },
-                { div: '도기부자재', name: '배수구', spec: '육가S (도무스) [150*150]', unit: 'ea', qty: '1', price: '28000' },
-                { div: '도기부자재', name: '배수구', spec: '육가S 편심 (도무스) [150*150]', unit: 'ea', qty: '1', price: '28000' },
-                { div: '도기부자재', name: '배수구', spec: '세탁기육가66', unit: 'ea', qty: '1', price: '7000' },
-                { div: '도기부자재', name: '배수구', spec: '세탁기육가50 (편심)', unit: 'ea', qty: '1', price: '7000' },
-                { div: '도기부자재', name: '배수구', spec: '조적욕조육가 (니켈) [100*100]', unit: 'ea', qty: '1', price: '25000' },
-                { div: '도기부자재', name: '배수구', spec: '트랜치S센터600 (도무스) [600*75]', unit: 'ea', qty: '1', price: '60000' },
-                { div: '도기부자재', name: '배수구', spec: '트랜치S사이드600 (도무스) [600*75]', unit: 'ea', qty: '1', price: '60000' },
-                { div: '도기부자재', name: '배수구', spec: '트랜치S센터800 (도무스) [800*75]', unit: 'ea', qty: '1', price: '80000' },
-                { div: '도기부자재', name: '배수구', spec: '트랜치S사이드800 (도무스) [800*75]', unit: 'ea', qty: '1', price: '80000' },
-                { div: '도기부자재', name: '문지방 - 마블', spec: '문지방 800+12*52*81', unit: 'ea', qty: '1', price: '45000' },
-                { div: '수전', name: '세면수전', spec: '하프단102니켈 원홀세면수전', unit: 'ea', qty: '1', price: '84000' },
-                { div: '수전', name: '샤워수전', spec: '하프욕조202니켈 샤워욕조수전', unit: 'ea', qty: '1', price: '156000' },
-                { div: '수전', name: '매립수전', spec: '하프벽매립5506니켈', unit: 'ea', qty: '1', price: '135000' },
-                { div: '수전', name: '주방수전', spec: '슈티에싱크8026니켈 주방수전', unit: 'ea', qty: '1', price: '199000' },
-                { div: '수전', name: '주방수전', spec: '슈티에싱크063니켈 주방수전', unit: 'ea', qty: '1', price: '209000' },
-                { div: '수전', name: '주방수전', spec: '슈티에싱크701니켈 주방수전', unit: 'ea', qty: '1', price: '197000' },
-                { div: '수전', name: '주방수전', spec: '슈티에싱크8029니켈 주방수전', unit: 'ea', qty: '1', price: '199000' },
-                { div: '수전', name: '주방수전', spec: '피오TM0030N 주방수전 (니켈) 라우체', unit: 'ea', qty: '1', price: '330000' },
-                { div: '수전', name: '주방수전', spec: '아르띠 TM0028N 와이드주방수전', unit: 'ea', qty: '1', price: '175000' },
-                { div: '수전', name: '세면수전', spec: 'BLE-D340.BN 원홀세면기수전', unit: 'ea', qty: '1', price: '40000' },
-                { div: '수전', name: '샤워수전', spec: 'BLE-D600.BN 샤워욕조수전', unit: 'ea', qty: '1', price: '75000' },
-                { div: '수전', name: '샤워수전', spec: 'C-2009.BN 레인샤워수전', unit: 'ea', qty: '1', price: '120000' },
-                { div: '수전', name: '샤워수전', spec: 'E7-1006NB 레인샤워 (에떼르노)', unit: 'ea', qty: '1', price: '154000' },
-                { div: '수전', name: '매립수전', spec: '셀럽 FC044SH 매립세면수전 (니켈)', unit: 'ea', qty: '1', price: '149000' },
-                { div: '수전', name: '매립수전', spec: '셀럽 RC0482SH 매립해바라기수전 (니켈)', unit: 'ea', qty: '1', price: '358000' },
-                { div: '수전', name: '매립수전', spec: '셀럽 FC0462SH 매립욕조샤워수전 (니켈)', unit: 'ea', qty: '1', price: '289000' },
-                { div: '수전', name: '슬라이드바', spec: '바흐6025니켈 슬라이드바', unit: 'ea', qty: '1', price: '55000' },
-                { div: '수전', name: '슬라이드바', spec: 'SG-31.BN 원형슬라이드바', unit: 'ea', qty: '1', price: '25000' },
-                { div: '수전', name: '슬라이드바', spec: 'VIVANT CA307(MS) 슬라이드바', unit: 'ea', qty: '1', price: '34000' },
-                { div: '수전', name: '수도꼭지', spec: '세탁기꼭지', unit: 'ea', qty: '1', price: '7000' },
-                { div: '수전', name: '수도꼭지', spec: '슬림세탁기꼭지', unit: 'ea', qty: '1', price: '15000' },
-                { div: '수전', name: '수도꼭지', spec: '두갈래꼭지', unit: 'ea', qty: '1', price: '11000' },
-                { div: '수전', name: '청소건', spec: '발코니건SET', unit: 'set', qty: '1', price: '15000' },
-                { div: '수전', name: '청소건', spec: '청소건SET', unit: 'set', qty: '1', price: '19000' },
-                { div: '수전', name: '청소건', spec: 'SP01N PVC 코일청소건SET (라우체)', unit: 'set', qty: '1', price: '22000' },
-                { div: '수전', name: '발코니수도', spec: '멀티콕200CD 매립발코니수도', unit: 'set', qty: '1', price: '70000' },
-                { div: '수전', name: '발코니수도', spec: '멀티콕200CD 매립발코니수도', unit: 'set', qty: '1', price: '52000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: 'PS 슬라이딩장 (1380*770) DO [LG 콘센트]', unit: 'ea', qty: '1', price: '193000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: 'PS 슬라이딩장 (1750*800) DO [LG 콘센트]', unit: 'ea', qty: '1', price: '280000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: 'PS 슬라이딩장 (1470*800) DO [LG 콘센트]', unit: 'ea', qty: '1', price: '220000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: 'PS 슬라이딩장 (1320*645) DO [LG]', unit: 'ea', qty: '1', price: '180000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: 'PS 슬라이딩장 (1390*750) DO [LG]', unit: 'ea', qty: '1', price: '160000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: 'PS 슬라이딩장 (1520*750) DO [LG]', unit: 'ea', qty: '1', price: '200000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드4도어장 (1580*770) DO [LG 콘센트 하부조명형]', unit: 'ea', qty: '1', price: '262000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1880*800) DO [LG 콘센트 하부조명형]', unit: 'ea', qty: '1', price: '317000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드4도어장 (1440*800) DO [LG]', unit: 'ea', qty: '1', price: '210000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드4도어장 (1560*800) DO [LG]', unit: 'ea', qty: '1', price: '230000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드4도어장 (1460*800) DO [DG]', unit: 'ea', qty: '1', price: '210000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1280*800) HD [HC]', unit: 'ea', qty: '1', price: '170000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1520*700) HD [GB]', unit: 'ea', qty: '1', price: '270000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1450*700) HD [GB]', unit: 'ea', qty: '1', price: '250000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1400*600) HD [MG]', unit: 'ea', qty: '1', price: '200000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1400*800) HD [MG]', unit: 'ea', qty: '1', price: '220000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1310*650) HD [MG]', unit: 'ea', qty: '1', price: '187000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1470*800) HD [MG]', unit: 'ea', qty: '1', price: '207000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1330*800) DO [LG 콘센트 하부조명형]', unit: 'ea', qty: '1', price: '225000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1220*800) HN [CG]', unit: 'ea', qty: '1', price: '165000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1450*600) DO [LG 하부조명형]', unit: 'ea', qty: '1', price: '217000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: '베이스슬라이딩장 (1100*700) [HC]', unit: 'ea', qty: '1', price: '140000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: '베이스슬라이딩장 (1340*700) [HG]', unit: 'ea', qty: '1', price: '170000' },
-                { div: '욕실장', name: '욕실장 - 슬라이딩 도어', spec: '바세 슬라이딩장 (1420*780) DO [LG]', unit: 'ea', qty: '1', price: '195000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: '누드3도어장 (1480*780) DO [LG]', unit: 'ea', qty: '1', price: '212000' },
-                { div: '욕실장', name: '욕실장 - 여닫이 도어', spec: 'CB230R-1 원도어라운드욕실장 [NW 450*800]', unit: 'ea', qty: '1', price: '140000' },
-                { div: '욕실장', name: '욕실장 - 복합형 (플랩, 여닫이)', spec: 'UP복합장 (1310*500) DO [DG 하부조명형]', unit: 'ea', qty: '1', price: '186000' },
-                { div: '욕실장', name: '욕실장 - 복합형 (플랩, 여닫이)', spec: 'UP복합장 (1310*500) DO [DG 하부조명형]', unit: 'ea', qty: '1', price: '224000' },
-                { div: '욕실장', name: '욕실장 - 플랩', spec: 'UP장 (1190*500) HN [CG 하부조명형]', unit: 'ea', qty: '1', price: '155000' },
-                { div: '욕실장', name: '욕실장 - 플랩', spec: 'UP장 (1310*500) DO [LG 하부조명형]', unit: 'ea', qty: '1', price: '191000' },
-                { div: '욕실장', name: '욕실장 - 심플', spec: '심플욕실장 (800*750) [LW 콘센트]', unit: 'ea', qty: '1', price: '160000' },
-                { div: '욕실장', name: '욕실장 - 심플', spec: '심플1도어욕실장 (450*750) [LW]', unit: 'ea', qty: '1', price: '95000' },
-                { div: '욕실장', name: '욕실장 - 오픈', spec: 'SB401 오픈우드 [400*800]', unit: 'ea', qty: '1', price: '68000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED트랙거울 (전구색) DA [500*800]', unit: 'ea', qty: '1', price: '140000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (400*1030) HD [전구색 3면LED]', unit: 'ea', qty: '1', price: '190000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (500*1030) HD [전구색 3면LED]', unit: 'ea', qty: '1', price: '190000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (500*1200) HD [주백색]', unit: 'ea', qty: '1', price: '220000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (450*850) HD [주백색]', unit: 'ea', qty: '1', price: '140000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (500*1130) HD [주백색]', unit: 'ea', qty: '1', price: '220000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (550*900) HD [주백색]', unit: 'ea', qty: '1', price: '180000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (400*1040) DO [전구색 3면LED]', unit: 'ea', qty: '1', price: '200000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED직사각거울 (300*900) HD [주백색 좌우LED]', unit: 'ea', qty: '1', price: '140000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED원형거울 HD [전구색 600*600]', unit: 'ea', qty: '1', price: '125000' },
-                { div: '거울', name: '거울 - LED', spec: 'LED원형거울 HN [터치식 600*600]', unit: 'ea', qty: '1', price: '125000' },
-                { div: '거울', name: '거울 - 일반', spec: '써클스텐리스거울 (W/M)88 루바인 [800*800]', unit: 'ea', qty: '1', price: '125000' },
-                { div: '거울', name: '거울 - 일반', spec: '양타원거울 DO [WT 550*800]', unit: 'ea', qty: '1', price: '48000' },
-                { div: '거울', name: '거울 - 일반', spec: '슬림사각거울 DO [WT 460*970]', unit: 'ea', qty: '1', price: '55000' },
-                { div: '거울', name: '거울 - 일반', spec: '프로젝트5T 사각거울 [600*700]', unit: 'ea', qty: '1', price: '65000' },
-                { div: '거울', name: '거울 - 트랙', spec: '프로젝트5T 트랙거울 (550*750) HD', unit: 'ea', qty: '1', price: '75000' },
-                { div: '거울', name: '거울 - 일반', spec: '프로젝트5T 사각거울 (1000*1220) HD', unit: 'ea', qty: '1', price: '188000' },
-                { div: '욕실악세사리', name: '수건걸이', spec: '폴리아6001니켈 수건걸이', unit: 'ea', qty: '1', price: '25000' },
-                { div: '욕실악세사리', name: '휴지걸이', spec: '미스틱7011N 휴지걸이 (니켈) 라우체', unit: 'ea', qty: '1', price: '28000' },
-                { div: '욕실악세사리', name: '휴지걸이', spec: '폴리아71111니켈 휴지걸이', unit: 'ea', qty: '1', price: '39000' },
-                { div: '욕실악세사리', name: '옷걸이', spec: '폴리아6010니켈 옷걸이', unit: 'ea', qty: '1', price: '14000' },
-                { div: '욕실악세사리', name: '옷걸이', spec: '폴리아73010니켈 옷걸이', unit: 'ea', qty: '1', price: '18000' },
-                { div: '욕실악세사리', name: '선반', spec: '뉴제시230니켈 일자선반 [230*90*118]', unit: 'ea', qty: '1', price: '35000' },
-                { div: '욕실악세사리', name: '선반', spec: '폰타나 삼각코너선반 TF-AC7500.BN', unit: 'ea', qty: '1', price: '46000' },
-                { div: '욕실악세사리', name: '선반', spec: 'KN6505SA 수건걸이형바스켓선반', unit: 'ea', qty: '1', price: '55000' },
-                { div: '욕실악세사리', name: '선반', spec: 'KN6605SA 일자선반301', unit: 'ea', qty: '1', price: '34000' },
-                { div: '욕실악세사리', name: '선반', spec: 'DS-1608(BN) 이단수건선반', unit: 'ea', qty: '1', price: '79000' },
-                { div: '욕실악세사리', name: '휴지걸이', spec: '에르사휴지걸이 TF-AC7102B.BN', unit: 'ea', qty: '1', price: '32000' },
-                { div: '욕실악세사리', name: '휴지걸이', spec: '크레아 WMPC02SH 매립휴지걸이 커버O (니켈)', unit: 'ea', qty: '1', price: '57000' },
-                { div: '욕실악세사리', name: '변기솔', spec: '사각변기솔 FH1062-491', unit: 'ea', qty: '1', price: '43000' }
-            ],
+            '11': [],
             '12': [
                 { div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (삼화 - 아이생각 4L 당 30헤베 2.9) - 국산', unit: 'm2', qty: '1', price: '50000' },
                 { div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (KCC - 숲으로 4L 당 30헤베 4.9) - 국산', unit: 'm2', qty: '1', price: '55000' },
@@ -4376,60 +3874,28 @@
         };
 
         let customers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
-        let trash = JSON.parse(localStorage.getItem('dz_trash') || '[]'); // 휴지통
         let currentCustomerId = null;
         let currentData = {};
         let currentStatusFilter = 'all';
         let isAdminMode = false;
 
-        // 30일 지난 휴지통 항목 자동 삭제
-        function cleanOldTrash() {
-            const now = new Date();
-            const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
-            const oldCount = trash.length;
-            trash = trash.filter(item => {
-                const deletedDate = new Date(item.deletedAt);
-                return deletedDate > thirtyDaysAgo;
-            });
-            if (oldCount !== trash.length) {
-                localStorage.setItem('dz_trash', JSON.stringify(trash));
-                console.log('휴지통 자동 정리:', oldCount - trash.length, '건 영구삭제');
-            }
-        }
-
-        // 페이지 로드 시 휴지통 정리
-        cleanOldTrash();
-
-        // Google Sheets 고객관리 API URL
-        const CUSTOMER_API_URL = 'https://script.google.com/macros/s/AKfycbx-QJ2Jl1q-SWNl84v3oaQAh0urb72HJjR_EelKDT0UaDtCAOmvZ3UF9OT8HXhbs2CXyQ/exec';
-
-        // 페이지 로드 시 Google Sheets에서 고객 데이터 불러오기
-        async function loadCustomersFromSheet() {
-            try {
-                const response = await fetch(CUSTOMER_API_URL);
-                const data = await response.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    customers = data;
-                    localStorage.setItem('dz_customers', JSON.stringify(customers));
-                    updateCustomerList();
-                    console.log('Google Sheets에서 고객 데이터 로드 완료:', customers.length, '명');
-                }
-            } catch (error) {
-                console.error('Google Sheets 로드 실패, localStorage 사용:', error);
-            }
-        }
-
-        // 페이지 로드 시 실행
-        window.addEventListener('load', () => {
-            setTimeout(loadCustomersFromSheet, 500);
-        });
-
         // 기본 비밀번호
         const DEFAULT_PASSWORD = 'W6454';
+        const PAGE_ACCESS_PASSWORD = '6454';
 
-        // 초기화 시 기본 비밀번호 설정
-        if (!localStorage.getItem('dz_admin_password_new')) {
-            localStorage.setItem('dz_admin_password_new', DEFAULT_PASSWORD);
+        // 강제로 기본 비밀번호로 리셋 (한번만 실행 후 이 줄 삭제 가능)
+        localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
+
+        // 페이지 접근 비밀번호 확인
+        function checkPageAccess() {
+            const inputPw = document.getElementById('pageAccessPassword').value;
+            if (inputPw === PAGE_ACCESS_PASSWORD) {
+                document.getElementById('pageAccessModal').classList.remove('show');
+            } else {
+                alert('비밀번호가 틀렸습니다');
+                document.getElementById('pageAccessPassword').value = '';
+                document.getElementById('pageAccessPassword').focus();
+            }
         }
 
         // 관리자 모달 표시
@@ -4437,116 +3903,6 @@
             document.getElementById('adminModal').classList.add('show');
             document.getElementById('adminPassword').value = '';
             document.getElementById('adminPassword').focus();
-        }
-
-        // 비밀번호 확인 프라미스
-        function requestPassword(message) {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('passwordPromptModal');
-                const title = document.getElementById('passwordPromptTitle');
-                const input = document.getElementById('passwordPromptInput');
-                const confirmBtn = document.getElementById('passwordPromptConfirm');
-                const cancelBtn = document.getElementById('passwordPromptCancel');
-
-                title.textContent = message || '비밀번호 확인';
-                input.value = '';
-                modal.classList.add('show');
-                input.focus();
-
-                const handleConfirm = () => {
-                    const pw = input.value;
-                    cleanup();
-                    resolve(pw);
-                };
-
-                const handleCancel = () => {
-                    cleanup();
-                    resolve(null);
-                };
-
-                const handleKeyup = (e) => {
-                    if (e.key === 'Enter') handleConfirm();
-                    if (e.key === 'Escape') handleCancel();
-                };
-
-                const cleanup = () => {
-                    modal.classList.remove('show');
-                    confirmBtn.removeEventListener('click', handleConfirm);
-                    cancelBtn.removeEventListener('click', handleCancel);
-                    input.removeEventListener('keyup', handleKeyup);
-                };
-
-                confirmBtn.addEventListener('click', handleConfirm);
-                cancelBtn.addEventListener('click', handleCancel);
-                input.addEventListener('keyup', handleKeyup);
-            });
-        }
-
-        // 인쇄 선택 모달 열기
-        function openPrintSelectionModal() {
-            document.getElementById('printSelectionModal').classList.add('show');
-            // 기본값: 현재 보고 있는 탭만 선택할 수도 있고, 전체 해제할 수도 있음. 
-            // 여기서는 전체 해제 상태로 시작 (사용자가 선택하도록)
-            document.querySelectorAll('.print-check').forEach(chk => chk.checked = false);
-
-            // 현재 활성화된 탭 자동 체크
-            const activeTab = document.querySelector('.customer-tab.active');
-            if (activeTab) {
-                const tabId = activeTab.getAttribute('onclick').match(/'([^']+)'/)[1]; // info, contract, etc.
-                const checkbox = document.querySelector(`.print-check[data-target="print-${tabId}"]`);
-                if (checkbox) checkbox.checked = true;
-            }
-        }
-
-        function closePrintSelectionModal() {
-            document.getElementById('printSelectionModal').classList.remove('show');
-        }
-
-        // 선택 항목 인쇄
-        function printSelectedDocs() {
-            const checks = document.querySelectorAll('.print-check:checked');
-            if (checks.length === 0) {
-                showToast('인쇄할 항목을 선택해주세요', 'error');
-                return;
-            }
-
-            // 인쇄 모드 준비
-            document.body.classList.add('print-mode');
-
-            // 모든 인쇄 섹션 숨김 (기본 CSS로 처리되지만 확실하게)
-            document.querySelectorAll('.print-section').forEach(el => {
-                el.classList.remove('show-print');
-            });
-
-            // 선택된 섹션만 표시
-            checks.forEach(chk => {
-                const targetClass = chk.dataset.target;
-                const targetEl = document.querySelector(`.${targetClass}`);
-                if (targetEl) {
-                    targetEl.classList.add('show-print');
-                }
-            });
-
-            closePrintSelectionModal();
-
-            // 인쇄 실행
-            setTimeout(() => {
-                window.print();
-
-                // 인쇄 후 복구
-                document.body.classList.remove('print-mode');
-                document.querySelectorAll('.print-section').forEach(el => {
-                    el.classList.remove('show-print');
-                });
-
-                // 원래 탭 상태 복구 (탭 로직에 의해 자동 처리되지만 명시적으로)
-                const activePanel = document.querySelector('.tab-panel.active');
-                if (activePanel) {
-                    // active 클래스가 있어도 display:none이 될 수 있으므로 remove가 아니라 
-                    // 인쇄 종료 시 스타일이 원래대로 돌아오는지 확인 필요.
-                    // @media print 밖에서는 .tab-panel.active가 display:block이므로 문제없음.
-                }
-            }, 500);
         }
 
         function closeAdminModal() {
@@ -4572,7 +3928,7 @@
                 return;
             }
 
-            localStorage.setItem('dz_admin_password_new', newPw);
+            localStorage.setItem('dz_admin_password', newPw);
             closePasswordModal();
             showToast('관리자 비밀번호가 설정되었습니다', 'success');
 
@@ -4583,7 +3939,7 @@
         // 관리자 로그인
         function loginAdmin() {
             const inputPw = document.getElementById('adminPassword').value;
-            const savedPw = localStorage.getItem('dz_admin_password_new') || DEFAULT_PASSWORD;
+            const savedPw = localStorage.getItem('dz_admin_password') || DEFAULT_PASSWORD;
 
             if (inputPw === savedPw) {
                 closeAdminModal();
@@ -4599,7 +3955,6 @@
         // 관리자 모드 활성화
         function activateAdminMode() {
             isAdminMode = true;
-            localStorage.setItem('isAdmin', 'true'); // 타 페이지에서도 관리자 인식하도록 설정
 
             // UI 업데이트
             document.getElementById('adminBadge').className = 'admin-badge admin';
@@ -4642,7 +3997,7 @@
                 return;
             }
 
-            localStorage.setItem('dz_admin_password_new', newPw);
+            localStorage.setItem('dz_admin_password', newPw);
             document.getElementById('changePassword').value = '';
             showToast('비밀번호가 변경되었습니다', 'success');
         }
@@ -4677,23 +4032,6 @@
             createCoverTable();
             initYearFilter();
             updateCustomerList();
-
-            // 브라우저 히스토리 초기 상태 설정 (고객 목록 뷰)
-            history.replaceState({ view: 'list' }, '', location.href);
-
-            // 브라우저 뒤로가기 버튼 핸들링
-            window.addEventListener('popstate', function (event) {
-                if (event.state && event.state.view === 'list') {
-                    // 고객 목록으로 돌아가기
-                    showCustomerList();
-                } else if (event.state && event.state.view === 'customer' && event.state.customerId) {
-                    // 특정 고객 상세보기로 이동 (히스토리 추가 없이)
-                    selectCustomerWithoutHistory(event.state.customerId);
-                } else {
-                    // 기본: 고객 목록으로
-                    showCustomerList();
-                }
-            });
         });
 
         // 토스트 알림
@@ -4740,161 +4078,6 @@
             }
         }
 
-        // ========== 견적문의 불러오기 기능 ==========
-        function openQuoteImportModal() {
-            document.getElementById('quoteImportModal').style.display = 'flex';
-            loadQuotesFromSheet();
-        }
-
-        function closeQuoteImportModal() {
-            document.getElementById('quoteImportModal').style.display = 'none';
-        }
-
-        async function loadQuotesFromSheet() {
-            const listContainer = document.getElementById('quoteImportList');
-            listContainer.innerHTML = `
-                <div style="padding:40px; text-align:center; color:#86868b;">
-                    <span style="font-size:24px;">⏳</span>
-                    <p style="margin-top:8px;">불러오는 중...</p>
-                </div>
-            `;
-
-            try {
-                // Google Apps Script URL 사용 (Vercel 환경변수 우회)
-                const GAS_URL = 'https://script.google.com/macros/s/AKfycbxDw-t-SVUz3y8wiRmTQ2jcR74uuiBlu0-yv6heBJfErPmO6QhaPn3SD0qo1QBmkWmG1g/exec';
-                const response = await fetch(GAS_URL);
-                if (!response.ok) throw new Error('API 응답 오류');
-
-                const quotes = await response.json();
-
-                if (quotes.length === 0) {
-                    listContainer.innerHTML = `
-                        <div style="padding:40px; text-align:center; color:#86868b;">
-                            <span style="font-size:24px;">📭</span>
-                            <p style="margin-top:8px;">접수된 견적문의가 없습니다.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                let html = '<table style="width:100%; border-collapse:collapse; font-size:12px;">';
-                html += '<thead><tr style="background:#f5f5f7;">';
-                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">No.</th>';
-                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">접수일</th>';
-                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">이름</th>';
-                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">연락처</th>';
-                html += '<th style="padding:10px 8px; text-align:left; border-bottom:1px solid #e8e8ed;">공사위치</th>';
-                html += '<th style="padding:10px 8px; text-align:center; border-bottom:1px solid #e8e8ed;">선택</th>';
-                html += '</tr></thead><tbody>';
-
-                quotes.forEach((q, idx) => {
-                    const dateStr = q.date ? new Date(q.date).toLocaleDateString('ko-KR') : '-';
-                    html += `<tr style="border-bottom:1px solid #f5f5f7; ${idx % 2 === 1 ? 'background:#fbfbfd;' : ''}">`;
-                    html += `<td style="padding:8px;">${q.no || idx + 1}</td>`;
-                    html += `<td style="padding:8px;">${dateStr}</td>`;
-                    html += `<td style="padding:8px; font-weight:600;">${q.name || '-'}</td>`;
-                    html += `<td style="padding:8px;">${q.phone || '-'}</td>`;
-                    html += `<td style="padding:8px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${q.location || '-'}</td>`;
-                    html += `<td style="padding:8px; text-align:center;">
-                        <button onclick='importQuoteAsCustomer(${JSON.stringify(q).replace(/'/g, "&#39;")})' 
-                            style="padding:4px 12px; background:#0071e3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:11px;">
-                            불러오기
-                        </button>
-                    </td>`;
-                    html += '</tr>';
-                });
-
-                html += '</tbody></table>';
-                listContainer.innerHTML = html;
-
-            } catch (error) {
-                console.error('Quote load error:', error);
-                listContainer.innerHTML = `
-                    <div style="padding:40px; text-align:center; color:#ff3b30;">
-                        <span style="font-size:24px;">⚠️</span>
-                        <p style="margin-top:8px;">데이터를 불러오는데 실패했습니다.</p>
-                        <p style="font-size:11px; color:#86868b; margin-top:4px;">${error.message}</p>
-                        <p style="font-size:11px; color:#86868b; margin-top:8px;">
-                            Vercel 환경변수에 GOOGLE_SHEETS_API_KEY가 설정되어 있는지 확인하세요.
-                        </p>
-                    </div>
-                `;
-            }
-        }
-
-        function importQuoteAsCustomer(quote) {
-            // 모달 닫기
-            closeQuoteImportModal();
-
-            // 신규 고객 생성
-            const now = new Date();
-            const yy = now.getFullYear().toString().slice(-2);
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const seq = String(Math.floor(Math.random() * 900) + 100);
-            currentCustomerId = `${yy}${mm}${dd}-${seq}`;
-
-            // 브라우저 히스토리에 상태 추가
-            history.pushState({ view: 'customer', customerId: currentCustomerId }, '', location.href);
-
-            // 공사유형 매핑
-            const typeMap = {
-                'full': '전체 인테리어',
-                'partial': '부분 인테리어',
-                'remodel': '리모델링',
-                'other': '기타'
-            };
-
-            currentData = {
-                customerId: currentCustomerId,
-                status: 'consulting',
-                createdAt: new Date().toISOString().split('T')[0],
-                profitRate: '15%',
-                // 견적문의 데이터 매핑
-                clientName: quote.name || '',
-                clientPhone: quote.phone || '',
-                clientEmail: quote.email || '',
-                siteAddress: quote.location || '',
-                area: quote.size || '',
-                buildingType: typeMap[quote.type] || quote.type || '',
-                customerRequest: quote.message || '',
-                clientSource: '홈페이지 견적문의'
-            };
-
-            // UI 업데이트
-            document.querySelectorAll('.customer-field').forEach(f => {
-                const field = f.dataset.field;
-                if (currentData[field] !== undefined) {
-                    f.value = currentData[field];
-                } else if (field === 'profitRate') {
-                    f.value = '15%';
-                } else {
-                    f.value = '';
-                }
-            });
-
-            document.getElementById('customerStatus').value = 'consulting';
-            document.getElementById('asEndDateDisplay').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('customerView').style.display = 'block';
-            document.getElementById('headerCustomerName').textContent = quote.name || '신규 고객';
-            document.getElementById('headerCustomerId').textContent = currentCustomerId;
-
-            clearCostData();
-            currentData.estimateData = {};
-            currentData.estimateProfitRate = 15;
-            categories.forEach(cat => {
-                delete currentData[`estMemo_${cat.no}`];
-            });
-
-            loadEstimateData();
-            syncAllFields();
-            showCustomerTab('info');
-
-            showToast(`${quote.name || '고객'} 정보를 불러왔습니다`, 'success');
-        }
-        // ========== 견적문의 불러오기 기능 끝 ==========
-
         function newCustomer() {
             const now = new Date();
             const yy = now.getFullYear().toString().slice(-2);
@@ -4902,10 +4085,6 @@
             const dd = String(now.getDate()).padStart(2, '0');
             const seq = String(Math.floor(Math.random() * 900) + 100);
             currentCustomerId = `${yy}${mm}${dd}-${seq}`;
-
-            // 브라우저 히스토리에 상태 추가
-            history.pushState({ view: 'customer', customerId: currentCustomerId }, '', location.href);
-
             currentData = {
                 customerId: currentCustomerId,
                 status: 'consulting',
@@ -4935,65 +4114,13 @@
             syncAllFields();
         }
 
-        // 고객 목록 화면으로 돌아가기 (뒤로가기 시 사용)
-        function showCustomerList() {
-            currentCustomerId = null;
-            currentData = {};
-            document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('customerView').style.display = 'none';
-            updateCustomerList();
-        }
-
-        // 히스토리 추가 없이 고객 선택 (popstate 이벤트용)
-        function selectCustomerWithoutHistory(customerId) {
-            const customer = customers.find(c => c.customerId === customerId);
-            if (!customer) {
-                showCustomerList();
-                return;
-            }
-            currentCustomerId = customerId;
-            currentData = { ...customer };
-            document.querySelectorAll('.customer-field').forEach(f => {
-                let val = currentData[f.dataset.field] || '';
-                if (f.type === 'date' && val.includes('.')) {
-                    val = val.replace(/\./g, '-');
-                }
-                f.value = val;
-            });
-            document.getElementById('customerStatus').value = currentData.status || 'consulting';
-            const asDisplay = document.getElementById('asEndDateDisplay');
-            if (currentData.status === 'as_done' && currentData.asEndDate) {
-                asDisplay.textContent = `A/S ~${currentData.asEndDate}`;
-                asDisplay.style.display = 'block';
-            } else {
-                asDisplay.style.display = 'none';
-            }
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('customerView').style.display = 'block';
-            document.getElementById('headerCustomerName').textContent = currentData.clientName || '고객명 없음';
-            document.getElementById('headerCustomerId').textContent = currentCustomerId;
-            loadCostData();
-            loadEstimateData();
-            updateCustomerList();
-            syncAllFields();
-        }
-
         function selectCustomer(customerId) {
             const customer = customers.find(c => c.customerId === customerId);
             if (!customer) return;
-
-            // 브라우저 히스토리에 상태 추가
-            history.pushState({ view: 'customer', customerId: customerId }, '', location.href);
-
             currentCustomerId = customerId;
             currentData = { ...customer };
             document.querySelectorAll('.customer-field').forEach(f => {
-                let val = currentData[f.dataset.field] || '';
-                // date input에는 yyyy-mm-dd 형식 필요
-                if (f.type === 'date' && val.includes('.')) {
-                    val = val.replace(/\./g, '-');
-                }
-                f.value = val;
+                f.value = currentData[f.dataset.field] || '';
             });
             document.getElementById('customerStatus').value = currentData.status || 'consulting';
 
@@ -5017,106 +4144,11 @@
         }
 
         function updateCustomerField(el) {
-            let value = el.value;
-            const field = el.dataset.field;
-
-            // 날짜 필드 자동 포맷팅 (YYYY.MM.DD)
-            // constructionPeriod 만 처리 (나머지는 type="date"로 변경됨)
-            if (['constructionPeriod'].includes(field)) {
-                // 숫자만 추출
-                const nums = value.replace(/[^0-9]/g, '');
-                // 8자리인 경우에만 포맷팅 (YYYYMMDD -> YYYY.MM.DD)
-                // 공사기간은 일단 단순 숫자만 있고 8자리일때만 변환 (범위 입력 등은 허용)
-                if (nums.length === 8) {
-                    value = `${nums.slice(0, 4)}.${nums.slice(4, 6)}.${nums.slice(6, 8)}`;
-                }
+            currentData[el.dataset.field] = el.value;
+            if (el.dataset.field === 'clientName') {
+                document.getElementById('headerCustomerName').textContent = el.value || '고객명 없음';
             }
-
-            // 평형 (py) 자동 포맷팅
-            if (field === 'area') {
-                const num = value.replace(/[^0-9]/g, '');
-                if (num) {
-                    value = `${num}py`;
-                }
-            }
-
-            el.value = value;
-            currentData[field] = value;
-
-            if (field === 'clientName') {
-                document.getElementById('headerCustomerName').textContent = value || '고객명 없음';
-            }
-
-            // 평형 변경 시 견적서 수량 업데이트
-            if (field === 'area') {
-                updateEstimateQuantities(value);
-            }
-
             syncAllFields();
-        }
-
-        // 공사기간 시작/종료일을 합쳐서 저장
-        function updateConstructionPeriod() {
-            const startInput = document.querySelector('.customer-field[data-field="constructionStartDate"]');
-            const endInput = document.querySelector('.customer-field[data-field="constructionEndDate"]');
-
-            const startVal = startInput ? startInput.value : '';
-            const endVal = endInput ? endInput.value : '';
-
-            currentData.constructionStartDate = startVal;
-            currentData.constructionEndDate = endVal;
-
-            // 합쳐서 constructionPeriod에 저장 (YYYY.MM.DD ~ YYYY.MM.DD)
-            if (startVal && endVal) {
-                currentData.constructionPeriod = `${startVal.replace(/-/g, '.')} ~ ${endVal.replace(/-/g, '.')}`;
-            } else if (startVal) {
-                currentData.constructionPeriod = `${startVal.replace(/-/g, '.')} ~`;
-            } else if (endVal) {
-                currentData.constructionPeriod = `~ ${endVal.replace(/-/g, '.')}`;
-            } else {
-                currentData.constructionPeriod = '';
-            }
-
-            syncAllFields();
-        }
-
-        // 평형 변경 시 견적서/원가관리표의 'py' 단위 항목 수량 자동 업데이트
-        function updateEstimateQuantities(areaStr) {
-            if (!areaStr) return;
-            const pyeong = parseInt(areaStr.replace(/[^0-9]/g, ''));
-            if (isNaN(pyeong)) return;
-
-            // 모든 카테고리 순회
-            categories.forEach(cat => {
-                const tbody = document.getElementById(`estBody${cat.no}`);
-                if (!tbody) return;
-
-                const rows = tbody.querySelectorAll('tr');
-                rows.forEach(tr => {
-                    const unitCell = tr.querySelector('.unit-cell');
-                    const qtyInput = tr.querySelector('.qty-input');
-
-                    if (unitCell && qtyInput) {
-                        const unit = unitCell.textContent.trim().toLowerCase();
-                        // 단위가 'py' 또는 '평'인 경우 수량 업데이트
-                        if (unit === 'py' || unit === '평') {
-                            // 기존 값과 다를 경우에만 업데이트
-                            if (parseInt(qtyInput.value) !== pyeong) {
-                                qtyInput.value = pyeong;
-                                // 변경 이벤트 트리거 (계산 로직 실행)
-                                onEstQtyChange(qtyInput, cat.no);
-                            }
-                        }
-                    }
-                });
-
-                // 원가관리표에도 적용 여부? 
-                // 견적서 데이터(currentData.estimateData)는 onEstQtyChange에서 업데이트됨.
-                // 원가관리표는? 'costData'는 별도임.
-                // 원가관리표는 견적서 로직과 유사하게 처리해야 할 수도 있음.
-                // 일단 견적서(계약견적서)만 요청사항에 명시된 것으로 보임 ("계약견적서 작업시...").
-            });
-            showToast('평형 변경에 따라 견적서 수량이 업데이트되었습니다', 'success');
         }
 
         function updateStatus() {
@@ -5149,141 +4181,16 @@
             }
         }
 
-        // 삭제 시 비밀번호 확인 후 휴지통으로 이동
-        async function deleteCurrentCustomer() {
-            if (!currentCustomerId) return;
-
-            // 비밀번호 확인 (커스텀 모달)
-            const password = await requestPassword('삭제하려면 관리자 비밀번호를 입력하세요:');
-            if (password === null) return; // 취소됨
-
-            const savedPassword = localStorage.getItem('dz_admin_password_new') || DEFAULT_PASSWORD;
-            if (password !== savedPassword) {
-                showToast('비밀번호가 틀렸습니다', 'error');
-                return;
-            }
-
-            if (!confirm('이 고객을 휴지통으로 이동하시겠습니까?\n(30일 후 자동 삭제됩니다)')) return;
-
-            // 휴지통으로 이동
-            const customerToDelete = customers.find(c => c.customerId === currentCustomerId);
-            if (customerToDelete) {
-                customerToDelete.deletedAt = new Date().toISOString();
-                trash.push(customerToDelete);
-                localStorage.setItem('dz_trash', JSON.stringify(trash));
-            }
-
+        function deleteCurrentCustomer() {
+            if (!currentCustomerId || !confirm('이 고객을 삭제하시겠습니까?')) return;
             customers = customers.filter(c => c.customerId !== currentCustomerId);
             localStorage.setItem('dz_customers', JSON.stringify(customers));
-
-            // Google Sheets에도 동기화
-            try {
-                await fetch(CUSTOMER_API_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    body: JSON.stringify({ customers: customers })
-                });
-            } catch (error) {
-                console.error('Google Sheets 동기화 실패:', error);
-            }
-
             currentCustomerId = null;
             currentData = {};
             document.getElementById('emptyState').style.display = 'block';
             document.getElementById('customerView').style.display = 'none';
             updateCustomerList();
-            showToast('휴지통으로 이동되었습니다 (30일 후 자동 삭제)', 'success');
-        }
-
-        // 휴지통에서 복원
-        async function restoreFromTrash(customerId) {
-            const itemIndex = trash.findIndex(c => c.customerId === customerId);
-            if (itemIndex === -1) return;
-
-            const item = trash[itemIndex];
-            delete item.deletedAt; // 삭제일 제거
-            customers.push(item);
-            trash.splice(itemIndex, 1);
-
-            localStorage.setItem('dz_customers', JSON.stringify(customers));
-            localStorage.setItem('dz_trash', JSON.stringify(trash));
-
-            // Google Sheets 동기화
-            try {
-                await fetch(CUSTOMER_API_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    body: JSON.stringify({ customers: customers })
-                });
-            } catch (error) {
-                console.error('Google Sheets 동기화 실패:', error);
-            }
-
-            updateCustomerList();
-            updateTrashList();
-            showToast('복원되었습니다', 'success');
-        }
-
-        // 휴지통에서 영구 삭제
-        async function permanentDeleteFromTrash(customerId) {
-            // 비밀번호 확인 (커스텀 모달)
-            const password = await requestPassword('영구 삭제하려면 관리자 비밀번호를 입력하세요:');
-            if (password === null) return; // 취소됨
-
-            const savedPassword = localStorage.getItem('dz_admin_password_new') || DEFAULT_PASSWORD;
-            if (password !== savedPassword) {
-                showToast('비밀번호가 틀렸습니다', 'error');
-                return;
-            }
-
-            if (!confirm('정말 영구 삭제하시겠습니까?\n복구할 수 없습니다!')) return;
-
-            trash = trash.filter(c => c.customerId !== customerId);
-            localStorage.setItem('dz_trash', JSON.stringify(trash));
-            updateTrashList();
-            showToast('영구 삭제되었습니다', 'success');
-        }
-
-        // 휴지통 목록 업데이트
-        function updateTrashList() {
-            const container = document.getElementById('trashList');
-            if (!container) return;
-
-            if (trash.length === 0) {
-                container.innerHTML = '<div style="padding:40px; text-align:center; color:#86868b;">휴지통이 비어있습니다</div>';
-                return;
-            }
-
-            let html = '<table style="width:100%; border-collapse:collapse;">';
-            html += '<thead><tr style="background:#f5f5f7;"><th style="padding:12px; text-align:left;">고객명</th><th style="padding:12px;">삭제일</th><th style="padding:12px;">남은 기간</th><th style="padding:12px;">작업</th></tr></thead><tbody>';
-
-            trash.forEach(item => {
-                const deletedDate = new Date(item.deletedAt);
-                const daysLeft = Math.max(0, 30 - Math.floor((new Date() - deletedDate) / (1000 * 60 * 60 * 24)));
-
-                html += `<tr style="border-bottom:1px solid #e8e8ed;">
-                    <td style="padding:12px;">${item.clientName || item.customerId}</td>
-                    <td style="padding:12px; text-align:center;">${deletedDate.toLocaleDateString()}</td>
-                    <td style="padding:12px; text-align:center; color:${daysLeft <= 7 ? '#ff3b30' : '#86868b'};">${daysLeft}일</td>
-                    <td style="padding:12px; text-align:center;">
-                        <button onclick="restoreFromTrash('${item.customerId}')" style="padding:6px 12px; margin-right:4px; background:#34c759; color:#fff; border:none; border-radius:6px; cursor:pointer;">복원</button>
-                        <button onclick="permanentDeleteFromTrash('${item.customerId}')" style="padding:6px 12px; background:#ff3b30; color:#fff; border:none; border-radius:6px; cursor:pointer;">영구삭제</button>
-                    </td>
-                </tr>`;
-            });
-
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-
-        // 휴지통 모달 열기/닫기
-        function openTrashModal() {
-            document.getElementById('trashModal').style.display = 'flex';
-            updateTrashList();
-        }
-
-        function closeTrashModal() {
-            document.getElementById('trashModal').style.display = 'none';
+            showToast('고객이 삭제되었습니다', 'success');
         }
 
         function updateCustomerList() {
@@ -5356,7 +4263,7 @@
 
         function filterCustomers() { updateCustomerList(); }
 
-        async function saveData() {
+        function saveData() {
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
             // 관리자 모드일 때만 원가관리표 저장
@@ -5366,31 +4273,21 @@
 
             // 고객별 견적 데이터는 항상 저장
             saveEstimateData();
-
-            // 중복 제거: 동일한 customerId가 있으면 모두 제거 후 새로 추가
-            customers = customers.filter(c => c.customerId !== currentCustomerId);
-            customers.push({ ...currentData });
-
+            const idx = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (idx >= 0) customers[idx] = { ...currentData };
+            else customers.push({ ...currentData });
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
-            // Google Sheets에도 저장
-            try {
-                await fetch(CUSTOMER_API_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    body: JSON.stringify({ customers: customers })
-                });
-                console.log('Google Sheets 저장 완료');
-            } catch (error) {
-                console.error('Google Sheets 저장 실패:', error);
-            }
-
-            // 저장 후 고객 목록 업데이트 (현재 화면 유지)
+            // 저장 후 고객 목록으로 이동
+            currentCustomerId = null;
+            currentData = {};
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('customerView').style.display = 'none';
             initYearFilter();
             updateCustomerList();
 
             if (isAdminMode) {
-                showToast('저장되었습니다 (Google Sheets 동기화)', 'success');
+                showToast('저장되었습니다 (원가관리표 포함)', 'success');
             } else {
                 showToast('저장되었습니다', 'success');
             }
@@ -6219,7 +5116,6 @@
             });
         }
 
-        // 문서별 인쇄 (새 창 열지 않고 현재 창에서 인쇄)
         function downloadPDF(elementId, filename) {
             const element = document.getElementById(elementId);
             if (!element) {
@@ -6227,47 +5123,252 @@
                 return;
             }
 
-            // elementId를 print-section 클래스명으로 매핑
-            const printSectionMap = {
-                'customerInfoDoc': 'print-info',
-                'contractDoc': 'print-contract',
-                'coverDoc': 'print-cover',
-                'estimateDoc': 'print-estimate',
-                'costDoc': 'print-cost'
-            };
+            const customerName = currentData.clientName || '고객';
+            const today = new Date().toISOString().split('T')[0];
+            const pdfFilename = `${customerName}_${filename}_${today}`;
 
-            const printClass = printSectionMap[elementId];
-            if (!printClass) {
-                showToast('인쇄할 수 없는 문서입니다', 'error');
+            // 새 창에서 인쇄
+            const printWindow = window.open('', '_blank');
+
+            if (!printWindow) {
+                showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
                 return;
             }
 
-            // 모든 인쇄 섹션 숨기기
-            document.querySelectorAll('.print-section').forEach(el => {
-                el.classList.remove('show-print');
+            // 스타일 복사
+            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            let styleHTML = '';
+            styles.forEach(s => styleHTML += s.outerHTML);
+
+            // element 복제
+            const clonedElement = element.cloneNode(true);
+
+            // 모든 input을 텍스트로 변환
+            clonedElement.querySelectorAll('input').forEach(input => {
+                const span = document.createElement('span');
+                span.textContent = input.value || '-';
+                span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
+                input.parentNode.replaceChild(span, input);
             });
 
-            // 해당 문서만 인쇄 표시
-            const targetSection = document.querySelector(`.${printClass}`);
-            if (targetSection) {
-                targetSection.classList.add('show-print');
-            } else {
-                // fallback: element 자체에 show-print 추가
-                element.classList.add('show-print');
+            // 모든 textarea를 텍스트로 변환 (스크롤 없이 전체 표시)
+            clonedElement.querySelectorAll('textarea').forEach(textarea => {
+                const div = document.createElement('div');
+                div.textContent = textarea.value || '';
+                div.style.cssText = 'white-space:pre-wrap; padding:6px 0; font-size:inherit; line-height:1.5;';
+                textarea.parentNode.replaceChild(div, textarea);
+            });
+
+            // 모든 select를 텍스트로 변환
+            clonedElement.querySelectorAll('select').forEach(select => {
+                const span = document.createElement('span');
+                const selectedOption = select.options[select.selectedIndex];
+                span.textContent = selectedOption ? selectedOption.text : '-';
+                span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
+                select.parentNode.replaceChild(span, select);
+            });
+
+            // 견적서인 경우 추가 처리
+            if (elementId === 'estimateDoc') {
+                // 품명이 선택되지 않은 행 제거 (금액이 '-'인 행)
+                clonedElement.querySelectorAll('.estimate-table tbody tr').forEach(tr => {
+                    const amountCell = tr.querySelector('.amount-cell');
+                    if (amountCell && (amountCell.textContent === '-' || amountCell.textContent === '0')) {
+                        tr.remove();
+                    }
+                });
+
+                // 각 카테고리별 번호 재정렬
+                clonedElement.querySelectorAll('.estimate-table tbody').forEach(tbody => {
+                    tbody.querySelectorAll('tr').forEach((tr, i) => {
+                        const cells = tr.querySelectorAll('td');
+                        if (cells[0]) cells[0].textContent = i + 1;
+                    });
+                });
+
+                // 빈 카테고리 숨기기 (항목이 없는 카테고리)
+                clonedElement.querySelectorAll('.category-section').forEach(section => {
+                    const tbody = section.querySelector('.estimate-table tbody');
+                    if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                        section.style.display = 'none';
+                    }
+                });
             }
 
-            // 인쇄 실행
-            setTimeout(() => {
-                window.print();
+            // 인쇄용 HTML 생성
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${pdfFilename}</title>
+                    ${styleHTML}
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 8mm 5mm 10mm 5mm; /* 좌우 최소화 */
+                        }
+                        
+                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        
+                        html, body { 
+                            margin: 0 !important; 
+                            padding: 0 !important; 
+                            width: 100% !important;
+                            background: white !important;
+                        }
+                        
+                        .document-wrapper {
+                            box-shadow: none !important;
+                            border: none !important;
+                            margin: 0 !important;
+                            padding: 10px !important;
+                            width: 100% !important;
+                            max-width: none !important;
+                        }
+                        
+                        .doc-content {
+                            padding: 0 !important;
+                        }
+                        
+                        .pdf-btn, .no-print, .add-row-btn, .estimate-actions { display: none !important; }
+                        
+                        /* 테이블 전체 너비 */
+                        .data-table, .estimate-table, .summary-table, .estimate-select-table {
+                            width: 100% !important;
+                            table-layout: fixed !important;
+                            font-size: 10px !important;
+                        }
+                        
+                        /* 테이블 헤더 */
+                        .data-table th, .estimate-table th, .summary-table th {
+                            padding: 5px 3px !important;
+                            font-size: 9px !important;
+                            white-space: nowrap !important;
+                        }
+                        
+                        /* 테이블 셀 */
+                        .data-table td, .estimate-table td, .summary-table td {
+                            padding: 4px 3px !important;
+                            font-size: 10px !important;
+                            white-space: nowrap !important;
+                            overflow: hidden !important;
+                            text-overflow: ellipsis !important;
+                        }
+                        
+                        /* 품명/규격 열은 줄바꿈 허용 및 자동 확장 */
+                        .data-table .col-name, .estimate-table td:nth-child(2) {
+                            white-space: normal !important;
+                            word-break: keep-all !important;
+                            width: auto !important;
+                        }
+                        
+                        /* 원가관리표 컬럼 너비 */
+                        .data-table colgroup col:nth-child(1) { width: 18px; } /* No */
+                        .data-table colgroup col:nth-child(2) { width: 32px; } /* 구분 */
+                        .data-table colgroup col:nth-child(3) { width: auto; } /* 품명 */
+                        .data-table colgroup col:nth-child(4) { width: 70px; } /* 규격 */
+                        .data-table colgroup col:nth-child(5) { width: 28px; } /* 단위 */
+                        .data-table colgroup col:nth-child(6) { width: 28px; } /* 수량 */
+                        .data-table colgroup col:nth-child(7) { width: 50px; } /* 단가 */
+                        .data-table colgroup col:nth-child(8) { width: 60px; } /* 금액 */
+                        .data-table colgroup col:nth-child(9) { width: 45px; } /* 비고 */
+                        
+                        /* 견적서 컬럼 너비 */
+                        .estimate-table colgroup col:nth-child(1) { width: 18px; } /* No */
+                        .estimate-table colgroup col:nth-child(2) { width: auto; } /* 품명 */
+                        .estimate-table colgroup col:nth-child(3) { width: 70px; } /* 규격 */
+                        .estimate-table colgroup col:nth-child(4) { width: 28px; } /* 단위 */
+                        .estimate-table colgroup col:nth-child(5) { width: 28px; } /* 수량 */
+                        .estimate-table colgroup col:nth-child(6) { width: 50px; } /* 단가 */
+                        .estimate-table colgroup col:nth-child(7) { width: 60px; } /* 금액 */
+                        
+                        /* 구분 열 숨기기 */
+                        .col-div, th.col-div { display: none !important; }
+                        
+                        /* 체크박스 숨기기 */
+                        input[type="checkbox"] { display: none !important; }
+                        
+                        /* 행 스타일 정리 */
+                        tr { opacity: 1 !important; text-decoration: none !important; }
+                        
+                        /* 카테고리 헤더 */
+                        .category-header { padding: 5px 8px !important; }
+                        .category-header h3 { font-size: 10px !important; }
+                        .category-header .subtotal { font-size: 10px !important; }
+                        
+                        /* 총합계 */
+                        .grand-total { padding: 8px !important; margin-top: 6px !important; }
+                        .total-row { padding: 3px 0 !important; }
+                        .total-row label { font-size: 9px !important; }
+                        .total-row .amount { font-size: 10px !important; }
+                        .total-row.main .amount { font-size: 12px !important; }
+                        
+                        /* 정보 그리드 */
+                        .info-grid { gap: 5px !important; }
+                        .info-item { padding: 5px 6px !important; }
+                        .info-item label { font-size: 7px !important; }
+                        .info-item input, .info-item select, .info-item span { font-size: 9px !important; }
+                        
+                        /* 메모 전체 표시 */
+                        .estimate-memo, .category-memo {
+                            overflow: visible !important;
+                            max-height: none !important;
+                        }
+                        .estimate-memo .memo-content, .category-memo textarea {
+                            white-space: pre-wrap !important;
+                            word-break: break-word !important;
+                            font-size: 8px !important;
+                        }
+                        
+                        /* 서명 영역 */
+                        .signature-card h4 { font-size: 9px !important; }
+                        .sig-field label { font-size: 7px !important; }
+                        .sig-field input, .sig-field span { font-size: 8px !important; }
+                        
+                        /* 조항 */
+                        .clause { padding: 6px !important; margin-bottom: 3px !important; }
+                        .clause-title { font-size: 9px !important; }
+                        .clause-content { font-size: 8px !important; line-height: 1.4 !important; }
+                        
+                        /* 대금지급 */
+                        .payment-item { padding: 5px !important; }
+                        .payment-item label { font-size: 7px !important; }
+                        .payment-item input, .payment-item span { font-size: 9px !important; }
+                        
+                        /* 페이지 번호 */
+                        .page-number {
+                            position: fixed;
+                            bottom: 3mm;
+                            left: 0;
+                            right: 0;
+                            text-align: center;
+                            font-size: 8px;
+                            color: #86868b;
+                        }
+                        .page-number::after { content: counter(page); }
+                        
+                        @media screen { .page-number { display: none; } }
+                        @media print { .page-number { display: block; } }
+                    </style>
+                </head>
+                <body>
+                    ${clonedElement.outerHTML}
+                    <div class="page-number"></div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                                window.onafterprint = function() { window.close(); };
+                            }, 500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
 
-                // 인쇄 후 복구 (인쇄 완료/취소 상관없이 실행됨)
-                document.querySelectorAll('.print-section').forEach(el => {
-                    el.classList.remove('show-print');
-                });
-                element.classList.remove('show-print');
-
-                // 참고: 브라우저는 인쇄 취소 여부를 감지할 수 없으므로 토스트 표시하지 않음
-            }, 300);
+            printWindow.document.close();
+            showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
         }
 
         function exportAllData() {
@@ -6538,53 +5639,6 @@
             circle.style.background = `conic-gradient(#34c759 0%, #34c759 ${rate}%, #e8e8ed ${rate}%, #e8e8ed 100%)`;
         }
     </script>
-    <!-- 비밀번호 확인 모달 -->
-    <div class="print-modal" id="passwordPromptModal">
-        <div class="print-modal-content" style="max-width:300px; padding:20px;">
-            <h3 id="passwordPromptTitle" style="margin-top:0; font-size:16px;">비밀번호 확인</h3>
-            <input type="password" id="passwordPromptInput" class="admin-password-input" placeholder="비밀번호"
-                style="width:100%; margin:15px 0;">
-            <div style="display:flex; justify-content:flex-end; gap:8px;">
-                <button id="passwordPromptCancel"
-                    style="padding:6px 12px; background:#f5f5f7; border:1px solid #d2d2d7; border-radius:6px; cursor:pointer;">취소</button>
-                <button id="passwordPromptConfirm"
-                    style="padding:6px 12px; background:#0071e3; color:#white; border:none; border-radius:6px; cursor:pointer; color:#fff;">확인</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 인쇄 선택 모달 -->
-    <div class="print-modal" id="printSelectionModal">
-        <div class="print-modal-content">
-            <h3>🖨️ 인쇄할 항목 선택</h3>
-            <div class="print-options">
-                <label>
-                    <input type="checkbox" class="print-check" value="info" data-target="print-info" checked>
-                    고객정보 (Customer Info)
-                </label>
-                <label>
-                    <input type="checkbox" class="print-check" value="cover" data-target="print-cover">
-                    표지계약서 (Cover)
-                </label>
-                <label>
-                    <input type="checkbox" class="print-check" value="contract" data-target="print-contract">
-                    공사계약서 (Contract)
-                </label>
-                <label>
-                    <input type="checkbox" class="print-check" value="estimate" data-target="print-estimate">
-                    계약견적서 (Estimate)
-                </label>
-                <label>
-                    <input type="checkbox" class="print-check" value="stats" data-target="print-stats">
-                    통계분석 (Analysis)
-                </label>
-            </div>
-            <div class="print-modal-btns">
-                <button class="cancel-btn" onclick="closePrintSelectionModal()">취소</button>
-                <button class="print-btn" onclick="printSelectedDocs()">인쇄하기</button>
-            </div>
-        </div>
-    </div>
 </body>
 
 </html>
