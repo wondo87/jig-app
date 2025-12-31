@@ -53,16 +53,6 @@ export default async function handler(req, res) {
                 }
             };
 
-            // Add photo if exists
-            if (item.photoUrl) {
-                properties["사진"] = {
-                    files: [{
-                        name: "Field_Photo",
-                        type: "external",
-                        external: { url: item.photoUrl }
-                    }]
-                };
-            }
 
             const response = await notion.pages.create({
                 parent: { database_id: DATABASE_ID },

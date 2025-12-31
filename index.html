@@ -697,468 +697,612 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* 비밀번호 보호 오버레이 */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .password-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .password-box {
+            width: 90%;
+            max-width: 400px;
+            padding: 40px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .password-box .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+            color: #1d1d1f;
+        }
+
+        .password-box h2 {
+            font-size: 1.2rem;
+            color: #1d1d1f;
+            margin-bottom: 1rem;
+        }
+
+        .password-box p {
+            color: #86868b;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .password-input-group {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .password-input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+
+        .password-input-group input:focus {
+            border-color: #0071e3;
+        }
+
+        .password-btn {
+            width: 100%;
+            padding: 15px;
+            background: #1d1d1f;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .password-btn:hover {
+            background: #000;
+        }
+
+        .password-error {
+            color: #ff3b30;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            display: none;
+        }
     </style>
 </head>
 
 <body>
 
-    <body>
-
-        <!-- Header -->
-        <header class="header" id="header">
-            <div class="header-container">
-                <a href="/" class="logo">DESIGN JIG</a>
-                <nav class="nav" id="nav">
-                    <ul class="nav-list">
-                        <li><a href="/columns" class="nav-link">COLUMNS</a></li>
-                        <li><a href="/portfolio" class="nav-link">PORTFOLIO</a></li>
-                        <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
-                    </ul>
-                </nav>
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+    <!-- 비밀번호 오버레이 -->
+    <div id="passwordOverlay" class="password-overlay">
+        <div class="password-box">
+            <div class="logo-text">DESIGN JIG</div>
+            <h2>비공개 페이지입니다</h2>
+            <p>디자인지그의 포트폴리오와 칼럼 등의 콘텐츠 보호를 위해 비밀번호가 필요합니다.</p>
+            <div class="password-input-group">
+                <input type="password" id="sitePassword" placeholder="••••" maxlength="10">
+                <div id="passwordError" class="password-error">비밀번호가 올바르지 않습니다.</div>
             </div>
-        </header>
+            <button onclick="checkSitePassword()" class="password-btn">입력하기</button>
+        </div>
+    </div>
 
-        <main>
-            <!-- Hero Slider -->
-            <section class="hero-slider">
-                <!-- Slide 1 -->
-                <div class="slide slide-1 active">
-                    <div class="slide-content">
-                        <p class="slide-subtitle">Your Sanctuary</p>
-                        <h1 class="slide-title">매일, 가장 빨리<br>돌아가고 싶은 곳</h1>
-                        <p class="slide-description">
-                            유지보수 걱정 없이, 오래 살수록 편안한 집.<br>
-                            당신의 취향과 삶을 담아 진짜 쉼이 있는 공간을 만듭니다.
-                        </p>
-                        <div class="slide-cta">
-                            <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
-                            <a href="/quote" class="btn btn-secondary">견적 문의</a>
-                        </div>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-container">
+            <a href="/" class="logo">DESIGN JIG</a>
+            <nav class="nav" id="nav">
+                <ul class="nav-list">
+                    <li><a href="/columns" class="nav-link">COLUMNS</a></li>
+                    <li><a href="/portfolio" class="nav-link">PORTFOLIO</a></li>
+                    <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Slider -->
+        <section class="hero-slider">
+            <!-- Slide 1 -->
+            <div class="slide slide-1 active">
+                <div class="slide-content">
+                    <p class="slide-subtitle">Your Sanctuary</p>
+                    <h1 class="slide-title">매일, 가장 빨리<br>돌아가고 싶은 곳</h1>
+                    <p class="slide-description">
+                        유지보수 걱정 없이, 오래 살수록 편안한 집.<br>
+                        당신의 취향과 삶을 담아 진짜 쉼이 있는 공간을 만듭니다.
+                    </p>
+                    <div class="slide-cta">
+                        <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
+                        <a href="/quote" class="btn btn-secondary">견적 문의</a>
                     </div>
                 </div>
+            </div>
 
-                <!-- Slide 2 -->
-                <div class="slide slide-2">
-                    <div class="slide-content">
-                        <p class="slide-subtitle">Quality First</p>
-                        <h1 class="slide-title">보이지 않는 곳부터<br>다릅니다</h1>
-                        <p class="slide-description">
-                            설비, 방수, 단열 — 마감 뒤에 숨은 기본기.<br>
-                            이 기본이 무너지면 삶의 질도 무너집니다.<br>
-                            디자인지그는 보이지 않는 곳부터 제대로 잡습니다.
-                        </p>
-                        <div class="slide-cta">
-                            <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
-                            <a href="/quote" class="btn btn-secondary">견적 문의</a>
-                        </div>
+            <!-- Slide 2 -->
+            <div class="slide slide-2">
+                <div class="slide-content">
+                    <p class="slide-subtitle">Quality First</p>
+                    <h1 class="slide-title">보이지 않는 곳부터<br>다릅니다</h1>
+                    <p class="slide-description">
+                        설비, 방수, 단열 — 마감 뒤에 숨은 기본기.<br>
+                        이 기본이 무너지면 삶의 질도 무너집니다.<br>
+                        디자인지그는 보이지 않는 곳부터 제대로 잡습니다.
+                    </p>
+                    <div class="slide-cta">
+                        <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
+                        <a href="/quote" class="btn btn-secondary">견적 문의</a>
                     </div>
                 </div>
+            </div>
 
-                <!-- Slide 3 -->
-                <div class="slide slide-3">
-                    <div class="slide-content">
-                        <p class="slide-subtitle">Timeless Design</p>
-                        <h1 class="slide-title">튼튼한 기본 위에<br>그리는 아름다움</h1>
-                        <p class="slide-description">
-                            트렌드를 쫓기보다, 오래 봐도 편안한 공간. 기본이 탄탄해야 아름다움도 오래갑니다.<br>
-                            디자인지그는 그 순서를 지킵니다.
-                        </p>
-                        <div class="slide-cta">
-                            <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
-                            <a href="/quote" class="btn btn-secondary">견적 문의</a>
-                        </div>
+            <!-- Slide 3 -->
+            <div class="slide slide-3">
+                <div class="slide-content">
+                    <p class="slide-subtitle">Timeless Design</p>
+                    <h1 class="slide-title">튼튼한 기본 위에<br>그리는 아름다움</h1>
+                    <p class="slide-description">
+                        트렌드를 쫓기보다, 오래 봐도 편안한 공간. 기본이 탄탄해야 아름다움도 오래갑니다.<br>
+                        디자인지그는 그 순서를 지킵니다.
+                    </p>
+                    <div class="slide-cta">
+                        <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
+                        <a href="/quote" class="btn btn-secondary">견적 문의</a>
                     </div>
                 </div>
+            </div>
 
 
-                <!-- Navigation Dots -->
-                <div class="slider-nav">
-                    <button class="slider-dot active" data-slide="0"></button>
-                    <button class="slider-dot" data-slide="1"></button>
-                    <button class="slider-dot" data-slide="2"></button>
-                </div>
-            </section>
+            <!-- Navigation Dots -->
+            <div class="slider-nav">
+                <button class="slider-dot active" data-slide="0"></button>
+                <button class="slider-dot" data-slide="1"></button>
+                <button class="slider-dot" data-slide="2"></button>
+            </div>
+        </section>
 
-            <!-- Feature Section 1: 좌측 텍스트 + 우측 이미지 (주거공간 전문) -->
-            <section class="feature-section">
-                <div class="feature-container reverse">
-                    <div class="feature-content">
-                        <div class="feature-label">
+        <!-- Feature Section 1: 좌측 텍스트 + 우측 이미지 (주거공간 전문) -->
+        <section class="feature-section">
+            <div class="feature-container reverse">
+                <div class="feature-content">
+                    <div class="feature-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        맞춤형 공간 설계
+                    </div>
+                    <h2 class="feature-title">당신만의 안식처를<br>완성합니다</h2>
+                    <p class="feature-description">
+                        좋은 집은 화려하지 않아도 됩니다. 문을 열고 들어서는 순간 '집에 왔다'는 안도감,
+                        소파에 앉아 하루를 내려놓을 수 있는 편안함. 디자인지그는 그런 공간을 만듭니다.
+                    </p>
+                    <ul class="feature-list">
+                        <li>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
-                            맞춤형 공간 설계
-                        </div>
-                        <h2 class="feature-title">당신만의 안식처를<br>완성합니다</h2>
-                        <p class="feature-description">
-                            좋은 집은 화려하지 않아도 됩니다. 문을 열고 들어서는 순간 '집에 왔다'는 안도감,
-                            소파에 앉아 하루를 내려놓을 수 있는 편안함. 디자인지그는 그런 공간을 만듭니다.
-                        </p>
-                        <ul class="feature-list">
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                생활 동선을 고려한 맞춤 설계
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                실용성과 내구성을 갖춘 자재 선택
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                10년 뒤에도 튼튼한 시공 품질
-                            </li>
-                        </ul>
-                        <a href="/portfolio" class="btn-feature">시공 사례 보기</a>
-                    </div>
-                    <div class="feature-image" id="featureImage1">
-                        <img src="" alt="맞춤형 공간 설계" style="width:100%; height:100%; object-fit:cover; display:none;">
-                        <span class="feature-image-placeholder">로딩 중...</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Feature Section 2: 좌측 이미지 + 우측 텍스트 (시공 품질 보증) -->
-            <section class="feature-section bg-light">
-                <div class="feature-container">
-                    <div class="feature-image" id="featureImage2">
-                        <img src="" alt="시공 품질 보증" style="width:100%; height:100%; object-fit:cover; display:none;">
-                        <span class="feature-image-placeholder">로딩 중...</span>
-                    </div>
-                    <div class="feature-content">
-                        <div class="feature-label">
+                            생활 동선을 고려한 맞춤 설계
+                        </li>
+                        <li>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
-                            시공 품질 보증
-                        </div>
-                        <h2 class="feature-title">기본에 충실한<br>시공 품질</h2>
-                        <p class="feature-description">
-                            화려한 마감재 뒤에 숨은 설비, 방수, 단열 등 보이지 않는 곳일수록 더 꼼꼼해야 합니다.
-                            10년 이상 현장을 경험한 소장이 직접 관리하며 끝까지 책임집니다.
-                        </p>
-                        <ul class="feature-list">
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                현장 경력 10년+ 전문가
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                투명한 공정 관리
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                시공 후 A/S 보장
-                            </li>
-                        </ul>
-                        <a href="/quote" class="btn-feature">견적 문의하기</a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Feature Section 3: 좌측 텍스트 + 우측 이미지 (맞춤형 솔루션) -->
-            <section class="feature-section">
-                <div class="feature-container reverse">
-                    <div class="feature-content">
-                        <div class="feature-label">
+                            실용성과 내구성을 갖춘 자재 선택
+                        </li>
+                        <li>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
-                            맞춤형 솔루션
-                        </div>
-                        <h2 class="feature-title">고객의 자산을<br>더 빛나게</h2>
-                        <p class="feature-description">
-                            집은 단순한 공간이 아니라 소중한 자산입니다. 디자인지그는 예산과 라이프스타일에 맞는
-                            제안으로 그 가치를 더 높여드립니다. 상담부터 시공, 사후관리까지 한 팀이 끝까지 함께합니다.
-                        </p>
-                        <ul class="feature-list">
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                합리적인 견적 시스템
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                과잉 시공 없는 정직한 제안
-                            </li>
-                            <li>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                원스톱 프로젝트 관리
-                            </li>
-                        </ul>
-                        <a href="/quote" class="btn-feature">상담 신청하기</a>
-                    </div>
-                    <div class="feature-image" id="featureImage3">
-                        <img src="" alt="맞춤형 솔루션" style="width:100%; height:100%; object-fit:cover; display:none;">
-                        <span class="feature-image-placeholder">로딩 중...</span>
-                    </div>
+                            10년 뒤에도 튼튼한 시공 품질
+                        </li>
+                    </ul>
+                    <a href="/portfolio" class="btn-feature">시공 사례 보기</a>
                 </div>
-            </section>
+                <div class="feature-image" id="featureImage1">
+                    <img src="" alt="맞춤형 공간 설계" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span class="feature-image-placeholder">로딩 중...</span>
+                </div>
+            </div>
+        </section>
 
-            <!-- Column Section: 인테리어 가이드 -->
-            <section class="column-section">
-                <div class="column-container">
-                    <div class="column-header">
-                        <h3 class="column-title">인테리어 가이드</h3>
-                        <a href="/columns" class="column-more">더보기 →</a>
-                    </div>
-                    <div class="column-grid" id="guideGrid">
-                        <!-- Notion에서 가이드 카테고리 글을 불러옵니다 -->
-                        <div class="loading-placeholder">로딩 중...</div>
-                    </div>
+        <!-- Feature Section 2: 좌측 이미지 + 우측 텍스트 (시공 품질 보증) -->
+        <section class="feature-section bg-light">
+            <div class="feature-container">
+                <div class="feature-image" id="featureImage2">
+                    <img src="" alt="시공 품질 보증" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span class="feature-image-placeholder">로딩 중...</span>
                 </div>
-            </section>
-        </main>
+                <div class="feature-content">
+                    <div class="feature-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        시공 품질 보증
+                    </div>
+                    <h2 class="feature-title">기본에 충실한<br>시공 품질</h2>
+                    <p class="feature-description">
+                        화려한 마감재 뒤에 숨은 설비, 방수, 단열 등 보이지 않는 곳일수록 더 꼼꼼해야 합니다.
+                        10년 이상 현장을 경험한 소장이 직접 관리하며 끝까지 책임집니다.
+                    </p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            현장 경력 10년+ 전문가
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            투명한 공정 관리
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            시공 후 A/S 보장
+                        </li>
+                    </ul>
+                    <a href="/quote" class="btn-feature">견적 문의하기</a>
+                </div>
+            </div>
+        </section>
 
-        <!-- Guide Modal -->
-        <div class="guide-modal-overlay" id="guideModal">
-            <div class="guide-modal-content">
-                <div class="guide-modal-header">
-                    <img id="guideModalImage" src="" alt="">
-                    <button class="guide-modal-close" onclick="closeGuideModal()">×</button>
+        <!-- Feature Section 3: 좌측 텍스트 + 우측 이미지 (맞춤형 솔루션) -->
+        <section class="feature-section">
+            <div class="feature-container reverse">
+                <div class="feature-content">
+                    <div class="feature-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                        </svg>
+                        맞춤형 솔루션
+                    </div>
+                    <h2 class="feature-title">고객의 자산을<br>더 빛나게</h2>
+                    <p class="feature-description">
+                        집은 단순한 공간이 아니라 소중한 자산입니다. 디자인지그는 예산과 라이프스타일에 맞는
+                        제안으로 그 가치를 더 높여드립니다. 상담부터 시공, 사후관리까지 한 팀이 끝까지 함께합니다.
+                    </p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            합리적인 견적 시스템
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            과잉 시공 없는 정직한 제안
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            원스톱 프로젝트 관리
+                        </li>
+                    </ul>
+                    <a href="/quote" class="btn-feature">상담 신청하기</a>
                 </div>
-                <div class="guide-modal-body">
-                    <h1 id="guideModalTitle"></h1>
-                    <div class="meta" id="guideModalMeta"></div>
-                    <div class="content" id="guideModalContent"></div>
+                <div class="feature-image" id="featureImage3">
+                    <img src="" alt="맞춤형 솔루션" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span class="feature-image-placeholder">로딩 중...</span>
                 </div>
+            </div>
+        </section>
+
+        <!-- Column Section: 인테리어 가이드 -->
+        <section class="column-section">
+            <div class="column-container">
+                <div class="column-header">
+                    <h3 class="column-title">인테리어 가이드</h3>
+                    <a href="/columns" class="column-more">더보기 →</a>
+                </div>
+                <div class="column-grid" id="guideGrid">
+                    <!-- Notion에서 가이드 카테고리 글을 불러옵니다 -->
+                    <div class="loading-placeholder">로딩 중...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Guide Modal -->
+    <div class="guide-modal-overlay" id="guideModal">
+        <div class="guide-modal-content">
+            <div class="guide-modal-header">
+                <img id="guideModalImage" src="" alt="">
+                <button class="guide-modal-close" onclick="closeGuideModal()">×</button>
+            </div>
+            <div class="guide-modal-body">
+                <h1 id="guideModalTitle"></h1>
+                <div class="meta" id="guideModalMeta"></div>
+                <div class="content" id="guideModalContent"></div>
             </div>
         </div>
+    </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-container">
-                <div class="footer-brand">
-                    <span class="footer-logo">디자인지그</span>
-                    <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
-                </div>
-
-                <div class="footer-info">
-                    <p>경기도 용인시</p>
-                    <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
-                    <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
-                </div>
-
-                <div class="footer-sns">
-                    <a href="https://blog.naver.com/sweet00700" class="sns-link" target="_blank"
-                        rel="noopener noreferrer" title="네이버 블로그">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" />
-                        </svg>
-                    </a>
-                    <a href="https://cafe.naver.com/supermanhome" class="sns-link" target="_blank"
-                        rel="noopener noreferrer" title="네이버 카페">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path
-                                d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
-                            <path d="M2 20h20v2H2z" />
-                        </svg>
-                    </a>
-                    <a href="https://www.instagram.com/design__jig" class="sns-link" target="_blank"
-                        rel="noopener noreferrer" title="인스타그램">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                        </svg>
-                    </a>
-                    <a href="https://www.youtube.com/@DESIGN_JIG" class="sns-link" target="_blank"
-                        rel="noopener noreferrer" title="유튜브">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path
-                                d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                        </svg>
-                    </a>
-                </div>
-
-                <div class="footer-copyright">
-                    <p>Copyright Rimdesign interior. All Right Reserved.</p>
-                </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <span class="footer-logo">디자인지그</span>
+                <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
             </div>
-        </footer>
 
-        <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
-        <script>
-            // Slider functionality
-            let currentSlide = 0;
-            const slides = document.querySelectorAll('.slide');
-            const dots = document.querySelectorAll('.slider-dot');
-            const totalSlides = slides.length;
-            let autoplayInterval;
+            <div class="footer-info">
+                <p>경기도 용인시</p>
+                <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+                <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
+            </div>
 
-            function showSlide(index) {
-                slides.forEach(slide => slide.classList.remove('active'));
-                dots.forEach(dot => dot.classList.remove('active'));
+            <div class="footer-sns">
+                <a href="https://blog.naver.com/sweet00700" class="sns-link" target="_blank" rel="noopener noreferrer"
+                    title="네이버 블로그">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" />
+                    </svg>
+                </a>
+                <a href="https://cafe.naver.com/supermanhome" class="sns-link" target="_blank" rel="noopener noreferrer"
+                    title="네이버 카페">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                            d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                        <path d="M2 20h20v2H2z" />
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/design__jig" class="sns-link" target="_blank"
+                    rel="noopener noreferrer" title="인스타그램">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="https://www.youtube.com/@DESIGN_JIG" class="sns-link" target="_blank" rel="noopener noreferrer"
+                    title="유튜브">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                </a>
+            </div>
 
-                currentSlide = (index + totalSlides) % totalSlides;
-                slides[currentSlide].classList.add('active');
-                dots[currentSlide].classList.add('active');
+            <div class="footer-copyright">
+                <p>Copyright Rimdesign interior. All Right Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
+        // 비밀번호 확인 로직
+        const DEFAULT_SITE_PASSWORD = 'W6454';
+
+        function checkSitePassword() {
+            const input = document.getElementById('sitePassword').value;
+            const error = document.getElementById('passwordError');
+
+            if (input === DEFAULT_SITE_PASSWORD) {
+                localStorage.setItem('dz_site_unlocked', 'true');
+                document.getElementById('passwordOverlay').classList.remove('show');
+                document.body.style.overflow = '';
+            } else {
+                error.style.display = 'block';
+                document.getElementById('sitePassword').value = '';
+                document.getElementById('sitePassword').focus();
             }
+        }
 
-            function nextSlide() {
-                showSlide(currentSlide + 1);
-            }
+        // 페이지 로드 시 확인
+        document.addEventListener('DOMContentLoaded', function () {
+            const overlay = document.getElementById('passwordOverlay');
+            const isUnlocked = localStorage.getItem('dz_site_unlocked');
 
-            function prevSlide() {
-                showSlide(currentSlide - 1);
-            }
-
-            // Auto play
-            function startAutoplay() {
-                autoplayInterval = setInterval(nextSlide, 5000);
-            }
-
-            function stopAutoplay() {
-                clearInterval(autoplayInterval);
-            }
-
-            // Event listeners for dots
-            dots.forEach((dot, index) => {
-                dot.addEventListener('click', () => {
-                    showSlide(index);
-                    stopAutoplay();
-                    startAutoplay();
+            if (!isUnlocked) {
+                overlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                document.getElementById('sitePassword').addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') checkSitePassword();
                 });
-            });
-
-            // Start autoplay
-            startAutoplay();
-
-            // Mobile menu toggle
-            document.getElementById('mobileMenuBtn').addEventListener('click', function () {
-                document.getElementById('nav').classList.toggle('active');
-                this.classList.toggle('active');
-            });
-        </script>
-        <script>
-            // 피처 섹션 이미지 로드 (Notion 카테고리에서 이미지 가져오기)
-            async function loadFeatureImages() {
-                const featureCategories = [
-                    { id: 'featureImage1', category: '맞춤형 공간 설계' },
-                    { id: 'featureImage2', category: '시공 품질 보증' },
-                    { id: 'featureImage3', category: '맞춤형 솔루션' }
-                ];
-
-                for (const feature of featureCategories) {
-                    try {
-                        const response = await fetch(`/api/mainpage?category=${encodeURIComponent(feature.category)}`);
-                        if (!response.ok) continue;
-
-                        const articles = await response.json();
-                        if (articles.length === 0) continue;
-
-                        const article = articles[0];
-                        const props = article.properties;
-
-                        // 커버 이미지 URL 가져오기 (커버 > 썸네일 > 아이콘 순)
-                        const coverUrl = article.cover?.external?.url ||
-                            article.cover?.file?.url ||
-                            props.썸네일?.files?.[0]?.external?.url ||
-                            props.썸네일?.files?.[0]?.file?.url ||
-                            props.Thumbnail?.files?.[0]?.external?.url ||
-                            props.Thumbnail?.files?.[0]?.file?.url ||
-                            (article.icon?.type === 'external' ? article.icon.external.url : null) ||
-                            (article.icon?.type === 'file' ? article.icon.file.url : null);
-
-                        if (coverUrl) {
-                            const container = document.getElementById(feature.id);
-                            const img = container.querySelector('img');
-                            const placeholder = container.querySelector('.feature-image-placeholder');
-
-                            img.src = coverUrl;
-                            img.onload = function () {
-                                img.style.display = 'block';
-                                if (placeholder) placeholder.style.display = 'none';
-                            };
-                            img.onerror = function () {
-                                if (placeholder) placeholder.textContent = '이미지를 불러올 수 없습니다';
-                            };
-                        }
-                    } catch (error) {
-                        console.error(`피처 이미지 로드 오류 (${feature.category}):`, error);
-                    }
-                }
+                document.getElementById('sitePassword').focus();
             }
+        });
 
-            // 페이지 로드 시 피처 이미지 불러오기
-            loadFeatureImages();
-        </script>
-        <script>
-            // 가이드 데이터 저장
-            let GUIDE_DATA = [];
+        // Slider functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.slider-dot');
+        const totalSlides = slides.length;
+        let autoplayInterval;
 
-            // 인테리어 가이드 로드 (Notion에서 '가이드' 카테고리 글 가져오기)
-            async function loadGuides() {
-                const guideGrid = document.getElementById('guideGrid');
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
 
+            currentSlide = (index + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Auto play
+        function startAutoplay() {
+            autoplayInterval = setInterval(nextSlide, 5000);
+        }
+
+        function stopAutoplay() {
+            clearInterval(autoplayInterval);
+        }
+
+        // Event listeners for dots
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                showSlide(index);
+                stopAutoplay();
+                startAutoplay();
+            });
+        });
+
+        // Start autoplay
+        startAutoplay();
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+            document.getElementById('nav').classList.toggle('active');
+            this.classList.toggle('active');
+        });
+    </script>
+    <script>
+        // 피처 섹션 이미지 로드 (Notion 카테고리에서 이미지 가져오기)
+        async function loadFeatureImages() {
+            const featureCategories = [
+                { id: 'featureImage1', category: '맞춤형 공간 설계' },
+                { id: 'featureImage2', category: '시공 품질 보증' },
+                { id: 'featureImage3', category: '맞춤형 솔루션' }
+            ];
+
+            for (const feature of featureCategories) {
                 try {
-                    const response = await fetch('/api/columns?category=가이드&limit=3');
-                    if (!response.ok) throw new Error('API 오류');
+                    const response = await fetch(`/api/mainpage?category=${encodeURIComponent(feature.category)}`);
+                    if (!response.ok) continue;
 
                     const articles = await response.json();
-                    GUIDE_DATA = articles;
+                    if (articles.length === 0) continue;
 
-                    if (articles.length === 0) {
-                        guideGrid.innerHTML = '<p style="color:#666; text-align:center; grid-column:1/-1;">등록된 가이드가 없습니다.</p>';
-                        return;
+                    const article = articles[0];
+                    const props = article.properties;
+
+                    // 커버 이미지 URL 가져오기 (커버 > 썸네일 > 아이콘 순)
+                    const coverUrl = article.cover?.external?.url ||
+                        article.cover?.file?.url ||
+                        props.썸네일?.files?.[0]?.external?.url ||
+                        props.썸네일?.files?.[0]?.file?.url ||
+                        props.Thumbnail?.files?.[0]?.external?.url ||
+                        props.Thumbnail?.files?.[0]?.file?.url ||
+                        (article.icon?.type === 'external' ? article.icon.external.url : null) ||
+                        (article.icon?.type === 'file' ? article.icon.file.url : null);
+
+                    if (coverUrl) {
+                        const container = document.getElementById(feature.id);
+                        const img = container.querySelector('img');
+                        const placeholder = container.querySelector('.feature-image-placeholder');
+
+                        img.src = coverUrl;
+                        img.onload = function () {
+                            img.style.display = 'block';
+                            if (placeholder) placeholder.style.display = 'none';
+                        };
+                        img.onerror = function () {
+                            if (placeholder) placeholder.textContent = '이미지를 불러올 수 없습니다';
+                        };
                     }
+                } catch (error) {
+                    console.error(`피처 이미지 로드 오류 (${feature.category}):`, error);
+                }
+            }
+        }
 
-                    guideGrid.innerHTML = articles.map((article, index) => {
-                        const props = article.properties;
-                        const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
-                        const category = props['카테고리']?.select?.name || '가이드';
+        // 페이지 로드 시 피처 이미지 불러오기
+        loadFeatureImages();
+    </script>
+    <script>
+        // 가이드 데이터 저장
+        let GUIDE_DATA = [];
 
-                        // 썸네일 우선순위: 1.커버 2.속성(썸네일) 3.아이콘 4.기본이미지
-                        const coverUrl = article.cover?.external?.url ||
-                            article.cover?.file?.url ||
-                            props.썸네일?.files?.[0]?.external?.url ||
-                            props.썸네일?.files?.[0]?.file?.url ||
-                            props.Thumbnail?.files?.[0]?.external?.url ||
-                            props.Thumbnail?.files?.[0]?.file?.url ||
-                            (article.icon?.type === 'external' ? article.icon.external.url : null) ||
-                            (article.icon?.type === 'file' ? article.icon.file.url : null) ||
-                            'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+        // 인테리어 가이드 로드 (Notion에서 '가이드' 카테고리 글 가져오기)
+        async function loadGuides() {
+            const guideGrid = document.getElementById('guideGrid');
 
-                        return `
+            try {
+                const response = await fetch('/api/columns?category=가이드&limit=3');
+                if (!response.ok) throw new Error('API 오류');
+
+                const articles = await response.json();
+                GUIDE_DATA = articles;
+
+                if (articles.length === 0) {
+                    guideGrid.innerHTML = '<p style="color:#666; text-align:center; grid-column:1/-1;">등록된 가이드가 없습니다.</p>';
+                    return;
+                }
+
+                guideGrid.innerHTML = articles.map((article, index) => {
+                    const props = article.properties;
+                    const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
+                    const category = props['카테고리']?.select?.name || '가이드';
+
+                    // 썸네일 우선순위: 1.커버 2.속성(썸네일) 3.아이콘 4.기본이미지
+                    const coverUrl = article.cover?.external?.url ||
+                        article.cover?.file?.url ||
+                        props.썸네일?.files?.[0]?.external?.url ||
+                        props.썸네일?.files?.[0]?.file?.url ||
+                        props.Thumbnail?.files?.[0]?.external?.url ||
+                        props.Thumbnail?.files?.[0]?.file?.url ||
+                        (article.icon?.type === 'external' ? article.icon.external.url : null) ||
+                        (article.icon?.type === 'file' ? article.icon.file.url : null) ||
+                        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+                    return `
                         <article class="column-card" onclick="openGuideModal(${index})">
                             <img class="column-card-image" src="${coverUrl}" alt="${title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600'">
                             <div class="column-card-content">
@@ -1167,118 +1311,118 @@
                             </div>
                         </article>
                     `;
-                    }).join('');
-                } catch (error) {
-                    console.error('가이드 로드 오류:', error);
-                    guideGrid.innerHTML = '<p style="color:#999; text-align:center; grid-column:1/-1;">가이드를 불러올 수 없습니다.</p>';
-                }
-            }
-
-            // 가이드 모달 열기
-            async function openGuideModal(index) {
-                const article = GUIDE_DATA[index];
-                if (!article) return;
-
-                const props = article.properties;
-                const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
-                const date = props['작성일']?.date?.start || '';
-                const category = props['카테고리']?.select?.name || '가이드';
-
-                const coverUrl = article.cover?.external?.url ||
-                    article.cover?.file?.url ||
-                    props.썸네일?.files?.[0]?.external?.url ||
-                    props.썸네일?.files?.[0]?.file?.url ||
-                    (article.icon?.type === 'external' ? article.icon.external.url : null) ||
-                    (article.icon?.type === 'file' ? article.icon.file.url : null) ||
-                    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
-
-                document.getElementById('guideModalImage').src = coverUrl;
-                document.getElementById('guideModalTitle').textContent = title;
-                document.getElementById('guideModalMeta').textContent = formatGuideDate(date) + ' · ' + category;
-
-                const contentDiv = document.getElementById('guideModalContent');
-                contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
-
-                document.getElementById('guideModal').classList.add('show');
-                document.body.style.overflow = 'hidden';
-
-                // 내용 불러오기
-                try {
-                    const res = await fetch(`/api/content?id=${article.id}`);
-                    if (!res.ok) throw new Error('Failed to fetch content');
-                    const blocks = await res.json();
-                    contentDiv.innerHTML = renderGuideBlocks(blocks);
-                } catch (e) {
-                    console.error('Content Load Error:', e);
-                    contentDiv.innerHTML = '<p>내용을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
-                }
-            }
-
-            function formatGuideDate(dateStr) {
-                if (!dateStr) return '';
-                const date = new Date(dateStr);
-                return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-            }
-
-            function renderGuideBlocks(blocks) {
-                if (!blocks || blocks.length === 0) return '<p>내용이 없습니다.</p>';
-
-                return blocks.map(block => {
-                    const type = block.type;
-                    const value = block[type];
-
-                    switch (type) {
-                        case 'paragraph':
-                            return `<p>${renderGuideRichText(value.rich_text)}</p>`;
-                        case 'heading_1':
-                            return `<h2>${renderGuideRichText(value.rich_text)}</h2>`;
-                        case 'heading_2':
-                            return `<h3>${renderGuideRichText(value.rich_text)}</h3>`;
-                        case 'heading_3':
-                            return `<h4>${renderGuideRichText(value.rich_text)}</h4>`;
-                        case 'bulleted_list_item':
-                            return `<ul><li>${renderGuideRichText(value.rich_text)}</li></ul>`;
-                        case 'numbered_list_item':
-                            return `<ol><li>${renderGuideRichText(value.rich_text)}</li></ol>`;
-                        case 'image':
-                            const imageUrl = value.type === 'external' ? value.external.url : value.file.url;
-                            return `<img src="${imageUrl}" alt="">`;
-                        default:
-                            return '';
-                    }
                 }).join('');
+            } catch (error) {
+                console.error('가이드 로드 오류:', error);
+                guideGrid.innerHTML = '<p style="color:#999; text-align:center; grid-column:1/-1;">가이드를 불러올 수 없습니다.</p>';
             }
+        }
 
-            function renderGuideRichText(richText) {
-                if (!richText || richText.length === 0) return '';
-                return richText.map(text => {
-                    let content = text.plain_text.replace(/\n/g, '<br>');
-                    if (text.annotations.bold) content = `<strong>${content}</strong>`;
-                    if (text.annotations.italic) content = `<em>${content}</em>`;
-                    if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
-                    return content;
-                }).join('');
+        // 가이드 모달 열기
+        async function openGuideModal(index) {
+            const article = GUIDE_DATA[index];
+            if (!article) return;
+
+            const props = article.properties;
+            const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
+            const date = props['작성일']?.date?.start || '';
+            const category = props['카테고리']?.select?.name || '가이드';
+
+            const coverUrl = article.cover?.external?.url ||
+                article.cover?.file?.url ||
+                props.썸네일?.files?.[0]?.external?.url ||
+                props.썸네일?.files?.[0]?.file?.url ||
+                (article.icon?.type === 'external' ? article.icon.external.url : null) ||
+                (article.icon?.type === 'file' ? article.icon.file.url : null) ||
+                'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+            document.getElementById('guideModalImage').src = coverUrl;
+            document.getElementById('guideModalTitle').textContent = title;
+            document.getElementById('guideModalMeta').textContent = formatGuideDate(date) + ' · ' + category;
+
+            const contentDiv = document.getElementById('guideModalContent');
+            contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
+
+            document.getElementById('guideModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // 내용 불러오기
+            try {
+                const res = await fetch(`/api/content?id=${article.id}`);
+                if (!res.ok) throw new Error('Failed to fetch content');
+                const blocks = await res.json();
+                contentDiv.innerHTML = renderGuideBlocks(blocks);
+            } catch (e) {
+                console.error('Content Load Error:', e);
+                contentDiv.innerHTML = '<p>내용을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
             }
+        }
 
-            function closeGuideModal() {
-                document.getElementById('guideModal').classList.remove('show');
-                document.body.style.overflow = '';
-            }
+        function formatGuideDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
 
-            // 모달 외부 클릭시 닫기
-            document.getElementById('guideModal').addEventListener('click', function (e) {
-                if (e.target === this) closeGuideModal();
-            });
+        function renderGuideBlocks(blocks) {
+            if (!blocks || blocks.length === 0) return '<p>내용이 없습니다.</p>';
 
-            // ESC 키로 닫기
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') closeGuideModal();
-            });
+            return blocks.map(block => {
+                const type = block.type;
+                const value = block[type];
 
-            // 페이지 로드 시 가이드 불러오기
-            loadGuides();
-        </script>
-    </body>
+                switch (type) {
+                    case 'paragraph':
+                        return `<p>${renderGuideRichText(value.rich_text)}</p>`;
+                    case 'heading_1':
+                        return `<h2>${renderGuideRichText(value.rich_text)}</h2>`;
+                    case 'heading_2':
+                        return `<h3>${renderGuideRichText(value.rich_text)}</h3>`;
+                    case 'heading_3':
+                        return `<h4>${renderGuideRichText(value.rich_text)}</h4>`;
+                    case 'bulleted_list_item':
+                        return `<ul><li>${renderGuideRichText(value.rich_text)}</li></ul>`;
+                    case 'numbered_list_item':
+                        return `<ol><li>${renderGuideRichText(value.rich_text)}</li></ol>`;
+                    case 'image':
+                        const imageUrl = value.type === 'external' ? value.external.url : value.file.url;
+                        return `<img src="${imageUrl}" alt="">`;
+                    default:
+                        return '';
+                }
+            }).join('');
+        }
+
+        function renderGuideRichText(richText) {
+            if (!richText || richText.length === 0) return '';
+            return richText.map(text => {
+                let content = text.plain_text.replace(/\n/g, '<br>');
+                if (text.annotations.bold) content = `<strong>${content}</strong>`;
+                if (text.annotations.italic) content = `<em>${content}</em>`;
+                if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
+                return content;
+            }).join('');
+        }
+
+        function closeGuideModal() {
+            document.getElementById('guideModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // 모달 외부 클릭시 닫기
+        document.getElementById('guideModal').addEventListener('click', function (e) {
+            if (e.target === this) closeGuideModal();
+        });
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeGuideModal();
+        });
+
+        // 페이지 로드 시 가이드 불러오기
+        loadGuides();
+    </script>
+</body>
 
 </html>
 ```

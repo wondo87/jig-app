@@ -3243,7 +3243,6 @@
                                         <th style="width:110px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
                                         <th style="width:110px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
                                         <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
-                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">사진</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                         <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                     </tr>
@@ -3942,6 +3941,9 @@
         // 기본 비밀번호
         const DEFAULT_PASSWORD = 'W6454';
 
+        // Google Sheets GAS URL
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyP1i5-VbO7QlXTX14J5Qnk3hpbX-EmN-9e7Q8HGH3fenUpjQBQxv3zCXJG1V0QXKTP/exec';
+
         // 강제로 기본 비밀번호로 리셋 (비활성화)
         // localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
 
@@ -3986,10 +3988,11 @@
         // 관리자 로그인
         function loginAdmin() {
             const inputPw = document.getElementById('adminPassword').value;
-            // 고정 비밀번호 사용
+            // 고정 비밀번호 또는 사용자 설정 비밀번호 확인
+            const savedPw = localStorage.getItem('dz_admin_password');
             const fixedPw = 'W6454';
 
-            if (inputPw === fixedPw) {
+            if (inputPw === fixedPw || (savedPw && inputPw === savedPw)) {
                 closeAdminModal();
                 activateAdminMode();
                 showToast('관리자 모드가 활성화되었습니다', 'success');
@@ -4117,37 +4120,40 @@
 
         let scheduleRows = [];
         const defaultScheduleSteps = [
-            { name: "민원 접수", inCharge: "" },
-            { name: "엘리베이터 보양", inCharge: "" },
-            { name: "창호 공사", inCharge: "" },
-            { name: "철거 공사", inCharge: "" },
-            { name: "수도 설비", inCharge: "" },
-            { name: "전기 공사 (기초)", inCharge: "" },
-            { name: "전기 공사 (마감)", inCharge: "" },
-            { name: "목공 공사 (기초)", inCharge: "" },
-            { name: "목공 공사 (마감)", inCharge: "" },
-            { name: "에어컨 공사", inCharge: "" },
-            { name: "방수 공사", inCharge: "" },
-            { name: "타일 공사", inCharge: "" },
-            { name: "욕실 세팅", inCharge: "" },
-            { name: "주방 가구", inCharge: "" },
-            { name: "수납 가구", inCharge: "" },
-            { name: "필름 공사", inCharge: "" },
-            { name: "도장 공사", inCharge: "" },
-            { name: "도배 공사", inCharge: "" },
-            { name: "바닥재 공사 (마루/장판/타일)", inCharge: "" },
-            { name: "상판/샌딩", inCharge: "" },
-            { name: "탄성 코트", inCharge: "" },
-            { name: "중문 공사", inCharge: "" },
-            { name: "조명 세팅", inCharge: "" },
-            { name: "마감 실리콘", inCharge: "" },
-            { name: "입주 청소", inCharge: "" },
-            { name: "공사 완료/준공", inCharge: "" },
-            { name: "준공 사진 촬영", inCharge: "" },
-            { name: "폐기물 처리", inCharge: "" },
-            { name: "자재 상하차", inCharge: "" },
-            { name: "현장 정리/청소", inCharge: "" },
-            { name: "기타", inCharge: "" }
+            { name: "디자인 상담 및 설계", inCharge: "" },
+            { name: "민원 접수 및 보양", inCharge: "" },
+            { name: "보존 상태 확인", inCharge: "" },
+            { name: "가구 철거", inCharge: "" },
+            { name: "마루 철거", inCharge: "" },
+            { name: "일반 철거", inCharge: "" },
+            { name: "설비", inCharge: "" },
+            { name: "1차 방수", inCharge: "" },
+            { name: "창호", inCharge: "" },
+            { name: "2차 방수", inCharge: "" },
+            { name: "시스템 에어컨 선배관", inCharge: "" },
+            { name: "전기 배선", inCharge: "" },
+            { name: "3차 방수", inCharge: "" },
+            { name: "목공/도어", inCharge: "" },
+            { name: "현장정리", inCharge: "" },
+            { name: "타일", inCharge: "" },
+            { name: "화장실 천장 돔", inCharge: "" },
+            { name: "필름", inCharge: "" },
+            { name: "도어락 설치", inCharge: "" },
+            { name: "바닥재 시공", inCharge: "" },
+            { name: "도배", inCharge: "" },
+            { name: "인터폰 설치", inCharge: "" },
+            { name: "도장(탄성)", inCharge: "" },
+            { name: "가구(주방)", inCharge: "" },
+            { name: "가구(붙박이장/신발장)", inCharge: "" },
+            { name: "전기(조명/스위치/콘센트/실링팬)", inCharge: "" },
+            { name: "온도조절기", inCharge: "" },
+            { name: "도기/수전", inCharge: "" },
+            { name: "시스템 에어컨 기계 설치", inCharge: "" },
+            { name: "중문", inCharge: "" },
+            { name: "최종마감/검수", inCharge: "" },
+            { name: "준공청소", inCharge: "" },
+            { name: "최종 마감", inCharge: "" },
+            { name: "인수인계", inCharge: "" }
         ];
 
         function loadScheduleForCustomer() {
@@ -4162,7 +4168,6 @@
                     start: '',
                     end: '',
                     inCharge: s.inCharge || '',
-                    photoUrl: '',
                     memo: ''
                 }));
             }
@@ -4259,16 +4264,6 @@
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" value="${row.inCharge || ''}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="담당자">
                     </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
-                        ${row.photoUrl ? `
-                            <div style="position:relative; display:inline-block;">
-                                <img src="${row.photoUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid #d2d2d7; cursor:pointer;" onclick="window.open('${row.photoUrl}', '_blank')">
-                                <span style="position:absolute; top:-5px; right:-5px; background:rgba(255,59,48,0.8); color:white; width:14px; height:14px; line-height:12px; text-align:center; border-radius:50%; font-size:10px; cursor:pointer;" onclick="removeSchedulePhoto(event, ${index})">✕</span>
-                            </div>
-                        ` : `
-                            <button class="btn btn-secondary btn-sm" onclick="uploadSchedulePhoto(${index})" style="font-size:10px; padding:4px 8px;">📷 추가</button>
-                        `}
-                    </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" value="${row.memo || ''}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
                     </td>
@@ -4288,7 +4283,6 @@
                 start: '',
                 end: '',
                 inCharge: '',
-                photoUrl: '',
                 memo: ''
             });
             renderScheduleTable();
@@ -4319,37 +4313,6 @@
         function saveScheduleToCustomer() {
             currentData.schedules = [...scheduleRows];
             syncAllFields();
-        }
-
-        function uploadSchedulePhoto(index) {
-            const projectName = document.getElementById('scheduleProjectSelect').value || currentData.projectName || currentData.clientName || '미지정';
-            // Cloudinary folder structure: 고객용_공유/현장명/01_현장 시공 사진
-            const folderPath = `고객용_공유/${projectName}/01_현장 시공 사진`;
-
-            var myWidget = cloudinary.createUploadWidget({
-                cloudName: 'designjig',
-                uploadPreset: 'unsigned_preset', // NOTE: User needs to ensure this preset exists in Cloudinary
-                folder: folderPath,
-                clientAllowedFormats: ["png", "jpg", "jpeg", "webp"],
-                maxFileSize: 10000000,
-                multiple: false
-            }, (error, result) => {
-                if (!error && result && result.event === "success") {
-                    console.log('Done! Here is the image info: ', result.info);
-                    updateScheduleRow(index, 'photoUrl', result.info.secure_url);
-                    renderScheduleTable();
-                    showToast('사진 업로드 성공!', 'success');
-                }
-            });
-            myWidget.open();
-        }
-
-        function removeSchedulePhoto(event, index) {
-            event.stopPropagation();
-            if (!confirm('사진을 삭제하시겠습니까?')) return;
-            updateScheduleRow(index, 'photoUrl', '');
-            renderScheduleTable();
-            showToast('사진이 삭제되었습니다', 'success');
         }
 
         async function syncScheduleToNotion() {
@@ -4432,6 +4395,12 @@
         }
 
         function newCustomer() {
+            if (!isAdminMode) {
+                showToast('관리자 로그인이 필요합니다', 'error');
+                showAdminModal();
+                return;
+            }
+            const name = prompt('고객명을 입력하세요:');
             const now = new Date();
             const yy = now.getFullYear().toString().slice(-2);
             const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -4536,6 +4505,11 @@
         }
 
         function deleteCurrentCustomer() {
+            if (!isAdminMode) {
+                showToast('관리자 로그인이 필요합니다', 'error');
+                showAdminModal();
+                return;
+            }
             if (!currentCustomerId || !confirm('이 고객을 삭제하시겠습니까?')) return;
             customers = customers.filter(c => c.customerId !== currentCustomerId);
             localStorage.setItem('dz_customers', JSON.stringify(customers));
@@ -4580,8 +4554,8 @@
                     if (c.status === 'as_done' && c.asEndDate) {
                         statusText = `A/S ~${c.asEndDate}`;
                     }
-                    const displayName = c.projectName || c.clientName || '이름 없음';
-                    const subInfo = c.projectName ? (c.clientName || '') : (c.clientPhone || '');
+                    const displayName = c.projectName || '현장명 미지정';
+                    const subInfo = (c.clientName || '') + (c.clientName && c.clientPhone ? ' / ' : '') + (c.clientPhone || '');
 
                     return `
                     <div class="customer-item ${c.customerId === currentCustomerId ? 'active' : ''}" onclick="selectCustomer('${c.customerId}')">
@@ -4620,8 +4594,47 @@
 
         function filterCustomers() { updateCustomerList(); }
 
-        function saveData() {
+        async function syncToGoogleSheets(data) {
+            try {
+                const payload = {
+                    sheetName: '고객관리',
+                    data: {
+                        customerId: data.customerId || '',
+                        clientName: data.clientName || '',
+                        clientPhone: data.clientPhone || '',
+                        status: data.status || '',
+                        clientAddress: data.clientAddress || '',
+                        projectName: data.projectName || '',
+                        siteAddress: data.siteAddress || '',
+                        constructionPeriod: data.constructionPeriod || '',
+                        pyeong: data.area || '',
+                        totalAmount: data.totalAmount || '',
+                        estimateProfitRate: data.estimateProfitRate || 15,
+                        jsonData: JSON.stringify(data)
+                    }
+                };
+
+                // mode: 'no-cors'를 사용하여 불필요한 에러 방지 (실제 전송은 됨)
+                await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                console.log('Google Sheets Sync successfully triggered');
+            } catch (error) {
+                console.error('Google Sheets Sync Error:', error);
+            }
+        }
+
+        async function saveData() {
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
+
+            if (!isAdminMode) {
+                showToast('관리자 로그인이 필요합니다 (열람 모드에서는 저장할 수 없습니다)', 'error');
+                showAdminModal();
+                return;
+            }
 
             // 관리자 모드일 때만 원가관리표 저장
             if (isAdminMode) {
@@ -4635,6 +4648,15 @@
             else customers.push({ ...currentData });
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
+            if (isAdminMode) {
+                showToast('저장되었습니다 (원가관리표 포함)', 'success');
+            } else {
+                showToast('저장되었습니다', 'success');
+            }
+
+            // Google Sheets 동기화 (백그라운드)
+            syncToGoogleSheets({ ...currentData });
+
             // 저장 후 고객 목록으로 이동
             currentCustomerId = null;
             currentData = {};
@@ -4642,12 +4664,6 @@
             document.getElementById('customerView').style.display = 'none';
             initYearFilter();
             updateCustomerList();
-
-            if (isAdminMode) {
-                showToast('저장되었습니다 (원가관리표 포함)', 'success');
-            } else {
-                showToast('저장되었습니다', 'success');
-            }
         }
 
         function createCoverTable() {
@@ -5737,8 +5753,14 @@
             showToast('데이터 내보내기 완료', 'success');
         }
 
-        function importData() { document.getElementById('importFile').click(); }
-
+        function importData() {
+            if (!isAdminMode) {
+                showToast('관리자 로그인이 필요합니다', 'error');
+                showAdminModal();
+                return;
+            }
+            document.getElementById('importFile').click();
+        }
         function handleImport(event) {
             const file = event.target.files[0];
             if (!file) return;
