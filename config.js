@@ -8,7 +8,7 @@ const CONFIG = {
     // https://cloudinary.com 가입 후 Dashboard에서 확인
     // ----------------------------------------
     CLOUDINARY: {
-        CLOUD_NAME: 'YOUR_CLOUD_NAME',      // 예: 'designjig'
+        CLOUD_NAME: 'designjig',
     },
 
     // ----------------------------------------
@@ -17,8 +17,8 @@ const CONFIG = {
     // ----------------------------------------
     NOTION: {
         PORTFOLIO_DB_ID: '2d016b5df7b380d2a974c5f07b6ebf82',
-        // 칼럼용 데이터베이스 ID (추후 설정)
-        COLUMNS_DB_ID: 'YOUR_COLUMNS_DATABASE_ID',
+        // 칼럼용 데이터베이스 ID
+        COLUMNS_DB_ID: '2d116b5df7b380dcb0ebc5e97f6f9332',
     },
 
     // ----------------------------------------

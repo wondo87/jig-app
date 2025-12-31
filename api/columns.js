@@ -12,8 +12,8 @@ export default async function handler(req, res) {
         });
     }
 
-    // 환경변수 문제로 인해 임시로 ID 하드코딩
-    const databaseId = '2d116b5df7b380dcb0ebc5e97f6f9332';
+    // 환경변수 우선 사용, 없을 경우 기본값 구성
+    const databaseId = process.env.NOTION_COLUMNS_ID || '2d116b5df7b380dcb0ebc5e97f6f9332';
 
     // 카테고리 필터 파라미터 확인
     const { category, limit } = req.query;
