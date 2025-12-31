@@ -4216,16 +4216,18 @@
                             select.value = currentData.projectName;
                         }
                     });
+                } else {
+                    console.error("Failed to load projects:", data.message);
+                    selects.forEach(s => {
+                        const firstOpt = s.options[0];
+                        if (firstOpt) firstOpt.text = "목록 없음 (클릭하여 재시도)";
+                    });
                 }
-                selects.forEach(s => {
-                    const firstOpt = s.options[0];
-                    if (firstOpt) firstOpt.text = "현장을 선택하세요 (노션 연동)";
-                });
             } catch (error) {
                 console.error("Error fetching projects:", error);
                 selects.forEach(s => {
                     const firstOpt = s.options[0];
-                    if (firstOpt) firstOpt.text = "목록 불러오기 실패";
+                    if (firstOpt) firstOpt.text = "서버 연결 실패 (재시도)";
                 });
             }
         }
