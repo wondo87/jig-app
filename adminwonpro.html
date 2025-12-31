@@ -3143,12 +3143,12 @@
                             <!-- 관리자 설정 (관리자 모드일 때만 표시) -->
                             <div class="settings-section" id="adminSettings" style="display:none;">
                                 <h4>⚙️ 관리자 설정</h4>
-                                <div class="settings-row">
+                                <div class="settings-row" style="display: none;">
                                     <input type="password" id="changePassword" placeholder="새 비밀번호">
                                     <button onclick="changeAdminPassword()">비밀번호 변경</button>
                                 </div>
                                 <button onclick="logoutAdmin()"
-                                    style="width:100%; margin-top:8px; padding:8px; border-radius:6px; border:1px solid #ff3b30; background:#fff; color:#ff3b30; font-size:11px; cursor:pointer;">🔒
+                                    style="width:100%; margin-top:8px; padding:12px; border-radius:12px; border:1px solid #ff3b30; background:#fff; color:#ff3b30; font-size:12px; font-weight:600; cursor:pointer;">🔒
                                     관리자 로그아웃</button>
                             </div>
                             <div id="costCategoriesWrapper" class="cost-locked">
@@ -3940,7 +3940,7 @@
         let isAdminMode = false;
 
         // 기본 비밀번호
-        const DEFAULT_PASSWORD = '6454';
+        const DEFAULT_PASSWORD = 'W6454';
 
         // 강제로 기본 비밀번호로 리셋 (비활성화)
         // localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
@@ -3986,9 +3986,10 @@
         // 관리자 로그인
         function loginAdmin() {
             const inputPw = document.getElementById('adminPassword').value;
-            const savedPw = localStorage.getItem('dz_admin_password') || DEFAULT_PASSWORD;
+            // 고정 비밀번호 사용
+            const fixedPw = 'W6454';
 
-            if (inputPw === savedPw) {
+            if (inputPw === fixedPw) {
                 closeAdminModal();
                 activateAdminMode();
                 showToast('관리자 모드가 활성화되었습니다', 'success');
@@ -4035,18 +4036,9 @@
             showToast('관리자 모드가 해제되었습니다', 'success');
         }
 
-        // 비밀번호 변경
+        // 비밀번호 변경 (기능 비활성화)
         function changeAdminPassword() {
-            const newPw = document.getElementById('changePassword').value;
-
-            if (newPw.length < 4) {
-                showToast('비밀번호는 4자리 이상이어야 합니다', 'error');
-                return;
-            }
-
-            localStorage.setItem('dz_admin_password', newPw);
-            document.getElementById('changePassword').value = '';
-            showToast('비밀번호가 변경되었습니다', 'success');
+            showToast('비밀번호 변경은 시스템에서 잠금 처리되었습니다.', 'error');
         }
 
         // 관리자 모드 체크 (저장 시)
@@ -4169,7 +4161,7 @@
                     name: s.name,
                     start: '',
                     end: '',
-                    inCharge: s.inCharge,
+                    inCharge: s.inCharge || '',
                     photoUrl: '',
                     memo: ''
                 }));
@@ -4211,16 +4203,19 @@
                             select.add(option);
                         });
 
+                        // 첫번째 옵션 텍스트 복구
+                        const firstOpt = select.options[0];
+                        if (firstOpt) firstOpt.text = "현장을 선택하세요";
+
                         // 현재 데이터에 프로젝트명이 있으면 선택
                         if (currentData.projectName) {
                             select.value = currentData.projectName;
                         }
                     });
                 } else {
-                    console.error("Failed to load projects:", data.message);
                     selects.forEach(s => {
                         const firstOpt = s.options[0];
-                        if (firstOpt) firstOpt.text = "목록 없음 (클릭하여 재시도)";
+                        if (firstOpt) firstOpt.text = "목록 불러오기 실패";
                     });
                 }
             } catch (error) {

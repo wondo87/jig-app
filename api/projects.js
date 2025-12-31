@@ -1,9 +1,10 @@
-const { Client } = require("@notionhq/client");
+import { Client } from "@notionhq/client";
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY || "ntn_W60962876671zXOYqiYKtlhW1IS8ort8H9fAhUekkeF3JY" });
 const SCHEDULE_DB_ID = "6b993a15bb2643979ceb382460ed7e77";
+const PORTFOLIO_DB_ID = "2d016b5df7b3804bb0e3f65399868e3d";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -25,10 +26,9 @@ module.exports = async (req, res) => {
             }));
             return res.status(200).json({ success: true, projects });
         } else {
-            // Fallback: search in Portfolio database if the select property is empty or missing
-            const portfolioDbId = "2d016b5df7b3804bb0e3f65399868e3d";
+            // Fallback: search in Portfolio database
             const portfolioResponse = await notion.databases.query({
-                database_id: portfolioDbId,
+                database_id: PORTFOLIO_DB_ID,
                 page_size: 100
             });
 
@@ -44,4 +44,4 @@ module.exports = async (req, res) => {
         console.error("Error fetching projects:", error);
         res.status(500).json({ success: false, message: error.message });
     }
-};
+}

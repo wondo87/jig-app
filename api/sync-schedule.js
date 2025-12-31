@@ -1,11 +1,5 @@
-/**
- * Vercel Serverless Function: sync-schedule
- * Path: /api/sync-schedule.js
- */
+import { Client } from "@notionhq/client";
 
-const { Client } = require("@notionhq/client");
-
-// Provided by user - Confirmed working key
 const NOTION_API_KEY = "ntn_W60962876671zXOYqiYKtlhW1IS8ort8H9fAhUekkeF3JY";
 const DATABASE_ID = "6b993a15bb2643979ceb382460ed7e77";
 
@@ -13,7 +7,7 @@ const notion = new Client({
     auth: NOTION_API_KEY,
 });
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     // Enable CORS for local testing if needed
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -91,4 +85,4 @@ module.exports = async (req, res) => {
             error: error.message
         });
     }
-};
+}
