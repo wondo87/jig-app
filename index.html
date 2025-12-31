@@ -1277,18 +1277,8 @@
 
             // 페이지 로드 시 가이드 불러오기
             loadGuides();
-
-            // Entry Password (Subtle Prompt)
-            if (localStorage.getItem('dz_entry_session') !== 'authenticated') {
-                const pw = prompt('비밀번호를 입력하세요 (6454):');
-                if (pw === '6454') {
-                    localStorage.setItem('dz_entry_session', 'authenticated');
-                } else {
-                    alert('비밀번호가 틀렸습니다. 다시 시도해 주세요.');
-                    window.location.reload();
-                }
-            }
         </script>
     </body>
 
 </html>
+```
