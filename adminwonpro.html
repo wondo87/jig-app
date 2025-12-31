@@ -4595,6 +4595,9 @@
         function filterCustomers() { updateCustomerList(); }
 
         async function syncToGoogleSheets(data) {
+            console.log('📤 [Google Sheets Sync] Starting sync process...');
+            console.log('📋 [Google Sheets Sync] Customer Data:', data);
+
             try {
                 const payload = {
                     sheetName: '고객관리',
@@ -4614,16 +4617,30 @@
                     }
                 };
 
+                console.log('📦 [Google Sheets Sync] Payload:', payload);
+                console.log('🌐 [Google Sheets Sync] Target URL:', GOOGLE_SHEET_URL);
+
                 // mode: 'no-cors'를 사용하여 불필요한 에러 방지 (실제 전송은 됨)
-                await fetch(GOOGLE_SHEET_URL, {
+                const response = await fetch(GOOGLE_SHEET_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                console.log('Google Sheets Sync successfully triggered');
+
+                console.log('✅ [Google Sheets Sync] Request sent successfully');
+                console.log('ℹ️ [Google Sheets Sync] Note: no-cors mode prevents reading response status');
+
+                // 사용자에게 시각적 피드백 제공
+                showToast('구글 시트 동기화 요청 전송됨', 'info');
+
             } catch (error) {
-                console.error('Google Sheets Sync Error:', error);
+                console.error('❌ [Google Sheets Sync] Error:', error);
+                console.error('❌ [Google Sheets Sync] Error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                showToast('구글 시트 동기화 실패: ' + error.message, 'error');
             }
         }
 
