@@ -2540,19 +2540,6 @@
         </div>
     </header>
 
-    <!-- 페이지 접근 비밀번호 모달 -->
-    <div class="admin-modal show" id="pageAccessModal">
-        <div class="admin-modal-content">
-            <h3>🔒 페이지 접근</h3>
-            <p>관리 시스템에 접근하려면 비밀번호를 입력하세요</p>
-            <input type="password" id="pageAccessPassword" placeholder="비밀번호"
-                onkeypress="if(event.key==='Enter')checkPageAccess()">
-            <div class="admin-modal-btns">
-                <button class="confirm-btn" onclick="checkPageAccess()">확인</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 관리자 로그인 모달 -->
     <div class="admin-modal" id="adminModal">
         <div class="admin-modal-content">
@@ -2735,9 +2722,16 @@
                                 <div class="section-title"><span class="section-number">02</span> 공사정보</div>
                                 <div class="info-grid">
                                     <div class="info-item full">
-                                        <label>공사명</label>
-                                        <input type="text" class="customer-field" data-field="projectName"
-                                            placeholder="공사명을 입력하세요" oninput="updateCustomerField(this)">
+                                        <label>공사명 (노션 현장명)</label>
+                                        <div style="display:flex; gap:8px;">
+                                            <select id="infoProjectSelect" class="customer-field synced-input"
+                                                data-field="projectName" data-sync="projectName"
+                                                onchange="updateCustomerField(this)" style="flex:1;">
+                                                <option value="">현장을 선택하세요 (노션 연동)</option>
+                                            </select>
+                                            <button class="btn btn-secondary btn-sm" onclick="fetchNotionProjects()"
+                                                title="목록 새로고침" style="padding:6px 12px;">🔄</button>
+                                        </div>
                                     </div>
                                     <div class="info-item full">
                                         <label>현장주소</label>
@@ -3203,44 +3197,62 @@
 
                 <!-- 스케줄 관리 패널 -->
                 <div class="tab-panel" id="panel-schedule">
-                    <div class="document-wrapper">
-                        <div class="doc-header">
+                    <div class="document-wrapper"
+                        style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                        <div class="doc-header"
+                            style="padding:30px; background:#fff; border-bottom:1px solid #f2f2f7; display:flex; justify-content:space-between; align-items:center;">
                             <div>
                                 <div
-                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
+                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#0071e3;">
                                     Design Jig</div>
-                                <h1>📅 공사 스케줄 관리</h1>
-                                <div class="subtitle">Construction Schedule Manager</div>
+                                <h1 style="font-size:24px; font-weight:700; color:#1d1d1f; margin:0;">📅 공사 스케줄 관리</h1>
+                                <div class="subtitle" style="font-size:13px; color:#86868b; margin-top:4px;">
+                                    Construction Schedule Manager</div>
                             </div>
-                            <div style="display:flex; gap:8px;">
-                                <button class="btn btn-secondary btn-sm" onclick="addScheduleRow()">➕ 공정 추가</button>
-                                <button class="btn btn-primary btn-sm" onclick="syncScheduleToNotion()"
-                                    id="scheduleSyncBtn">📤 노션 동기화</button>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <label style="font-size:12px; font-weight:600; color:#1d1d1f;">현장 선택:</label>
+                                    <select id="scheduleProjectSelect" class="customer-field synced-input"
+                                        style="padding:6px 10px; border-radius:6px; border:1px solid #d2d2d7; font-size:12px; min-width:200px;"
+                                        onchange="updateCustomerField(this)" data-field="projectName"
+                                        data-sync="projectName">
+                                        <option value="">현장을 선택하세요 (노션 연동)</option>
+                                    </select>
+                                    <button class="btn btn-secondary btn-sm" onclick="fetchNotionProjects()"
+                                        title="현장 목록 새로고침" style="padding:6px 8px;">🔄</button>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-secondary btn-sm" onclick="addScheduleRow()">➕ 공정 추가</button>
+                                    <button class="btn btn-primary btn-sm" onclick="syncScheduleToNotion()"
+                                        id="scheduleSyncBtn">📤 노션 동기화</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="doc-content">
-                            <div style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px;">
-                                <strong>💡 사용법:</strong> 공정을 추가하고 날짜/담당자를 입력한 후 "노션 동기화" 버튼을 누르세요. 해당 고객의 스케줄이 노션
-                                데이터베이스에 저장됩니다.
+                        <div class="doc-content" style="padding:30px;">
+                            <div
+                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
+                                <strong>💡 사용법:</strong> 현장을 선택하고 공정을 추가한 후 날짜/담당자를 입력하세요. "노션 동기화" 버튼을 누르면 해당 현장의 스케줄이
+                                노션에 저장됩니다. (드래그로 순서 변경 가능)
                             </div>
-                            <table class="data-table" style="width:100%;">
+                            <table class="data-table" style="width:100%; border-collapse:collapse;">
                                 <thead>
-                                    <tr>
-                                        <th style="width:40px;">No</th>
-                                        <th>공정명</th>
-                                        <th style="width:140px;">시작일</th>
-                                        <th style="width:140px;">종료일</th>
-                                        <th style="width:120px;">담당자</th>
-                                        <th style="width:50px;"></th>
+                                    <tr style="background:#f5f5f7;">
+                                        <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7;">공정명</th>
+                                        <th style="width:110px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
+                                        <th style="width:110px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                     </tr>
                                 </thead>
                                 <tbody id="scheduleTableBody">
-                                    <!-- Dynamic rows -->
+                                    <!-- Dynamic Rows -->
                                 </tbody>
                             </table>
                             <div id="scheduleEmptyState"
                                 style="text-align:center; padding:40px; color:#86868b; display:none;">
-                                추가된 공정이 없습니다. "공정 추가" 버튼을 눌러주세요.
+                                등록된 스케줄이 없습니다. 공정을 추가해주세요.
                             </div>
                         </div>
                     </div>
@@ -3926,23 +3938,10 @@
         let isAdminMode = false;
 
         // 기본 비밀번호
-        const DEFAULT_PASSWORD = 'W6454';
-        const PAGE_ACCESS_PASSWORD = '6454';
+        const DEFAULT_PASSWORD = '6454';
 
         // 강제로 기본 비밀번호로 리셋 (한번만 실행 후 이 줄 삭제 가능)
         localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
-
-        // 페이지 접근 비밀번호 확인
-        function checkPageAccess() {
-            const inputPw = document.getElementById('pageAccessPassword').value;
-            if (inputPw === PAGE_ACCESS_PASSWORD) {
-                document.getElementById('pageAccessModal').classList.remove('show');
-            } else {
-                alert('비밀번호가 틀렸습니다');
-                document.getElementById('pageAccessPassword').value = '';
-                document.getElementById('pageAccessPassword').focus();
-            }
-        }
 
         // 관리자 모달 표시
         function showAdminModal() {
@@ -4105,212 +4104,275 @@
         function showCustomerTab(tabId) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.customer-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('panel-' + tabId).classList.add('active');
-            event.target.classList.add('active');
+
+            const panel = document.getElementById('panel-' + tabId);
+            if (panel) panel.classList.add('active');
+
+            // Find the button and add active class
+            const buttons = document.querySelectorAll('.customer-tab');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(`'${tabId}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+
             syncAllFields();
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
         }
 
-        // ========== 스케줄 관리 기능 ==========
         let scheduleRows = [];
-        let draggedRow = null;
         const defaultScheduleSteps = [
-            { name: "디자인 상담 및 설계", inCharge: "" },
-            { name: "민원 접수 및 보양", inCharge: "" },
-            { name: "보존 상태 확인", inCharge: "" },
-            { name: "가구 철거", inCharge: "" },
-            { name: "마루 철거", inCharge: "" },
-            { name: "일반 철거", inCharge: "" },
-            { name: "설비", inCharge: "" },
-            { name: "창호 시공", inCharge: "" },
-            { name: "시스템 에어컨", inCharge: "" },
-            { name: "전기 배선", inCharge: "" },
-            { name: "목공/도어", inCharge: "" },
-            { name: "현장정리", inCharge: "" },
-            { name: "타일", inCharge: "" },
-            { name: "화장실 천장 돔", inCharge: "" },
-            { name: "필름", inCharge: "" },
-            { name: "도어락 설치", inCharge: "" },
-            { name: "바닥재 시공", inCharge: "" },
-            { name: "도배", inCharge: "" },
-            { name: "인터폰 설치", inCharge: "" },
-            { name: "도장(탄성)", inCharge: "" },
-            { name: "가구(주방)", inCharge: "" },
-            { name: "가구(붙박이장/신발장)", inCharge: "" },
-            { name: "전기 (기구설치)", inCharge: "" },
-            { name: "온도조절기", inCharge: "" },
-            { name: "도기/수전", inCharge: "" },
-            { name: "시스템 에어컨 기계 설치", inCharge: "" },
-            { name: "중문", inCharge: "" },
-            { name: "최종마감/검수", inCharge: "" },
-            { name: "준공청소", inCharge: "" },
-            { name: "최종마감", inCharge: "" },
-            { name: "인수인계", inCharge: "" }
+            { name: "민원 접수", inCharge: "" },
+            { name: "엘리베이터 보양", inCharge: "" },
+            { name: "창호 공사", inCharge: "" },
+            { name: "철거 공사", inCharge: "" },
+            { name: "수도 설비", inCharge: "" },
+            { name: "전기 공사 (기초)", inCharge: "" },
+            { name: "전기 공사 (마감)", inCharge: "" },
+            { name: "목공 공사 (기초)", inCharge: "" },
+            { name: "목공 공사 (마감)", inCharge: "" },
+            { name: "에어컨 공사", inCharge: "" },
+            { name: "방수 공사", inCharge: "" },
+            { name: "타일 공사", inCharge: "" },
+            { name: "욕실 세팅", inCharge: "" },
+            { name: "주방 가구", inCharge: "" },
+            { name: "수납 가구", inCharge: "" },
+            { name: "필름 공사", inCharge: "" },
+            { name: "도장 공사", inCharge: "" },
+            { name: "도배 공사", inCharge: "" },
+            { name: "바닥재 공사 (마루/장판/타일)", inCharge: "" },
+            { name: "상판/샌딩", inCharge: "" },
+            { name: "탄성 코트", inCharge: "" },
+            { name: "중문 공사", inCharge: "" },
+            { name: "조명 세팅", inCharge: "" },
+            { name: "마감 실리콘", inCharge: "" },
+            { name: "입주 청소", inCharge: "" },
+            { name: "공사 완료/준공", inCharge: "" },
+            { name: "준공 사진 촬영", inCharge: "" },
+            { name: "폐기물 처리", inCharge: "" },
+            { name: "자재 상하차", inCharge: "" },
+            { name: "현장 정리/청소", inCharge: "" },
+            { name: "기타", inCharge: "" }
         ];
 
         function loadScheduleForCustomer() {
-            // 고객 데이터에 저장된 스케줄 로드 또는 기본 스케줄
+            fetchNotionProjects();
+
             if (currentData.schedules && currentData.schedules.length > 0) {
                 scheduleRows = [...currentData.schedules];
-            } else if (scheduleRows.length === 0) {
-                // 첫 로드 시 기본 스케줄 세팅
-                defaultScheduleSteps.forEach(s => {
-                    scheduleRows.push({
-                        id: Date.now() + Math.random(),
-                        name: s.name,
-                        start: '',
-                        end: '',
-                        inCharge: s.inCharge
+            } else {
+                scheduleRows = defaultScheduleSteps.map(s => ({
+                    id: Date.now() + Math.random(),
+                    name: s.name,
+                    start: '',
+                    end: '',
+                    inCharge: s.inCharge
+                }));
+            }
+            renderScheduleTable();
+
+            // 모든 연동 필드 업데이트
+            syncAllFields();
+        }
+
+        async function fetchNotionProjects() {
+            const selects = [
+                document.getElementById('scheduleProjectSelect'),
+                document.getElementById('infoProjectSelect')
+            ].filter(s => s !== null);
+
+            if (selects.length === 0) return;
+
+            try {
+                selects.forEach(s => {
+                    const firstOpt = s.options[0];
+                    if (firstOpt) firstOpt.text = "현장 목록 불러오는 중...";
+                });
+
+                const response = await fetch('/api/projects');
+                const data = await response.json();
+
+                if (data.success && data.projects) {
+                    selects.forEach(select => {
+                        // 기존 옵션 제거 (첫번째 제외)
+                        while (select.options.length > 1) {
+                            select.remove(1);
+                        }
+
+                        data.projects.forEach(p => {
+                            const option = document.createElement('option');
+                            option.value = p.name;
+                            option.text = p.name;
+                            select.add(option);
+                        });
+
+                        // 현재 데이터에 프로젝트명이 있으면 선택
+                        if (currentData.projectName) {
+                            select.value = currentData.projectName;
+                        }
                     });
+                }
+                selects.forEach(s => {
+                    const firstOpt = s.options[0];
+                    if (firstOpt) firstOpt.text = "현장을 선택하세요 (노션 연동)";
+                });
+            } catch (error) {
+                console.error("Error fetching projects:", error);
+                selects.forEach(s => {
+                    const firstOpt = s.options[0];
+                    if (firstOpt) firstOpt.text = "목록 불러오기 실패";
                 });
             }
-            renderScheduleTable();
-        }
-
-        function addScheduleRow(data = { name: '', start: '', end: '', inCharge: '' }) {
-            scheduleRows.push({
-                id: Date.now() + Math.random(),
-                ...data
-            });
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
-
-        function removeScheduleRow(id) {
-            scheduleRows = scheduleRows.filter(r => r.id !== id);
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
-
-        function updateScheduleRow(id, field, value) {
-            const row = scheduleRows.find(r => r.id === id);
-            if (row) {
-                row[field] = value;
-                saveScheduleToCustomer();
-            }
-        }
-
-        function saveScheduleToCustomer() {
-            currentData.schedules = [...scheduleRows];
-        }
-
-        // 드래그 앤 드롭 순서 변경
-        function handleDragStart(e, index) {
-            draggedRow = index;
-            e.target.style.opacity = '0.5';
-        }
-
-        function handleDragEnd(e) {
-            e.target.style.opacity = '1';
-            draggedRow = null;
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
-
-        function handleDrop(e, dropIndex) {
-            e.preventDefault();
-            if (draggedRow === null || draggedRow === dropIndex) return;
-
-            const draggedItem = scheduleRows[draggedRow];
-            scheduleRows.splice(draggedRow, 1);
-            scheduleRows.splice(dropIndex, 0, draggedItem);
-
-            renderScheduleTable();
-            saveScheduleToCustomer();
-            showToast('순서가 변경되었습니다', 'success');
-        }
-
-        // 위/아래 버튼으로 순서 변경
-        function moveRowUp(index) {
-            if (index <= 0) return;
-            [scheduleRows[index], scheduleRows[index - 1]] = [scheduleRows[index - 1], scheduleRows[index]];
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
-
-        function moveRowDown(index) {
-            if (index >= scheduleRows.length - 1) return;
-            [scheduleRows[index], scheduleRows[index + 1]] = [scheduleRows[index + 1], scheduleRows[index]];
-            renderScheduleTable();
-            saveScheduleToCustomer();
         }
 
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
-            const emptyState = document.getElementById('scheduleEmptyState');
-
+            const empty = document.getElementById('scheduleEmptyState');
             if (!tbody) return;
 
             if (scheduleRows.length === 0) {
                 tbody.innerHTML = '';
-                if (emptyState) emptyState.style.display = 'block';
+                empty.style.display = 'block';
                 return;
             }
 
-            if (emptyState) emptyState.style.display = 'none';
-
+            empty.style.display = 'none';
             tbody.innerHTML = scheduleRows.map((row, index) => `
-                <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${index})" style="cursor:grab;">
-                    <td style="text-align:center; color:#86868b;">
-                        <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
-                            <span style="cursor:grab; color:#ccc;">☰</span>
-                            ${index + 1}
-                        </div>
+                <tr draggable="true" 
+                    ondragstart="handleDragStart(event, ${index})" 
+                    ondragover="handleDragOver(event)" 
+                    ondrop="handleDrop(event, ${index})" 
+                    ondragend="handleDragEnd(event)"
+                    style="cursor:move; transition: background 0.2s;">
+                    <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.name}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'name', this.value)">
                     </td>
-                    <td><input type="text" value="${row.name || ''}" onchange="updateScheduleRow(${row.id}, 'name', this.value)" placeholder="공정명" style="width:100%; border:none; background:transparent;"></td>
-                    <td><input type="date" value="${row.start || ''}" onchange="updateScheduleRow(${row.id}, 'start', this.value)" style="width:100%; border:none; background:transparent;"></td>
-                    <td><input type="date" value="${row.end || ''}" onchange="updateScheduleRow(${row.id}, 'end', this.value)" style="width:100%; border:none; background:transparent;"></td>
-                    <td><input type="text" value="${row.inCharge || ''}" onchange="updateScheduleRow(${row.id}, 'inCharge', this.value)" placeholder="담당자" style="width:100%; border:none; background:transparent;"></td>
-                    <td style="text-align:center;">
-                        <button onclick="moveRowUp(${index})" style="border:none; background:#f0f0f0; width:20px; height:20px; border-radius:3px; cursor:pointer; margin-right:2px;" title="위로">▲</button>
-                        <button onclick="moveRowDown(${index})" style="border:none; background:#f0f0f0; width:20px; height:20px; border-radius:3px; cursor:pointer; margin-right:4px;" title="아래로">▼</button>
-                        <button onclick="removeScheduleRow(${row.id})" style="border:none; background:#ff3b30; color:white; width:20px; height:20px; border-radius:3px; cursor:pointer;" title="삭제">✕</button>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="date" value="${row.start || ''}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'start', this.value)">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="date" value="${row.end || ''}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'end', this.value)">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.inCharge || ''}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="담당자">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.memo || ''}" class="customer-field" style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;" onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
+                    </td>
+                    <td style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
+                        <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)" style="padding:2px 4px;">▲</button>
+                        <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)" style="padding:2px 4px;">▼</button>
+                        <button class="btn btn-secondary btn-sm" onclick="removeScheduleRow(${index})" style="padding:2px 4px; color:#ff3b30;">✕</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function syncScheduleToNotion() {
-            const projectName = currentData.projectName || currentData.clientName || '미지정 프로젝트';
-            const validSchedules = scheduleRows.filter(r => r.name && r.name.trim() !== '');
+        function addScheduleRow() {
+            scheduleRows.push({
+                id: Date.now() + Math.random(),
+                name: '',
+                start: '',
+                end: '',
+                inCharge: '',
+                memo: ''
+            });
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
 
-            if (validSchedules.length === 0) {
-                showToast('동기화할 공정이 없습니다', 'error');
+        function removeScheduleRow(index) {
+            if (!confirm('기록을 삭제하시겠습니까?')) return;
+            scheduleRows.splice(index, 1);
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        function updateScheduleRow(index, field, value) {
+            scheduleRows[index][field] = value;
+            saveScheduleToCustomer();
+        }
+
+        function moveScheduleRow(index, delta) {
+            const newIndex = index + delta;
+            if (newIndex < 0 || newIndex >= scheduleRows.length) return;
+            const item = scheduleRows.splice(index, 1)[0];
+            scheduleRows.splice(newIndex, 0, item);
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        function saveScheduleToCustomer() {
+            currentData.schedules = [...scheduleRows];
+            syncAllFields();
+        }
+
+        async function syncScheduleToNotion() {
+            const btn = document.getElementById('scheduleSyncBtn');
+            const projectName = document.getElementById('scheduleProjectSelect').value || currentData.projectName || currentData.clientName;
+
+            if (!projectName) {
+                alert('현장명(또는 고객명)이 없습니다. 상단에서 현장을 선택해주세요.');
                 return;
             }
 
-            const btn = document.getElementById('scheduleSyncBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '⏳ 동기화 중...';
+            if (scheduleRows.length === 0) {
+                alert('동기화할 공정 데이터가 없습니다.');
+                return;
+            }
+
+            if (!confirm(`[${projectName}] 현장의 스케줄을 노션으로 전송할까요?`)) return;
 
             try {
+                btn.disabled = true;
+                btn.textContent = '⏳ 전송 중...';
+
                 const response = await fetch('/api/sync-schedule', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         project: projectName,
-                        schedules: validSchedules
+                        schedules: scheduleRows.filter(r => r.name.trim() !== '')
                     })
                 });
 
                 const result = await response.json();
-
-                if (response.ok) {
-                    showToast(`노션에 ${result.count}개의 일정이 등록되었습니다!`, 'success');
+                if (result.success) {
+                    showToast('노션 동기화 성공!', 'success');
                 } else {
-                    throw new Error(result.message || '서버 응답 오류');
+                    throw new Error(result.message);
                 }
-            } catch (e) {
-                console.error('Schedule sync error:', e);
-                showToast(`동기화 실패: ${e.message}`, 'error');
+            } catch (error) {
+                console.error('Sync Error:', error);
+                alert('동기화 실패: ' + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = originalText;
+                btn.textContent = '📤 노션 동기화';
             }
+        }
+
+        // Drag & Drop
+        let draggedIndex = null;
+        function handleDragStart(e, index) {
+            draggedIndex = index;
+            e.target.style.opacity = '0.4';
+        }
+        function handleDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedIndex = null;
+        }
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+        function handleDrop(e, index) {
+            e.preventDefault();
+            if (draggedIndex === null || draggedIndex === index) return;
+            const item = scheduleRows.splice(draggedIndex, 1)[0];
+            scheduleRows.splice(index, 0, item);
+            renderScheduleTable();
+            saveScheduleToCustomer();
         }
 
         function syncAllFields() {
@@ -4448,7 +4510,7 @@
             const monthFilter = document.getElementById('monthFilter').value;
 
             let filtered = customers.filter(c => {
-                const matchSearch = [c.clientName, c.clientPhone, c.siteAddress].join(' ').toLowerCase().includes(searchTerm);
+                const matchSearch = [c.clientName, c.clientPhone, c.siteAddress, c.projectName].join(' ').toLowerCase().includes(searchTerm);
                 const matchStatus = currentStatusFilter === 'all' || c.status === currentStatusFilter;
 
                 // 년/월 필터 (customerId 기준: YYMMDD-XXX)
@@ -4480,7 +4542,7 @@
                             <span class="customer-item-id">${c.customerId}</span>
                             <span class="status-badge ${c.status}">${statusText}</span>
                         </div>
-                        <div class="customer-item-name">${c.clientName || '이름 없음'}</div>
+                        <div class="customer-item-name">${c.clientName || '이름 없음'} <span style="font-size:10px; opacity:0.6; font-weight:normal;">${c.projectName ? '[' + c.projectName + ']' : ''}</span></div>
                         <div class="customer-item-info">${c.clientPhone || ''}</div>
                     </div>
                 `}).join('');
