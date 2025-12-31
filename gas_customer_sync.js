@@ -5,7 +5,7 @@
 // 용도: adminwonpro.html에서 고객 데이터를 Google Sheets로 동기화
 
 // 올바른 스프레드시트 ID
-var SPREADSHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
+var SPREADSHEET_ID = '12uGvZETy-_6Er6SYkzA0F1VQ8gMogKuESpSLY75yiF0';
 
 /**
  * POST 요청 핸들러 - 단일 고객 데이터 저장/업데이트
