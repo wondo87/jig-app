@@ -2,6 +2,9 @@ import { Client } from '@notionhq/client';
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
+// 메모리 캐시 (30분 TTL)
+const cache = new Map();
+const CACHE_TTL = 30 * 60 * 1000; // 30분
 
 export default async function handler(req, res) {
     // 환경변수 확인
@@ -17,6 +20,17 @@ export default async function handler(req, res) {
 
     // 카테고리 필터 파라미터 확인
     const { category, limit } = req.query;
+    const cacheKey = `columns_${category || 'all'}_${limit || 'all'}`;
+
+    // Edge/CDN 캐시 헤더 설정 (30분 캐시, 1일 백그라운드 재검증)
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
+
+    // 메모리 캐시 확인
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.status(200).json(cached.data);
+    }
 
     try {
         const queryOptions = {
@@ -46,7 +60,10 @@ export default async function handler(req, res) {
 
         const response = await notion.databases.query(queryOptions);
 
-        // 노션의 원본 데이터(results)를 그대로 클라이언트에 보냅니다.
+        // 캐시에 저장
+        cache.set(cacheKey, { data: response.results, timestamp: Date.now() });
+
+        res.setHeader('X-Cache', 'MISS');
         res.status(200).json(response.results);
     } catch (error) {
         console.error('Notion API Error (With Sort):', error);
@@ -56,6 +73,10 @@ export default async function handler(req, res) {
             const response = await notion.databases.query({
                 database_id: databaseId,
             });
+
+            // 캐시에 저장
+            cache.set(cacheKey, { data: response.results, timestamp: Date.now() });
+
             return res.status(200).json(response.results);
         } catch (retryError) {
             console.error('Notion API Error (Retry):', retryError);
