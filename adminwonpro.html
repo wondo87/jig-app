@@ -4883,7 +4883,7 @@
             currentData = {
                 customerId: currentCustomerId,
                 clientName: name,  // 입력받은 고객명 저장
-                projectName: name, // 현장명도 동일하게 설정
+                projectName: '',   // 현장명은 비워둠 (요청 사항)
                 status: 'consulting',
                 createdAt: new Date().toISOString().split('T')[0],
                 profitRate: '15%',
@@ -4907,7 +4907,7 @@
             const clientNameField = document.querySelector('.customer-field[data-field="clientName"]');
             if (clientNameField) clientNameField.value = name;
             const projectNameField = document.querySelector('.customer-field[data-field="projectName"]');
-            if (projectNameField) projectNameField.value = name;
+            if (projectNameField) projectNameField.value = '';
             document.getElementById('headerCustomerName').textContent = name;
             clearCostData();
             // 견적 데이터 초기화 (메모는 undefined로 설정해서 원가관리표 메모 사용)
