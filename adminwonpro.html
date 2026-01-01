@@ -8,9 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
 
-    <!-- 페이지 접근 보호 스크립트 (최우선 실행) -->
+    <!-- 페이지 접근 보호 스크립트 (테스트를 위해 임시 비활성화) -->
     <script>
         (function () {
+            // 테스트 중 비밀번호 보호 비활성화
+            sessionStorage.setItem('dz_admin_page_auth', 'true');
+            /*
             const ADMIN_PAGE_PASSWORD = 'W6454';
             const isAuthenticated = sessionStorage.getItem('dz_admin_page_auth');
 
@@ -25,6 +28,7 @@
                     window.location.href = '/';
                 }
             }
+            */
         })();
     </script>
 
@@ -3943,7 +3947,7 @@
         const DEFAULT_PASSWORD = 'W6454';
 
         // Google Sheets GAS URL
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxdxhwhxkikPcK5dlPb9ldTWD7kSkjIBr2Yg6amu1cPioDaFwNOM836FITtQ3YH1yRwpg/exec';
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwzY4jD5QPhIwmCIBrrjDrPGt1u5Swr5yhI-UdmAas_JeRL81K1IAmmh3Pv3tlI7RWOWg/exec';
 
         // 강제로 기본 비밀번호로 리셋 (비활성화)
         // localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
@@ -4544,7 +4548,7 @@
                 // no-cors 모드 제거하여 실제 응답 확인 가능
                 const response = await fetch(GOOGLE_SHEET_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
 
