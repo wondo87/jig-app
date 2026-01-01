@@ -7,6 +7,8 @@
     <title>디자인지그 통합 관리 시스템</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
+    <!-- 환경 설정 파일 로드 (비밀번호 등) -->
+    <script src="admin_config.js"></script>
 
     <!-- 페이지 접근 및 다중 관리자 시스템 -->
     <script>
@@ -4172,15 +4174,9 @@
         let currentStatusFilter = 'all';
 
         // ========== 다중 관리자 시스템 ==========
-        // 메인관리자 (하드코딩)
-        const MAIN_ADMIN = {
-            id: 'sweet00700',
-            password: 'Zxasqw12!@',
-            role: 'main'
-        };
+        // ========== 다중 관리자 시스템 ==========
+        // 설정값은 admin_config.js 에서 로드됨
 
-        // 삭제 비밀번호
-        const DELETE_PASSWORD = '6454';
 
         // 일반관리자 목록 (localStorage)
         function getRegularAdmins() {
@@ -4310,7 +4306,7 @@
         }
 
         // Google Sheets GAS URL
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwzY4jD5QPhIwmCIBrrjDrPGt1u5Swr5yhI-UdmAas_JeRL81K1IAmmh3Pv3tlI7RWOWg/exec';
+
 
         // 관리자 모달 표시
         function showAdminModal() {
@@ -5264,8 +5260,31 @@
             // 고객별 견적 데이터는 항상 저장
             saveEstimateData();
             const idx = customers.findIndex(c => c.customerId === currentCustomerId);
-            if (idx >= 0) customers[idx] = { ...currentData };
-            else customers.push({ ...currentData });
+
+            // FUNDAMENTAL LOCK CHECK
+            if (idx >= 0) {
+                const original = customers[idx];
+                // If it was locked, and we are not just unlocking it (i.e. isLocked is still true in currentData or original logic), BLOCK.
+                // Wait, toggleCustomerLock modifies customers array directly.
+                // Here we are potentially overwriting it from currentData.
+                // If original is locked, we must NOT overwrite it unless we are Main Admin unlocking it?
+                // But toggleCustomerLock handles the unlock.
+                // This function is "Save Data" button.
+                // If Locked, Save should be REJECTED for content changes.
+
+                if (original.isLocked) {
+                    // Check if we are trying to change isLocked status?
+                    // No, toggleCustomerLock handles that separately.
+                    // Here we are saving content.
+                    // If Locked, Content Save is FORBIDDEN.
+                    showToast('잠금 상태에서는 저장할 수 없습니다.', 'error');
+                    return;
+                }
+
+                customers[idx] = { ...currentData };
+            } else {
+                customers.push({ ...currentData });
+            }
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
             if (isLoggedIn()) {
