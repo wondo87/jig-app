@@ -8,27 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
 
-    <!-- 페이지 접근 보호 스크립트 (테스트를 위해 임시 비활성화) -->
+    <!-- 페이지 접근 및 다중 관리자 시스템 -->
     <script>
         (function () {
-            // 테스트 중 비밀번호 보호 비활성화
+            // 페이지는 열람 모드로 볼 수 있음
+            // 관리자 로그인은 헤더의 로그인 버튼 통해 진행
             sessionStorage.setItem('dz_admin_page_auth', 'true');
-            /*
-            const ADMIN_PAGE_PASSWORD = 'W6454';
-            const isAuthenticated = sessionStorage.getItem('dz_admin_page_auth');
-
-            // 인증되지 않았으면 비밀번호 확인
-            if (!isAuthenticated) {
-                const password = prompt('관리자 페이지 접근 비밀번호를 입력하세요:');
-
-                if (password === ADMIN_PAGE_PASSWORD) {
-                    sessionStorage.setItem('dz_admin_page_auth', 'true');
-                } else {
-                    alert('비밀번호가 올바르지 않습니다. 메인 페이지로 이동합니다.');
-                    window.location.href = '/';
-                }
-            }
-            */
         })();
     </script>
 
@@ -570,6 +555,12 @@
         .customer-item-info {
             font-size: 10px;
             color: #86868b;
+        }
+
+        .customer-item-creator {
+            font-size: 9px;
+            color: #a0a0a5;
+            margin-top: 4px;
         }
 
         /* 상태 뱃지 */
@@ -2570,7 +2561,8 @@
     <div class="admin-modal" id="adminModal">
         <div class="admin-modal-content">
             <h3>🔐 관리자 로그인</h3>
-            <p>원가관리표 수정을 위해 비밀번호를 입력하세요</p>
+            <p>관리자 아이디와 비밀번호를 입력하세요</p>
+            <input type="text" id="adminId" placeholder="아이디" style="margin-bottom:8px;">
             <input type="password" id="adminPassword" placeholder="비밀번호"
                 onkeypress="if(event.key==='Enter')loginAdmin()">
             <div class="admin-modal-btns">
@@ -2580,7 +2572,46 @@
         </div>
     </div>
 
-    <!-- 비밀번호 설정 모달 -->
+    <!-- 삭제 비밀번호 모달 -->
+    <div class="admin-modal" id="deletePasswordModal">
+        <div class="admin-modal-content">
+            <h3>🗑️ 삭제 확인</h3>
+            <p>삭제하려면 비밀번호를 입력하세요</p>
+            <input type="password" id="deletePassword" placeholder="삭제 비밀번호"
+                onkeypress="if(event.key==='Enter')confirmDeletePassword()">
+            <div class="admin-modal-btns">
+                <button class="cancel-btn" onclick="closeDeletePasswordModal()">취소</button>
+                <button class="confirm-btn" onclick="confirmDeletePassword()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 관리 모달 (메인관리자 전용) -->
+    <div class="admin-modal" id="adminManagerModal">
+        <div class="admin-modal-content" style="max-width:400px;">
+            <h3>👥 일반관리자 관리</h3>
+            <p style="font-size:11px;color:#86868b;">메인관리자만 관리 가능합니다</p>
+
+            <!-- 일반관리자 목록 -->
+            <div id="regularAdminList"
+                style="max-height:200px;overflow-y:auto;border:1px solid #e8e8ed;border-radius:6px;margin-bottom:15px;">
+            </div>
+
+            <!-- 새 관리자 추가 -->
+            <div style="background:#f5f5f7;padding:12px;border-radius:6px;margin-bottom:15px;">
+                <div style="font-weight:600;margin-bottom:8px;font-size:12px;">➕ 새 일반관리자 추가</div>
+                <input type="text" id="newAdminId" placeholder="아이디" style="margin-bottom:6px;">
+                <input type="password" id="newAdminPw" placeholder="비밀번호" style="margin-bottom:8px;">
+                <button class="btn btn-primary btn-sm" onclick="addRegularAdmin()" style="width:100%;">추가</button>
+            </div>
+
+            <div class="admin-modal-btns">
+                <button class="confirm-btn" onclick="closeAdminManagerModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 비밀번호 설정 모달 (미사용) -->
     <div class="admin-modal" id="passwordModal">
         <div class="admin-modal-content">
             <h3>🔑 비밀번호 설정</h3>
@@ -2668,7 +2699,13 @@
                 <div class="customer-header-bar">
                     <div class="customer-header-left">
                         <h2 id="headerCustomerName">고객명</h2>
-                        <div class="customer-id-display" id="headerCustomerId">DJ-000000</div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="customer-id-display" id="headerCustomerId">DJ-000000</div>
+                            <button id="lockToggleBtn" onclick="toggleCustomerLock()"
+                                style="background:none;border:none;cursor:pointer;font-size:18px;padding:0;"
+                                title="잠금 토글">🔓</button>
+                            <span id="headerCreatedBy" style="font-size:10px;color:#86868b;">📝 -</span>
+                        </div>
                     </div>
                     <div class="customer-header-right">
                         <select id="customerStatus" onchange="updateStatus()">
@@ -2690,13 +2727,19 @@
 
                 <!-- 고객 내부 탭 -->
                 <div class="customer-tabs">
-                    <button class="customer-tab active" onclick="showCustomerTab('info')">👤 고객정보</button>
-                    <button class="customer-tab" onclick="showCustomerTab('contract')">📋 도급계약서</button>
-                    <button class="customer-tab" onclick="showCustomerTab('cover')">📊 표지계약서</button>
-                    <button class="customer-tab" onclick="showCustomerTab('estimate')">📝 계약견적서</button>
-                    <button class="customer-tab" onclick="showCustomerTab('cost')">💰 원가관리표</button>
-                    <button class="customer-tab" onclick="showCustomerTab('stats')">📈 통계</button>
-                    <button class="customer-tab" onclick="showCustomerTab('schedule')">📅 스케줄</button>
+                    <button class="customer-tab active" onclick="showCustomerTab('info')" data-tab="info">👤
+                        고객정보</button>
+                    <button class="customer-tab" onclick="showCustomerTab('contract')" data-tab="contract">📋
+                        도급계약서</button>
+                    <button class="customer-tab" onclick="showCustomerTab('cover')" data-tab="cover">📊 표지계약서</button>
+                    <button class="customer-tab" onclick="showCustomerTab('estimate')" data-tab="estimate">📝
+                        계약견적서</button>
+                    <button class="customer-tab" onclick="showCustomerTab('cost')" data-tab="cost"
+                        data-main-only="true">💰 원가관리표</button>
+                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats"
+                        data-main-only="true">📈 통계</button>
+                    <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
+                        스케줄</button>
                 </div>
 
                 <!-- 고객정보 패널 -->
@@ -3941,22 +3984,60 @@
         let currentCustomerId = null;
         let currentData = {};
         let currentStatusFilter = 'all';
-        let isAdminMode = false;
 
-        // 기본 비밀번호
-        const DEFAULT_PASSWORD = 'W6454';
+        // ========== 다중 관리자 시스템 ==========
+        // 메인관리자 (하드코딩)
+        const MAIN_ADMIN = {
+            id: 'sweet00700',
+            password: 'Zxasqw12!@',
+            role: 'main'
+        };
+
+        // 삭제 비밀번호
+        const DELETE_PASSWORD = '6454';
+
+        // 일반관리자 목록 (localStorage)
+        function getRegularAdmins() {
+            return JSON.parse(localStorage.getItem('dz_regular_admins') || '[]');
+        }
+
+        function saveRegularAdmins(admins) {
+            localStorage.setItem('dz_regular_admins', JSON.stringify(admins));
+        }
+
+        // 현재 로그인한 관리자
+        let currentAdmin = null; // { id, role: 'main' | 'regular' }
+
+        // 권한 체크 함수
+        function isLoggedIn() {
+            return currentAdmin !== null;
+        }
+
+        function isMainAdmin() {
+            return currentAdmin?.role === 'main';
+        }
+
+        function canDelete() {
+            return currentAdmin?.role === 'main';
+        }
+
+        function canWrite() {
+            return currentAdmin !== null;
+        }
+
+        function canManageAdmins() {
+            return currentAdmin?.role === 'main';
+        }
 
         // Google Sheets GAS URL
         const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwzY4jD5QPhIwmCIBrrjDrPGt1u5Swr5yhI-UdmAas_JeRL81K1IAmmh3Pv3tlI7RWOWg/exec';
 
-        // 강제로 기본 비밀번호로 리셋 (비활성화)
-        // localStorage.setItem('dz_admin_password', DEFAULT_PASSWORD);
-
         // 관리자 모달 표시
         function showAdminModal() {
             document.getElementById('adminModal').classList.add('show');
+            document.getElementById('adminId').value = '';
             document.getElementById('adminPassword').value = '';
-            document.getElementById('adminPassword').focus();
+            document.getElementById('adminId').focus();
         }
 
         function closeAdminModal() {
@@ -3967,68 +4048,193 @@
             document.getElementById('passwordModal').classList.remove('show');
         }
 
-        // 비밀번호 설정
-        function setAdminPassword() {
-            const newPw = document.getElementById('newPassword').value;
-            const confirmPw = document.getElementById('confirmPassword').value;
+        // 삭제 비밀번호 모달 표시
+        function showDeletePasswordModal(callback) {
+            window.pendingDeleteCallback = callback;
+            document.getElementById('deletePasswordModal').classList.add('show');
+            document.getElementById('deletePassword').value = '';
+            document.getElementById('deletePassword').focus();
+        }
 
-            if (newPw.length < 4) {
-                showToast('비밀번호는 4자리 이상이어야 합니다', 'error');
+        function closeDeletePasswordModal() {
+            document.getElementById('deletePasswordModal').classList.remove('show');
+            window.pendingDeleteCallback = null;
+        }
+
+        function confirmDeletePassword() {
+            const inputPw = document.getElementById('deletePassword').value;
+            if (inputPw === DELETE_PASSWORD) {
+                closeDeletePasswordModal();
+                if (window.pendingDeleteCallback) {
+                    window.pendingDeleteCallback();
+                }
+            } else {
+                showToast('삭제 비밀번호가 틀렸습니다', 'error');
+                document.getElementById('deletePassword').value = '';
+                document.getElementById('deletePassword').focus();
+            }
+        }
+
+        // 관리자 관리 모달
+        function showAdminManagerModal() {
+            if (!isMainAdmin()) {
+                showToast('메인관리자만 접근 가능합니다', 'error');
+                return;
+            }
+            document.getElementById('adminManagerModal').classList.add('show');
+            renderRegularAdminList();
+        }
+
+        function closeAdminManagerModal() {
+            document.getElementById('adminManagerModal').classList.remove('show');
+        }
+
+        function renderRegularAdminList() {
+            const admins = getRegularAdmins();
+            const container = document.getElementById('regularAdminList');
+            if (admins.length === 0) {
+                container.innerHTML = '<div style="color:#86868b;text-align:center;padding:20px;">등록된 일반관리자가 없습니다</div>';
+            } else {
+                container.innerHTML = admins.map((admin, i) => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e8e8ed;">
+                        <span>👤 ${admin.id}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="removeRegularAdmin(${i})" style="color:#ff3b30;">삭제</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addRegularAdmin() {
+            const id = document.getElementById('newAdminId').value.trim();
+            const pw = document.getElementById('newAdminPw').value;
+
+            if (!id || !pw) {
+                showToast('아이디와 비밀번호를 입력하세요', 'error');
                 return;
             }
 
-            if (newPw !== confirmPw) {
-                showToast('비밀번호가 일치하지 않습니다', 'error');
+            if (id === MAIN_ADMIN.id) {
+                showToast('메인관리자 ID는 사용할 수 없습니다', 'error');
                 return;
             }
 
-            localStorage.setItem('dz_admin_password', newPw);
-            closePasswordModal();
-            showToast('관리자 비밀번호가 설정되었습니다', 'success');
+            const admins = getRegularAdmins();
+            if (admins.some(a => a.id === id)) {
+                showToast('이미 존재하는 아이디입니다', 'error');
+                return;
+            }
 
-            // 자동으로 관리자 모드 활성화
-            activateAdminMode();
+            admins.push({ id, password: pw });
+            saveRegularAdmins(admins);
+
+            document.getElementById('newAdminId').value = '';
+            document.getElementById('newAdminPw').value = '';
+            renderRegularAdminList();
+            showToast(`일반관리자 '${id}' 추가됨`, 'success');
+        }
+
+        function removeRegularAdmin(index) {
+            if (!confirm('이 관리자를 삭제하시겠습니까?')) return;
+            const admins = getRegularAdmins();
+            const removed = admins.splice(index, 1)[0];
+            saveRegularAdmins(admins);
+            renderRegularAdminList();
+            showToast(`관리자 '${removed.id}' 삭제됨`, 'success');
         }
 
         // 관리자 로그인
         function loginAdmin() {
+            const inputId = document.getElementById('adminId').value.trim();
             const inputPw = document.getElementById('adminPassword').value;
-            // 고정 비밀번호 또는 사용자 설정 비밀번호 확인
-            const savedPw = localStorage.getItem('dz_admin_password');
-            const fixedPw = 'W6454';
 
-            if (inputPw === fixedPw || (savedPw && inputPw === savedPw)) {
+            // 메인관리자 확인
+            if (inputId === MAIN_ADMIN.id && inputPw === MAIN_ADMIN.password) {
+                currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
                 closeAdminModal();
                 activateAdminMode();
-                showToast('관리자 모드가 활성화되었습니다', 'success');
-            } else {
-                showToast('비밀번호가 틀렸습니다', 'error');
-                document.getElementById('adminPassword').value = '';
-                document.getElementById('adminPassword').focus();
+                showToast('메인관리자로 로그인되었습니다', 'success');
+                return;
             }
+
+            // 일반관리자 확인
+            const admins = getRegularAdmins();
+            const found = admins.find(a => a.id === inputId && a.password === inputPw);
+            if (found) {
+                currentAdmin = { id: found.id, role: 'regular' };
+                closeAdminModal();
+                activateAdminMode();
+                showToast('관리자로 로그인되었습니다', 'success');
+                return;
+            }
+
+            showToast('아이디 또는 비밀번호가 틀렸습니다', 'error');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('adminPassword').focus();
         }
 
         // 관리자 모드 활성화
         function activateAdminMode() {
-            isAdminMode = true;
+            const roleLabel = isMainAdmin() ? '🔑 메인관리자' : '👤 관리자';
+            const adminId = currentAdmin?.id || '';
 
             // UI 업데이트
             document.getElementById('adminBadge').className = 'admin-badge admin';
-            document.getElementById('adminBadge').innerHTML = '👑 관리자';
-            document.getElementById('adminStatus').innerHTML = `
-                <span class="admin-badge admin" id="adminBadge">👑 관리자</span>
+            document.getElementById('adminBadge').innerHTML = `${roleLabel}: ${adminId}`;
+
+            let statusHTML = `
+                <span class="admin-badge admin" id="adminBadge">${roleLabel}: ${adminId}</span>
                 <button class="admin-login-btn" onclick="logoutAdmin()">로그아웃</button>
             `;
+
+            // 메인관리자만 관리자 관리 버튼 표시
+            if (isMainAdmin()) {
+                statusHTML += `<button class="admin-login-btn" onclick="showAdminManagerModal()" style="margin-left:5px;">👥 관리자 관리</button>`;
+            }
+
+            document.getElementById('adminStatus').innerHTML = statusHTML;
 
             // 원가관리표 잠금 해제
             document.getElementById('costLockOverlay').style.display = 'none';
             document.getElementById('costCategoriesWrapper').classList.remove('cost-locked');
             document.getElementById('adminSettings').style.display = 'block';
+
+            // 역할에 따른 탭 가시성 업데이트
+            updateTabVisibility();
+        }
+
+        // 역할에 따른 탭 가시성 업데이트
+        function updateTabVisibility() {
+            const mainOnly = isMainAdmin();
+
+            // 메인관리자만 볼 수 있는 탭 처리 (원가관리표, 통계)
+            document.querySelectorAll('.customer-tab[data-main-only="true"]').forEach(tab => {
+                tab.style.display = mainOnly ? '' : 'none';
+            });
+
+            // 통계 패널도 숨기기
+            const statsPanel = document.getElementById('panel-stats');
+            if (statsPanel) {
+                statsPanel.style.display = mainOnly ? '' : 'none';
+            }
+
+            // 원가관리표 패널도 숨기기
+            const costPanel = document.getElementById('panel-cost');
+            if (costPanel) {
+                costPanel.style.display = mainOnly ? '' : 'none';
+            }
+
+            // 일반관리자가 숨겨진 탭을 보고 있다면 고객정보 탭으로 이동
+            if (!mainOnly) {
+                const activeTab = document.querySelector('.customer-tab.active');
+                if (activeTab && activeTab.dataset.mainOnly === 'true') {
+                    showCustomerTab('info');
+                }
+            }
         }
 
         // 관리자 로그아웃
         function logoutAdmin() {
-            isAdminMode = false;
+            currentAdmin = null;
 
             // UI 업데이트
             document.getElementById('adminStatus').innerHTML = `
@@ -4041,21 +4247,89 @@
             document.getElementById('costCategoriesWrapper').classList.add('cost-locked');
             document.getElementById('adminSettings').style.display = 'none';
 
-            showToast('관리자 모드가 해제되었습니다', 'success');
+            // 탭 가시성 업데이트 (열람 모드에서는 모든 탭 표시)
+            updateTabVisibility();
+
+            showToast('로그아웃되었습니다', 'success');
         }
 
         // 비밀번호 변경 (기능 비활성화)
         function changeAdminPassword() {
-            showToast('비밀번호 변경은 시스템에서 잠금 처리되었습니다.', 'error');
+            showToast('비밀번호 변경은 관리자 관리 메뉴에서 가능합니다.', 'error');
         }
 
         // 관리자 모드 체크 (저장 시)
         function checkAdminForSave() {
-            if (!isAdminMode) {
+            if (!isLoggedIn()) {
                 // 원가관리표는 저장하지 않음 (전역 데이터이므로)
                 return false;
             }
             return true;
+        }
+
+        // 잠금 상태 체크
+        function isCustomerLocked() {
+            return currentData?.isLocked === true;
+        }
+
+        // 잠금 UI 업데이트
+        function updateLockUI() {
+            const lockBtn = document.getElementById('lockToggleBtn');
+            const createdBySpan = document.getElementById('headerCreatedBy');
+
+            if (lockBtn) {
+                lockBtn.textContent = currentData?.isLocked ? '🔒' : '🔓';
+                lockBtn.title = currentData?.isLocked ? '잠금 해제' : '잠금 설정';
+            }
+
+            if (createdBySpan) {
+                createdBySpan.textContent = `📝 ${currentData?.createdBy || '-'}`;
+            }
+        }
+
+        // 잠금 토글
+        function toggleCustomerLock() {
+            if (!isLoggedIn()) {
+                showToast('관리자 로그인이 필요합니다', 'error');
+                showAdminModal();
+                return;
+            }
+
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
+
+            // 현재 잠금 상태
+            const isLocked = currentData?.isLocked === true;
+
+            if (isLocked) {
+                // 잠금 해제 시 비밀번호 필요
+                showDeletePasswordModal(() => {
+                    currentData.isLocked = false;
+                    updateLockUI();
+                    updateCustomerList();
+                    // localStorage에 저장
+                    const idx = customers.findIndex(c => c.customerId === currentCustomerId);
+                    if (idx >= 0) {
+                        customers[idx].isLocked = false;
+                        localStorage.setItem('dz_customers', JSON.stringify(customers));
+                    }
+                    showToast('잠금이 해제되었습니다', 'success');
+                });
+            } else {
+                // 잠금 설정
+                currentData.isLocked = true;
+                updateLockUI();
+                updateCustomerList();
+                // localStorage에 저장
+                const idx = customers.findIndex(c => c.customerId === currentCustomerId);
+                if (idx >= 0) {
+                    customers[idx].isLocked = true;
+                    localStorage.setItem('dz_customers', JSON.stringify(customers));
+                }
+                showToast('잠금이 설정되었습니다', 'success');
+            }
         }
 
         // 글씨 크기 조절
@@ -4318,12 +4592,16 @@
         }
 
         function newCustomer() {
-            if (!isAdminMode) {
+            if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다', 'error');
                 showAdminModal();
                 return;
             }
             const name = prompt('고객명을 입력하세요:');
+            if (!name) {
+                showToast('고객명을 입력해주세요', 'error');
+                return;
+            }
             const now = new Date();
             const yy = now.getFullYear().toString().slice(-2);
             const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -4332,10 +4610,18 @@
             currentCustomerId = `${yy}${mm}${dd}-${seq}`;
             currentData = {
                 customerId: currentCustomerId,
+                clientName: name,  // 입력받은 고객명 저장
+                projectName: name, // 현장명도 동일하게 설정
                 status: 'consulting',
                 createdAt: new Date().toISOString().split('T')[0],
-                profitRate: '15%'
+                profitRate: '15%',
+                createdBy: currentAdmin?.id || 'unknown',  // 작성자 관리자 ID
+                isLocked: false  // 잠금 상태
             };
+
+            // 고객 목록에 즉시 추가
+            customers.push({ ...currentData });
+            localStorage.setItem('dz_customers', JSON.stringify(customers));
             document.querySelectorAll('.customer-field').forEach(f => {
                 f.value = f.dataset.field === 'profitRate' ? '15%' : '';
             });
@@ -4345,6 +4631,12 @@
             document.getElementById('customerView').style.display = 'block';
             document.getElementById('headerCustomerName').textContent = '신규 고객';
             document.getElementById('headerCustomerId').textContent = currentCustomerId;
+            // 이미 customers에 추가되었으므로 고객명 필드에도 설정
+            const clientNameField = document.querySelector('.customer-field[data-field="clientName"]');
+            if (clientNameField) clientNameField.value = name;
+            const projectNameField = document.querySelector('.customer-field[data-field="projectName"]');
+            if (projectNameField) projectNameField.value = name;
+            document.getElementById('headerCustomerName').textContent = name;
             clearCostData();
             // 견적 데이터 초기화 (메모는 undefined로 설정해서 원가관리표 메모 사용)
             currentData.estimateData = {};
@@ -4386,6 +4678,7 @@
             loadEstimateData();
             updateCustomerList();
             syncAllFields();
+            updateLockUI();  // 잠금 상태 및 작성자 표시
         }
 
         function updateCustomerField(el) {
@@ -4428,12 +4721,26 @@
         }
 
         function deleteCurrentCustomer() {
-            if (!isAdminMode) {
+            if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다', 'error');
                 showAdminModal();
                 return;
             }
-            if (!currentCustomerId || !confirm('이 고객을 삭제하시겠습니까?')) return;
+
+            // 일반관리자는 삭제 비밀번호 필요
+            if (!canDelete()) {
+                showDeletePasswordModal(() => {
+                    performDeleteCustomer();
+                });
+                return;
+            }
+
+            if (!confirm('이 고객을 삭제하시겠습니까?')) return;
+            performDeleteCustomer();
+        }
+
+        function performDeleteCustomer() {
+            if (!currentCustomerId) return;
             customers = customers.filter(c => c.customerId !== currentCustomerId);
             localStorage.setItem('dz_customers', JSON.stringify(customers));
             currentCustomerId = null;
@@ -4479,15 +4786,18 @@
                     }
                     const displayName = c.projectName || '현장명 미지정';
                     const subInfo = (c.clientName || '') + (c.clientName && c.clientPhone ? ' / ' : '') + (c.clientPhone || '');
+                    const lockIcon = c.isLocked ? '🔒' : '';
+                    const creatorInfo = c.createdBy ? `<div class="customer-item-creator">📝 ${c.createdBy}</div>` : '';
 
                     return `
                     <div class="customer-item ${c.customerId === currentCustomerId ? 'active' : ''}" onclick="selectCustomer('${c.customerId}')">
                         <div class="customer-item-header">
-                            <span class="customer-item-id">${c.customerId}</span>
+                            <span class="customer-item-id">${lockIcon} ${c.customerId}</span>
                             <span class="status-badge ${c.status}">${statusText}</span>
                         </div>
                         <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
                         <div class="customer-item-info">${subInfo}</div>
+                        ${creatorInfo}
                     </div>
                 `}).join('');
             }
@@ -4593,14 +4903,26 @@
         async function saveData() {
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
-            if (!isAdminMode) {
+            if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다 (열람 모드에서는 저장할 수 없습니다)', 'error');
                 showAdminModal();
                 return;
             }
 
+            // 잠금된 고객은 비밀번호 필요
+            if (isCustomerLocked()) {
+                showDeletePasswordModal(() => {
+                    performSaveData();
+                });
+                return;
+            }
+
+            performSaveData();
+        }
+
+        function performSaveData() {
             // 관리자 모드일 때만 원가관리표 저장
-            if (isAdminMode) {
+            if (isLoggedIn()) {
                 saveCostData();
             }
 
@@ -4611,7 +4933,7 @@
             else customers.push({ ...currentData });
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
-            if (isAdminMode) {
+            if (isLoggedIn()) {
                 showToast('저장되었습니다 (원가관리표 포함)', 'success');
             } else {
                 showToast('저장되었습니다', 'success');
@@ -5717,7 +6039,7 @@
         }
 
         function importData() {
-            if (!isAdminMode) {
+            if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다', 'error');
                 showAdminModal();
                 return;
