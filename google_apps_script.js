@@ -14,7 +14,7 @@
 
 // ========== 설정 영역 ==========
 // 여기에 실제 설문 폼 URL을 입력하세요!
-const SURVEY_FORM_URL = 'https://forms.gle/여기에_실제_설문_링크';
+const SURVEY_FORM_URL = 'https://nickole-unwandering-nonsalutarily.ngrok-free.dev/form/2b5ebbc1-6321-4c15-9434-f92ebfc988d3';
 
 // 발신자 이름 (이메일에 표시됨)
 const SENDER_NAME = '디자인지그';
@@ -89,43 +89,44 @@ function sendSurveyEmail(customerName, customerEmail) {
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Noto Sans KR', -apple-system, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: 'Noto Sans KR', -apple-system, sans-serif; line-height: 1.75; color: #333; letter-spacing: -0.02em; }
         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .logo { font-size: 24px; font-weight: bold; color: #1a1a1a; }
-        .content { background: #f8f6f3; padding: 30px; border-radius: 12px; margin-bottom: 30px; }
-        .highlight { color: #B4956F; font-weight: bold; }
-        .btn { display: inline-block; background: #B4956F; color: #fff !important; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-        .footer { text-align: center; color: #999; font-size: 12px; margin-top: 30px; }
+        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px; line-height: 1.6; }
+        a { color: #1a1a1a; text-decoration: none; border-bottom: 1px solid #1a1a1a; font-weight: bold; transition: opacity 0.2s; }
+        a:hover { opacity: 0.7; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="logo">DESIGN JIG</div>
-            <p style="color: #666; font-size: 14px;">기준으로 완성하는, 오래 가는 인테리어</p>
-        </div>
-        
-        <div class="content">
-            <p>안녕하세요, <strong>${customerName || '고객'}</strong>님!</p>
-            <p>디자인지그에 상담 문의해 주셔서 감사합니다.</p>
-            <p>고객님께 맞는 <span class="highlight">맞춤 상담</span>을 위해<br>
-            아래 설문을 작성해 주시면 더욱 정확한 상담이 가능합니다.</p>
-            
-            <div style="text-align: center;">
-                <a href="${SURVEY_FORM_URL}" class="btn">📋 설문 작성하기</a>
-            </div>
-            
-            <p style="font-size: 14px; color: #666;">
-                설문은 약 3분 정도 소요되며,<br>
-                작성해 주신 내용을 바탕으로 순차적으로 상담을 도와드리겠습니다.
-            </p>
-        </div>
-        
+        <p>안녕하세요, <strong>${customerName || '고객'}님의</strong>님.</p>
+        <p>디자인지그에 문의 주셔서 감사합니다.</p>
+        <br>
+        <p>디자인지그는<br>
+        공간을 단순히 꾸미는 것이 아니라,<br>
+        그 공간에서 살아갈 사람의 생활 방식과 기준을<br>
+        먼저 이해하는 것에서 설계를 시작합니다.</p>
+        <br>
+        <p>보다 정확한 상담을 위해<br>
+        간단한 사전 설문을 요청드립니다.<br>
+        설문을 통해 공간의 방향과 우선순위를 정리한 후,<br>
+        그에 맞는 상담을 진행하고 있습니다.</p>
+        <br>
+        <p>아래 설문을 작성해 주시면,<br>
+        확인 후 안내드리겠습니다.</p>
+        <br>
+        <p>
+            <a href="${SURVEY_FORM_URL}">▶ 사전 설문 작성하기</a>
+        </p>
+        <br>
+        <p>설문은 약 2~3분 정도 소요됩니다.</p>
+        <br>
+        <p>감사합니다.<br>
+        DESIGN JIG 드림</p>
+
         <div class="footer">
-            <p>디자인지그 | 경기도 용인시</p>
-            <p>연락처: 031-000-0000 | 이메일: designjig.office@gmail.com</p>
-            <p>© Design Jig. All rights reserved.</p>
+            <strong style="color: #1a1a1a; font-size: 13px;">DESIGN JIG</strong><br>
+            공간에 기준을 세우는 디자인<br>
+            <span style="font-size: 11px; color: #999;">© Design Jig. All rights reserved.</span>
         </div>
     </div>
 </body>
@@ -133,20 +134,33 @@ function sendSurveyEmail(customerName, customerEmail) {
     `;
 
     var plainTextBody = `
-안녕하세요, ${customerName || '고객'}님!
+안녕하세요, ${customerName || '고객'}님.
+디자인지그에 문의 주셔서 감사합니다.
 
-디자인지그에 상담 문의해 주셔서 감사합니다.
+디자인지그는
+공간을 단순히 꾸미는 것이 아니라,
+그 공간에서 살아갈 사람의 생활 방식과 기준을
+먼저 이해하는 것에서 설계를 시작합니다.
 
-고객님께 맞는 맞춤 상담을 위해 아래 설문을 작성해 주시면 
-더욱 정확한 상담이 가능합니다.
+보다 정확한 상담을 위해
+간단한 사전 설문을 요청드립니다.
+설문을 통해 공간의 방향과 우선순위를 정리한 후,
+그에 맞는 상담을 진행하고 있습니다.
 
-👉 설문 링크: ${SURVEY_FORM_URL}
+아래 설문을 작성해 주시면,
+확인 후 안내드리겠습니다.
 
-설문은 약 3분 정도 소요되며,
-작성해 주신 내용을 바탕으로 순차적으로 상담을 도와드리겠습니다.
+▶ 사전 설문 작성하기: ${SURVEY_FORM_URL}
+
+설문은 약 2~3분 정도 소요됩니다.
 
 감사합니다.
-디자인지그 드림
+DESIGN JIG 드림
+
+────────────────
+DESIGN JIG
+공간에 기준을 세우는 디자인
+© Design Jig. All rights reserved.
     `;
 
     try {
