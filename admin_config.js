@@ -13,7 +13,7 @@ const MAIN_ADMIN = {
 const DELETE_PASSWORD = '6454';
 
 // Google Apps Script Web App URL (고객 데이터 동기화용)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwzY4jD5QPhIwmCIBrrjDrPGt1u5Swr5yhI-UdmAas_JeRL81K1IAmmh3Pv3tlI7RWOWg/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxDw-t-SVUz3y8wiRmTQ2jcR74uuiBlu0-yv6heBJfErPmO6QhaPn3SD0qo1QBmkWmG1g/exec';
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
