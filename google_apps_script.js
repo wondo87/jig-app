@@ -305,11 +305,10 @@ function moveRowToAS(sourceSheet, rowNum) {
         ''           // A/S 완료일 (공란 - 수식이나 자동입력 필요시 로직 추가 가능)
     ];
 
-    // 3. 이동 및 삭제
-    targetSheet.appendRow(newRowData);
-    sourceSheet.deleteRow(rowNum);
+    // 3. 복사 (원본 유지)
+    targetSheet.appendRow(newRowData); // [수정] 원본 데이터 삭제하지 않음 (유지-복사)
 
-    spreadsheet.toast('고객 정보를 [계약완료고객_A/S] 시트로 이동했습니다.', '이동 완료');
+    spreadsheet.toast('고객 정보를 [계약완료고객_A/S] 시트로 복사했습니다.', '복사 완료');
 }
 
 // ==========================================
