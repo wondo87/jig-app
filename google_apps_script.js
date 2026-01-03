@@ -238,22 +238,16 @@ function doGet(e) {
 }
 
 // ==========================================
-// [추가 기능] 상담상태 변경 시 시트 이동 처리
+// [이동 로직 업데이트] 데이터 매핑 적용
 // ==========================================
-function onEdit(e) {
+function processStatusChange(e) {
     var range = e.range;
     var sheet = range.getSheet();
 
-    // 1. 시트 이름 확인 ('상담관리_마스터' 인지)
     if (sheet.getName() !== '상담관리_마스터') return;
-
-    // 2. 수정된 열 확인 (8번째 열 '상담상태' 인지 - A열이 1번)
-    if (range.getColumn() !== 8) return;
-
-    // 3. 변경된 값 확인 ('계약완료' 인지)
+    if (range.getColumn() !== 8) return; // 상담상태 열
     if (e.value !== '계약완료') return;
 
-    // 이동 로직 수행
     moveRowToAS(sheet, range.getRow());
 }
 
