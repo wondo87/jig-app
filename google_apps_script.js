@@ -113,7 +113,7 @@ function sendSurveyEmail(data) {
     <div class="container">
         <p><strong>DESIGN JIG</strong></p>
         <br>
-        <p>안녕하세요, <strong>\${customerName}</strong> 님.<br>
+        <p>안녕하세요, <strong>${customerName}</strong> 님.<br>
         디자인지그에 문의해 주셔서 감사합니다.</p>
         <br>
         <p>디자인지그는<br>
@@ -128,7 +128,7 @@ function sendSurveyEmail(data) {
         <br>
         <p>아래 링크를 클릭하시면 <strong>기본 정보가 자동으로 입력되어 있습니다.</strong></p>
         <p>
-            <a href="\${finalSurveyUrl}">▶ 사전 설문 작성하기</a><br>
+            <a href="${finalSurveyUrl}">▶ 사전 설문 작성하기</a><br>
             (약 2~3분 소요)
         </p>
         <br>
@@ -152,7 +152,7 @@ function sendSurveyEmail(data) {
     var plainTextBody = `
 DESIGN JIG
 
-안녕하세요, \${customerName} 님.
+안녕하세요, ${customerName} 님.
 디자인지그에 문의해 주셔서 감사합니다.
 
 디자인지그는
@@ -168,7 +168,7 @@ DESIGN JIG
 아래 링크를 클릭하시면 기본 정보가 자동으로 입력되어 있습니다.
 
 ▶ 사전 설문 작성하기
-\${finalSurveyUrl}
+${finalSurveyUrl}
 (약 2~3분 소요)
 
 설문 작성 후 확인되는 대로
@@ -201,7 +201,24 @@ designjig.com
 function setupSheet(sheet) {
     var headers = ['No.', '접수일시', '이름', '연락처', '이메일', '현장주소', '문의내용', '상담상태', '상담 예약 날짜'];
     sheet.appendRow(headers);
-    // ... 스타일 설정 생략 ...
+
+    var headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground('#4a7c59');
+    headerRange.setFontColor('#ffffff');
+    headerRange.setFontWeight('bold');
+    headerRange.setHorizontalAlignment('center');
+
+    sheet.setColumnWidth(1, 50);
+    sheet.setColumnWidth(2, 150);
+    sheet.setColumnWidth(3, 80);
+    sheet.setColumnWidth(4, 120);
+    sheet.setColumnWidth(5, 180);
+    sheet.setColumnWidth(6, 200);
+    sheet.setColumnWidth(7, 250);
+    sheet.setColumnWidth(8, 100);
+    sheet.setColumnWidth(9, 120);
+
+    sheet.getRange(1, 1, 1, headers.length).createFilter();
 }
 
 function doGet(e) {
@@ -238,9 +255,12 @@ function doGet(e) {
 }
 
 // ==========================================
-// [이동 로직 업데이트] 데이터 매핑 적용
+// [중요] 트리거 연결용 함수 (이름 변경됨)
 // ==========================================
 function processStatusChange(e) {
+    // 0. 트리거 테스트 시 e가 없을 수 있음 방지
+    if (!e) return;
+
     var range = e.range;
     var sheet = range.getSheet();
 
@@ -256,7 +276,7 @@ function moveRowToAS(sourceSheet, rowNum) {
     var spreadsheet = sourceSheet.getParent();
     var targetSheet = spreadsheet.getSheetByName(targetSheetName);
 
-    // 타겟 시트가 없으면 생성 (헤더 자동 생성)
+    // 타겟 시트가 없을 때만 생성 (헤더 자동 설정)
     if (!targetSheet) {
         targetSheet = spreadsheet.insertSheet(targetSheetName);
         var headers = ['NO', '고객명', '연락처', '이메일', '현장주소', '공사 완료일', '보증 기간 (개월)', '12개월차 점검 예정일', '12개월차 점검 상태', '담당자', '비고'];
@@ -266,48 +286,41 @@ function moveRowToAS(sourceSheet, rowNum) {
         headerRange.setFontColor('#ffffff');
         headerRange.setFontWeight('bold');
         headerRange.setHorizontalAlignment('center');
-
-        // 열 너비 조정 (선택 사항)
         targetSheet.setColumnWidth(2, 100);
         targetSheet.setColumnWidth(3, 120);
         targetSheet.setColumnWidth(4, 180);
         targetSheet.setColumnWidth(5, 200);
     }
 
-    // 1. 원본 데이터 가져오기 (No, 접수일시, 이름, 연락처, 이메일, 현장주소, 문의내용, 상담상태, 예약날짜)
-    // 범위: 해당 행의 1열부터 끝까지
+    // 1. 원본 데이터 가져오기
     var rowValues = sourceSheet.getRange(rowNum, 1, 1, sourceSheet.getLastColumn()).getValues()[0];
 
-    // 원본 데이터 매핑 (인덱스는 0부터 시작)
+    // 데이터 매핑 (인덱스 주의: 0부터 시작)
     var no = rowValues[0];       // No.
-    var name = rowValues[2];     // 이름
-    var phone = rowValues[3];    // 연락처
-    var email = rowValues[4];    // 이메일
-    var address = rowValues[5];  // 현장주소
-    // var message = rowValues[6];  // 문의내용 (비고에 넣으려면 사용)
+    var name = rowValues[2];     // 이름 -> 고객명
+    var phone = rowValues[3];    // 연락처 -> 연락처
+    var email = rowValues[4];    // 이메일 -> 이메일
+    var address = rowValues[5];  // 현장주소 -> 현장주소
 
-    // 2. 타겟 시트에 넣을 데이터 배열 만들기 (순서 중요!)
-    // ['NO', '고객명', '연락처', '이메일', '현장주소', '공사 완료일', '보증 기간', '점검 예정일', '점검 상태', '담당자', '비고']
+    // 2. 타겟 시트용 배열 생성
+    // 순서: NO, 고객명, 연락처, 이메일, 현장주소, 공사 완료일, 보증 기간, 점검 예정일, 점검 상태, 담당자, 비고
     var newRowData = [
-        no,          // NO
-        name,        // 고객명
-        phone,       // 연락처
-        email,       // 이메일
-        address,     // 현장주소
-        '',          // 공사 완료일 (빈칸)
-        '',          // 보증 기간 (개월) (빈칸)
-        '',          // 12개월차 점검 예정일 (빈칸)
-        '',          // 12개월차 점검 상태 (빈칸)
-        '',          // 담당자 (빈칸)
-        ''           // 비고 (빈칸, 필요 시 message 변수 할당)
+        no,
+        name,
+        phone,
+        email,
+        address,
+        '',          // 공사 완료일
+        '',          // 보증 기간
+        '',          // 점검 예정일
+        '',          // 점검 상태
+        '',          // 담당자
+        ''           // 비고
     ];
 
-    // 3. 타겟 시트에 데이터 추가
+    // 3. 이동 및 삭제
     targetSheet.appendRow(newRowData);
-
-    // 4. 원본 시트에서 해당 행 삭제
     sourceSheet.deleteRow(rowNum);
 
-    // 성공 메시지
     spreadsheet.toast('고객 정보를 [계약완료고객_A/S] 시트로 이동했습니다.', '이동 완료');
 }
