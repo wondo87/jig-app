@@ -14,7 +14,8 @@
 
 // ========== 설정 영역 ==========
 // 여기에 실제 설문 폼 URL을 입력하세요!
-const SURVEY_FORM_URL = 'https://nickole-unwandering-nonsalutarily.ngrok-free.dev/form/2b5ebbc1-6321-4c15-9434-f92ebfc988d3';
+// 여기에 실제 설문 폼 URL을 입력하세요!
+const SURVEY_FORM_URL = 'https://forms.gle/1LtYkX4evraSQtoA6';
 
 // 발신자 이름 (이메일에 표시됨)
 const SENDER_NAME = '디자인지그';
@@ -49,17 +50,15 @@ function doPost(e) {
 
         // 데이터 행 추가
         sheet.appendRow([
-            nextNum,
-            new Date(),
-            data.name || '',
-            data.phone || '',
-            data.email || '',
-            data.type || '',
-            data.size || '',
-            data.location || '',
-            data.budget || '',
-            data.message || '설문 링크 발송 완료',
-            ''
+            nextNum,            // No
+            new Date(),         // 접수일시
+            '설문발송',          // 상담상태 (자동 설정)
+            data.name || '',    // 이름
+            data.phone || '',   // 연락처
+            data.email || '',   // 이메일
+            data.location || '',// 공사위치
+            data.message || '', // 문의내용
+            ''                  // 상담 예약 날짜 (공란)
         ]);
 
         // ✅ 고객에게 자동 이메일 발송
@@ -179,7 +178,7 @@ DESIGN JIG
 
 // 시트 초기 설정 (헤더 + 스타일)
 function setupSheet(sheet) {
-    var headers = ['No.', '접수일시', '이름', '연락처', '이메일', '공사유형', '예상평수', '공사위치', '예산', '문의내용', '상담 예약 날짜'];
+    var headers = ['No.', '접수일시', '상담상태', '이름', '연락처', '이메일', '공사위치', '문의내용', '상담 예약 날짜'];
     sheet.appendRow(headers);
 
     var headerRange = sheet.getRange(1, 1, 1, headers.length);
@@ -188,17 +187,15 @@ function setupSheet(sheet) {
     headerRange.setFontWeight('bold');
     headerRange.setHorizontalAlignment('center');
 
-    sheet.setColumnWidth(1, 50);
-    sheet.setColumnWidth(2, 150);
-    sheet.setColumnWidth(3, 80);
-    sheet.setColumnWidth(4, 120);
-    sheet.setColumnWidth(5, 180);
-    sheet.setColumnWidth(6, 100);
-    sheet.setColumnWidth(7, 80);
-    sheet.setColumnWidth(8, 200);
-    sheet.setColumnWidth(9, 120);
-    sheet.setColumnWidth(10, 250);
-    sheet.setColumnWidth(11, 120);
+    sheet.setColumnWidth(1, 50);  // No
+    sheet.setColumnWidth(2, 150); // Date
+    sheet.setColumnWidth(3, 100); // Status
+    sheet.setColumnWidth(4, 80);  // Name
+    sheet.setColumnWidth(5, 120); // Phone
+    sheet.setColumnWidth(6, 180); // Email
+    sheet.setColumnWidth(7, 200); // Location
+    sheet.setColumnWidth(8, 250); // Message
+    sheet.setColumnWidth(9, 120); // Reservation Date
 
     sheet.getRange(1, 1, 1, headers.length).createFilter();
 }
@@ -217,15 +214,13 @@ function doGet(e) {
             return {
                 no: row[0] || index + 1,
                 date: row[1] || '',
-                name: row[2] || '',
-                phone: row[3] || '',
-                email: row[4] || '',
-                type: row[5] || '',
-                size: row[6] || '',
-                location: row[7] || '',
-                budget: row[8] || '',
-                message: row[9] || '',
-                note: row[10] || ''
+                status: row[2] || '신규문의', // 상담상태
+                name: row[3] || '',
+                phone: row[4] || '',
+                email: row[5] || '',
+                location: row[6] || '',
+                message: row[7] || '',
+                note: row[8] || '' // 상담 예약 날짜
             };
         });
 
