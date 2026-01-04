@@ -20,6 +20,12 @@ export default async function handler(req, res) {
     try {
         const queryOptions = {
             database_id: databaseId,
+            sorts: [
+                {
+                    property: '작성일',
+                    direction: 'descending',
+                },
+            ],
         };
 
         // 카테고리 필터 추가 ('선택' 속성 사용)

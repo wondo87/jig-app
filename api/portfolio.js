@@ -18,6 +18,12 @@ export default async function handler(req, res) {
   try {
     const response = await notion.databases.query({
       database_id: databaseId,
+      sorts: [
+        {
+          property: '작성일',
+          direction: 'descending',
+        },
+      ],
     });
 
     // 노션의 원본 데이터(results)를 그대로 클라이언트에 보냅니다.
