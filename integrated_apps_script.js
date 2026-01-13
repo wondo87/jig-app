@@ -546,35 +546,66 @@ function buildCustomerFromRow(row) {
 }
 
 // Helper: Build row data for 사후관리_A/S sheet
-// 컬럼: NO, 고객명, 연락처, 이메일, 현장주소, 기본 A/S 상태, 화장실 A/S 상태, 공사 완료일, 기본 보증 기간, A/S 완료일, 화장실 누수 보증 기간, 화장실 누수 보증일, 담당자, 비고
+// 컬럼: NO, 고객명, 연락처, 이메일, 현장주소, 기본 A/S 상태, 화장실 A/S 상태, 공사기간, 잔금일, A/S 기간, A/S 완료일, 화장실 누수 보증 기간, 화장실 누수 보증일, 담당자, 비고
 function buildAsRowData(customerData) {
-    // A/S 완료일 계산 (계약일 + 보증기간)
     var asEndDate = '';
-    var warrantyMonths = parseInt(customerData.warrantyPeriod) || 12; // 기본 12개월
+    var bathroomWarrantyDate = '';
+    var warrantyMonths = parseInt(customerData.warrantyPeriod) || 12; // 기본 A/S 기간 (12개월)
+    var bathroomWarrantyMonths = 30; // 화장실 누수 보증 기간 (30개월)
 
-    if (customerData.contractDate) {
-        var contractDate = new Date(customerData.contractDate);
-        if (!isNaN(contractDate.getTime())) {
-            contractDate.setMonth(contractDate.getMonth() + warrantyMonths);
-            asEndDate = contractDate.toISOString().split('T')[0];
+    var asStatus = '';           // 기본 A/S 상태
+    var bathroomAsStatus = '';   // 화장실 A/S 상태
+
+    // 잔금일 기준으로 계산
+    var finalPaymentDate = customerData.finalPaymentDate || customerData.contractDate || '';
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (finalPaymentDate) {
+        var baseDate = new Date(finalPaymentDate);
+        if (!isNaN(baseDate.getTime())) {
+            // A/S 완료일 = 잔금일 + A/S 기간
+            var asDate = new Date(baseDate);
+            asDate.setMonth(asDate.getMonth() + warrantyMonths);
+            asEndDate = asDate.toISOString().split('T')[0];
+
+            // 기본 A/S 상태 자동 설정
+            if (today <= asDate) {
+                asStatus = 'A/S 기간진행';
+            } else {
+                asStatus = 'A/S 기간완료';
+            }
+
+            // 화장실 누수 보증일 = 잔금일 + 30개월
+            var bathDate = new Date(baseDate);
+            bathDate.setMonth(bathDate.getMonth() + bathroomWarrantyMonths);
+            bathroomWarrantyDate = bathDate.toISOString().split('T')[0];
+
+            // 화장실 A/S 상태 자동 설정
+            if (today <= bathDate) {
+                bathroomAsStatus = 'A/S 기간진행';
+            } else {
+                bathroomAsStatus = 'A/S 기간완료';
+            }
         }
     }
 
     return [
-        customerData.customerId || '',     // NO (고객ID)
-        customerData.clientName || '',      // 고객명
-        customerData.clientPhone || '',     // 연락처
-        customerData.clientEmail || '',     // 이메일
-        customerData.siteAddress || '',     // 현장주소
-        '',                                 // 기본 A/S 상태 (빈 값)
-        '',                                 // 화장실 A/S 상태 (빈 값)
-        customerData.contractDate || '',    // 공사 완료일 (계약일 사용)
-        warrantyMonths,                     // 기본 보증 기간 (개월)
-        asEndDate,                          // A/S 완료일
-        '',                                 // 화장실 누수 보증 기간
-        '',                                 // 화장실 누수 보증일
-        customerData.createdBy || '',       // 담당자
-        ''                                  // 비고
+        customerData.customerId || '',       // NO (고객ID)
+        customerData.clientName || '',        // 고객명
+        customerData.clientPhone || '',       // 연락처
+        customerData.clientEmail || '',       // 이메일
+        customerData.siteAddress || '',       // 현장주소
+        asStatus,                             // 기본 A/S 상태 (자동 계산)
+        bathroomAsStatus,                     // 화장실 A/S 상태 (자동 계산)
+        customerData.constructionPeriod || '',// 공사기간
+        finalPaymentDate,                     // 잔금일
+        warrantyMonths,                       // A/S 기간 (개월)
+        asEndDate,                            // A/S 완료일
+        bathroomWarrantyMonths,               // 화장실 누수 보증 기간 (30개월)
+        bathroomWarrantyDate,                 // 화장실 누수 보증일
+        customerData.createdBy || '',         // 담당자
+        ''                                    // 비고
     ];
 }
 
@@ -710,12 +741,9 @@ function moveRowToAS(sourceSheet, rowNum) {
     spreadsheet.toast('고객 정보를 [사후관리_A/S] 시트로 복사했습니다.', '복사 완료');
 }
 
-// [트리거] 시간 기반 (일 1회)
+// [트리거] 시간 기반 (일 1회) - 기본 A/S 및 화장실 A/S 완료 이메일 자동 발송
 function sendWarrantyExpirationEmails() {
     var targetSheetName = '사후관리_A/S';
-    // 이 함수는 '상담용 스프레드시트'를 기준으로 동작해야 함 (트리거 설정된 시트)
-    // 따라서 getActiveSpreadsheet()가 안전할 수 있으나, 만약 스크립트가 독립형이라면 ID 지정 필수.
-    // 여기서는 안전하게 ID 지정 권장
     var spreadsheet = SpreadsheetApp.openById(CONSULTING_SHEET_ID);
     var sheet = spreadsheet.getSheetByName(targetSheetName);
 
@@ -728,63 +756,75 @@ function sendWarrantyExpirationEmails() {
     var today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 열 인덱스 (A=0, B=1 ...)
+    // 컬럼 인덱스 (0부터 시작)
+    // NO(0), 고객명(1), 연락처(2), 이메일(3), 현장주소(4), 기본A/S상태(5), 화장실A/S상태(6),
+    // 공사기간(7), 잔금일(8), A/S기간(9), A/S완료일(10), 화장실보증기간(11), 화장실보증일(12), 담당자(13), 비고(14)
     var NAME_COL = 1;
     var EMAIL_COL = 3;
-    var DATE_COL = 9; // J열
+    var BASIC_AS_END_COL = 10;      // A/S 완료일
+    var BATHROOM_AS_END_COL = 12;   // 화장실 누수 보증일
 
-    var sentCount = 0;
+    var basicSentCount = 0;
+    var bathroomSentCount = 0;
 
     for (var i = 1; i < data.length; i++) {
         var row = data[i];
-        var expirationDate = row[DATE_COL];
-        var email = row[EMAIL_COL];
         var name = row[NAME_COL];
+        var email = row[EMAIL_COL];
+        var basicAsEndDate = row[BASIC_AS_END_COL];
+        var bathroomAsEndDate = row[BATHROOM_AS_END_COL];
 
-        if (expirationDate instanceof Date && email) {
-            expirationDate.setHours(0, 0, 0, 0);
-            if (expirationDate.getTime() === today.getTime()) {
-                sendExpirationEmail(email, name); // 위쪽에 정의된 sendSurveyEmail과 구분하기 위해 이름 변경 권장
-                // 여기서는 아래에 별도로 정의된 sendExpirationEmail 함수 호출
-                sentCount++;
+        if (!email) continue;
+
+        // 1. 기본 A/S 완료일 체크
+        if (basicAsEndDate) {
+            var basicDate = (basicAsEndDate instanceof Date) ? basicAsEndDate : new Date(basicAsEndDate);
+            if (!isNaN(basicDate.getTime())) {
+                basicDate.setHours(0, 0, 0, 0);
+                if (basicDate.getTime() === today.getTime()) {
+                    sendBasicAsExpirationEmail(email, name);
+                    basicSentCount++;
+                }
+            }
+        }
+
+        // 2. 화장실 누수 보증일 체크
+        if (bathroomAsEndDate) {
+            var bathDate = (bathroomAsEndDate instanceof Date) ? bathroomAsEndDate : new Date(bathroomAsEndDate);
+            if (!isNaN(bathDate.getTime())) {
+                bathDate.setHours(0, 0, 0, 0);
+                if (bathDate.getTime() === today.getTime()) {
+                    sendBathroomAsExpirationEmail(email, name);
+                    bathroomSentCount++;
+                }
             }
         }
     }
-    console.log('총 ' + sentCount + '건의 A/S 만료 안내 메일 발송');
+    console.log('기본 A/S 완료 메일: ' + basicSentCount + '건, 화장실 A/S 완료 메일: ' + bathroomSentCount + '건 발송');
 }
 
-function sendExpirationEmail(email, name) {
-    var subject = '[디자인지그] A/S 보증 기간 완료 안내';
+// 기본 A/S 보증 기간 완료 이메일
+function sendBasicAsExpirationEmail(email, name) {
+    var subject = '[디자인지그] 기본 A/S 보증 기간 완료 안내';
     var customerName = name || '고객';
 
-    var body = `DESIGN JIG
-
-안녕하세요, ${customerName} 고객님.
-디자인지그입니다.
-
-고객님 공간의 A/S 보증 기간이 완료되어 안내드립니다.
-
-보증 기간 동안 불편함 없이 잘 사용하고 계셨는지,
-혹시 미처 말씀하지 못하신 부분은 없으셨는지
-한 번 더 여쭙고 싶어 연락드렸습니다.
-
-보증 기간이 종료되더라도
-디자인지그가 시공한 공간에 대한 책임은 계속됩니다.
-
-사용 중 불편하신 점이나 궁금한 사항이 있으시면
-언제든지 편하게 연락 주시기 바랍니다.
-
-기본이 탄탄해야 아름다움도 오래가듯,
-시공 이후의 관계도 오래 이어가겠습니다.
-
-감사합니다.
-
-디자인지그 드림
-
-────────────────
-DESIGN JIG
-기본이 탄탄해야 아름다움도 오래갑니다.
-designjig.com`;
+    var body = 'DESIGN JIG\n\n' +
+        '안녕하세요, ' + customerName + ' 고객님.\n' +
+        '디자인지그입니다.\n\n' +
+        '고객님 공간의 기본 A/S 보증 기간이 완료되어 안내드립니다.\n\n' +
+        '보증 기간 동안 불편함 없이 잘 사용하고 계셨는지,\n' +
+        '혹시 미처 말씀하지 못하신 부분은 없으셨는지\n' +
+        '한 번 더 여쭙고 싶어 연락드렸습니다.\n\n' +
+        '보증 기간이 종료되더라도\n' +
+        '디자인지그가 시공한 공간에 대한 책임은 계속됩니다.\n\n' +
+        '사용 중 불편하신 점이나 궁금한 사항이 있으시면\n' +
+        '언제든지 편하게 연락 주시기 바랍니다.\n\n' +
+        '감사합니다.\n\n' +
+        '디자인지그 드림\n\n' +
+        '────────────────\n' +
+        'DESIGN JIG\n' +
+        '기본이 탄탄해야 아름다움도 오래갑니다.\n' +
+        'designjig.com';
 
     try {
         MailApp.sendEmail({
@@ -793,6 +833,42 @@ designjig.com`;
             body: body,
             name: SENDER_NAME
         });
+        console.log('기본 A/S 완료 메일 발송: ' + email);
+    } catch (e) {
+        console.log('메일 발송 에러 (' + email + '): ' + e.toString());
+    }
+}
+
+// 화장실 누수 보증 기간 완료 이메일
+function sendBathroomAsExpirationEmail(email, name) {
+    var subject = '[디자인지그] 화장실 누수 보증 기간 완료 안내';
+    var customerName = name || '고객';
+
+    var body = 'DESIGN JIG\n\n' +
+        '안녕하세요, ' + customerName + ' 고객님.\n' +
+        '디자인지그입니다.\n\n' +
+        '고객님 공간의 화장실 누수 보증 기간(30개월)이 완료되어 안내드립니다.\n\n' +
+        '그동안 화장실 사용에 불편함은 없으셨는지,\n' +
+        '혹시 누수나 이상 징후가 있으셨다면\n' +
+        '편하게 연락 주시기 바랍니다.\n\n' +
+        '보증 기간이 종료되더라도\n' +
+        '저희가 시공한 공간에 대한 책임감은 변함없습니다.\n\n' +
+        '언제든지 문의해 주세요.\n\n' +
+        '감사합니다.\n\n' +
+        '디자인지그 드림\n\n' +
+        '────────────────\n' +
+        'DESIGN JIG\n' +
+        '기본이 탄탄해야 아름다움도 오래갑니다.\n' +
+        'designjig.com';
+
+    try {
+        MailApp.sendEmail({
+            to: email,
+            subject: subject,
+            body: body,
+            name: SENDER_NAME
+        });
+        console.log('화장실 A/S 완료 메일 발송: ' + email);
     } catch (e) {
         console.log('메일 발송 에러 (' + email + '): ' + e.toString());
     }
