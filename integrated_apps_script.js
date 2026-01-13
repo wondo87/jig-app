@@ -438,7 +438,7 @@ function handleCustomerSync(payload) {
     }
 
     // [로직] 상태별 분기
-    // 1. **계약완료** (Contracted)
+    // 1. **계약완료** (Contracted) - 계약완료 시트 + 사후관리_A/S 시트 모두 추가
     if (newStatus === 'contracted' || newStatus === '계약완료') {
         // 계약완료 시트: 추가/업데이트
         if (contractedRowIndex > 0) {
@@ -446,8 +446,14 @@ function handleCustomerSync(payload) {
         } else {
             contractedSheet.appendRow(rowData);
         }
-        // A/S 시트: 삭제 (아직 A/S 단계 아님)
-        if (asRowIndex > 0) asSheet.deleteRow(asRowIndex);
+
+        // 사후관리_A/S 시트: 자동 복사 (A/S 기간 계산)
+        var asRowData = buildAsRowData(customerData);
+        if (asRowIndex > 0) {
+            asSheet.getRange(asRowIndex, 1, 1, asRowData.length).setValues([asRowData]);
+        } else {
+            asSheet.appendRow(asRowData);
+        }
     }
     // 2. **A/S** (After Sales)
     else if (newStatus === 'as_done' || newStatus === 'A/S') {
@@ -458,10 +464,11 @@ function handleCustomerSync(payload) {
             contractedSheet.appendRow(rowData);
         }
         // A/S 시트: 추가/업데이트
+        var asRowData2 = buildAsRowData(customerData);
         if (asRowIndex > 0) {
-            asSheet.getRange(asRowIndex, 1, 1, rowData.length).setValues([rowData]);
+            asSheet.getRange(asRowIndex, 1, 1, asRowData2.length).setValues([asRowData2]);
         } else {
-            asSheet.appendRow(rowData);
+            asSheet.appendRow(asRowData2);
         }
     }
     // 3. **기타** (상담중 등)
@@ -536,6 +543,39 @@ function buildCustomerFromRow(row) {
         totalAmount: row[13] || '',
         estimateProfitRate: row[14] || ''
     };
+}
+
+// Helper: Build row data for 사후관리_A/S sheet
+// 컬럼: NO, 고객명, 연락처, 이메일, 현장주소, 기본 A/S 상태, 화장실 A/S 상태, 공사 완료일, 기본 보증 기간, A/S 완료일, 화장실 누수 보증 기간, 화장실 누수 보증일, 담당자, 비고
+function buildAsRowData(customerData) {
+    // A/S 완료일 계산 (계약일 + 보증기간)
+    var asEndDate = '';
+    var warrantyMonths = parseInt(customerData.warrantyPeriod) || 12; // 기본 12개월
+
+    if (customerData.contractDate) {
+        var contractDate = new Date(customerData.contractDate);
+        if (!isNaN(contractDate.getTime())) {
+            contractDate.setMonth(contractDate.getMonth() + warrantyMonths);
+            asEndDate = contractDate.toISOString().split('T')[0];
+        }
+    }
+
+    return [
+        customerData.customerId || '',     // NO (고객ID)
+        customerData.clientName || '',      // 고객명
+        customerData.clientPhone || '',     // 연락처
+        customerData.clientEmail || '',     // 이메일
+        customerData.siteAddress || '',     // 현장주소
+        '',                                 // 기본 A/S 상태 (빈 값)
+        '',                                 // 화장실 A/S 상태 (빈 값)
+        customerData.contractDate || '',    // 공사 완료일 (계약일 사용)
+        warrantyMonths,                     // 기본 보증 기간 (개월)
+        asEndDate,                          // A/S 완료일
+        '',                                 // 화장실 누수 보증 기간
+        '',                                 // 화장실 누수 보증일
+        customerData.createdBy || '',       // 담당자
+        ''                                  // 비고
+    ];
 }
 
 // --- Customer Sync Helpers ---
