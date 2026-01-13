@@ -4175,6 +4175,7 @@
         let currentCustomerId = null;
         let currentData = {};
         let currentStatusFilter = 'all';
+        let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
         // ========== 다중 관리자 시스템 ==========
         // ========== 다중 관리자 시스템 ==========
@@ -4898,7 +4899,7 @@
             localStorage.setItem('dz_customers', JSON.stringify(customers));
         }
 
-        async function newCustomer() {
+        function newCustomer() {
             if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다', 'error');
                 showAdminModal();
@@ -4910,21 +4911,9 @@
                 return;
             }
 
-            // Google Sheets에서 현재 고객 수 가져오기
-            let cloudCount = 0;
-            try {
-                showToast('고객번호 생성 중...', 'info');
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리');
-                if (response.ok) {
-                    const cloudCustomers = await response.json();
-                    if (Array.isArray(cloudCustomers)) {
-                        cloudCount = cloudCustomers.length;
-                    }
-                }
-            } catch (e) {
-                console.warn('Google Sheets 조회 실패, 로컬 기준 사용:', e);
-                cloudCount = customers.filter(c => c.status !== 'trash').length;
-            }
+            // 캐시된 고객 수 사용 (동기화 시 업데이트됨)
+            // API 호출 없이 즉시 ID 생성
+            const cloudCount = cachedCloudCount;
 
             const now = new Date();
             const yy = now.getFullYear().toString().slice(-2);
@@ -4947,6 +4936,7 @@
 
             // 고객 목록에 즉시 추가
             customers.push({ ...currentData });
+            cachedCloudCount++; // 캐시 업데이트
             localStorage.setItem('dz_customers', JSON.stringify(customers));
             document.querySelectorAll('.customer-field').forEach(f => {
                 f.value = f.dataset.field === 'profitRate' ? '15%' : '';
@@ -5262,6 +5252,7 @@
 
                 // UI 업데이트
                 customers = cloudCustomers;
+                cachedCloudCount = cloudCustomers.length; // 캐시 업데이트
                 updateCustomerList();
                 initYearFilter();
 
