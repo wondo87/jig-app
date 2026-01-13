@@ -5162,6 +5162,21 @@
         function updateStatus() {
             const status = document.getElementById('customerStatus').value;
             currentData.status = status;
+
+            // Auto-fill Contract Date if status is 'contracted'
+            if (status === 'contracted' && !currentData.contractDate) {
+                const today = new Date().toISOString().split('T')[0];
+                currentData.contractDate = today;
+                const contractField = document.querySelector('.customer-field[data-field="contractDate"]');
+                if (contractField) contractField.value = today;
+                showToast('계약일이 오늘 날짜로 자동 설정되었습니다');
+            }
+
+            // Auto-calculate A/S End Date if status is 'as_done'
+            if (status === 'as_done') {
+                calculateAsEndDate();
+            }
+
             const asDisplay = document.getElementById('asEndDateDisplay');
             if (status === 'as_done' && currentData.asEndDate) {
                 asDisplay.textContent = `A/S ~${currentData.asEndDate}`;
@@ -5181,7 +5196,8 @@
             if (finalPaymentDate) {
                 const date = new Date(finalPaymentDate);
                 date.setMonth(date.getMonth() + 12);
-                const endDate = date.toISOString().split('T')[0].replace(/-/g, '.');
+                // Input type="date" expects YYYY-MM-DD
+                const endDate = date.toISOString().split('T')[0];
                 currentData.asEndDate = endDate;
                 const asEndField = document.querySelector('.customer-field[data-field="asEndDate"]');
                 if (asEndField) asEndField.value = endDate;
@@ -5268,7 +5284,12 @@
                 container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
             } else {
                 container.innerHTML = filtered.map(c => {
-                    let statusText = statusLabels[c.status] || c.status;
+                    let statusKey = (c.status || '').trim(); // Remove potential whitespace
+                    // Try to match exact key, or lowercase if not found
+                    if (!statusLabels[statusKey] && statusLabels[statusKey.toLowerCase()]) {
+                        statusKey = statusKey.toLowerCase();
+                    }
+                    let statusText = statusLabels[statusKey] || c.status;
                     if (c.status === 'as_done' && c.asEndDate) {
                         statusText = `A/S ~${c.asEndDate}`;
                     }
