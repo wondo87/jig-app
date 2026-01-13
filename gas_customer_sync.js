@@ -121,32 +121,39 @@ function doPost(e) {
 
         var action = '';
 
-        // 계약완료 상태인 경우 → 계약완료고객 시트로 이동
+        // 계약완료 상태인 경우 → 계약완료고객 시트로 복사 (고객관리 시트에도 유지)
         if (newStatus === 'contracted') {
-            // 고객관리 시트에서 삭제
+            // 1. 고객관리 시트 업데이트 (삭제하지 않음!)
             if (mainRowIndex > 0) {
-                mainSheet.deleteRow(mainRowIndex);
+                mainSheet.getRange(mainRowIndex, 1, 1, rowData.length).setValues([rowData]);
+            } else {
+                mainSheet.appendRow(rowData);
             }
-            // 계약완료고객 시트에 추가/업데이트
+
+            // 2. 계약완료고객 시트에 추가/업데이트
             if (contractedRowIndex > 0) {
                 contractedSheet.getRange(contractedRowIndex, 1, 1, rowData.length).setValues([rowData]);
-                action = 'moved_updated';
+                action = 'copied_updated';
             } else {
                 contractedSheet.appendRow(rowData);
-                action = 'moved_to_contracted';
+                action = 'copied_to_contracted';
             }
         } else {
-            // 계약완료가 아닌 경우 → 고객관리 시트에 저장
-            // 계약완료고객 시트에 있으면 삭제하고 고객관리로 이동
-            if (contractedRowIndex > 0) {
-                contractedSheet.deleteRow(contractedRowIndex);
-            }
+            // 계약완료가 아닌 경우 (예: 상담중으로 변경)
+
+            // 1. 고객관리 시트 업데이트/추가
             if (mainRowIndex > 0) {
                 mainSheet.getRange(mainRowIndex, 1, 1, rowData.length).setValues([rowData]);
                 action = 'updated';
             } else {
                 mainSheet.appendRow(rowData);
                 action = 'created';
+            }
+
+            // 2. 계약완료고객 시트에 있다면 삭제 (선택사항: 계약 취소 시 목록에서 제거)
+            if (contractedRowIndex > 0) {
+                contractedSheet.deleteRow(contractedRowIndex);
+                // action += '_removed_from_contracted'; 
             }
         }
 

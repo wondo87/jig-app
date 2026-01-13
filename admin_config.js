@@ -16,7 +16,7 @@ const DELETE_PASSWORD = '6454';
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzlUqGjCjdVMgGKckrcrnnqrAc92ejl0DsZwNtSd5mcOK8VxGS5PZB5BvMyzVxkhb04Cg/exec';
 
 // [중요] 고객관리 동기화 전용 URL (gas_customer_sync.js 배포 URL)
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbykiyqG_969IqnmxGeQAz6O0QVNQVI4a55FDThY_3jK0klr-qHlfe-TM-CuLR8whc0ArA/exec';
+const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyYVdatm62Vurmdx0LSmPNN52UQ27cYKy9KLoRTe5FkaWHkPTVLGDCSEdywq1XDdhkJ_w/exec';
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
