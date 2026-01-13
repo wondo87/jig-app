@@ -15,5 +15,10 @@ const DELETE_PASSWORD = '6454';
 // Google Apps Script Web App URL (고객 데이터 동기화용)
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzlUqGjCjdVMgGKckrcrnnqrAc92ejl0DsZwNtSd5mcOK8VxGS5PZB5BvMyzVxkhb04Cg/exec';
 
+// [중요] 고객관리 동기화 전용 URL (gas_customer_sync.js 배포 URL)
+// 아래 URL을 gas_customer_sync.js를 배포한 후 발급받은 URL로 교체하세요.
+// 현재는 GOOGLE_SHEET_URL과 동일하게 설정 (별도 배포 필요시 변경)
+const CUSTOMER_SYNC_URL = GOOGLE_SHEET_URL;
+
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
