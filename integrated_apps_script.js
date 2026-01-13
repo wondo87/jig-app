@@ -506,12 +506,36 @@ function handleCustomerGet(e) {
             try {
                 customers.push(JSON.parse(jsonData));
             } catch (e) {
-                // 파싱 실패 시 기본 구조
-                customers.push({ customerId: row[0], status: row[1] });
+                // 파싱 실패 시 기본 구조로 생성
+                customers.push(buildCustomerFromRow(row));
             }
+        } else if (row[0]) {
+            // JSON데이터가 없어도 customerId가 있으면 기본 컬럼에서 구성
+            customers.push(buildCustomerFromRow(row));
         }
     }
     return ContentService.createTextOutput(JSON.stringify(customers)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Helper: Build customer object from sheet row
+function buildCustomerFromRow(row) {
+    return {
+        customerId: row[0] || '',
+        status: row[1] || '',
+        createdAt: row[2] || '',
+        clientName: row[3] || '',
+        clientPhone: row[4] || '',
+        clientEmail: row[5] || '',
+        clientAddress: row[6] || '',
+        projectName: row[7] || '',
+        siteAddress: row[8] || '',
+        pyeong: row[9] || '',
+        contractDate: row[10] || '',
+        constructionPeriod: row[11] || '',
+        warrantyPeriod: row[12] || '',
+        totalAmount: row[13] || '',
+        estimateProfitRate: row[14] || ''
+    };
 }
 
 // --- Customer Sync Helpers ---
