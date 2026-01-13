@@ -546,7 +546,7 @@ function buildCustomerFromRow(row) {
 }
 
 // Helper: Build row data for 사후관리_A/S sheet
-// 컬럼: NO, 고객명, 연락처, 이메일, 현장주소, 기본 A/S 상태, 화장실 A/S 상태, 공사기간, 잔금일, A/S 기간, 화장실 누수 보증 기간(날짜), 화장실 누수 보증일(30), 담당자, 비고
+// 컬럼: NO, 고객명, 연락처, 이메일, 현장주소, 기본A/S상태, 화장실A/S상태, 공사기간, 잔금일, 기본A/S보증일(개월), 기본A/S기간, 화장실A/S보증일(개월), 화장실A/S기간, 담당자, 비고
 function buildAsRowData(customerData) {
     var asEndDate = '';
     var bathroomWarrantyDate = '';
@@ -596,13 +596,14 @@ function buildAsRowData(customerData) {
         customerData.clientPhone || '',       // 연락처
         customerData.clientEmail || '',       // 이메일
         customerData.siteAddress || '',       // 현장주소
-        asStatus,                             // 기본 A/S 상태 (자동 계산)
-        bathroomAsStatus,                     // 화장실 A/S 상태 (자동 계산)
+        asStatus,                             // 기본 A/S 상태
+        bathroomAsStatus,                     // 화장실 A/S 상태
         customerData.constructionPeriod || '',// 공사기간
         finalPaymentDate,                     // 잔금일
-        asEndDate,                            // A/S 기간 (완료일 - 날짜)
-        bathroomWarrantyDate,                 // 화장실 누수 보증 기간 (잔금일+30개월 - 날짜)
-        bathroomWarrantyMonths,               // 화장실 누수 보증일 (30 - 개월수)
+        warrantyMonths,                       // 기본 A/S 보증일(개월) - 12
+        asEndDate,                            // 기본 A/S 기간 (날짜)
+        bathroomWarrantyMonths,               // 화장실 A/S 보증일(개월) - 30
+        bathroomWarrantyDate,                 // 화장실 A/S 기간 (날짜)
         '',                                   // 담당자 (사용자가 직접 입력)
         ''                                    // 비고
     ];
