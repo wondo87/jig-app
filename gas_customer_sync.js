@@ -16,34 +16,27 @@ function doPost(e) {
         var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         var payload = JSON.parse(e.postData.contents);
 
-        // sheetName이 있으면 사용, 없으면 기본값
-        var sheetName = payload.sheetName || '고객관리';
-        var sheet = spreadsheet.getSheetByName(sheetName);
+        var customerData = payload.data;
+        var customerId = customerData.customerId;
+        var newStatus = customerData.status;
+
+        // '고객관리' 시트와 '계약완료고객' 시트 참조
+        var mainSheet = spreadsheet.getSheetByName('고객관리');
+        var contractedSheet = spreadsheet.getSheetByName('계약완료고객');
 
         // 시트가 없으면 생성
-        if (!sheet) {
-            sheet = spreadsheet.insertSheet(sheetName);
-            initializeSheet(sheet);
+        if (!mainSheet) {
+            mainSheet = spreadsheet.insertSheet('고객관리');
+            initializeSheet(mainSheet);
+        }
+        if (!contractedSheet) {
+            contractedSheet = spreadsheet.insertSheet('계약완료고객');
+            initializeSheet(contractedSheet);
         }
 
         // 헤더가 없으면 초기화
-        if (sheet.getLastRow() === 0) {
-            initializeSheet(sheet);
-        }
-
-        var customerData = payload.data;
-        var customerId = customerData.customerId;
-
-        // 기존 고객 찾기 (customerId로 검색)
-        var data = sheet.getDataRange().getValues();
-        var rowIndex = -1;
-
-        for (var i = 1; i < data.length; i++) {
-            if (data[i][0] === customerId) {
-                rowIndex = i + 1; // 1-indexed
-                break;
-            }
-        }
+        if (mainSheet.getLastRow() === 0) initializeSheet(mainSheet);
+        if (contractedSheet.getLastRow() === 0) initializeSheet(contractedSheet);
 
         // 행 데이터 구성
         var rowData = [
@@ -63,17 +56,60 @@ function doPost(e) {
             customerData.jsonData || JSON.stringify(customerData)
         ];
 
-        if (rowIndex > 0) {
-            // 기존 고객 업데이트
-            sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+        // 고객관리 시트에서 검색
+        var mainData = mainSheet.getDataRange().getValues();
+        var mainRowIndex = -1;
+        for (var i = 1; i < mainData.length; i++) {
+            if (mainData[i][0] === customerId) {
+                mainRowIndex = i + 1;
+                break;
+            }
+        }
+
+        // 계약완료고객 시트에서 검색
+        var contractedData = contractedSheet.getDataRange().getValues();
+        var contractedRowIndex = -1;
+        for (var j = 1; j < contractedData.length; j++) {
+            if (contractedData[j][0] === customerId) {
+                contractedRowIndex = j + 1;
+                break;
+            }
+        }
+
+        var action = '';
+
+        // 계약완료 상태인 경우 → 계약완료고객 시트로 이동
+        if (newStatus === 'contracted') {
+            // 고객관리 시트에서 삭제
+            if (mainRowIndex > 0) {
+                mainSheet.deleteRow(mainRowIndex);
+            }
+            // 계약완료고객 시트에 추가/업데이트
+            if (contractedRowIndex > 0) {
+                contractedSheet.getRange(contractedRowIndex, 1, 1, rowData.length).setValues([rowData]);
+                action = 'moved_updated';
+            } else {
+                contractedSheet.appendRow(rowData);
+                action = 'moved_to_contracted';
+            }
         } else {
-            // 새 고객 추가
-            sheet.appendRow(rowData);
+            // 계약완료가 아닌 경우 → 고객관리 시트에 저장
+            // 계약완료고객 시트에 있으면 삭제하고 고객관리로 이동
+            if (contractedRowIndex > 0) {
+                contractedSheet.deleteRow(contractedRowIndex);
+            }
+            if (mainRowIndex > 0) {
+                mainSheet.getRange(mainRowIndex, 1, 1, rowData.length).setValues([rowData]);
+                action = 'updated';
+            } else {
+                mainSheet.appendRow(rowData);
+                action = 'created';
+            }
         }
 
         return ContentService.createTextOutput(JSON.stringify({
             result: 'success',
-            action: rowIndex > 0 ? 'updated' : 'created',
+            action: action,
             customerId: customerId
         })).setMimeType(ContentService.MimeType.JSON);
 
