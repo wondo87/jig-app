@@ -5058,6 +5058,17 @@
             const customer = customers.find(c => c.customerId === customerId);
             if (!customer) return;
             currentCustomerId = customerId;
+
+            // Legacy Data Compatibility (Cloud Compatibility Fix)
+            // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (area, profitRate) if new keys are missing
+            if (!customer.area && customer.pyeong) customer.area = customer.pyeong;
+            if (!customer.profitRate && customer.estimateProfitRate) {
+                // Format estimateProfitRate if it's just a number
+                let rate = String(customer.estimateProfitRate);
+                if (/^\d+$/.test(rate)) rate += '%';
+                customer.profitRate = rate;
+            }
+
             currentData = { ...customer };
 
             // 접근 제한 확인
