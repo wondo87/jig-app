@@ -4214,7 +4214,7 @@
             try {
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // text/plain 사용 (CORS 회피)
                     body: JSON.stringify({
                         action: 'admin',
                         data: adminData
@@ -4234,7 +4234,7 @@
             try {
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'deleteAdmin',
                         adminId: adminId
