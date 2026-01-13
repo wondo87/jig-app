@@ -2958,7 +2958,8 @@
                                     <div class="info-item">
                                         <label>연락처</label>
                                         <input type="text" class="customer-field" data-field="clientPhone"
-                                            placeholder="010-0000-0000" oninput="updateCustomerField(this)">
+                                            placeholder="010-0000-0000"
+                                            oninput="autoFormatPhone(this); updateCustomerField(this)">
                                     </div>
                                     <div class="info-item full">
                                         <label>주소</label>
@@ -5133,6 +5134,20 @@
             }
             // Trigger standard update
             updateCustomerField(hiddenInput);
+        }
+
+        // Phone Number Auto-format (Same logic as quote.html)
+        function autoFormatPhone(el) {
+            let value = el.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+
+            if (value.length <= 3) {
+                el.value = value;
+            } else if (value.length <= 7) {
+                el.value = value.slice(0, 3) + '-' + value.slice(3);
+            } else {
+                el.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7);
+            }
         }
 
         function updateCustomerField(el) {
