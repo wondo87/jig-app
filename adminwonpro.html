@@ -4898,7 +4898,7 @@
             localStorage.setItem('dz_customers', JSON.stringify(customers));
         }
 
-        function newCustomer() {
+        async function newCustomer() {
             if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다', 'error');
                 showAdminModal();
@@ -4909,14 +4909,30 @@
                 showToast('고객명을 입력해주세요', 'error');
                 return;
             }
+
+            // Google Sheets에서 현재 고객 수 가져오기
+            let cloudCount = 0;
+            try {
+                showToast('고객번호 생성 중...', 'info');
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리');
+                if (response.ok) {
+                    const cloudCustomers = await response.json();
+                    if (Array.isArray(cloudCustomers)) {
+                        cloudCount = cloudCustomers.length;
+                    }
+                }
+            } catch (e) {
+                console.warn('Google Sheets 조회 실패, 로컬 기준 사용:', e);
+                cloudCount = customers.filter(c => c.status !== 'trash').length;
+            }
+
             const now = new Date();
             const yy = now.getFullYear().toString().slice(-2);
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const dd = String(now.getDate()).padStart(2, '0');
 
-            // 현재 고객 수 + 1 (Google Sheets 행 번호와 일치하도록)
-            const customerCount = customers.filter(c => c.status !== 'trash').length;
-            const seq = String(customerCount + 1).padStart(3, '0');
+            // Google Sheets 고객 수 + 1
+            const seq = String(cloudCount + 1).padStart(3, '0');
             currentCustomerId = `${yy}${mm}${dd}-${seq}`;
             currentData = {
                 customerId: currentCustomerId,
