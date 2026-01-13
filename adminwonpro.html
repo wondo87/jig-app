@@ -5516,6 +5516,11 @@
                 asDisplay.style.display = 'none';
             }
             updateCustomerList();
+
+            // Auto-sync to Google Sheets on status change
+            saveCustomers(); // Save locally first
+            syncToGoogleSheets({ ...currentData }); // Sync to cloud
+            showToast(`상태가 '${status}'(으)로 변경되고 동기화되었습니다`, 'success');
         }
         function updateAsDate() {
             // A/S 날짜는 잔금일 기준 자동 계산으로 변경됨
