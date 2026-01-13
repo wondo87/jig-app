@@ -5227,7 +5227,7 @@
                 // UI 업데이트
                 customers = localCustomers;
                 updateCustomerList();
-                updateYearFilter();
+                initYearFilter();
 
                 showToast(`클라우드 동기화 완료! 추가: ${addedCount}명, 업데이트: ${updatedCount}명`, 'success');
                 console.log(`✅ [Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}`);
