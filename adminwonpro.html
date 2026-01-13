@@ -2802,7 +2802,10 @@
         <div class="sidebar">
             <div class="sidebar-header">
                 <h3>고객 목록</h3>
-                <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="syncFromCloud()" title="클라우드에서 불러오기">☁️↓</button>
+                    <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
+                </div>
             </div>
             <div class="sidebar-search">
                 <input type="text" placeholder="이름, 연락처 검색..." id="searchInput" oninput="filterCustomers()">
@@ -5157,6 +5160,83 @@
         }
 
         function filterCustomers() { updateCustomerList(); }
+
+        // ==========================================
+        // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
+        // ==========================================
+        async function syncFromCloud() {
+            if (!confirm('클라우드에서 고객 데이터를 불러옵니다.\n\n기존 로컬 데이터와 병합됩니다.\n진행하시겠습니까?')) {
+                return;
+            }
+
+            showToast('클라우드에서 데이터 불러오는 중...', 'info');
+
+            try {
+                // Google Apps Script GET 요청 (고객 데이터 조회)
+                const response = await fetch(GOOGLE_SHEET_URL + '?sheet=고객관리', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const cloudCustomers = await response.json();
+                console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
+
+                if (!Array.isArray(cloudCustomers)) {
+                    if (cloudCustomers.error) {
+                        throw new Error(cloudCustomers.error);
+                    }
+                    throw new Error('잘못된 응답 형식');
+                }
+
+                if (cloudCustomers.length === 0) {
+                    showToast('클라우드에 저장된 고객 데이터가 없습니다.', 'info');
+                    return;
+                }
+
+                // 기존 localStorage 데이터 로드
+                const localCustomers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
+                const localMap = new Map(localCustomers.map(c => [c.customerId, c]));
+
+                // 병합: 클라우드 데이터를 로컬에 추가/업데이트
+                let addedCount = 0;
+                let updatedCount = 0;
+
+                cloudCustomers.forEach(cloudCustomer => {
+                    if (!cloudCustomer.customerId) return;
+
+                    if (localMap.has(cloudCustomer.customerId)) {
+                        // 기존 고객 업데이트 (클라우드 데이터로 덮어쓰기)
+                        const existingIndex = localCustomers.findIndex(c => c.customerId === cloudCustomer.customerId);
+                        if (existingIndex !== -1) {
+                            localCustomers[existingIndex] = cloudCustomer;
+                            updatedCount++;
+                        }
+                    } else {
+                        // 새 고객 추가
+                        localCustomers.push(cloudCustomer);
+                        addedCount++;
+                    }
+                });
+
+                // localStorage에 저장
+                localStorage.setItem('dz_customers', JSON.stringify(localCustomers));
+
+                // UI 업데이트
+                customers = localCustomers;
+                updateCustomerList();
+                updateYearFilter();
+
+                showToast(`클라우드 동기화 완료! 추가: ${addedCount}명, 업데이트: ${updatedCount}명`, 'success');
+                console.log(`✅ [Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}`);
+
+            } catch (error) {
+                console.error('❌ [Cloud Sync] Error:', error);
+                showToast('클라우드 동기화 실패: ' + error.message, 'error');
+            }
+        }
 
         async function syncToGoogleSheets(data) {
             console.log('📤 [Google Sheets Sync] Starting sync process...');
