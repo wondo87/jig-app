@@ -5205,45 +5205,52 @@
                 }
 
                 if (cloudCustomers.length === 0) {
-                    showToast('클라우드에 저장된 고객 데이터가 없습니다.', 'info');
+                    if (confirm('클라우드에 저장된 고객 데이터가 없습니다.\n\n로컬 데이터도 모두 삭제할까요?')) {
+                        localStorage.setItem('dz_customers', '[]');
+                        customers = [];
+                        updateCustomerList();
+                        initYearFilter();
+                        showToast('모든 고객 데이터가 삭제되었습니다.', 'info');
+                    }
                     return;
                 }
 
-                // 기존 localStorage 데이터 로드
+                // 완전 동기화: 클라우드 데이터로 로컬 데이터 교체
+                // (클라우드에 없는 데이터는 삭제됨)
+                const cloudMap = new Map(cloudCustomers.map(c => [c.customerId, c]));
                 const localCustomers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
-                const localMap = new Map(localCustomers.map(c => [c.customerId, c]));
 
-                // 병합: 클라우드 데이터를 로컬에 추가/업데이트
                 let addedCount = 0;
                 let updatedCount = 0;
+                let deletedCount = 0;
 
-                cloudCustomers.forEach(cloudCustomer => {
-                    if (!cloudCustomer.customerId) return;
+                // 로컬에만 있고 클라우드에 없는 데이터 카운트
+                localCustomers.forEach(local => {
+                    if (!cloudMap.has(local.customerId)) {
+                        deletedCount++;
+                    }
+                });
 
-                    if (localMap.has(cloudCustomer.customerId)) {
-                        // 기존 고객 업데이트 (클라우드 데이터로 덮어쓰기)
-                        const existingIndex = localCustomers.findIndex(c => c.customerId === cloudCustomer.customerId);
-                        if (existingIndex !== -1) {
-                            localCustomers[existingIndex] = cloudCustomer;
-                            updatedCount++;
-                        }
+                // 클라우드 데이터 기준으로 업데이트/추가 카운트
+                const localMap = new Map(localCustomers.map(c => [c.customerId, c]));
+                cloudCustomers.forEach(cloud => {
+                    if (localMap.has(cloud.customerId)) {
+                        updatedCount++;
                     } else {
-                        // 새 고객 추가
-                        localCustomers.push(cloudCustomer);
                         addedCount++;
                     }
                 });
 
-                // localStorage에 저장
-                localStorage.setItem('dz_customers', JSON.stringify(localCustomers));
+                // 클라우드 데이터로 완전 교체
+                localStorage.setItem('dz_customers', JSON.stringify(cloudCustomers));
 
                 // UI 업데이트
-                customers = localCustomers;
+                customers = cloudCustomers;
                 updateCustomerList();
                 initYearFilter();
 
-                showToast(`클라우드 동기화 완료! 추가: ${addedCount}명, 업데이트: ${updatedCount}명`, 'success');
-                console.log(`✅ [Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}`);
+                showToast(`클라우드 동기화 완료! 추가: ${addedCount}명, 업데이트: ${updatedCount}명, 삭제: ${deletedCount}명`, 'success');
+                console.log(`✅ [Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
