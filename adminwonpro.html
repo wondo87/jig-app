@@ -3604,6 +3604,8 @@
     </div>
 
     <script>
+        const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxrbmUDfHYanKtlqazwhgmBzyFTG4i7Cccm1mCTXiabkEtE9WzNOfR5hXoCfAAjhfR6Dg/exec';
+
         const categories = [
             { no: '01', name: '가설공사' }, { no: '02', name: '철거공사' }, { no: '03', name: '설비/방수공사' },
             { no: '04', name: '확장/단열공사' }, { no: '05', name: '창호공사' }, { no: '06', name: '전기/조명공사' },
@@ -5463,7 +5465,7 @@
                 let koreanStatus = statusLabels[statusKey] || statusLabels[statusKey.toLowerCase()] || data.status;
 
                 const payload = {
-                    sheetName: '고객관리',
+                    sheetName: '고객관리_견적서',
                     data: {
                         customerId: data.customerId || '',
                         clientName: data.clientName || '',

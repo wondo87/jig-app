@@ -367,11 +367,15 @@ function handleCustomerSync(payload) {
     // 시트 준비
     var mainSheet = spreadsheet.getSheetByName('고객관리_견적서');
     var contractedSheet = spreadsheet.getSheetByName('계약완료');
+    var asSheet = spreadsheet.getSheetByName('사후관리_A/S');
 
     if (!mainSheet) { mainSheet = spreadsheet.insertSheet('고객관리_견적서'); initializeCustomerSheet(mainSheet); }
     if (!contractedSheet) { contractedSheet = spreadsheet.insertSheet('계약완료'); initializeCustomerSheet(contractedSheet); }
+    if (!asSheet) { asSheet = spreadsheet.insertSheet('사후관리_A/S'); initializeCustomerSheet(asSheet); }
+
     if (mainSheet.getLastRow() === 0) initializeCustomerSheet(mainSheet);
     if (contractedSheet.getLastRow() === 0) initializeCustomerSheet(contractedSheet);
+    if (asSheet.getLastRow() === 0) initializeCustomerSheet(asSheet);
 
     var rowData = [
         customerData.customerId,
@@ -392,7 +396,7 @@ function handleCustomerSync(payload) {
         customerData.jsonData || JSON.stringify(customerData)
     ];
 
-    // 기존 데이터 위치 검색
+    // 기존 데이터 위치 검색 (Main)
     var mainData = mainSheet.getDataRange().getValues();
     var mainRowIndex = -1;
     for (var i = 1; i < mainData.length; i++) {
@@ -402,6 +406,7 @@ function handleCustomerSync(payload) {
         }
     }
 
+    // 기존 데이터 위치 검색 (Contracted)
     var contractedData = contractedSheet.getDataRange().getValues();
     var contractedRowIndex = -1;
     for (var j = 1; j < contractedData.length; j++) {
@@ -411,41 +416,59 @@ function handleCustomerSync(payload) {
         }
     }
 
+    // 기존 데이터 위치 검색 (A/S)
+    var asData = asSheet.getDataRange().getValues();
+    var asRowIndex = -1;
+    for (var k = 1; k < asData.length; k++) {
+        if (asData[k][0] === customerId) {
+            asRowIndex = k + 1;
+            break;
+        }
+    }
+
     var action = '';
 
-    // [로직] 계약완료 시 -> '복사' (이동 아님)
-    if (newStatus === 'contracted') {
-        // 1. 고객관리 시트: 수정 or 추가 (삭제X)
-        if (mainRowIndex > 0) {
-            mainSheet.getRange(mainRowIndex, 1, 1, rowData.length).setValues([rowData]);
-        } else {
-            mainSheet.appendRow(rowData);
-        }
+    // [로직] 메인 시트는 항상 업데이트/추가
+    if (mainRowIndex > 0) {
+        mainSheet.getRange(mainRowIndex, 1, 1, rowData.length).setValues([rowData]);
+        action = 'updated';
+    } else {
+        mainSheet.appendRow(rowData);
+        action = 'created';
+    }
 
-        // 2. 계약완료고객 시트: 수정 or 추가
+    // [로직] 상태별 분기
+    // 1. **계약완료** (Contracted)
+    if (newStatus === 'contracted' || newStatus === '계약완료') {
+        // 계약완료 시트: 추가/업데이트
         if (contractedRowIndex > 0) {
             contractedSheet.getRange(contractedRowIndex, 1, 1, rowData.length).setValues([rowData]);
-            action = 'copied_updated';
         } else {
             contractedSheet.appendRow(rowData);
-            action = 'copied_to_contracted';
         }
-    } else {
-        // 계약완료 아님 (상담중 등)
-
-        // 1. 고객관리 시트: 수정 or 추가
-        if (mainRowIndex > 0) {
-            mainSheet.getRange(mainRowIndex, 1, 1, rowData.length).setValues([rowData]);
-            action = 'updated';
-        } else {
-            mainSheet.appendRow(rowData);
-            action = 'created';
-        }
-
-        // 2. 계약완료고객 시트: 있으면 삭제
+        // A/S 시트: 삭제 (아직 A/S 단계 아님)
+        if (asRowIndex > 0) asSheet.deleteRow(asRowIndex);
+    }
+    // 2. **A/S** (After Sales)
+    else if (newStatus === 'as_done' || newStatus === 'A/S') {
+        // 계약완료 시트: 유지 (Data Copy) - 업데이트
         if (contractedRowIndex > 0) {
-            contractedSheet.deleteRow(contractedRowIndex);
+            contractedSheet.getRange(contractedRowIndex, 1, 1, rowData.length).setValues([rowData]);
+        } else {
+            contractedSheet.appendRow(rowData);
         }
+        // A/S 시트: 추가/업데이트
+        if (asRowIndex > 0) {
+            asSheet.getRange(asRowIndex, 1, 1, rowData.length).setValues([rowData]);
+        } else {
+            asSheet.appendRow(rowData);
+        }
+    }
+    // 3. **기타** (상담중 등)
+    else {
+        // 계약완료/AS 시트에서 제거 (상태가 돌아갔을 경우)
+        if (contractedRowIndex > 0) contractedSheet.deleteRow(contractedRowIndex);
+        if (asRowIndex > 0) asSheet.deleteRow(asRowIndex);
     }
 
     return ContentService.createTextOutput(JSON.stringify({
