@@ -2993,14 +2993,23 @@
                                             placeholder="현장 주소" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
-                                        <label>공사기간</label>
-                                        <input type="text" class="customer-field" data-field="constructionPeriod"
-                                            placeholder="0000.00.00 ~ 0000.00.00" oninput="updateCustomerField(this)">
+                                        <label>공사기간 (시작 ~ 종료)</label>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <input type="date" id="constructionStartInput" class="customer-field"
+                                                style="flex: 1; padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px;"
+                                                oninput="updateConstructionPeriod()">
+                                            <span>~</span>
+                                            <input type="date" id="constructionEndInput" class="customer-field"
+                                                style="flex: 1; padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px;"
+                                                oninput="updateConstructionPeriod()">
+                                        </div>
+                                        <input type="hidden" class="customer-field" data-field="constructionPeriod"
+                                            id="hiddenConstructionPeriod">
                                     </div>
                                     <div class="info-item">
                                         <label>이사예정일</label>
-                                        <input type="text" class="customer-field" data-field="movingDate"
-                                            placeholder="0000.00.00" oninput="updateCustomerField(this)">
+                                        <input type="date" class="customer-field" data-field="movingDate"
+                                            placeholder="연도. 월. 일." oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>평형</label>
@@ -3014,8 +3023,8 @@
                                     </div>
                                     <div class="info-item">
                                         <label>계약일</label>
-                                        <input type="text" class="customer-field" data-field="contractDate"
-                                            placeholder="0000.00.00" oninput="updateCustomerField(this)">
+                                        <input type="date" class="customer-field" data-field="contractDate"
+                                            placeholder="연도. 월. 일." oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>총 계약금액 (VAT 포함)</label>
@@ -5088,6 +5097,42 @@
             updateCustomerList();
             syncAllFields();
             updateLockUI();  // 잠금 상태 및 작성자 표시
+
+            // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
+            // Convert any stored dots (YYYY.MM.DD) to dashes.
+            ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
+                const el = document.querySelector(`.customer-field[data-field="${field}"]`);
+                if (el && currentData[field]) {
+                    el.value = currentData[field].replace(/\./g, '-');
+                }
+            });
+
+            // [CONSTRUCTION PERIOD FIX] Split string into two date inputs
+            if (currentData.constructionPeriod) {
+                const parts = currentData.constructionPeriod.split('~');
+                if (parts.length > 0) document.getElementById('constructionStartInput').value = parts[0].replace(/\./g, '-').trim();
+                if (parts.length > 1) document.getElementById('constructionEndInput').value = parts[1].replace(/\./g, '-').trim();
+            } else {
+                document.getElementById('constructionStartInput').value = '';
+                document.getElementById('constructionEndInput').value = '';
+            }
+        }
+
+        function updateConstructionPeriod() {
+            const start = document.getElementById('constructionStartInput').value;
+            const end = document.getElementById('constructionEndInput').value;
+            const hiddenInput = document.getElementById('hiddenConstructionPeriod');
+
+            if (start && end) {
+                // Store as Dots for consistency with legacy/placeholder text
+                hiddenInput.value = `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
+            } else if (start) {
+                hiddenInput.value = `${start.replace(/-/g, '.')}`;
+            } else {
+                hiddenInput.value = '';
+            }
+            // Trigger standard update
+            updateCustomerField(hiddenInput);
         }
 
         function updateCustomerField(el) {
