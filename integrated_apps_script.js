@@ -550,8 +550,10 @@ function buildCustomerFromRow(row) {
 function buildAsRowData(customerData) {
     var asEndDate = '';
     var bathroomWarrantyDate = '';
-    var warrantyMonths = parseInt(customerData.warrantyPeriod) || 12; // 기본 A/S 기간 (12개월)
+    // 기본 A/S 기간: 항상 12개월 (warrantyPeriod가 날짜 문자열일 수 있으므로 고정값 사용)
+    var warrantyMonths = 12;
     var bathroomWarrantyMonths = 30; // 화장실 누수 보증 기간 (30개월)
+
 
     var asStatus = '';           // 기본 A/S 상태
     var bathroomAsStatus = '';   // 화장실 A/S 상태
