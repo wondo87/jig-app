@@ -12,13 +12,27 @@ var SPREADSHEET_ID = '12uGvZETy-_6Er6SYkzA0F1VQ8gMogKuESpSLY75yiF0';
  * adminwonpro.html의 syncToGoogleSheets에서 호출됨
  */
 function doPost(e) {
+    var lock = LockService.getScriptLock();
+    lock.tryLock(10000); // 동시성 제어 - 최대 10초 대기
+
     try {
         var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-        var payload = JSON.parse(e.postData.contents);
+        var contents = e.postData.contents;
+        var payload;
 
-        // 관리자 저장 요청 처리
-        if (payload.action === 'admin') {
+        // JSON 파싱 시도 (text/plain으로 올 수 있음)
+        try {
+            payload = JSON.parse(contents);
+        } catch (parseError) {
+            // 파싱 실패 시 쿼리 파라미터 확인 시도
+            payload = e.parameter;
+        }
+
+        // [중요] 관리자 저장 요청 우선 처리
+        if (payload && payload.action === 'admin') {
             var adminData = payload.data;
+            if (!adminData || !adminData.id) throw new Error('Invalid admin data');
+
             var result = saveAdmin(spreadsheet, adminData);
             return ContentService.createTextOutput(JSON.stringify({
                 result: 'success',
@@ -27,8 +41,8 @@ function doPost(e) {
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
-        // 관리자 삭제 요청 처리
-        if (payload.action === 'deleteAdmin') {
+        // [중요] 관리자 삭제 요청 우선 처리
+        if (payload && payload.action === 'deleteAdmin') {
             var deleted = deleteAdmin(spreadsheet, payload.adminId);
             return ContentService.createTextOutput(JSON.stringify({
                 result: deleted ? 'success' : 'not_found',
@@ -36,7 +50,16 @@ function doPost(e) {
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
-        var customerData = payload.data;
+        // --- 일반 고객 데이터 처리 ---
+        // payload.data가 있으면 그것을, 없으면 payload 자체를 고객 데이터로 간주
+        var customerData = payload.data || payload;
+
+        // 필수 필드 체크 (잘못된 요청이나 관리자 데이터가 여기로 빠지는 것 방지)
+        if (!customerData || (!customerData.customerId && !customerData.status)) {
+            // 관리자 데이터인데 action 필드가 누락되었거나 파싱이 잘못된 경우를 대비해 에러 처리
+            throw new Error('Customer data missing required fields (customerId, status) or unknown action');
+        }
+
         var customerId = customerData.customerId;
         var newStatus = customerData.status;
 
@@ -137,8 +160,10 @@ function doPost(e) {
         return ContentService.createTextOutput(JSON.stringify({
             result: 'error',
             error: err.toString(),
-            line: err.lineNumber
+            stack: err.stack
         })).setMimeType(ContentService.MimeType.JSON);
+    } finally {
+        lock.releaseLock();
     }
 }
 
