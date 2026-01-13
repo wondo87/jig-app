@@ -5173,7 +5173,7 @@
 
             try {
                 // Google Apps Script GET 요청 (고객 데이터 조회)
-                const response = await fetch(GOOGLE_SHEET_URL + '?sheet=고객관리', {
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리', {
                     method: 'GET'
                 });
 
@@ -5264,10 +5264,10 @@
                 };
 
                 console.log('📦 [Google Sheets Sync] Payload:', payload);
-                console.log('🌐 [Google Sheets Sync] Target URL:', GOOGLE_SHEET_URL);
+                console.log('🌐 [Google Sheets Sync] Target URL:', CUSTOMER_SYNC_URL);
 
                 // no-cors 모드 제거하여 실제 응답 확인 가능
-                const response = await fetch(GOOGLE_SHEET_URL, {
+                const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
