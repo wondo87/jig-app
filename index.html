@@ -25,11 +25,21 @@
     <meta name="twitter:description" content="디자인 지그는 아름답고 기능적인 공간을 만듭니다.">
     <meta name="twitter:image"
         content="https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png">
+
+    <!-- 폰트 최적화: preconnect + preload -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
-        rel="stylesheet">
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+            rel="stylesheet">
+    </noscript>
+
     <script src="js/protection.js"></script>
     <style>
         * {
