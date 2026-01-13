@@ -1,1 +1,29 @@
+# Dependencies
 node_modules/
+
+# 환경 변수 (민감한 정보 - Vercel에서 관리)
+.env
+.env.local
+.env.production
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# 로그
+*.log
+npm-debug.log*
+
+# 임시 파일
+*.tmp
+*.temp
+
+# 테스트 파일
+test_*.js
+test_*.cjs
+inspect_*.cjs
+list_*.cjs
