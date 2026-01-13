@@ -4182,13 +4182,69 @@
         // 설정값은 admin_config.js 에서 로드됨
 
 
-        // 일반관리자 목록 (localStorage)
+        // 일반관리자 목록 (localStorage + 클라우드 동기화)
         function getRegularAdmins() {
             return JSON.parse(localStorage.getItem('dz_regular_admins') || '[]');
         }
 
         function saveRegularAdmins(admins) {
             localStorage.setItem('dz_regular_admins', JSON.stringify(admins));
+        }
+
+        // 관리자 클라우드 동기화 - 불러오기
+        async function syncAdminsFromCloud() {
+            try {
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=관리자');
+                if (response.ok) {
+                    const cloudAdmins = await response.json();
+                    if (Array.isArray(cloudAdmins) && cloudAdmins.length > 0) {
+                        saveRegularAdmins(cloudAdmins);
+                        console.log('✅ [Admin Sync] 관리자 동기화 완료:', cloudAdmins.length + '명');
+                        return cloudAdmins;
+                    }
+                }
+            } catch (e) {
+                console.warn('관리자 동기화 실패:', e);
+            }
+            return getRegularAdmins();
+        }
+
+        // 관리자 클라우드 동기화 - 저장
+        async function syncAdminToCloud(adminData) {
+            try {
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'admin',
+                        data: adminData
+                    })
+                });
+                const result = await response.json();
+                console.log('✅ [Admin Sync] 관리자 저장 완료:', result);
+                return result;
+            } catch (e) {
+                console.error('관리자 저장 실패:', e);
+                return null;
+            }
+        }
+
+        // 관리자 클라우드 삭제
+        async function deleteAdminFromCloud(adminId) {
+            try {
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'deleteAdmin',
+                        adminId: adminId
+                    })
+                });
+                return await response.json();
+            } catch (e) {
+                console.error('관리자 삭제 실패:', e);
+                return null;
+            }
         }
 
         // 현재 로그인한 관리자
@@ -4384,7 +4440,7 @@
             }
         }
 
-        function addRegularAdmin() {
+        async function addRegularAdmin() {
             const id = document.getElementById('newAdminId').value.trim();
             const pw = document.getElementById('newAdminPw').value;
 
@@ -4404,22 +4460,36 @@
                 return;
             }
 
-            admins.push({ id, password: pw });
+            const newAdmin = {
+                id,
+                password: pw,
+                name: id,
+                createdAt: new Date().toISOString()
+            };
+
+            admins.push(newAdmin);
             saveRegularAdmins(admins);
+
+            // 클라우드 동기화
+            syncAdminToCloud(newAdmin);
 
             document.getElementById('newAdminId').value = '';
             document.getElementById('newAdminPw').value = '';
             renderRegularAdminList();
-            showToast(`일반관리자 '${id}' 추가됨`, 'success');
+            showToast(`일반관리자 '${id}' 추가됨 (클라우드 동기화)`, 'success');
         }
 
-        function removeRegularAdmin(index) {
+        async function removeRegularAdmin(index) {
             if (!confirm('이 관리자를 삭제하시겠습니까?')) return;
             const admins = getRegularAdmins();
             const removed = admins.splice(index, 1)[0];
             saveRegularAdmins(admins);
+
+            // 클라우드에서도 삭제
+            deleteAdminFromCloud(removed.id);
+
             renderRegularAdminList();
-            showToast(`관리자 '${removed.id}' 삭제됨`, 'success');
+            showToast(`관리자 '${removed.id}' 삭제됨 (클라우드 동기화)`, 'success');
         }
 
         // 오버레이 로그인 처리
@@ -4649,13 +4719,18 @@
             document.documentElement.style.setProperty('--font-size-base', savedSize + 'px');
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             loadFontSize();
             createCostCategories();
             createEstimateCategories();
             createCoverTable();
             initYearFilter();
             updateCustomerList();
+
+            // 관리자 계정 클라우드 동기화 (백그라운드)
+            syncAdminsFromCloud().then(() => {
+                console.log('✅ 관리자 계정 동기화 완료');
+            });
         });
 
         // 토스트 알림

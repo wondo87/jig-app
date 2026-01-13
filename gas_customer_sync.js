@@ -16,6 +16,26 @@ function doPost(e) {
         var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         var payload = JSON.parse(e.postData.contents);
 
+        // 관리자 저장 요청 처리
+        if (payload.action === 'admin') {
+            var adminData = payload.data;
+            var result = saveAdmin(spreadsheet, adminData);
+            return ContentService.createTextOutput(JSON.stringify({
+                result: 'success',
+                action: result,
+                adminId: adminData.id
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 관리자 삭제 요청 처리
+        if (payload.action === 'deleteAdmin') {
+            var deleted = deleteAdmin(spreadsheet, payload.adminId);
+            return ContentService.createTextOutput(JSON.stringify({
+                result: deleted ? 'success' : 'not_found',
+                action: 'deleted'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
         var customerData = payload.data;
         var customerId = customerData.customerId;
         var newStatus = customerData.status;
@@ -129,6 +149,14 @@ function doGet(e) {
     try {
         var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         var sheetName = e.parameter.sheet || '고객관리';
+
+        // 관리자 시트 조회
+        if (sheetName === '관리자') {
+            var admins = getAdmins(spreadsheet);
+            return ContentService.createTextOutput(JSON.stringify(admins))
+                .setMimeType(ContentService.MimeType.JSON);
+        }
+
         var sheet = spreadsheet.getSheetByName(sheetName);
 
         if (!sheet || sheet.getLastRow() < 2) {
@@ -201,4 +229,102 @@ function initializeSheet(sheet) {
     for (var i = 1; i <= headers.length; i++) {
         sheet.autoResizeColumn(i);
     }
+}
+
+/**
+ * 관리자 시트 초기화
+ */
+function initializeAdminSheet(sheet) {
+    var headers = ['아이디', '비밀번호', '이름', '생성일'];
+    sheet.appendRow(headers);
+
+    var headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground('#4A90D9');
+    headerRange.setFontColor('#FFFFFF');
+    headerRange.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+}
+
+/**
+ * 관리자 데이터 조회 (GET ?sheet=관리자)
+ */
+function getAdmins(spreadsheet) {
+    var sheet = spreadsheet.getSheetByName('관리자');
+    if (!sheet || sheet.getLastRow() < 2) {
+        return [];
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var admins = [];
+
+    for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        if (row[0]) { // 아이디가 있는 경우만
+            admins.push({
+                id: row[0],
+                password: row[1],
+                name: row[2] || row[0],
+                createdAt: row[3]
+            });
+        }
+    }
+    return admins;
+}
+
+/**
+ * 관리자 저장/업데이트 (POST action: 'admin')
+ */
+function saveAdmin(spreadsheet, adminData) {
+    var sheet = spreadsheet.getSheetByName('관리자');
+
+    if (!sheet) {
+        sheet = spreadsheet.insertSheet('관리자');
+        initializeAdminSheet(sheet);
+    }
+
+    if (sheet.getLastRow() === 0) {
+        initializeAdminSheet(sheet);
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+
+    for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === adminData.id) {
+            rowIndex = i + 1;
+            break;
+        }
+    }
+
+    var rowData = [
+        adminData.id,
+        adminData.password,
+        adminData.name || adminData.id,
+        adminData.createdAt || new Date().toISOString()
+    ];
+
+    if (rowIndex > 0) {
+        sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+        return 'updated';
+    } else {
+        sheet.appendRow(rowData);
+        return 'created';
+    }
+}
+
+/**
+ * 관리자 삭제
+ */
+function deleteAdmin(spreadsheet, adminId) {
+    var sheet = spreadsheet.getSheetByName('관리자');
+    if (!sheet) return false;
+
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === adminId) {
+            sheet.deleteRow(i + 1);
+            return true;
+        }
+    }
+    return false;
 }
