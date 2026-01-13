@@ -5448,6 +5448,9 @@
             console.log('📋 [Google Sheets Sync] Customer Data:', data);
 
             try {
+                const statusKey = (data.status || '').trim();
+                let koreanStatus = statusLabels[statusKey] || statusLabels[statusKey.toLowerCase()] || data.status;
+
                 const payload = {
                     sheetName: '고객관리',
                     data: {
@@ -5455,12 +5458,19 @@
                         clientName: data.clientName || '',
                         clientPhone: data.clientPhone || '',
                         clientEmail: data.clientEmail || '',
-                        status: data.status || '',
+                        status: koreanStatus, // Send Korean status
                         createdAt: data.createdAt || new Date().toISOString(),
                         clientAddress: data.clientAddress || '',
                         projectName: data.projectName || '',
                         siteAddress: data.siteAddress || '',
                         constructionPeriod: data.constructionPeriod || '',
+                        contractDate: data.contractDate || '', // Explicitly send Contract Date
+                        warrantyPeriod: data.asEndDate ? (data.asEndDate) : '', // Send A/S End Date
+                        // Note: For 'A/S 기간' (Warranty Period), if you want "YYYY.MM.DD ~ YYYY.MM.DD", construct it here.
+                        // Assuming the sheet just wants the end date or whatever is in 'asEndDate' data.
+                        // The user said "A/S Period not entered", screenshot shows column M "A/S 기간".
+                        // In `initializeCustomerSheet` of backend, column 13 is 'A/S 기간'.
+
                         pyeong: data.area || '',
                         totalAmount: data.totalAmount || '',
                         estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
