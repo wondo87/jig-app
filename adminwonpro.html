@@ -3015,7 +3015,8 @@
                                     <div class="info-item">
                                         <label>평형</label>
                                         <input type="text" class="customer-field" data-field="area" placeholder="00평"
-                                            oninput="updateCustomerField(this)">
+                                            oninput="updateCustomerField(this)"
+                                            onblur="autoFormatArea(this); updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>건물유형</label>
@@ -3035,7 +3036,8 @@
                                     <div class="info-item">
                                         <label>기업이율</label>
                                         <input type="text" class="customer-field" data-field="profitRate"
-                                            placeholder="15%" value="15%" oninput="updateCustomerField(this)">
+                                            placeholder="15%" value="15%" oninput="updateCustomerField(this)"
+                                            onblur="autoFormatProfit(this); updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>담당자</label>
@@ -5150,6 +5152,26 @@
             }
         }
 
+        // Area Auto-format (add 'py')
+        function autoFormatArea(el) {
+            let value = el.value.trim();
+            if (!value) return;
+            // If it's just numbers, add py
+            if (/^\d+$/.test(value)) {
+                el.value = value + 'py';
+            }
+        }
+
+        // Profit Rate Auto-format (add '%')
+        function autoFormatProfit(el) {
+            let value = el.value.trim();
+            if (!value) return;
+            // If it's just numbers, add %
+            if (/^\d+$/.test(value)) {
+                el.value = value + '%';
+            }
+        }
+
         function updateCustomerField(el) {
             currentData[el.dataset.field] = el.value;
             if (el.dataset.field === 'clientName' || el.dataset.field === 'projectName') {
@@ -5441,7 +5463,7 @@
                         constructionPeriod: data.constructionPeriod || '',
                         pyeong: data.area || '',
                         totalAmount: data.totalAmount || '',
-                        estimateProfitRate: data.estimateProfitRate || 15,
+                        estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
                         jsonData: JSON.stringify(data)
                     }
                 };
