@@ -4,7 +4,7 @@
 
 const MAIN_ADMIN = {
     id: 'sweet00700',
-    password: 'Zxasqw12!@', // 메인관리자 비밀번호
+    password: 'Dufan170531!@', // 메인관리자 비밀번호
     role: 'main',
     name: '메인관리자'
 };
