@@ -3500,7 +3500,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="scheduleTableBody">
-                                    <!-- Dynamic Rows -->
+                                    <!-- Dynamic Rows-->
                                 </tbody>
                             </table>
                             <div id="scheduleEmptyState"
@@ -3609,6 +3609,7 @@
 
 
     <script>
+        console.log('Main admin script loading...');
         const categories = [
             { no: '01', name: '가설공사' }, { no: '02', name: '철거공사' }, { no: '03', name: '설비/방수공사' },
             { no: '04', name: '확장/단열공사' }, { no: '05', name: '창호공사' }, { no: '06', name: '전기/조명공사' },
@@ -4500,7 +4501,7 @@
                 const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=관리자');
                 if (response.ok) {
                     const cloudAdmins = await response.json();
-                    if (Array.isArray(cloudAdmins) && cloudAdmins.length > 0) {
+                    if (Array.isArray(cloudAdmins) && cloudAdmins.length> 0) {
                         saveRegularAdmins(cloudAdmins);
                         console.log('✅ [Admin Sync] 관리자 동기화 완료:', cloudAdmins.length + '명');
                         return cloudAdmins;
@@ -4736,7 +4737,7 @@
             if (admins.length === 0) {
                 container.innerHTML = '<div style="color:#86868b;text-align:center;padding:20px;">등록된 일반관리자가 없습니다</div>';
             } else {
-                container.innerHTML = admins.map((admin, i) => `
+                container.innerHTML = admins.map((admin, i) =>`
     <div
         style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e8e8ed;">
         <span>👤 ${admin.id}</span>
@@ -4800,6 +4801,7 @@
 
         // 오버레이 로그인 처리
         function performLogin() {
+            console.log('performLogin called');
             const inputId = document.getElementById('loginId').value.trim();
             const inputPw = document.getElementById('loginPw').value;
 
@@ -5123,7 +5125,7 @@
         function loadScheduleForCustomer() {
             // Notion 통합 제거됨
 
-            if (currentData.schedules && currentData.schedules.length > 0) {
+            if (currentData.schedules && currentData.schedules.length> 0) {
                 scheduleRows = [...currentData.schedules];
             } else {
                 scheduleRows = defaultScheduleSteps.map(s => ({
@@ -5155,7 +5157,7 @@
             }
 
             empty.style.display = 'none';
-            tbody.innerHTML = scheduleRows.map((row, index) => `
+            tbody.innerHTML = scheduleRows.map((row, index) =>`
     <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
         ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
         style="cursor:move; transition: background 0.2s;">
@@ -5237,7 +5239,7 @@
 
         function moveScheduleRow(index, delta) {
             const newIndex = index + delta;
-            if (newIndex < 0 || newIndex >= scheduleRows.length) return;
+            if (newIndex <0 || newIndex>= scheduleRows.length) return;
             const item = scheduleRows.splice(index, 1)[0];
             scheduleRows.splice(newIndex, 0, item);
             renderScheduleTable();
@@ -5430,9 +5432,9 @@
             // [CONSTRUCTION PERIOD FIX] Split string into two date inputs
             if (currentData.constructionPeriod) {
                 const parts = currentData.constructionPeriod.split('~');
-                if (parts.length > 0) document.getElementById('constructionStartInput').value = parts[0].replace(/\./g,
+                if (parts.length> 0) document.getElementById('constructionStartInput').value = parts[0].replace(/\./g,
                     '-').trim();
-                if (parts.length > 1) document.getElementById('constructionEndInput').value = parts[1].replace(/\./g,
+                if (parts.length> 1) document.getElementById('constructionEndInput').value = parts[1].replace(/\./g,
                     '-').trim();
             } else {
                 document.getElementById('constructionStartInput').value = '';
@@ -5460,17 +5462,17 @@
         // Phone Number Auto-format (Same logic as quote.html)
         function autoFormatPhone(el) {
             let value = el.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
+            if (value.length> 11) value = value.slice(0, 11);
 
             if (value.length <= 3) { el.value = value; } else if (value.length <= 7) {
                 el.value = value.slice(0, 3) + '-' +
                     value.slice(3);
             } else { el.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7); }
         }//
-            Area Auto - format(add 'py') function autoFormatArea(el) {
+            Area Auto-format(add 'py') function autoFormatArea(el) {
             let value = el.value.trim(); if (!value) return; //
             If it's just numbers, add py if (/^\d+$/.test(value)) { el.value=value + 'py' ;}} // Profit Rate
-            Auto - format(add '%') function autoFormatProfit(el) {
+            Auto-format(add '%') function autoFormatProfit(el) {
                 let value = el.value.trim(); if (!value) return; // If
             it's just numbers, add % if (/^\d+$/.test(value)) { el.value=value + ' % ' ;}} function
                 updateCustomerField(el) {
@@ -5549,7 +5551,7 @@
                 let matchDate = true;
                 if (yearFilter || monthFilter) {
                     const idParts = c.customerId.split('-')[0];
-                    if (idParts && idParts.length >= 4) {
+                    if (idParts && idParts.length>= 4) {
                         const year = '20' + idParts.substring(0, 2);
                         const month = idParts.substring(2, 4);
                         if (yearFilter && year !== yearFilter) matchDate = false;
@@ -5572,7 +5574,7 @@
 
             if (filtered.length === 0) {
                 container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의
-                고객이 없습니다.</div > ';
+                고객이 없습니다.</div>';
             } else {
                 container.innerHTML = filtered.map(c => {
                     let statusKey = (c.status || '').trim(); // Remove potential whitespace
@@ -5610,7 +5612,7 @@
 
             customers.forEach(c => {
                 const idParts = c.customerId.split('-')[0];
-                if (idParts && idParts.length >= 2) {
+                if (idParts && idParts.length>= 2) {
                     years.add('20' + idParts.substring(0, 2));
                 }
             });
@@ -5622,7 +5624,7 @@
             // 정렬 후 옵션 추가
             const sortedYears = [...years].sort().reverse();
             yearFilter.innerHTML = '<option value="">전체 년도</option>' +
-                sortedYears.map(y => `<option value="${y}">${y}년</option>`).join('');
+                sortedYears.map(y =>`<option value="${y}">${y}년</option>`).join('');
         }
 
         function filterCustomers() { updateCustomerList(); }
@@ -5827,7 +5829,7 @@
             const idx = customers.findIndex(c => c.customerId === currentCustomerId);
 
             // FUNDAMENTAL LOCK CHECK
-            if (idx >= 0) {
+            if (idx>= 0) {
                 const original = customers[idx];
             // If it was locked, and we are not just unlocking it (i.e. isLocked is still true in currentData or
             original logic), BLOCK.
@@ -5873,7 +5875,7 @@
 
         function createCoverTable() {
             const tbody = document.getElementById('coverTableBody');
-            let html = categories.map((cat, i) => `
+            let html = categories.map((cat, i) =>`
             <tr>
                 <td class="no">${i + 1}</td>
                 <td>${cat.name}</td>
@@ -5907,7 +5909,7 @@
 
         function createCostCategories() {
             const container = document.getElementById('costCategories');
-            container.innerHTML = categories.map(cat => `
+            container.innerHTML = categories.map(cat =>`
             <div class="category-section">
                 <div class="category-header">
                     <h3><span class="cat-no">${cat.no}</span> ${cat.name}</h3>
@@ -5915,7 +5917,7 @@
                 </div>
                 <table class="data-table">
                     <colgroup>
-                        <col style="width:22px;"><!-- No -->
+                        <col style="width:22px;"><!-- No-->
                         <col style="width:50px;"><!-- 구분 -->
                         <col style="width:160px;"><!-- 품명 -->
                         <col style="width:auto;"><!-- 상세내용 (나머지 공간) -->
@@ -6017,7 +6019,7 @@
 
         function createEstimateCategories() {
             const container = document.getElementById('estimateCategories');
-            container.innerHTML = categories.map(cat => `
+            container.innerHTML = categories.map(cat =>`
             <div class="category-section">
                 <div class="category-header">
                     <h3><span class="cat-no">${cat.no}</span> ${cat.name}</h3>
@@ -6025,7 +6027,7 @@
                 </div>
                 <table class="estimate-table">
                     <colgroup>
-                        <col style="width:25px;"><!-- No -->
+                        <col style="width:25px;"><!-- No-->
                         <col style="width:60px;" class="col-div"><!-- 구분 (인쇄시 숨김) -->
                         <col style="width:auto;"><!-- 품명 (나머지 공간) -->
                         <col style="width:100px;"><!-- 상세내용 -->
@@ -6140,7 +6142,7 @@
             const rowCount = tbody.querySelectorAll('tr').length + 1;
             const items = getCostItemsByCategory(catNo);
             const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-            const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+            const divOptions = divs.map(d =>`<option value="${d}">${d}</option>`).join('');
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -6218,7 +6220,7 @@
             const items = getItemsByDivInCat(catNo, div);
             const sameNameItems = items.filter(item => item.name === selectedName);
 
-            if (sameNameItems.length > 1) {
+            if (sameNameItems.length> 1) {
                 // 같은 품명이 여러 개 있으면 상세내용 드롭다운 표시
                 const specCell = row.querySelector('.spec-cell');
                 const specOptions = sameNameItems.map((item, i) =>
@@ -6388,7 +6390,7 @@
                 const el = document.getElementById(`coverCat${cat.no}`);
                 if (el) {
                     const amount = categoryTotals[cat.no] || 0;
-                    el.textContent = amount > 0 ? '₩ ' + formatNumber(amount) : '-';
+                    el.textContent = amount> 0 ? '₩ ' + formatNumber(amount) : '-';
                 }
             });
 
@@ -6413,7 +6415,7 @@
             const payment2 = Math.round(total * 0.23);
             const payment3 = Math.round(total * 0.23);
             const payment4 = Math.round(total * 0.23);
-            const payment5 = total - payment1 - payment2 - payment3 - payment4; // 나머지 잔금
+            const payment5 = total-payment1 - payment2 - payment3 - payment4; // 나머지 잔금
 
             // currentData에 저장
             currentData.payment1 = '₩ ' + formatNumber(payment1) + ' (27%)';
@@ -6522,7 +6524,7 @@
                     tbody.innerHTML = '';
                     const items = getCostItemsByCategory(cat.no);
                     const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-                    const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+                    const divOptions = divs.map(d =>`<option value="${d}">${d}</option>`).join('');
 
                     savedRows.forEach((item, i) => {
                         const nameItems = item.div ? getItemsByDivInCat(cat.no, item.div) : [];
@@ -6544,12 +6546,12 @@
             <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
                             }>${item.div ? '<option value="">품명 선택</option>' + nameOptions : '<option value="">구분 먼저 선택</option>
                     '}</select></td>
-                            < td class="spec-cell" > ${item.spec || '-'}</td >
+                            <td class="spec-cell"> ${item.spec || '-'}</td>
             <td class="unit-cell">${item.unit || '-'}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
-            <td class="price-cell" data-price="${price}">${price > 0 ? formatNumber(price) : '-'}</td>
-            <td class="amount-cell">${amount > 0 ? formatNumber(amount) : '-'}</td>
+            <td class="price-cell" data-price="${price}">${price> 0 ? formatNumber(price) : '-'}</td>
+            <td class="amount-cell">${amount> 0 ? formatNumber(amount) : '-'}</td>
             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
                     title="삭제">✕</button></td>
                         `;
@@ -6565,9 +6567,9 @@
 
             // 메모 로드
             categories.forEach(cat => {
-            const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
-            if (memoTextarea && currentData[`estMemo_${cat.no}`] !== undefined) {
-            memoTextarea.value = currentData[`estMemo_${cat.no}`];
+            const memoTextarea = document.getElementById(`estMemoText${cat.no} `);
+            if (memoTextarea && currentData[`estMemo_${cat.no} `] !== undefined) {
+            memoTextarea.value = currentData[`estMemo_${cat.no} `];
             autoResizeTextarea(memoTextarea);
            }
            });
@@ -6588,12 +6590,12 @@
             // 저장된 메모가 없으면 현재 화면의 원가관리표 메모를 사용
 
             categories.forEach(cat => {
-            const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
-            const costMemoTextarea = document.getElementById(`costMemo${cat.no}`);
+            const estMemoTextarea = document.getElementById(`estMemoText${cat.no} `);
+            const costMemoTextarea = document.getElementById(`costMemo${cat.no} `);
 
             if (estMemoTextarea) {
             // 고객별 저장된 메모가 있으면 사용
-            const customerMemo = currentData[`estMemo_${cat.no}`];
+            const customerMemo = currentData[`estMemo_${cat.no} `];
 
             if (customerMemo !== undefined) {
             // 고객별로 저장된 메모가 있으면 그것 사용
@@ -6621,10 +6623,10 @@
             const globalCostData = {};
 
             categories.forEach(cat => {
-            const tbody = document.getElementById(`costBody${cat.no}`);
-            const memo = document.getElementById(`costMemo${cat.no}`);
+            const tbody = document.getElementById(`costBody${cat.no} `);
+            const memo = document.getElementById(`costMemo${cat.no} `);
             if (!tbody) return;
-            globalCostData[`cost_${cat.no}`] = [];
+            globalCostData[`cost_${cat.no} `] = [];
             tbody.querySelectorAll('tr').forEach(row => {
             const inputs = row.querySelectorAll('.col-div input, .col-name input');
             const specCell = row.querySelector('.col-spec');
@@ -6648,8 +6650,8 @@
             unitValue = unitSelect ? unitSelect.value : (unitInput ? unitInput.value : '');
            }
 
-            if (inputs.length >= 2 && inputs[1].value) {
-            globalCostData[`cost_${cat.no}`].push({
+            if (inputs.length>= 2 && inputs[1].value) {
+            globalCostData[`cost_${cat.no} `].push({
             div: inputs[0].value,
             name: inputs[1].value,
             spec: specValue,
@@ -6661,7 +6663,7 @@
            });
             // MEMO 저장
             if (memo) {
-            globalCostData[`costMemo_${cat.no}`] = memo.value;
+            globalCostData[`costMemo_${cat.no} `] = memo.value;
            }
            });
 
@@ -6675,12 +6677,12 @@
             const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
 
             categories.forEach(cat => {
-            const tbody = document.getElementById(`costBody${cat.no}`);
-            const memo = document.getElementById(`costMemo${cat.no}`);
+            const tbody = document.getElementById(`costBody${cat.no} `);
+            const memo = document.getElementById(`costMemo${cat.no} `);
             if (!tbody) return;
 
             // 전역 데이터가 있으면 사용, 없으면 기본 데이터 사용
-            let data = globalCostData[`cost_${cat.no}`] || [];
+            let data = globalCostData[`cost_${cat.no} `] || [];
             if (data.length === 0 && defaultCostData[cat.no]) {
             data = defaultCostData[cat.no];
            }
@@ -6695,7 +6697,7 @@
                 <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
                 <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
                 <td class="col-total">0</td>
-            </tr > `;
+            </tr>`;
           }else {
             tbody.innerHTML = data.map((item, i) => {
             const price = item.price || ((parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) +
@@ -6712,12 +6714,12 @@
                 <td class="col-qty"><input type="text" value="${item.qty || ''}" oninput="calcCostRow(this)"></td>
                 <td class="col-price"><input type="text" value="${price}" oninput="calcCostRow(this)"></td>
                 <td class="col-total">${formatNumber(total)}</td>
-            </tr > `;
+            </tr>`;
            }).join('');
            }
             // MEMO 로드 (저장된 메모가 없으면 기본 메모 사용)
             if (memo) {
-            memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
+            memo.value = globalCostData[`costMemo_${cat.no} `] || defaultCostMemos[cat.no] || '';
             autoResizeTextarea(memo);
            }
             // 소계 업데이트
@@ -6732,17 +6734,17 @@
             const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
 
             categories.forEach(cat => {
-            const tbody = document.getElementById(`costBody${cat.no}`);
-            const memo = document.getElementById(`costMemo${cat.no}`);
+            const tbody = document.getElementById(`costBody${cat.no} `);
+            const memo = document.getElementById(`costMemo${cat.no} `);
 
             // 전역 데이터가 있으면 사용, 없으면 기본 데이터
-            let data = globalCostData[`cost_${cat.no}`] || [];
+            let data = globalCostData[`cost_${cat.no} `] || [];
             if (data.length === 0) {
             data = defaultCostData[cat.no] || [];
            }
 
             if (tbody) {
-            if (data.length > 0) {
+            if (data.length> 0) {
             tbody.innerHTML = data.map((item, i) => {
             const price = item.price || ((parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) +
             (parseNumber(item.expense) || 0)) || '';
@@ -6758,7 +6760,7 @@
                 <td class="col-qty"><input type="text" value="${item.qty || ''}" oninput="calcCostRow(this)"></td>
                 <td class="col-price"><input type="text" value="${price}" oninput="calcCostRow(this)"></td>
                 <td class="col-total">${formatNumber(total)}</td>
-            </tr > `;
+            </tr>`;
            }).join('');
           }else {
             tbody.innerHTML = `<tr>
@@ -6770,11 +6772,11 @@
                 <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
                 <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
                 <td class="col-total">0</td>
-            </tr > `;
+            </tr>`;
            }
            }
             if (memo) {
-            memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
+            memo.value = globalCostData[`costMemo_${cat.no} `] || defaultCostMemos[cat.no] || '';
             autoResizeTextarea(memo);
            }
             // 소계 업데이트
@@ -6791,7 +6793,7 @@
 
             const customerName = currentData.clientName || '고객';
             const today = new Date().toISOString().split('T')[0];
-            const pdfFilename = ` ${customerName}_${filename}_${today}`;
+            const pdfFilename = ` ${customerName}_${filename}_${today} `;
 
             // 새 창에서 인쇄
             const printWindow = window.open('', '_blank');
@@ -6863,7 +6865,7 @@
 
             // 인쇄용 HTML 생성
             printWindow.document.write(`
-                            < !DOCTYPE html >
+                            < !DOCTYPE html>
                                 <html>
 
                                     <head>
@@ -6877,7 +6879,7 @@
                    }
 
                                                 * {
-                                                    -webkit - print - color - adjust: exact !important;
+                                                    -webkit-print - color-adjust: exact !important;
                                                 print-color-adjust: exact !important;
                    }
 
@@ -6890,7 +6892,7 @@
                    }
 
                                                 .document-wrapper {
-                                                    box - shadow: none !important;
+                                                    box-shadow: none !important;
                                                 border: none !important;
                                                 margin: 0 !important;
                                                 padding: 10px !important;
@@ -6942,7 +6944,7 @@
                                                 /* 품명/규격 열은 줄바꿈 허용 및 자동 확장 */
                                                 .data-table .col-name,
                                                 .estimate-table td:nth-child(2) {
-                                                    white - space: normal !important;
+                                                    white-space: normal !important;
                                                 word-break: keep-all !important;
                                                 width: auto !important;
                    }
@@ -7054,11 +7056,11 @@
                    }
 
                                                 .category-header h3 {
-                                                    font - size: 10px !important;
+                                                    font-size: 10px !important;
                    }
 
                                                 .category-header .subtotal {
-                                                    font - size: 10px !important;
+                                                    font-size: 10px !important;
                    }
 
                                                 /* 총합계 */
@@ -7072,15 +7074,15 @@
                    }
 
                                                 .total-row label {
-                                                    font - size: 9px !important;
+                                                    font-size: 9px !important;
                    }
 
                                                 .total-row .amount {
-                                                    font - size: 10px !important;
+                                                    font-size: 10px !important;
                    }
 
                                                 .total-row.main .amount {
-                                                    font - size: 12px !important;
+                                                    font-size: 12px !important;
                    }
 
                                                 /* 정보 그리드 */
@@ -7093,13 +7095,13 @@
                    }
 
                                                 .info-item label {
-                                                    font - size: 7px !important;
+                                                    font-size: 7px !important;
                    }
 
                                                 .info-item input,
                                                 .info-item select,
                                                 .info-item span {
-                                                    font - size: 9px !important;
+                                                    font-size: 9px !important;
                    }
 
                                                 /* 메모 전체 표시 */
@@ -7111,23 +7113,23 @@
 
                                                 .estimate-memo .memo-content,
                                                 .category-memo textarea {
-                                                    white - space: pre-wrap !important;
+                                                    white-space: pre-wrap !important;
                                                 word-break: break-word !important;
                                                 font-size: 8px !important;
                    }
 
                                                 /* 서명 영역 */
                                                 .signature-card h4 {
-                                                    font - size: 9px !important;
+                                                    font-size: 9px !important;
                    }
 
                                                 .sig-field label {
-                                                    font - size: 7px !important;
+                                                    font-size: 7px !important;
                    }
 
                                                 .sig-field input,
                                                 .sig-field span {
-                                                    font - size: 8px !important;
+                                                    font-size: 8px !important;
                    }
 
                                                 /* 조항 */
@@ -7137,11 +7139,11 @@
                    }
 
                                                 .clause-title {
-                                                    font - size: 9px !important;
+                                                    font-size: 9px !important;
                    }
 
                                                 .clause-content {
-                                                    font - size: 8px !important;
+                                                    font-size: 8px !important;
                                                 line-height: 1.4 !important;
                    }
 
@@ -7151,12 +7153,12 @@
                    }
 
                                                 .payment-item label {
-                                                    font - size: 7px !important;
+                                                    font-size: 7px !important;
                    }
 
                                                 .payment-item input,
                                                 .payment-item span {
-                                                    font - size: 9px !important;
+                                                    font-size: 9px !important;
                    }
 
                                                 /* 페이지 번호 */
@@ -7175,13 +7177,13 @@
                    }
 
                                                 @media screen {
-                        .page - number {
+                        .page-number {
                                                     display: none;
                        }
                    }
 
                                                 @media print {
-                        .page - number {
+                        .page-number {
                                                     display: block;
                        }
                    }
@@ -7273,7 +7275,7 @@ const totalCustomers = data.length;
 const contractedCustomers = data.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status));
 const totalContracts = contractedCustomers.length;
 const totalRevenue = contractedCustomers.reduce((sum, c) => sum + parseNumber(c.totalAmount), 0);
-const avgContract = totalContracts > 0 ? Math.round(totalRevenue / totalContracts) : 0;
+const avgContract = totalContracts> 0 ? Math.round(totalRevenue / totalContracts) : 0;
 
 document.getElementById('totalCustomers').textContent = totalCustomers;
 document.getElementById('totalContracts').textContent = totalContracts;
@@ -7471,7 +7473,7 @@ const notContracted = data.filter(c => ['budget_over', 'other_company'].includes
 const consulting = data.filter(c => ['consulting', 'hold'].includes(c.status)).length;
 
 const total = contracted + notContracted;
-const rate = total > 0 ? Math.round((contracted / total) * 100) : 0;
+const rate = total> 0 ? Math.round((contracted / total) * 100) : 0;
 
 document.getElementById('conversionRate').textContent = rate + '%';
 document.getElementById('contractedCount').textContent = contracted;
