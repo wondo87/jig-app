@@ -4913,7 +4913,10 @@
             const yy = now.getFullYear().toString().slice(-2);
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const dd = String(now.getDate()).padStart(2, '0');
-            const seq = String(Math.floor(Math.random() * 900) + 100);
+
+            // 현재 고객 수 + 1 (Google Sheets 행 번호와 일치하도록)
+            const customerCount = customers.filter(c => c.status !== 'trash').length;
+            const seq = String(customerCount + 1).padStart(3, '0');
             currentCustomerId = `${yy}${mm}${dd}-${seq}`;
             currentData = {
                 customerId: currentCustomerId,
