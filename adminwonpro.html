@@ -6879,11 +6879,20 @@
                 if (result.data && Array.isArray(result.data)) {
                     // 데이터를 카테고리별로 정리
                     const globalCostData = {};
+                    let loadCount = 0;
+                    let unmappedCount = 0;
 
                     result.data.forEach(item => {
-                        // 카테고리 번호 매핑
-                        const catNo = mapCategoryToNo(item.div || item.category);
-                        if (!catNo) return;
+                        // 카테고리 번호 매핑 (헤더값 우선, 없으면 구분값 사용)
+                        // item.category가 상위 헤더(예: '욕실공사')일 가능성이 높으므로 이것부터 매핑 시도
+                        let catNo = mapCategoryToNo(item.category);
+                        if (!catNo) catNo = mapCategoryToNo(item.div);
+
+                        if (!catNo) {
+                            unmappedCount++;
+                            // console.warn('분류 실패:', item.category, item.div, item.name); // 디버깅용
+                            return;
+                        }
 
                         if (!globalCostData[`cost_${catNo}`]) {
                             globalCostData[`cost_${catNo}`] = [];
@@ -6897,6 +6906,7 @@
                             qty: item.qty || '',
                             price: item.price || ''
                         });
+                        loadCount++;
                     });
 
                     // localStorage에 저장
@@ -6906,7 +6916,14 @@
                     createCostCategories();
                     loadCostData();
 
-                    showToast(`원가관리표 ${result.data.length}개 항목을 불러왔습니다.`, 'success');
+                    let msg = `원가관리표 ${loadCount}개 항목을 불러왔습니다.`;
+                    if (unmappedCount > 0) {
+                        msg += ` (분류 실패: ${unmappedCount}건)`;
+                        console.warn(`총 ${unmappedCount}개 항목을 분류하지 못했습니다. 구글 시트의 [구분] 또는 [카테고리] 명칭을 확인해주세요.`);
+                        showToast(`일부 항목(${unmappedCount}개)을 분류하지 못했습니다. 구글 시트 양식을 확인해주세요.`, 'warning');
+                    } else {
+                        showToast(msg, 'success');
+                    }
                 } else {
                     showToast('원가관리표 데이터가 없습니다.', 'warning');
                 }
@@ -6973,22 +6990,42 @@
                 '철거공사': '02', '철거': '02',
                 '설비/방수공사': '03', '설비': '03', '방수': '03',
                 '확장/단열공사': '04', '확장': '04', '단열': '04',
-                '창호공사': '05', '창호': '05',
-                '전기/조명공사': '06', '전기': '06', '조명': '06',
+                '창호공사': '05', '창호': '05', '샤시': '05', '샷시': '05',
+                '전기/조명공사': '06', '전기': '06', '조명': '06', '콘센트': '06',
                 '에어컨공사': '07', '에어컨': '07',
-                '목공/도어공사': '08', '목공': '08', '도어': '08',
-                '필름공사': '09', '필름': '09',
+                '목공/도어공사': '08', '목공': '08', '도어': '08', '몰딩': '08', '걸레받이': '08',
+                '필름공사': '09', '필름': '09', '인테리어필름': '09',
                 '타일공사': '10', '타일': '10',
-                '욕실공사': '11', '욕실': '11',
-                '도장공사': '12', '도장': '12',
-                '도배공사': '13', '도배': '13',
-                '바닥재공사': '14', '바닥': '14', '바닥재': '14',
+                '욕실공사': '11', '욕실': '11', '도기': '11', '수전': '11', '세면': '11', '양변기': '11', '욕조': '11', '젠다이': '11', '파티션': '11',
+                '도장공사': '12', '도장': '12', '페인트': '12', '탄성': '12',
+                '도배공사': '13', '도배': '13', '벽지': '13',
+                '바닥재공사': '14', '바닥': '14', '바닥재': '14', '마루': '14', '장판': '14', '데코타일': '14',
                 '가구공사': '15', '가구': '15', '싱크대': '15', '신발장': '15', '붙박이장': '15',
-                '마감공사': '16', '마감': '16',
+                '마감공사': '16', '마감': '16', '입주청소': '16', '준공청소': '16',
                 '기타공사': '17', '기타': '17'
             };
 
-            return categoryMap[name] || null;
+            // 1. 완전 일치 또는 매핑 테이블 검색
+            if (categoryMap[name]) return categoryMap[name];
+
+            // 2. 키워드 부분 일치 검색 (우선순위에 주의)
+            // 명확한 키워드부터 순차적으로 체크
+            if (name.includes('욕실') || name.includes('UBR')) return '11';
+            if (name.includes('타일')) return '10'; // 욕실보다 타일을 나중에 체크 (욕실 타일은 11로 가길 원할 수 있음, 하지만 '욕실'이 포함 안된 타일은 10)
+            if (name.includes('목공') || name.includes('도어') || name.includes('문')) return '08';
+            if (name.includes('필름')) return '09';
+            if (name.includes('도배')) return '13';
+            if (name.includes('바닥') || name.includes('마루') || name.includes('장판')) return '14';
+            if (name.includes('가구') || name.includes('싱크') || name.includes('장')) return '15';
+            if (name.includes('전기') || name.includes('조명') || name.includes('스위치')) return '06';
+            if (name.includes('설비') || name.includes('방수') || name.includes('보일러')) return '03';
+            if (name.includes('철거')) return '02'; // 다른 공종에 '철거'가 포함되면 그 공종으로 가도록 철거를 뒤에 배치
+            if (name.includes('창호') || name.includes('샤시') || name.includes('샷시')) return '05';
+            if (name.includes('에어컨')) return '07';
+            if (name.includes('도장') || name.includes('페인트')) return '12';
+            if (name.includes('마감') || name.includes('청소')) return '16';
+
+            return null;
         }
 
         // 원가관리표 데이터 로드 (전역 데이터)
