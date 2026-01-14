@@ -388,6 +388,8 @@ function handleCustomerSync(payload) {
         customerData.projectName || '',
         customerData.siteAddress || '',
         customerData.pyeong || '',
+        customerData.inflowPath || '',      // 유입경로
+        customerData.buildingType || '',    // 건물유형
         customerData.contractDate || '',
         customerData.constructionPeriod || '',
         customerData.warrantyPeriod || '',
@@ -537,13 +539,16 @@ function buildCustomerFromRow(row) {
         projectName: row[7] || '',
         siteAddress: row[8] || '',
         pyeong: row[9] || '',
-        contractDate: row[10] || '',
-        constructionPeriod: row[11] || '',
-        warrantyPeriod: row[12] || '',
-        totalAmount: row[13] || '',
-        estimateProfitRate: row[14] || ''
+        inflowPath: row[10] || '',       // 유입경로
+        buildingType: row[11] || '',     // 건물유형
+        contractDate: row[12] || '',
+        constructionPeriod: row[13] || '',
+        warrantyPeriod: row[14] || '',
+        totalAmount: row[15] || '',
+        estimateProfitRate: row[16] || ''
     };
 }
+
 
 // Helper: Build row data for 사후관리_A/S sheet
 // 컬럼: NO, 고객명, 연락처, 이메일, 현장주소, 기본A/S상태, 화장실A/S상태, 공사기간, 잔금일, 기본A/S보증일(개월), 기본A/S기간, 화장실A/S보증일(개월), 화장실A/S기간, 담당자, 비고
@@ -616,7 +621,7 @@ function buildAsRowData(customerData) {
 function initializeCustomerSheet(sheet) {
     var headers = [
         '고객ID', '상태', '생성일', '성명', '연락처', '이메일', '주소', '공사명', '현장주소',
-        '평형', '유입경로', '건물유형',  // 新 컬럼 추가
+        '평수', '유입경로', '건물유형',
         '계약일', '공사기간', 'A/S 기간', '계약금액', '이윤율', 'JSON데이터'
     ];
     sheet.appendRow(headers);
