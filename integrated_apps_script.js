@@ -928,11 +928,12 @@ function copyToCustomerSheet(sourceSheet, rowNum) {
     var customerId = datePrefix + '-' + String(maxNum + 1).padStart(3, '0');
 
 
-    // 중복 체크 (같은 연락처가 이미 있는지)
+    // 중복 체크 (같은 연락처 + 이름이 이미 있는지)
     var clientPhone = rowValues[3];
+    var clientName = rowValues[2];
     for (var j = 1; j < existingData.length; j++) {
-        if (existingData[j][4] === clientPhone) {
-            spreadsheet.toast('이미 등록된 고객입니다: ' + rowValues[2], '중복 알림');
+        if (existingData[j][4] === clientPhone && existingData[j][3] === clientName) {
+            spreadsheet.toast('이미 등록된 고객입니다: ' + clientName, '중복 알림');
             return;
         }
     }
