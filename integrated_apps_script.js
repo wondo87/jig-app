@@ -654,6 +654,54 @@ function initializeAsSheet(sheet) {
     sheet.setFrozenRows(1);
 }
 
+// [유틸리티] 기존 사후관리_A/S 시트 정리 - 드롭다운/체크박스 제거
+// 수동 실행: Apps Script Editor에서 이 함수 실행
+function cleanupAsSheet() {
+    var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+    var sheet = spreadsheet.getSheetByName('사후관리_A/S');
+
+    if (!sheet) {
+        SpreadsheetApp.getUi().alert('사후관리_A/S 시트를 찾을 수 없습니다.');
+        return;
+    }
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+
+    if (lastRow < 1 || lastCol < 1) {
+        SpreadsheetApp.getUi().alert('시트에 데이터가 없습니다.');
+        return;
+    }
+
+    // 전체 데이터 영역의 데이터 유효성 검사 제거
+    var dataRange = sheet.getRange(1, 1, lastRow, lastCol);
+    dataRange.clearDataValidations();
+
+    // 헤더 재설정
+    var headers = [
+        '고객ID', '고객명', '연락처', '이메일', '현장주소',
+        '기본 A/S 상태', '화장실 A/S 상태',
+        '공사기간', '잔금일',
+        '기본 A/S 보증일(개월)', '기본 A/S 기간',
+        '화장실 A/S 보증일(개월)', '화장실 A/S 기간',
+        '담당자', '비고'
+    ];
+
+    // 헤더 행 업데이트
+    for (var i = 0; i < headers.length; i++) {
+        sheet.getRange(1, i + 1).setValue(headers[i]);
+    }
+
+    // 헤더 스타일 적용
+    var headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground('#5C6BC0');
+    headerRange.setFontColor('#FFFFFF');
+    headerRange.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+
+    SpreadsheetApp.getUi().alert('사후관리_A/S 시트 정리 완료!\n드롭다운/체크박스가 제거되었습니다.');
+}
+
 
 function getAdmins(spreadsheet) {
     var sheet = spreadsheet.getSheetByName('관리자');
