@@ -5432,7 +5432,7 @@
             // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
             // Convert any stored dots (YYYY.MM.DD) to dashes.
             ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
-                const el = document.querySelector(`.customer - field[data - field="${field}"]`);
+                const el = document.querySelector(`.customer-field[data-field="${field}"]`);
                 if (el && currentData[field]) {
                     el.value = currentData[field].replace(/\./g, '-');
                 }
@@ -5440,11 +5440,16 @@
 
             // [CONSTRUCTION PERIOD FIX] Split string into two date inputs
             if (currentData.constructionPeriod) {
-                const parts = currentData.constructionPeriod.split('~');
-                if (parts.length > 0) document.getElementById('constructionStartInput').value = parts[0].replace(/\./g,
-                    '-').trim();
-                if (parts.length > 1) document.getElementById('constructionEndInput').value = parts[1].replace(/\./g,
-                    '-').trim();
+                // 다양한 형식 지원: "2025.01.01 ~ 2025.03.01" 또는 "2025-01-01 ~ 2025-03-01"
+                const periodStr = currentData.constructionPeriod.replace(/\s+/g, ''); // 모든 공백 제거
+                const parts = periodStr.split('~');
+                if (parts.length > 0 && parts[0]) {
+                    // 점을 대시로 변환하여 date input에 설정
+                    document.getElementById('constructionStartInput').value = parts[0].replace(/\./g, '-').trim();
+                }
+                if (parts.length > 1 && parts[1]) {
+                    document.getElementById('constructionEndInput').value = parts[1].replace(/\./g, '-').trim();
+                }
             } else {
                 document.getElementById('constructionStartInput').value = '';
                 document.getElementById('constructionEndInput').value = '';
@@ -5457,10 +5462,10 @@
             const hiddenInput = document.getElementById('hiddenConstructionPeriod');
 
             if (start && end) {
-                // Store as Dots for consistency with legacy/placeholder text
-                hiddenInput.value = `${start.replace(/-/g, '.')} ~${end.replace(/-/g, '.')} `;
+                // 일관된 형식으로 저장: "YYYY.MM.DD ~ YYYY.MM.DD"
+                hiddenInput.value = `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
             } else if (start) {
-                hiddenInput.value = `${start.replace(/-/g, '.')} `;
+                hiddenInput.value = `${start.replace(/-/g, '.')}`;
             } else {
                 hiddenInput.value = '';
             }
