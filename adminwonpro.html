@@ -5689,8 +5689,8 @@
             showToast('클라우드에서 데이터 불러오는 중...', 'info');
 
             try {
-                // Google Apps Script GET 요청 (고객 데이터 조회)
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리_견적서', {
+                // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리_견적서&t=' + new Date().getTime(), {
                     method: 'GET'
                 });
 
