@@ -825,16 +825,18 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
     var dd = String(today.getDate()).padStart(2, '0');
     var datePrefix = yy + mm + dd;
 
-    // 기존 고객 수 확인하여 순번 생성
+    // 기존 고객 수 확인하여 순번 생성 (최대 번호 + 1)
     var existingData = targetSheet.getDataRange().getValues();
-    var count = 1;
+    var maxNum = 0;
     for (var i = 1; i < existingData.length; i++) {
         var existingId = existingData[i][0] || '';
         if (existingId.toString().startsWith(datePrefix)) {
-            count++;
+            var numPart = parseInt(existingId.toString().split('-')[1]) || 0;
+            if (numPart > maxNum) maxNum = numPart;
         }
     }
-    var customerId = datePrefix + '-' + String(count).padStart(3, '0');
+    var customerId = datePrefix + '-' + String(maxNum + 1).padStart(3, '0');
+
 
     // 중복 체크 (같은 연락처 + 이름이 이미 있는지)
     var clientPhone = rowValues[2]; // 설문지 응답에서 3번째 컬럼이 연락처
@@ -893,16 +895,18 @@ function copyToCustomerSheet(sourceSheet, rowNum) {
     var dd = String(today.getDate()).padStart(2, '0');
     var datePrefix = yy + mm + dd;
 
-    // 기존 고객 수 확인하여 순번 생성
+    // 기존 고객 수 확인하여 순번 생성 (최대 번호 + 1)
     var existingData = targetSheet.getDataRange().getValues();
-    var count = 1;
+    var maxNum = 0;
     for (var i = 1; i < existingData.length; i++) {
         var existingId = existingData[i][0] || '';
         if (existingId.toString().startsWith(datePrefix)) {
-            count++;
+            var numPart = parseInt(existingId.toString().split('-')[1]) || 0;
+            if (numPart > maxNum) maxNum = numPart;
         }
     }
-    var customerId = datePrefix + '-' + String(count).padStart(3, '0');
+    var customerId = datePrefix + '-' + String(maxNum + 1).padStart(3, '0');
+
 
     // 중복 체크 (같은 연락처가 이미 있는지)
     var clientPhone = rowValues[3];
