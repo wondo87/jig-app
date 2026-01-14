@@ -5370,6 +5370,7 @@
             // Legacy Data Compatibility (Cloud Compatibility Fix)
             // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (area, profitRate) if new keys are missing
             if (!customer.area && customer.pyeong) customer.area = customer.pyeong;
+            if (!customer.clientSource && customer.inflowPath) customer.clientSource = customer.inflowPath;
             if (!customer.profitRate && customer.estimateProfitRate) {
                 // Format estimateProfitRate if it's just a number
                 let rate = String(customer.estimateProfitRate);
@@ -5778,17 +5779,16 @@
                         finalPaymentDate: data.finalPaymentDate || '', // 잔금일 추가
                         contractDate: data.contractDate || '', // Explicitly send Contract Date
                         warrantyPeriod: data.asEndDate ? (data.asEndDate) : '', // Send A/S End Date
-                        // Note: For 'A/S 기간' (Warranty Period), if you want "YYYY.MM.DD ~ YYYY.MM.DD", construct it here.
-                        // Assuming the sheet just wants the end date or whatever is in 'asEndDate' data.
-                        // The user said "A/S Period not entered", screenshot shows column M "A/S 기간".
-                        // In `initializeCustomerSheet` of backend, column 13 is 'A/S 기간'.
 
                         pyeong: data.area || '',
+                        inflowPath: data.clientSource || '',      // 유입경로
+                        buildingType: data.buildingType || '',    // 건물유형
                         totalAmount: data.totalAmount || '',
                         estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
                         jsonData: JSON.stringify(data)
                     }
                 };
+
 
                 console.log('📦 [Google Sheets Sync] Payload:', payload);
                 console.log('🌐 [Google Sheets Sync] Target URL:', CUSTOMER_SYNC_URL);
