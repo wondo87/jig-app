@@ -637,6 +637,24 @@ function initializeAdminSheet(sheet) {
     sheet.setFrozenRows(1);
 }
 
+function initializeAsSheet(sheet) {
+    var headers = [
+        'NO', '고객명', '연락처', '이메일', '현장주소',
+        '기본 A/S 상태', '화장실 A/S 상태',
+        '공사기간', '잔금일',
+        '기본 A/S 보증일(개월)', '기본 A/S 기간',
+        '화장실 A/S 보증일(개월)', '화장실 A/S 기간',
+        '담당자', '비고'
+    ];
+    sheet.appendRow(headers);
+    var headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground('#5C6BC0'); // 보라색 계열
+    headerRange.setFontColor('#FFFFFF');
+    headerRange.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+}
+
+
 function getAdmins(spreadsheet) {
     var sheet = spreadsheet.getSheetByName('관리자');
     if (!sheet || sheet.getLastRow() < 2) return [];
