@@ -371,11 +371,11 @@ function handleCustomerSync(payload) {
 
     if (!mainSheet) { mainSheet = spreadsheet.insertSheet('고객관리_견적서'); initializeCustomerSheet(mainSheet); }
     if (!contractedSheet) { contractedSheet = spreadsheet.insertSheet('계약완료'); initializeCustomerSheet(contractedSheet); }
-    if (!asSheet) { asSheet = spreadsheet.insertSheet('사후관리_A/S'); initializeCustomerSheet(asSheet); }
+    if (!asSheet) { asSheet = spreadsheet.insertSheet('사후관리_A/S'); initializeAsSheet(asSheet); }
 
     if (mainSheet.getLastRow() === 0) initializeCustomerSheet(mainSheet);
     if (contractedSheet.getLastRow() === 0) initializeCustomerSheet(contractedSheet);
-    if (asSheet.getLastRow() === 0) initializeCustomerSheet(asSheet);
+    if (asSheet.getLastRow() === 0) initializeAsSheet(asSheet);
 
     var rowData = [
         customerData.customerId,
