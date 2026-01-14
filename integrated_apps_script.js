@@ -96,7 +96,7 @@ function doGet(e) {
         var sheetParam = e.parameter.sheet; // '관리자', '고객관리' 등
 
         // 1. 고객관리/관리자 데이터 요청인 경우 (파라미터가 명시적인 경우)
-        if (sheetParam === '관리자' || sheetParam === '고객관리' || sheetParam === '계약완료고객') {
+        if (sheetParam === '관리자' || sheetParam === '고객관리' || sheetParam === '고객관리_견적서' || sheetParam === '계약완료고객' || sheetParam === '계약완료') {
             return handleCustomerGet(e);
         }
 
