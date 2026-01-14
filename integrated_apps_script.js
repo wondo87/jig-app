@@ -768,7 +768,27 @@ function deleteAdmin(spreadsheet, adminId) {
 // 5. 트리거 관련 함수 (Triggers)
 // ==========================================
 
+// [트리거] onFormSubmit - 설문지 응답 시 "상담상태"를 "설문응답"으로 자동 기입
+function onFormSubmit(e) {
+    if (!e) return;
+
+    var sheet = e.range.getSheet();
+    var sheetName = sheet.getName();
+
+    // 설문지 응답 시트에서만 동작
+    if (sheetName !== '설문지 응답') return;
+
+    var row = e.range.getRow();
+    var statusColumn = 6; // F열: 상담상태
+
+    // 상담상태 컬럼에 "설문응답" 자동 기입
+    sheet.getRange(row, statusColumn).setValue('설문응답');
+
+    SpreadsheetApp.getActiveSpreadsheet().toast('새 설문 응답이 등록되었습니다.', '설문 접수');
+}
+
 // [트리거] onEdit (상담 시트용)
+
 function processStatusChange(e) {
     if (!e) return;
     var range = e.range;
