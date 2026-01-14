@@ -639,7 +639,7 @@ function initializeAdminSheet(sheet) {
 
 function initializeAsSheet(sheet) {
     var headers = [
-        'NO', '고객명', '연락처', '이메일', '현장주소',
+        '고객ID', '고객명', '연락처', '이메일', '현장주소',
         '기본 A/S 상태', '화장실 A/S 상태',
         '공사기간', '잔금일',
         '기본 A/S 보증일(개월)', '기본 A/S 기간',
