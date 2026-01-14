@@ -16,7 +16,7 @@ const DELETE_PASSWORD = '6454';
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzlUqGjCjdVMgGKckrcrnnqrAc92ejl0DsZwNtSd5mcOK8VxGS5PZB5BvMyzVxkhb04Cg/exec';
 
 // [중요] 고객관리 동기화 전용 URL (integrated_apps_script.js 배포 URL)
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxoqANqAtAYAS9a2k0i64Msb0FvfV6CpwbhvOJG-1bsU6XTMgSU3N5gcp0YFU28cqriXw/exec';
+const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbx26zviODJeJMv1AiGqHKn0KNuApkfdqZCQOp-q0-67PZPAhCXxTBlzrSC8beVNWn-xtA/exec';
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
