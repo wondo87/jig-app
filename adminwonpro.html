@@ -5608,6 +5608,9 @@
             const monthFilter = document.getElementById('monthFilter').value;
 
             let filtered = customers.filter(c => {
+                // customerId가 없는 항목 제외
+                if (!c.customerId) return false;
+
                 // 휴지통 항목 제외
                 if (c.status === 'trash') return false;
 
@@ -5617,7 +5620,7 @@
                 // 년/월 필터 (customerId 기준: YYMMDD-XXX)
                 let matchDate = true;
                 if (yearFilter || monthFilter) {
-                    const idParts = c.customerId.split('-')[0];
+                    const idParts = (c.customerId || '').split('-')[0];
                     if (idParts && idParts.length >= 4) {
                         const year = '20' + idParts.substring(0, 2);
                         const month = idParts.substring(2, 4);
@@ -5677,7 +5680,8 @@
             const years = new Set();
 
             customers.forEach(c => {
-                const idParts = c.customerId.split('-')[0];
+                if (!c.customerId) return; // customerId가 없으면 건너뛰기
+                const idParts = (c.customerId || '').split('-')[0];
                 if (idParts && idParts.length >= 2) {
                     years.add('20' + idParts.substring(0, 2));
                 }

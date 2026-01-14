@@ -509,17 +509,30 @@ function handleCustomerGet(e) {
 
     for (var i = 1; i < data.length; i++) {
         var row = data[i];
+        var customerId = row[0]; // 첫 번째 열이 customerId
+
+        // customerId가 없으면 건너뛰기 (빈 행 또는 잘못된 데이터)
+        if (!customerId) continue;
+
         var jsonData = row[17]; // JSON데이터 열 (18번째 열 = 인덱스 17)
 
         if (jsonData) {
             try {
-                customers.push(JSON.parse(jsonData));
+                var parsedData = JSON.parse(jsonData);
+                // 파싱된 데이터에 customerId가 있는지 확인
+                if (parsedData.customerId) {
+                    customers.push(parsedData);
+                } else {
+                    // customerId가 없으면 행 데이터에서 추가
+                    parsedData.customerId = customerId;
+                    customers.push(parsedData);
+                }
             } catch (e) {
                 // 파싱 실패 시 기본 구조로 생성
                 customers.push(buildCustomerFromRow(row));
             }
-        } else if (row[0]) {
-            // JSON데이터가 없어도 customerId가 있으면 기본 컬럼에서 구성
+        } else {
+            // JSON데이터가 없으면 기본 컬럼에서 구성
             customers.push(buildCustomerFromRow(row));
         }
     }
