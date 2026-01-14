@@ -6635,16 +6635,55 @@
                     const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
                     const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
 
+
                     savedRows.forEach((item, i) => {
                         const nameItems = item.div ? getItemsByDivInCat(cat.no, item.div) : [];
-                        const nameOptions = nameItems.map((it, idx) =>
-                            `<option value="${idx}" data-spec="${it.spec}" data-unit="${it.unit}" data-price="${it.unitPrice}"
-                ${idx == item.nameIndex ? 'selected' : ''}>${it.name}</option>`
+
+                        // 고유한 품명만 추출 (중복 제거)
+                        const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+
+                        // 저장된 품명과 일치하는지 확인 (이름 또는 인덱스 호환)
+                        // item.name이 있으면 그것을 사용, 없으면 item.nameIndex를 사용할 수도 있지만
+                        // 이전 로직에서 nameIndex는 map index였으므로 신뢰하기 어려울 수 있음. item.name을 우선 사용.
+                        const currentName = item.name || '';
+
+                        const nameOptions = uniqueNames.map(name =>
+                            `<option value="${name}" ${name === currentName ? 'selected' : ''}>${name}</option>`
                         ).join('');
 
                         const price = parseInt(item.price) || 0;
                         const qty = parseInt(item.qty) || 0;
                         const amount = price * qty;
+
+                        // 상세내용 셀 처리 (드롭다운 복원 필요 여부 확인)
+                        let specCellContent = item.spec || '-';
+                        const sameNameItems = nameItems.filter(it => it.name === currentName);
+
+                        if (sameNameItems.length > 1) {
+                            // 중복 품명이면 상세내용 드롭다운 생성
+                            const specOptions = sameNameItems.map((it, idx) => {
+                                // 저장된 스펙과 일치하는지 확인 (공백 제거 등 유연하게)
+                                const isSelected = (it.spec || '') === item.spec || (it.spec === null && item.spec === '-');
+                                return `<option value="${idx}" data-spec="${it.spec || ''}" data-unit="${it.unit || ''}" data-price="${it.unitPrice || 0}" ${isSelected ? 'selected' : ''}>
+                                ${it.spec || '(상세내용 없음)'}</option>`;
+                            }).join('');
+
+                            specCellContent = `
+                            <select class="spec-select" onchange="onEstSpecSelect(this, '${cat.no}')"
+                                style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;">
+                                <option value="">상세 선택</option>
+                                ${specOptions}
+                                <option value="__custom__" ${item.spec && !sameNameItems.find(it => it.spec === item.spec) ? 'selected' : ''}>✏️ 직접입력</option>
+                            </select>`;
+
+                            // 만약 직접 입력된 값이라면 input으로 보여줘야 할 수도 있음 (여기선 일단 드롭다운으로 복원하고 직접입력 선택 시 처리)
+                            // 복잡함을 줄이기 위해 기본은 드롭다운으로 하되, 매칭 안되면 '직접입력'으로 처리
+                        } else if (item.spec && !sameNameItems.find(it => it.spec === item.spec) && item.spec !== '-') {
+                            // 매칭되는 스펙이 없는데 값이 있으면 input (직접입력 등)
+                            // 다만 기존 데이터가 단순 텍스트일 수 있으므로 상황에 따라 다름.
+                            // 여기서는 텍스트로 표시하되, 수정 시 풀림.
+                            // 완벽한 복원을 위해 input으로 바꿀 수도 있지만 UI 복잡도 고려하여 텍스트로 둠.
+                        }
 
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -6654,7 +6693,7 @@
                 </select></td>
             <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
                             }>${item.div ? '<option value="">품명 선택</option>' + nameOptions : '<option value="">구분 먼저 선택</option>'}</select></td>
-                            <td class="spec-cell"> ${item.spec || '-'}</td>
+            <td class="spec-cell">${specCellContent}</td>
             <td class="unit-cell">${item.unit || '-'}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
