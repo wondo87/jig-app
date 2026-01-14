@@ -615,8 +615,8 @@ function buildAsRowData(customerData) {
 
 function initializeCustomerSheet(sheet) {
     var headers = [
-        '고객ID', '상태', '생성일', '성명', '연락처',
-        '이메일', '주소', '공사명', '현장주소', '평형',
+        '고객ID', '상태', '생성일', '성명', '연락처', '이메일', '주소', '공사명', '현장주소',
+        '평형', '유입경로', '건물유형',  // 新 컬럼 추가
         '계약일', '공사기간', 'A/S 기간', '계약금액', '이윤율', 'JSON데이터'
     ];
     sheet.appendRow(headers);
@@ -702,22 +702,102 @@ function processStatusChange(e) {
     if (!e) return;
     var range = e.range;
     var sheet = range.getSheet();
+    var sheetName = sheet.getName();
 
-    // 상담관리_마스터 시트에서만 동작
-    if (sheet.getName() !== '상담관리_마스터') return;
-    if (range.getColumn() !== 8) return; // 상담상태 열 (H열)
+    // 상담관리_마스터 또는 설문지 응답 시트에서 동작
+    var statusColumn = -1;
+    if (sheetName === '상담관리_마스터') {
+        statusColumn = 8; // H열: 상담상태
+    } else if (sheetName === '설문지 응답') {
+        statusColumn = 15; // O열: 상담상태 (설문지 응답 마지막에 추가된 컬럼)
+    } else {
+        return;
+    }
+
+    if (range.getColumn() !== statusColumn) return;
 
     var newStatus = e.value;
     var rowNum = range.getRow();
 
     // 상담중 → 고객관리_견적서로 복사
     if (newStatus === '상담중') {
-        copyToCustomerSheet(sheet, rowNum);
+        if (sheetName === '설문지 응답') {
+            copyFromSurveyToCustomer(sheet, rowNum);
+        } else {
+            copyToCustomerSheet(sheet, rowNum);
+        }
     }
     // 계약완료 → 사후관리_A/S로 복사
     else if (newStatus === '계약완료') {
         moveRowToAS(sheet, rowNum);
     }
+}
+
+// [상담중] 설문지 응답 → 고객관리_견적서 복사 (유입경로, 건물유형, 평수 포함)
+function copyFromSurveyToCustomer(sourceSheet, rowNum) {
+    var spreadsheet = sourceSheet.getParent();
+    var targetSheet = spreadsheet.getSheetByName('고객관리_견적서');
+
+    if (!targetSheet) {
+        targetSheet = spreadsheet.insertSheet('고객관리_견적서');
+        initializeCustomerSheet(targetSheet);
+    }
+
+    var rowValues = sourceSheet.getRange(rowNum, 1, 1, sourceSheet.getLastColumn()).getValues()[0];
+    // 설문지 응답 컬럼: 0:타임스탬프, 1:성함, 2:연락처, 3:이메일, 4:현장주소, 
+    //                  5:Q1.유입경로, 6:Q2.건물유형, 7:Q3.평수, ...
+
+    // 고객ID 생성 (YYMMDD-NNN 형식)
+    var today = new Date();
+    var yy = String(today.getFullYear()).slice(-2);
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    var datePrefix = yy + mm + dd;
+
+    // 기존 고객 수 확인하여 순번 생성
+    var existingData = targetSheet.getDataRange().getValues();
+    var count = 1;
+    for (var i = 1; i < existingData.length; i++) {
+        var existingId = existingData[i][0] || '';
+        if (existingId.toString().startsWith(datePrefix)) {
+            count++;
+        }
+    }
+    var customerId = datePrefix + '-' + String(count).padStart(3, '0');
+
+    // 중복 체크 (같은 연락처가 이미 있는지)
+    var clientPhone = rowValues[2]; // 설문지 응답에서는 3번째 컬럼이 연락처
+    for (var j = 1; j < existingData.length; j++) {
+        if (existingData[j][4] === clientPhone) { // 고객관리_견적서에서 5번째(인덱스4)가 연락처
+            spreadsheet.toast('이미 등록된 고객입니다: ' + rowValues[1], '중복 알림');
+            return;
+        }
+    }
+
+    // 고객관리_견적서 컬럼: 고객ID, 상태, 생성일, 성명, 연락처, 이메일, 주소, 공사명, 현장주소, 평형, 유입경로, 건물유형, 계약일...
+    var newRowData = [
+        customerId,                     // 고객ID
+        '상담중',                        // 상태
+        new Date().toISOString().split('T')[0], // 생성일
+        rowValues[1] || '',             // 성명 (성함)
+        rowValues[2] || '',             // 연락처
+        rowValues[3] || '',             // 이메일
+        '',                             // 주소 (별도 입력)
+        '',                             // 공사명
+        rowValues[4] || '',             // 현장주소
+        rowValues[7] || '',             // 평형 (Q3.평수)
+        rowValues[5] || '',             // 유입경로 (Q1.유입경로)
+        rowValues[6] || '',             // 건물유형 (Q2.건물유형)
+        '',                             // 계약일
+        '',                             // 공사기간
+        '',                             // A/S 기간
+        '',                             // 계약금액
+        '',                             // 이윤율
+        ''                              // JSON데이터
+    ];
+
+    targetSheet.appendRow(newRowData);
+    spreadsheet.toast('설문 고객을 [고객관리_견적서] 시트로 복사했습니다.\n고객ID: ' + customerId, '복사 완료');
 }
 
 // [상담중] 상담관리_마스터 → 고객관리_견적서 복사
@@ -754,31 +834,32 @@ function copyToCustomerSheet(sourceSheet, rowNum) {
     // 중복 체크 (같은 연락처가 이미 있는지)
     var clientPhone = rowValues[3];
     for (var j = 1; j < existingData.length; j++) {
-        if (existingData[j][4] === clientPhone) { // 연락처 컬럼
+        if (existingData[j][4] === clientPhone) {
             spreadsheet.toast('이미 등록된 고객입니다: ' + rowValues[2], '중복 알림');
-            return; // 중복이면 복사 안함
+            return;
         }
     }
 
-    // 고객관리_견적서 컬럼 순서에 맞게 데이터 구성
-    // 고객ID, 상태, 생성일, 성명, 연락처, 이메일, 주소, 공사명, 현장주소, ...
+    // 고객관리_견적서 컬럼: 고객ID, 상태, 생성일, 성명, 연락처, 이메일, 주소, 공사명, 현장주소, 평형, 유입경로, 건물유형, 계약일...
     var newRowData = [
-        customerId,           // 고객ID
-        '상담중',              // 상태
+        customerId,                     // 고객ID
+        '상담중',                        // 상태
         new Date().toISOString().split('T')[0], // 생성일
-        rowValues[2] || '',   // 성명 (고객명)
-        rowValues[3] || '',   // 연락처
-        rowValues[4] || '',   // 이메일
-        '',                   // 주소 (별도 입력)
-        '',                   // 공사명
-        rowValues[5] || '',   // 현장주소
-        '',                   // 평형
-        '',                   // 계약일
-        '',                   // 공사기간
-        '',                   // A/S 기간
-        '',                   // 계약금액
-        '',                   // 이윤율
-        ''                    // JSON데이터
+        rowValues[2] || '',             // 성명 (고객명)
+        rowValues[3] || '',             // 연락처
+        rowValues[4] || '',             // 이메일
+        '',                             // 주소 (별도 입력)
+        '',                             // 공사명
+        rowValues[5] || '',             // 현장주소
+        '',                             // 평형
+        '',                             // 유입경로
+        '',                             // 건물유형
+        '',                             // 계약일
+        '',                             // 공사기간
+        '',                             // A/S 기간
+        '',                             // 계약금액
+        '',                             // 이윤율
+        ''                              // JSON데이터
     ];
 
     targetSheet.appendRow(newRowData);
