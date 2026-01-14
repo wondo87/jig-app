@@ -790,8 +790,8 @@ function processStatusChange(e) {
     var newStatus = e.value;
     var rowNum = range.getRow();
 
-    // 상담중 → 고객관리_견적서로 복사
-    if (newStatus === '상담중') {
+    // 견적서 → 고객관리_견적서로 복사
+    if (newStatus === '견적서') {
         if (sheetName === '설문지 응답') {
             copyFromSurveyToCustomer(sheet, rowNum);
         } else {
@@ -804,7 +804,7 @@ function processStatusChange(e) {
     }
 }
 
-// [상담중] 설문지 응답 → 고객관리_견적서 복사 (유입경로, 건물유형, 평수 포함)
+// [견적서] 설문지 응답 → 고객관리_견적서 복사 (유입경로, 건물유형, 평수 포함)
 function copyFromSurveyToCustomer(sourceSheet, rowNum) {
     var spreadsheet = sourceSheet.getParent();
     var targetSheet = spreadsheet.getSheetByName('고객관리_견적서');
@@ -848,7 +848,7 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
     // 고객관리_견적서 컬럼: 고객ID, 상태, 생성일, 성명, 연락처, 이메일, 주소, 공사명, 현장주소, 평형, 유입경로, 건물유형, 계약일...
     var newRowData = [
         customerId,                     // 고객ID
-        '상담중',                        // 상태
+        '견적서',                        // 상태
         new Date().toISOString().split('T')[0], // 생성일
         rowValues[1] || '',             // 성명 (성함)
         rowValues[2] || '',             // 연락처
@@ -871,7 +871,7 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
     spreadsheet.toast('설문 고객을 [고객관리_견적서] 시트로 복사했습니다.\n고객ID: ' + customerId, '복사 완료');
 }
 
-// [상담중] 상담관리_마스터 → 고객관리_견적서 복사
+// [견적서] 상담관리_마스터 → 고객관리_견적서 복사
 function copyToCustomerSheet(sourceSheet, rowNum) {
     var spreadsheet = sourceSheet.getParent();
     var targetSheet = spreadsheet.getSheetByName('고객관리_견적서');
@@ -914,7 +914,7 @@ function copyToCustomerSheet(sourceSheet, rowNum) {
     // 고객관리_견적서 컬럼: 고객ID, 상태, 생성일, 성명, 연락처, 이메일, 주소, 공사명, 현장주소, 평형, 유입경로, 건물유형, 계약일...
     var newRowData = [
         customerId,                     // 고객ID
-        '상담중',                        // 상태
+        '견적서',                        // 상태
         new Date().toISOString().split('T')[0], // 생성일
         rowValues[2] || '',             // 성명 (고객명)
         rowValues[3] || '',             // 연락처
