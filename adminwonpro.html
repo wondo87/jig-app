@@ -5368,15 +5368,13 @@
             currentCustomerId = customerId;
 
             // Legacy Data Compatibility (Cloud Compatibility Fix)
-            // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (area, profitRate) if new keys are missing
-            // Legacy Data Compatibility (Cloud Compatibility Fix)
-            // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (display py suffix automatically)
+            // Ensure old keys (pyeong, inflowPath) map to new inputs (area, clientSource)
             customer.clientSource = customer.clientSource || customer.inflowPath || '';
             customer.area = customer.area || customer.pyeong || '';
 
-            // Auto-add 'py' suffix if missing
-            if (customer.area && !String(customer.area).includes('py')) {
-                customer.area = String(customer.area) + 'py';
+            // 'py' 표기를 '평'으로 자동 변환 (기존 저장된 데이터 호환)
+            if (customer.area && /^\d+py$/i.test(String(customer.area).trim())) {
+                customer.area = customer.area.replace(/py$/i, '평');
             }
 
             if (!customer.profitRate && customer.estimateProfitRate) {
@@ -5481,11 +5479,18 @@
             } else { el.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7); }
         }
 
-        // Area Auto-format (add 'py')
+        // Area Auto-format (숫자만 입력 시 '평' 추가)
         function autoFormatArea(el) {
             let value = el.value.trim();
             if (!value) return;
-            if (/^\d+$/.test(value)) { el.value = value + 'py'; }
+            // 숫자만 입력된 경우 '평' 붙이기
+            if (/^\d+$/.test(value)) {
+                el.value = value + '평';
+            }
+            // 'py'가 포함된 경우 '평'으로 변환
+            else if (/^\d+py$/i.test(value)) {
+                el.value = value.replace(/py$/i, '평');
+            }
         }
 
         // Profit Rate Auto-format (add '%')

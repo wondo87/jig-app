@@ -539,7 +539,9 @@ function buildCustomerFromRow(row) {
         projectName: row[7] || '',
         siteAddress: row[8] || '',
         pyeong: row[9] || '',
+        area: row[9] || '',              // UI 호환: pyeong -> area 매핑
         inflowPath: row[10] || '',       // 유입경로
+        clientSource: row[10] || '',     // UI 호환: inflowPath -> clientSource 매핑
         buildingType: row[11] || '',     // 건물유형
         contractDate: row[12] || '',
         constructionPeriod: row[13] || '',
