@@ -21,6 +21,9 @@ const CONSULTING_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 // [수정] Make 연동 시트로 통합하기 위해 ID를 상담용과 동일하게 설정
 const CUSTOMER_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 
+// [원가관리표용] 스프레드시트 ID
+const COST_SHEET_ID = '1oKt3Gritja2K6rE09oyf6Ea16k8lV1p_hXMfz5j3YeY';
+
 // [상담용] 설문 Form URL
 const FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdcsD1hjKMNezFTaPAZRlKovdRDfCW08cy4VfLHL_LJDcmbVw/viewform';
 
@@ -62,7 +65,12 @@ function doPost(e) {
         }
 
         // --- [라우팅 로직] ---
-        // 1. 관리자 데이터 동기화 요청인지 확인
+        // 1. 원가관리표 업데이트 요청
+        if (payload.action === 'updateCost') {
+            return handleCostUpdate(payload);
+        }
+
+        // 2. 관리자 데이터 동기화 요청인지 확인
         // 조건: action 필드가 있거나, 데이터 내에 customerId가 있음 (관리자 기능)
         var isAdminAction = (payload.action === 'admin' || payload.action === 'deleteAdmin');
         var isCustomerSync = (payload.data && payload.data.customerId) || (payload.customerId);
@@ -72,7 +80,7 @@ function doPost(e) {
             return handleCustomerSync(payload);
         }
 
-        // 2. 그 외에는 상담 문의 접수로 간주
+        // 3. 그 외에는 상담 문의 접수로 간주
         // -> 상담 접수 로직 실행
         return handleConsultingInquiry(payload);
 
@@ -93,14 +101,19 @@ function doPost(e) {
  */
 function doGet(e) {
     try {
-        var sheetParam = e.parameter.sheet; // '관리자', '고객관리' 등
+        var sheetParam = e.parameter.sheet; // '관리자', '고객관리', '원가관리표' 등
 
-        // 1. 고객관리/관리자 데이터 요청인 경우 (파라미터가 명시적인 경우)
+        // 1. 원가관리표 데이터 요청
+        if (sheetParam === '원가관리표') {
+            return handleCostGet(e);
+        }
+
+        // 2. 고객관리/관리자 데이터 요청인 경우 (파라미터가 명시적인 경우)
         if (sheetParam === '관리자' || sheetParam === '고객관리' || sheetParam === '고객관리_견적서' || sheetParam === '계약완료고객' || sheetParam === '계약완료') {
             return handleCustomerGet(e);
         }
 
-        // 2. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
+        // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
         return handleConsultingGet(e);
 
     } catch (err) {
@@ -1144,5 +1157,142 @@ function sendBathroomAsExpirationEmail(email, name) {
         console.log('화장실 A/S 완료 메일 발송: ' + email);
     } catch (e) {
         console.log('메일 발송 에러 (' + email + '): ' + e.toString());
+    }
+}
+
+// ==========================================
+// 9. 원가관리표 데이터 처리 (Cost Management)
+// ==========================================
+
+/**
+ * 원가관리표 데이터 조회 (GET)
+ * Google Sheets에서 원가관리표 데이터를 읽어옵니다.
+ */
+function handleCostGet(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('시트1');
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                error: '원가관리표 시트를 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var costData = [];
+        var currentCategory = '';
+
+        // 헤더 행 건너뛰기 (첫 5행은 제목 및 헤더)
+        for (var i = 5; i < data.length; i++) {
+            var row = data[i];
+
+            // 빈 행 건너뛰기
+            if (!row[0] && !row[1] && !row[2]) continue;
+
+            // 구분(카테고리) 확인
+            var category = row[1] ? row[1].toString().trim() : '';
+            if (category && !row[2]) {
+                // 카테고리만 있고 품명이 없으면 카테고리 헤더
+                currentCategory = category;
+                continue;
+            }
+
+            costData.push({
+                no: row[0] || '',
+                category: currentCategory || category,
+                div: row[1] || '',
+                name: row[2] || '',
+                spec: row[3] || '',
+                unit: row[4] || '',
+                qty: row[5] || '',
+                price: row[6] || '',
+                total: row[7] || ''
+            });
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            data: costData,
+            lastUpdated: new Date().toISOString()
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 원가관리표 데이터 업데이트 (POST)
+ * Google Sheets에 원가관리표 데이터를 저장합니다.
+ */
+function handleCostUpdate(payload) {
+    try {
+        var costData = payload.data;
+
+        if (!costData || !Array.isArray(costData)) {
+            return ContentService.createTextOutput(JSON.stringify({
+                error: '유효한 원가관리표 데이터가 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('시트1');
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                error: '원가관리표 시트를 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 기존 데이터 영역 확인 (6행부터 시작)
+        var lastRow = sheet.getLastRow();
+
+        // 헤더 유지하고 데이터 영역만 삭제 (6행 이후)
+        if (lastRow > 5) {
+            sheet.getRange(6, 1, lastRow - 5, 8).clearContent();
+        }
+
+        // 새 데이터 쓰기
+        var currentRow = 6;
+        var currentCategory = '';
+
+        for (var i = 0; i < costData.length; i++) {
+            var item = costData[i];
+
+            // 카테고리가 바뀌면 카테고리 헤더 행 추가
+            if (item.category && item.category !== currentCategory) {
+                currentCategory = item.category;
+                // 카테고리 소계 행은 프론트엔드에서 계산하므로 여기서는 생략
+            }
+
+            // 데이터 행 쓰기
+            sheet.getRange(currentRow, 1, 1, 8).setValues([[
+                item.no || currentRow - 5,
+                item.div || '',
+                item.name || '',
+                item.spec || '',
+                item.unit || '',
+                item.qty || '',
+                item.price || '',
+                item.total || ''
+            ]]);
+
+            currentRow++;
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            message: '원가관리표가 저장되었습니다.',
+            rowsUpdated: costData.length
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            error: err.toString(),
+            stack: err.stack
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 }

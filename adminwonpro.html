@@ -3395,7 +3395,15 @@
                                 <h1>공사 원가관리표</h1>
                                 <div class="subtitle">Construction Cost Management</div>
                             </div>
-                            <button class="pdf-btn" onclick="downloadPDF('costDoc', '원가관리표')">🖨️ 인쇄/PDF</button>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="sync-btn no-print" onclick="syncCostFromCloud()"
+                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
+                                <button class="sync-btn no-print" onclick="requestCostSave()"
+                                    style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="Google Sheets에 저장">☁️↑ 저장</button>
+                                <button class="pdf-btn" onclick="downloadPDF('costDoc', '원가관리표')">🖨️ 인쇄/PDF</button>
+                            </div>
                         </div>
                         <div class="doc-content">
                             <!-- 잠금 상태 표시 -->
@@ -5354,7 +5362,7 @@
             currentData.estimateProfitRate = 15;
             // 견적서 메모를 원가관리표 메모로 초기화
             categories.forEach(cat => {
-                delete currentData[`estMemo_${cat.no} `]; // undefined로 설정
+                delete currentData[`estMemo_${cat.no}`]; // undefined로 설정
             });
             loadEstimateData();
             initYearFilter();
@@ -6627,9 +6635,9 @@
 
             // 메모 로드
             categories.forEach(cat => {
-                const memoTextarea = document.getElementById(`estMemoText${cat.no} `);
-                if (memoTextarea && currentData[`estMemo_${cat.no} `] !== undefined) {
-                    memoTextarea.value = currentData[`estMemo_${cat.no} `];
+                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
+                if (memoTextarea && currentData[`estMemo_${cat.no}`] !== undefined) {
+                    memoTextarea.value = currentData[`estMemo_${cat.no}`];
                     autoResizeTextarea(memoTextarea);
                 }
             });
@@ -6650,12 +6658,12 @@
             // 저장된 메모가 없으면 현재 화면의 원가관리표 메모를 사용
 
             categories.forEach(cat => {
-                const estMemoTextarea = document.getElementById(`estMemoText${cat.no} `);
-                const costMemoTextarea = document.getElementById(`costMemo${cat.no} `);
+                const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
+                const costMemoTextarea = document.getElementById(`costMemo${cat.no}`);
 
                 if (estMemoTextarea) {
                     // 고객별 저장된 메모가 있으면 사용
-                    const customerMemo = currentData[`estMemo_${cat.no} `];
+                    const customerMemo = currentData[`estMemo_${cat.no}`];
 
                     if (customerMemo !== undefined) {
                         // 고객별로 저장된 메모가 있으면 그것 사용
@@ -6683,10 +6691,10 @@
             const globalCostData = {};
 
             categories.forEach(cat => {
-                const tbody = document.getElementById(`costBody${cat.no} `);
-                const memo = document.getElementById(`costMemo${cat.no} `);
+                const tbody = document.getElementById(`costBody${cat.no}`);
+                const memo = document.getElementById(`costMemo${cat.no}`);
                 if (!tbody) return;
-                globalCostData[`cost_${cat.no} `] = [];
+                globalCostData[`cost_${cat.no}`] = [];
                 tbody.querySelectorAll('tr').forEach(row => {
                     const inputs = row.querySelectorAll('.col-div input, .col-name input');
                     const specCell = row.querySelector('.col-spec');
@@ -6711,7 +6719,7 @@
                     }
 
                     if (inputs.length >= 2 && inputs[1].value) {
-                        globalCostData[`cost_${cat.no} `].push({
+                        globalCostData[`cost_${cat.no}`].push({
                             div: inputs[0].value,
                             name: inputs[1].value,
                             spec: specValue,
@@ -6723,12 +6731,173 @@
                 });
                 // MEMO 저장
                 if (memo) {
-                    globalCostData[`costMemo_${cat.no} `] = memo.value;
+                    globalCostData[`costMemo_${cat.no}`] = memo.value;
                 }
             });
 
-            // 전역 원가관리표 데이터 저장
+            // 전역 원가관리표 데이터 저장 (localStorage)
             localStorage.setItem('dz_global_cost', JSON.stringify(globalCostData));
+
+            // Google Sheets 동기화 (메인관리자만)
+            if (loggedInAdmin && loggedInAdmin.role === 'main') {
+                syncCostToCloud(globalCostData);
+            } else {
+                showToast('원가관리표가 로컬에 저장되었습니다.', 'success');
+            }
+        }
+
+        // 원가관리표 저장 요청 (비밀번호 확인 필요)
+        function requestCostSave() {
+            // 이미 메인관리자로 로그인된 경우
+            if (loggedInAdmin && loggedInAdmin.role === 'main') {
+                saveCostData();
+                return;
+            }
+
+            // 비밀번호 확인 프롬프트
+            const password = prompt('원가관리표 저장은 메인관리자만 가능합니다.\n\n메인관리자 비밀번호를 입력하세요:');
+
+            if (password === null) return; // 취소됨
+
+            if (password === MAIN_ADMIN.password) {
+                // 임시 메인관리자 권한 부여
+                const tempAdmin = loggedInAdmin;
+                loggedInAdmin = { ...MAIN_ADMIN };
+
+                saveCostData();
+
+                // 원래 상태로 복원
+                loggedInAdmin = tempAdmin;
+            } else {
+                showToast('비밀번호가 일치하지 않습니다.', 'error');
+            }
+        }
+
+        // ==========================================
+        // [원가관리표 클라우드 동기화]
+        // ==========================================
+
+        // 원가관리표를 Google Sheets에서 불러오기
+        async function syncCostFromCloud() {
+            try {
+                showToast('원가관리표 불러오는 중...', 'info');
+
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=원가관리표&t=' + new Date().getTime(), {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('서버 응답 오류: ' + response.status);
+                }
+
+                const result = await response.json();
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                if (result.data && Array.isArray(result.data)) {
+                    // 데이터를 카테고리별로 정리
+                    const globalCostData = {};
+
+                    result.data.forEach(item => {
+                        // 카테고리 번호 매핑
+                        const catNo = mapCategoryToNo(item.div || item.category);
+                        if (!catNo) return;
+
+                        if (!globalCostData[`cost_${catNo}`]) {
+                            globalCostData[`cost_${catNo}`] = [];
+                        }
+
+                        globalCostData[`cost_${catNo}`].push({
+                            div: item.div || '',
+                            name: item.name || '',
+                            spec: item.spec || '',
+                            unit: item.unit || '',
+                            qty: item.qty || '',
+                            price: item.price || ''
+                        });
+                    });
+
+                    // localStorage에 저장
+                    localStorage.setItem('dz_global_cost', JSON.stringify(globalCostData));
+
+                    // UI 리로드
+                    createCostCategories();
+                    loadCostData();
+
+                    showToast(`원가관리표 ${result.data.length}개 항목을 불러왔습니다.`, 'success');
+                } else {
+                    showToast('원가관리표 데이터가 없습니다.', 'warning');
+                }
+
+            } catch (error) {
+                console.error('원가관리표 불러오기 실패:', error);
+                showToast('원가관리표 불러오기 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 원가관리표를 Google Sheets에 저장
+        async function syncCostToCloud(globalCostData) {
+            try {
+                // 데이터를 평탄화
+                const flatData = [];
+
+                categories.forEach(cat => {
+                    const items = globalCostData[`cost_${cat.no}`] || [];
+                    items.forEach((item, idx) => {
+                        flatData.push({
+                            no: idx + 1,
+                            category: cat.name,
+                            div: item.div || '',
+                            name: item.name || '',
+                            spec: item.spec || '',
+                            unit: item.unit || '',
+                            qty: item.qty || '',
+                            price: item.price || '',
+                            total: (parseNumber(item.qty) || 0) * (parseNumber(item.price) || 0)
+                        });
+                    });
+                });
+
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateCost',
+                        data: flatData
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('원가관리표가 클라우드에 저장되었습니다.', 'success');
+                } else {
+                    throw new Error(result.error || '저장 실패');
+                }
+
+            } catch (error) {
+                console.error('원가관리표 클라우드 저장 실패:', error);
+                showToast('클라우드 저장 실패 (로컬에는 저장됨): ' + error.message, 'warning');
+            }
+        }
+
+        // 카테고리 이름을 번호로 매핑
+        function mapCategoryToNo(categoryName) {
+            if (!categoryName) return null;
+            const name = categoryName.trim();
+
+            const categoryMap = {
+                '가설공사': '01', '주방': '02', '가구': '03', '가구(수납)': '03',
+                '바닥': '04', '벽': '05', '지기': '06', '도장': '07',
+                '창호': '08', '금속': '09', '위생': '10', '전기': '11',
+                '설비': '12', '아트월': '13', '기타': '14', '잡비': '15',
+                '소방': '16', '탄소': '17'
+            };
+
+            return categoryMap[name] || null;
         }
 
         // 원가관리표 데이터 로드 (전역 데이터)
@@ -6737,12 +6906,12 @@
             const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
 
             categories.forEach(cat => {
-                const tbody = document.getElementById(`costBody${cat.no} `);
-                const memo = document.getElementById(`costMemo${cat.no} `);
+                const tbody = document.getElementById(`costBody${cat.no}`);
+                const memo = document.getElementById(`costMemo${cat.no}`);
                 if (!tbody) return;
 
                 // 전역 데이터가 있으면 사용, 없으면 기본 데이터 사용
-                let data = globalCostData[`cost_${cat.no} `] || [];
+                let data = globalCostData[`cost_${cat.no}`] || [];
                 if (data.length === 0 && defaultCostData[cat.no]) {
                     data = defaultCostData[cat.no];
                 }
@@ -6779,7 +6948,7 @@
                 }
                 // MEMO 로드 (저장된 메모가 없으면 기본 메모 사용)
                 if (memo) {
-                    memo.value = globalCostData[`costMemo_${cat.no} `] || defaultCostMemos[cat.no] || '';
+                    memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
                     autoResizeTextarea(memo);
                 }
                 // 소계 업데이트
@@ -6794,11 +6963,11 @@
             const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
 
             categories.forEach(cat => {
-                const tbody = document.getElementById(`costBody${cat.no} `);
-                const memo = document.getElementById(`costMemo${cat.no} `);
+                const tbody = document.getElementById(`costBody${cat.no}`);
+                const memo = document.getElementById(`costMemo${cat.no}`);
 
                 // 전역 데이터가 있으면 사용, 없으면 기본 데이터
-                let data = globalCostData[`cost_${cat.no} `] || [];
+                let data = globalCostData[`cost_${cat.no}`] || [];
                 if (data.length === 0) {
                     data = defaultCostData[cat.no] || [];
                 }
@@ -6836,7 +7005,7 @@
                     }
                 }
                 if (memo) {
-                    memo.value = globalCostData[`costMemo_${cat.no} `] || defaultCostMemos[cat.no] || '';
+                    memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
                     autoResizeTextarea(memo);
                 }
                 // 소계 업데이트
