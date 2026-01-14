@@ -5367,6 +5367,9 @@
             if (!customer) return;
             currentCustomerId = customerId;
 
+            // [Debug] 임시 데이터 확인용 (문제가 지속되면 이 팝업 내용을 캡처해주세요)
+            alert(`[데이터 확인]\nID: ${customerId}\n유입경로(원본): ${customer.inflowPath}\n유입경로(매핑): ${customer.clientSource}\n건물유형: ${customer.buildingType}\n평수: ${customer.pyeong}`);
+
             // Legacy Data Compatibility (Cloud Compatibility Fix)
             // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (area, profitRate) if new keys are missing
             // Legacy Data Compatibility (Cloud Compatibility Fix)
