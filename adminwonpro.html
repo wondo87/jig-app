@@ -5369,14 +5369,23 @@
 
             // Legacy Data Compatibility (Cloud Compatibility Fix)
             // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (area, profitRate) if new keys are missing
-            if (!customer.area && customer.pyeong) customer.area = customer.pyeong;
-            if (!customer.clientSource && customer.inflowPath) customer.clientSource = customer.inflowPath;
+            // Legacy Data Compatibility (Cloud Compatibility Fix)
+            // Ensure old keys (pyeong, estimateProfitRate) map to new inputs (display py suffix automatically)
+            customer.clientSource = customer.clientSource || customer.inflowPath || '';
+            customer.area = customer.area || customer.pyeong || '';
+
+            // Auto-add 'py' suffix if missing
+            if (customer.area && !String(customer.area).includes('py')) {
+                customer.area = String(customer.area) + 'py';
+            }
+
             if (!customer.profitRate && customer.estimateProfitRate) {
                 // Format estimateProfitRate if it's just a number
                 let rate = String(customer.estimateProfitRate);
                 if (/^\d+$/.test(rate)) rate += '%';
                 customer.profitRate = rate;
             }
+
 
             currentData = { ...customer };
 
