@@ -5502,6 +5502,13 @@
 
         function updateCustomerField(el) {
             currentData[el.dataset.field] = el.value;
+
+            // customers 배열에도 변경사항 즉시 반영
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex !== -1) {
+                customers[customerIndex][el.dataset.field] = el.value;
+            }
+
             if (el.dataset.field === 'clientName' || el.dataset.field === 'projectName') {
                 const displayName = currentData.projectName || currentData.clientName || '고객명 없음';
                 document.getElementById('headerCustomerName').textContent = displayName;
