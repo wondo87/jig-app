@@ -709,7 +709,7 @@ function processStatusChange(e) {
     if (sheetName === '상담관리_마스터') {
         statusColumn = 8; // H열: 상담상태
     } else if (sheetName === '설문지 응답') {
-        statusColumn = 15; // O열: 상담상태 (설문지 응답 마지막에 추가된 컬럼)
+        statusColumn = 6; // F열: 상담상태
     } else {
         return;
     }
@@ -744,8 +744,8 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
     }
 
     var rowValues = sourceSheet.getRange(rowNum, 1, 1, sourceSheet.getLastColumn()).getValues()[0];
-    // 설문지 응답 컬럼: 0:타임스탬프, 1:성함, 2:연락처, 3:이메일, 4:현장주소, 
-    //                  5:Q1.유입경로, 6:Q2.건물유형, 7:Q3.평수, ...
+    // 설문지 응답 컬럼: 0:타임스탬프, 1:성함, 2:연락처, 3:이메일, 4:현장주소, 5:상담상태,
+    //                  6:Q1.유입경로, 7:Q2.건물유형, 8:Q3.평수, 9:Q4.예산범위, ...
 
     // 고객ID 생성 (YYMMDD-NNN 형식)
     var today = new Date();
@@ -785,9 +785,9 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
         '',                             // 주소 (별도 입력)
         '',                             // 공사명
         rowValues[4] || '',             // 현장주소
-        rowValues[7] || '',             // 평형 (Q3.평수)
-        rowValues[5] || '',             // 유입경로 (Q1.유입경로)
-        rowValues[6] || '',             // 건물유형 (Q2.건물유형)
+        rowValues[8] || '',             // 평형 (Q3.평수) - I열(인덱스8)
+        rowValues[6] || '',             // 유입경로 (Q1.유입경로) - G열(인덱스6)
+        rowValues[7] || '',             // 건물유형 (Q2.건물유형) - H열(인덱스7)
         '',                             // 계약일
         '',                             // 공사기간
         '',                             // A/S 기간
