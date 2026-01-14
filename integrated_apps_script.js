@@ -509,7 +509,7 @@ function handleCustomerGet(e) {
 
     for (var i = 1; i < data.length; i++) {
         var row = data[i];
-        var jsonData = row[15]; // JSON데이터 열 (0부터 시작하니 16번째 열은 인덱스 15)
+        var jsonData = row[17]; // JSON데이터 열 (18번째 열 = 인덱스 17)
 
         if (jsonData) {
             try {

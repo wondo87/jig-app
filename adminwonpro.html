@@ -5802,15 +5802,18 @@
                         projectName: data.projectName || '',
                         siteAddress: data.siteAddress || '',
                         constructionPeriod: data.constructionPeriod || '',
-                        finalPaymentDate: data.finalPaymentDate || '', // 잔금일 추가
-                        contractDate: data.contractDate || '', // Explicitly send Contract Date
-                        warrantyPeriod: data.asEndDate ? (data.asEndDate) : '', // Send A/S End Date
+                        movingDate: data.movingDate || '',           // 이사예정일 추가
+                        finalPaymentDate: data.finalPaymentDate || '', // 잔금일
+                        contractDate: data.contractDate || '', // 계약일
+                        warrantyPeriod: data.asEndDate ? (data.asEndDate) : '', // A/S 기간
+                        asEndDate: data.asEndDate || '',             // A/S 종료일 추가
 
                         pyeong: data.area || '',
                         inflowPath: data.clientSource || '',      // 유입경로
                         buildingType: data.buildingType || '',    // 건물유형
                         totalAmount: data.totalAmount || '',
                         estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
+                        manager: data.manager || '',              // 담당자 추가
                         jsonData: JSON.stringify(data)
                     }
                 };
