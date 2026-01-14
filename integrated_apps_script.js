@@ -836,11 +836,13 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
     }
     var customerId = datePrefix + '-' + String(count).padStart(3, '0');
 
-    // 중복 체크 (같은 연락처가 이미 있는지)
-    var clientPhone = rowValues[2]; // 설문지 응답에서는 3번째 컬럼이 연락처
+    // 중복 체크 (같은 연락처 + 이름이 이미 있는지)
+    var clientPhone = rowValues[2]; // 설문지 응답에서 3번째 컬럼이 연락처
+    var clientName = rowValues[1];  // 설문지 응답에서 2번째 컬럼이 성함
     for (var j = 1; j < existingData.length; j++) {
-        if (existingData[j][4] === clientPhone) { // 고객관리_견적서에서 5번째(인덱스4)가 연락처
-            spreadsheet.toast('이미 등록된 고객입니다: ' + rowValues[1], '중복 알림');
+        // 고객관리_견적서: 인덱스3=성명, 인덱스4=연락처
+        if (existingData[j][4] === clientPhone && existingData[j][3] === clientName) {
+            spreadsheet.toast('이미 등록된 고객입니다: ' + clientName, '중복 알림');
             return;
         }
     }
