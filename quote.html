@@ -620,9 +620,108 @@
         <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
     </footer>
 
+    <!-- 커스텀 성공 모달 -->
+    <div id="successModal" class="success-modal" style="display: none;">
+        <div class="success-modal-overlay"></div>
+        <div class="success-modal-content">
+            <div class="success-modal-icon">✓</div>
+            <h3>문의 감사합니다.</h3>
+            <p>고객님께 맞는 상담을 위해<br>이메일로 간단한 설문 링크를 보내드렸습니다.</p>
+            <p>설문 작성 후 순차적으로 상담을 도와드리겠습니다.</p>
+            <button class="success-modal-btn" onclick="closeSuccessModal()">확인</button>
+        </div>
+    </div>
+
+    <style>
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .success-modal-content {
+            position: relative;
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .success-modal-icon {
+            width: 60px;
+            height: 60px;
+            background: #B4956F;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 20px;
+        }
+
+        .success-modal-content h3 {
+            font-size: 1.3rem;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .success-modal-content p {
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .success-modal-btn {
+            margin-top: 24px;
+            background: #B4956F;
+            color: #fff;
+            border: none;
+            padding: 14px 48px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .success-modal-btn:hover {
+            background: #9a7d5c;
+        }
+    </style>
+
     <script>
         // [통합] Google Apps Script Web App URL
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhuxQwvRiz-n1oefbWezptCwgm9rMMlgHxCT4GD4YcXnAJw6LzsdVUFYjhWFY6JVX3bQ/exec';
+
+        // 성공 모달 함수
+        function showSuccessModal() {
+            document.getElementById('successModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
 
         function handleSubmit(e) {
             e.preventDefault();
@@ -663,7 +762,7 @@
             })
                 .then(() => {
                     // 성공 간주 (no-cors라 응답 상태 확인 불가하므로 성공으로 처리)
-                    alert('문의 감사합니다.\n\n고객님께 맞는 상담을 위해\n이메일로 간단한 설문 링크를 보내드렸습니다.\n설문 작성 후 순차적으로 상담을 도와드리겠습니다.');
+                    showSuccessModal();
                     form.reset();
                 })
                 .catch(err => {
