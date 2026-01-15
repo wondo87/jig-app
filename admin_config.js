@@ -13,10 +13,10 @@ const MAIN_ADMIN = {
 const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e852604566cbb848';
 
 // Google Apps Script Web App URL (고객 데이터 동기화용)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzEiT_M94z0RyUrxI2yoDa4ZLEw28Cy23087iA4ZRJBGAGR3yGnW2_4gG_-MCLdBxAx8Q/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwngdg3zc6FN1iaQai_078iEY92rf3jvfgzWSMUSNJ-SSDURZPoVeWC1bZLtlLAeu721Q/exec';
 
 // [중요] 고객관리 동기화 전용 URL (integrated_apps_script.js 배포 URL)
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzEiT_M94z0RyUrxI2yoDa4ZLEw28Cy23087iA4ZRJBGAGR3yGnW2_4gG_-MCLdBxAx8Q/exec';
+const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbwngdg3zc6FN1iaQai_078iEY92rf3jvfgzWSMUSNJ-SSDURZPoVeWC1bZLtlLAeu721Q/exec';
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
