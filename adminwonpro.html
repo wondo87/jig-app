@@ -1912,7 +1912,8 @@
             border-radius: 4px;
             padding: 4px 6px;
             font-size: 11px;
-            resize: vertical;
+            resize: none;
+            overflow-y: hidden;
         }
 
         .estimate-table .del-btn {
@@ -7002,6 +7003,11 @@
             });
 
             updateEstimateTotals();
+            // 로드된 비고란 높이 자동 조절
+            document.querySelectorAll('.estimate-table .remark-input').forEach(textarea => {
+                autoResizeTextarea(textarea);
+            });
+
             syncCostMemoToEstimate(); // 원가관리표 메모를 견적서에 동기화
 
             // 작성자 표시
