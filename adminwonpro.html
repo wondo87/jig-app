@@ -6939,6 +6939,7 @@
             try {
                 // 데이터를 평탄화
                 const flatData = [];
+                const memoData = {};
 
                 categories.forEach(cat => {
                     const items = globalCostData[`cost_${cat.no}`] || [];
@@ -6955,6 +6956,17 @@
                             total: (parseNumber(item.qty) || 0) * (parseNumber(item.price) || 0)
                         });
                     });
+
+                    // 메모 데이터 수집
+                    const memo = globalCostData[`costMemo_${cat.no}`] || '';
+                    if (memo) {
+                        // 메모를 줄 단위로 분리하여 배열로 변환
+                        const memoLines = memo.split('\n').filter(line => line.trim());
+                        memoData[cat.name] = memoLines.map((line, idx) => ({
+                            no: idx + 1,
+                            content: line.trim()
+                        }));
+                    }
                 });
 
                 const response = await fetch(CUSTOMER_SYNC_URL, {
@@ -6962,7 +6974,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'updateCost',
-                        data: flatData
+                        data: flatData,
+                        memos: memoData
                     })
                 });
 

@@ -1244,16 +1244,12 @@ function handleCostGet(e) {
 /**
  * 원가관리표 데이터 업데이트 (POST)
  * Google Sheets에 원가관리표 데이터를 저장합니다.
+ * 새 구조: A열=카테고리, B열=NO/MEMO, C열=구분, D열=품명, E열=상세내용, F열=단위, G열=수량, H열=단가, I열=합계
  */
 function handleCostUpdate(payload) {
     try {
-        var costData = payload.data;
-
-        if (!costData || !Array.isArray(costData)) {
-            return ContentService.createTextOutput(JSON.stringify({
-                error: '유효한 원가관리표 데이터가 없습니다.'
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
+        var costData = payload.data || [];
+        var memoData = payload.memos || {};
 
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
         var sheet = spreadsheet.getSheetByName('원가관리표');
@@ -1264,46 +1260,67 @@ function handleCostUpdate(payload) {
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
-        // 기존 데이터 영역 확인 (6행부터 시작)
+        // 기존 데이터 영역 확인 (3행부터 시작 - 1행 제목, 2행 헤더)
         var lastRow = sheet.getLastRow();
 
-        // 헤더 유지하고 데이터 영역만 삭제 (6행 이후)
-        if (lastRow > 5) {
-            sheet.getRange(6, 1, lastRow - 5, 8).clearContent();
+        // 헤더 유지하고 데이터 영역만 삭제 (3행 이후)
+        if (lastRow > 2) {
+            sheet.getRange(3, 1, lastRow - 2, 9).clearContent();
         }
 
+        // 카테고리별로 데이터 정렬
+        var categoryOrder = ['가설공사', '철거공사', '설비/방수공사', '확장/단열공사', '창호공사',
+            '전기/조명공사', '에어컨 공사', '목공/도어공사', '필름공사', '타일공사',
+            '욕실공사', '도장공사', '도배공사', '바닥재', '가구공사', '마감공사', '기타공사'];
+
         // 새 데이터 쓰기
-        var currentRow = 6;
-        var currentCategory = '';
+        var currentRow = 3;
+        var rows = [];
 
-        for (var i = 0; i < costData.length; i++) {
-            var item = costData[i];
+        // 카테고리 순서대로 데이터 정렬
+        categoryOrder.forEach(function (category) {
+            // 해당 카테고리의 일반 데이터
+            var categoryData = costData.filter(function (item) {
+                return item.category === category;
+            });
 
-            // 카테고리가 바뀌면 카테고리 헤더 행 추가
-            if (item.category && item.category !== currentCategory) {
-                currentCategory = item.category;
-                // 카테고리 소계 행은 프론트엔드에서 계산하므로 여기서는 생략
+            categoryData.forEach(function (item) {
+                rows.push([
+                    category,
+                    item.no || '',
+                    item.div || '',
+                    item.name || '',
+                    item.spec || '',
+                    item.unit || '',
+                    item.qty || '',
+                    item.price || '',
+                    item.total || ''
+                ]);
+            });
+
+            // 해당 카테고리의 메모 데이터
+            if (memoData[category] && memoData[category].length > 0) {
+                memoData[category].forEach(function (memo) {
+                    rows.push([
+                        category,
+                        'MEMO',
+                        memo.no || '',
+                        memo.content || '',
+                        '', '', '', '', ''
+                    ]);
+                });
             }
+        });
 
-            // 데이터 행 쓰기
-            sheet.getRange(currentRow, 1, 1, 8).setValues([[
-                item.no || currentRow - 5,
-                item.div || '',
-                item.name || '',
-                item.spec || '',
-                item.unit || '',
-                item.qty || '',
-                item.price || '',
-                item.total || ''
-            ]]);
-
-            currentRow++;
+        // 데이터가 있으면 한 번에 쓰기 (성능 최적화)
+        if (rows.length > 0) {
+            sheet.getRange(3, 1, rows.length, 9).setValues(rows);
         }
 
         return ContentService.createTextOutput(JSON.stringify({
             success: true,
             message: '원가관리표가 저장되었습니다.',
-            rowsUpdated: costData.length
+            rowsUpdated: rows.length
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (err) {
