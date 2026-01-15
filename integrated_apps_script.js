@@ -788,7 +788,11 @@ function deleteAdmin(spreadsheet, adminId) {
     if (!sheet) return false;
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
-        if (data[i][0] === adminId) { sheet.deleteRow(i + 1); return true; }
+        // String()으로 변환하여 비교 (데이터 타입 불일치 방지)
+        if (String(data[i][0]) === String(adminId)) {
+            sheet.deleteRow(i + 1);
+            return true;
+        }
     }
     return false;
 }
