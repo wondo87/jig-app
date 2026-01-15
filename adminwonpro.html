@@ -2021,6 +2021,55 @@
             transform: translateX(3px);
         }
 
+        /* 페이징 스타일 */
+        .pagination-container {
+            padding: 10px 16px;
+            background: #f8f9fa;
+            border-top: 1px solid #e5e5e5;
+            text-align: center;
+        }
+
+        .pagination-info {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pagination-btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover {
+            background: #005bb5;
+        }
+
+        .pagination-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pagination-current {
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            min-width: 60px;
+        }
+
         /* 통계 모달 */
         .stats-modal-overlay {
             position: fixed;
@@ -2849,6 +2898,15 @@
                 <button class="filter-btn" data-status="as_done" onclick="setStatusFilter('as_done')">A/S</button>
             </div>
             <div class="customer-list" id="customerList"></div>
+            <!-- 페이징 UI (500명 이상시 자동 표시) -->
+            <div class="pagination-container" id="paginationContainer" style="display:none;">
+                <div class="pagination-info" id="paginationInfo"></div>
+                <div class="pagination-buttons">
+                    <button class="pagination-btn" id="prevPageBtn" onclick="goToPrevPage()">◀ 이전</button>
+                    <span class="pagination-current" id="currentPageSpan">1</span>
+                    <button class="pagination-btn" id="nextPageBtn" onclick="goToNextPage()">다음 ▶</button>
+                </div>
+            </div>
             <!-- 통계 버튼 -->
             <div class="sidebar-stats-btn" onclick="openStatsModal()">
                 <span>📊</span>
@@ -4518,6 +4576,12 @@
         let currentStatusFilter = 'all';
         let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
+        // 페이징 관련 변수
+        const PAGE_THRESHOLD = 500; // 500명 이상이면 페이징 활성화
+        const ITEMS_PER_PAGE = 50; // 페이지당 표시 개수
+        let currentPage = 1;
+        let filteredCustomers = []; // 필터링된 고객 목록 저장
+
         // ========== 다중 관리자 시스템 ==========
         // ========== 다중 관리자 시스템 ==========
         // 설정값은 admin_config.js 에서 로드됨
@@ -5607,13 +5671,14 @@
             }
         }
 
-        function updateCustomerList() {
+        function updateCustomerList(resetPage = true) {
             const container = document.getElementById('customerList');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const yearFilter = document.getElementById('yearFilter').value;
             const monthFilter = document.getElementById('monthFilter').value;
 
-            let filtered = customers.filter(c => {
+            // 필터링
+            filteredCustomers = customers.filter(c => {
                 // customerId가 없는 항목 제외
                 if (!c.customerId) return false;
 
@@ -5639,7 +5704,7 @@
             });
 
             // 최신순 정렬 (customerId 기준: YYMMDD-XXX)
-            filtered.sort((a, b) => {
+            filteredCustomers.sort((a, b) => {
                 // createdAt이 있으면 우선 사용
                 if (a.createdAt && b.createdAt) {
                     return new Date(b.createdAt) - new Date(a.createdAt);
@@ -5648,35 +5713,90 @@
                 return (b.customerId || '').localeCompare(a.customerId || '');
             });
 
-            if (filtered.length === 0) {
+            // 페이지 리셋 (필터 변경 시)
+            if (resetPage) {
+                currentPage = 1;
+            }
+
+            // 페이징 적용 여부 결정
+            const paginationContainer = document.getElementById('paginationContainer');
+            const usePaging = filteredCustomers.length >= PAGE_THRESHOLD;
+
+            if (usePaging) {
+                // 페이징 UI 표시
+                paginationContainer.style.display = 'block';
+
+                const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
+                const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, filteredCustomers.length);
+                const pageItems = filteredCustomers.slice(startIdx, endIdx);
+
+                // 페이징 정보 업데이트
+                document.getElementById('paginationInfo').textContent =
+                    `전체 ${filteredCustomers.length}명 중 ${startIdx + 1}-${endIdx}명 표시`;
+                document.getElementById('currentPageSpan').textContent =
+                    `${currentPage} / ${totalPages}`;
+                document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+                document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+
+                // 페이징된 목록 렌더링
+                renderCustomerItems(container, pageItems);
+            } else {
+                // 페이징 UI 숨김
+                paginationContainer.style.display = 'none';
+
+                // 전체 목록 렌더링
+                renderCustomerItems(container, filteredCustomers);
+            }
+        }
+
+        // 고객 목록 아이템 렌더링 (공통)
+        function renderCustomerItems(container, items) {
+            if (items.length === 0) {
                 container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
             } else {
-                container.innerHTML = filtered.map(c => {
-                    let statusKey = (c.status || '').trim(); // Remove potential whitespace
-                    // Try to match exact key, or lowercase if not found
+                container.innerHTML = items.map(c => {
+                    let statusKey = (c.status || '').trim();
                     if (!statusLabels[statusKey] && statusLabels[statusKey.toLowerCase()]) {
                         statusKey = statusKey.toLowerCase();
                     }
                     let statusText = statusLabels[statusKey] || c.status;
                     if (c.status === 'as_done' && c.asEndDate) {
-                        statusText = `A / S ~${c.asEndDate} `;
+                        statusText = `A/S ~${c.asEndDate}`;
                     }
                     const displayName = c.projectName || '현장명 미지정';
                     const subInfo = (c.clientName || '') + (c.clientName && c.clientPhone ? ' / ' : '') + (c.clientPhone || '');
                     const lockIcon = c.isLocked ? '🔒' : '';
-                    const creatorInfo = c.createdBy ? `<div class="customer-item-creator" >📝 ${c.createdBy}</div> ` : '';
+                    const creatorInfo = c.createdBy ? `<div class="customer-item-creator">📝 ${c.createdBy}</div>` : '';
 
                     return `
-                <div class="customer-item${c.customerId === currentCustomerId ? 'active' : ''}"
-            onclick = "selectCustomer('${c.customerId}')" >
-                <div class="customer-item-header">
-                    <span class="customer-item-id">${lockIcon}${c.customerId}</span>
-                    <span class="status-badge${c.status}">${statusText}</span>
-                </div>
-                <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
-                <div class="customer-item-info">${subInfo}</div>
-                ${creatorInfo}            </div>
-                `}).join('');
+                <div class="customer-item ${c.customerId === currentCustomerId ? 'active' : ''}"
+                    onclick="selectCustomer('${c.customerId}')">
+                    <div class="customer-item-header">
+                        <span class="customer-item-id">${lockIcon}${c.customerId}</span>
+                        <span class="status-badge ${c.status}">${statusText}</span>
+                    </div>
+                    <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
+                    <div class="customer-item-info">${subInfo}</div>
+                    ${creatorInfo}
+                </div>`;
+                }).join('');
+            }
+        }
+
+        // 페이징 함수
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateCustomerList(false);
+            }
+        }
+
+        function goToNextPage() {
+            const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateCustomerList(false);
             }
         }
 
