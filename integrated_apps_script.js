@@ -307,10 +307,7 @@ designjig.com
     `;
 
     try {
-        MailApp.sendEmail({
-            to: data.email,
-            subject: subject,
-            body: plainTextBody,
+        GmailApp.sendEmail(data.email, subject, plainTextBody, {
             htmlBody: htmlBody,
             name: SENDER_NAME
         });
@@ -1130,15 +1127,15 @@ function sendBathroomAsExpirationEmail(email, name) {
 
     var body = '안녕하세요, ' + customerName + ' 고객님.\n' +
         '디자인지그입니다.\n\n' +
-        '고객님 공간 시공 후 30개월이 지났습니다.\n' +
+        '고객님 공간 시공 후 2년 6개월(30개월)이 지났습니다.\n' +
         '화장실 누수 보증 기간이 경과하여 \n' +
         '한 번 더 안부 여쭙고자 연락드렸습니다.\n\n' +
         '그동안 화장실 사용에 불편함은 없으셨는지,\n' +
-        '혹시 누수나 이상 징후가 없으셨는지 궁금합니다.\n\n' +
+        '혹시 누수 관련 문제는 없으셨는지 궁금합니다.\n\n' +
         '보증 기간이 지나더라도\n' +
-        '저희가 시공한 공간에 대한 관리와 상담은 계속됩니다.\n\n' +
+        '디자인지그가 시공한 공간에 대한 관리와 상담은 계속됩니다.\n\n' +
         '사용 중 궁금하신 점이나 점검이 필요하신 부분이 있으시면\n' +
-        '언제든지 편하게 연락 주시기 바랍니다.\n\n' +
+        '아래 연락처로 언제든지 편하게 연락 주시기 바랍니다.\n\n' +
         '감사합니다.\n\n' +
         '디자인지그 드림\n\n' +
         '────────────────\n' +
