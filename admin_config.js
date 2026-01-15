@@ -13,7 +13,7 @@ const MAIN_ADMIN = {
 const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e852604566cbb848';
 
 // Google Apps Script Web App URL (고객 데이터 동기화용)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzlUqGjCjdVMgGKckrcrnnqrAc92ejl0DsZwNtSd5mcOK8VxGS5PZB5BvMyzVxkhb04Cg/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyjmSl1jK917PRMw7TffRw9u3K0l3h6Anbv0HTtATq9zIY-ERFpEj44MuGaHlOyQpa_Gw/exec';
 
 // [중요] 고객관리 동기화 전용 URL (integrated_apps_script.js 배포 URL)
 const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyjmSl1jK917PRMw7TffRw9u3K0l3h6Anbv0HTtATq9zIY-ERFpEj44MuGaHlOyQpa_Gw/exec';
