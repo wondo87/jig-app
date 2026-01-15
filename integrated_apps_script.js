@@ -37,6 +37,7 @@ const ENTRY_IDS = {
 };
 
 const SENDER_NAME = '디자인지그';
+const SENDER_EMAIL = 'designjig.office@gmail.com';
 
 // ==========================================
 // 2. Main Entry Points (doPost, doGet)
@@ -1091,19 +1092,19 @@ function sendWarrantyExpirationEmails() {
 
 // 기본 A/S 보증 기간 완료 이메일
 function sendBasicAsExpirationEmail(email, name) {
-    var subject = '[디자인지그] 기본 A/S 보증 기간 완료 안내';
     var customerName = name || '고객';
+    var subject = '[디자인지그] ' + customerName + ' 고객님 A/S 보증기간 경과 안내';
 
-    var body = 'DESIGN JIG\n\n' +
-        '안녕하세요, ' + customerName + ' 고객님.\n' +
+    var body = '안녕하세요, ' + customerName + ' 고객님.\n' +
         '디자인지그입니다.\n\n' +
-        '고객님 공간의 기본 A/S 보증 기간이 완료되어 안내드립니다.\n\n' +
-        '보증 기간 동안 불편함 없이 잘 사용하고 계셨는지,\n' +
-        '혹시 미처 말씀하지 못하신 부분은 없으셨는지\n' +
-        '한 번 더 여쭙고 싶어 연락드렸습니다.\n\n' +
-        '보증 기간이 종료되더라도\n' +
-        '디자인지그가 시공한 공간에 대한 책임은 계속됩니다.\n\n' +
-        '사용 중 불편하신 점이나 궁금한 사항이 있으시면\n' +
+        '고객님 공간 시공 후 1년이 지났습니다.\n' +
+        'A/S 보증 기간이 경과하여 \n' +
+        '한 번 더 안부 여쭙고자 연락드렸습니다.\n\n' +
+        '그동안 사용하시면서 불편하신 점은 없으셨는지,\n' +
+        '혹시 확인이 필요한 부분은 없으신지 궁금합니다.\n\n' +
+        '보증 기간이 지나더라도\n' +
+        '디자인지그가 시공한 공간에 대한 관리와 상담은 계속됩니다.\n\n' +
+        '사용 중 궁금하신 점이나 점검이 필요하신 부분이 있으시면\n' +
         '언제든지 편하게 연락 주시기 바랍니다.\n\n' +
         '감사합니다.\n\n' +
         '디자인지그 드림\n\n' +
@@ -1113,10 +1114,7 @@ function sendBasicAsExpirationEmail(email, name) {
         'designjig.com';
 
     try {
-        MailApp.sendEmail({
-            to: email,
-            subject: subject,
-            body: body,
+        GmailApp.sendEmail(email, subject, body, {
             name: SENDER_NAME
         });
         console.log('기본 A/S 완료 메일 발송: ' + email);
@@ -1127,19 +1125,20 @@ function sendBasicAsExpirationEmail(email, name) {
 
 // 화장실 누수 보증 기간 완료 이메일
 function sendBathroomAsExpirationEmail(email, name) {
-    var subject = '[디자인지그] 화장실 누수 보증 기간 완료 안내';
     var customerName = name || '고객';
+    var subject = '[디자인지그] ' + customerName + ' 고객님 화장실 누수 보증기간 경과 안내';
 
-    var body = 'DESIGN JIG\n\n' +
-        '안녕하세요, ' + customerName + ' 고객님.\n' +
+    var body = '안녕하세요, ' + customerName + ' 고객님.\n' +
         '디자인지그입니다.\n\n' +
-        '고객님 공간의 화장실 누수 보증 기간(30개월)이 완료되어 안내드립니다.\n\n' +
+        '고객님 공간 시공 후 30개월이 지났습니다.\n' +
+        '화장실 누수 보증 기간이 경과하여 \n' +
+        '한 번 더 안부 여쭙고자 연락드렸습니다.\n\n' +
         '그동안 화장실 사용에 불편함은 없으셨는지,\n' +
-        '혹시 누수나 이상 징후가 있으셨다면\n' +
-        '편하게 연락 주시기 바랍니다.\n\n' +
-        '보증 기간이 종료되더라도\n' +
-        '저희가 시공한 공간에 대한 책임감은 변함없습니다.\n\n' +
-        '언제든지 문의해 주세요.\n\n' +
+        '혹시 누수나 이상 징후가 없으셨는지 궁금합니다.\n\n' +
+        '보증 기간이 지나더라도\n' +
+        '저희가 시공한 공간에 대한 관리와 상담은 계속됩니다.\n\n' +
+        '사용 중 궁금하신 점이나 점검이 필요하신 부분이 있으시면\n' +
+        '언제든지 편하게 연락 주시기 바랍니다.\n\n' +
         '감사합니다.\n\n' +
         '디자인지그 드림\n\n' +
         '────────────────\n' +
@@ -1148,10 +1147,7 @@ function sendBathroomAsExpirationEmail(email, name) {
         'designjig.com';
 
     try {
-        MailApp.sendEmail({
-            to: email,
-            subject: subject,
-            body: body,
+        GmailApp.sendEmail(email, subject, body, {
             name: SENDER_NAME
         });
         console.log('화장실 A/S 완료 메일 발송: ' + email);
@@ -1159,6 +1155,7 @@ function sendBathroomAsExpirationEmail(email, name) {
         console.log('메일 발송 에러 (' + email + '): ' + e.toString());
     }
 }
+
 
 // ==========================================
 // 9. 원가관리표 데이터 처리 (Cost Management)
@@ -1171,49 +1168,68 @@ function sendBathroomAsExpirationEmail(email, name) {
 function handleCostGet(e) {
     try {
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName('시트1');
-
-        if (!sheet) {
-            return ContentService.createTextOutput(JSON.stringify({
-                error: '원가관리표 시트를 찾을 수 없습니다.'
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        var data = sheet.getDataRange().getValues();
+        var sheets = spreadsheet.getSheets();
         var costData = [];
-        var currentCategory = '';
 
-        // 헤더 행 건너뛰기 (첫 5행은 제목 및 헤더)
-        for (var i = 5; i < data.length; i++) {
-            var row = data[i];
+        // 모든 시트를 순회
+        sheets.forEach(function (sheet) {
+            var sheetName = sheet.getName();
 
-            // 빈 행 건너뛰기
-            if (!row[0] && !row[1] && !row[2]) continue;
-
-            // 구분(카테고리) 확인
-            var category = row[1] ? row[1].toString().trim() : '';
-            if (category && !row[2]) {
-                // 카테고리만 있고 품명이 없으면 카테고리 헤더
-                currentCategory = category;
-                continue;
+            // 숨겨진 시트나 설정 시트 건너뛰기
+            if (sheetName.startsWith('_') || sheetName === '설정' || sheetName === 'config') {
+                return;
             }
 
-            costData.push({
-                no: row[0] || '',
-                category: currentCategory || category,
-                div: row[1] || '',
-                name: row[2] || '',
-                spec: row[3] || '',
-                unit: row[4] || '',
-                qty: row[5] || '',
-                price: row[6] || '',
-                total: row[7] || ''
-            });
-        }
+            var data = sheet.getDataRange().getValues();
+            var currentCategory = sheetName; // 시트 이름을 기본 카테고리로 사용
+
+            // 헤더 행 건너뛰기 (첫 5행은 제목 및 헤더로 가정)
+            var startRow = 5;
+            // 시트1인 경우 기존 로직 유지, 아니면 첫 행부터 데이터 확인
+            if (sheetName !== '시트1') {
+                // 첫 번째 행이 헤더인지 확인 (No, 구분, 품명 등이 있으면 스킵)
+                if (data.length > 0 && (data[0][0] === 'No' || data[0][0] === 'NO' || data[0][1] === '구분')) {
+                    startRow = 1;
+                } else {
+                    startRow = 0;
+                }
+            }
+
+            for (var i = startRow; i < data.length; i++) {
+                var row = data[i];
+
+                // 빈 행 건너뛰기
+                if (!row[0] && !row[1] && !row[2]) continue;
+
+                // 구분(카테고리) 확인 - 시트1일 때만 헤더 행 인식
+                var div = row[1] ? row[1].toString().trim() : '';
+                if (sheetName === '시트1' && div && !row[2]) {
+                    // 카테고리만 있고 품명이 없으면 카테고리 헤더
+                    currentCategory = div;
+                    continue;
+                }
+
+                // 품명이 없으면 데이터 아님
+                if (!row[2]) continue;
+
+                costData.push({
+                    no: row[0] || '',
+                    category: currentCategory, // 시트 이름 또는 헤더에서 가져온 카테고리
+                    div: div,
+                    name: row[2] || '',
+                    spec: row[3] || '',
+                    unit: row[4] || '',
+                    qty: row[5] || '',
+                    price: row[6] || '',
+                    total: row[7] || ''
+                });
+            }
+        });
 
         return ContentService.createTextOutput(JSON.stringify({
             success: true,
             data: costData,
+            sheetCount: sheets.length,
             lastUpdated: new Date().toISOString()
         })).setMimeType(ContentService.MimeType.JSON);
 

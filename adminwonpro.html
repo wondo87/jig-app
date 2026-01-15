@@ -7009,17 +7009,21 @@
             if (categoryMap[name]) return categoryMap[name];
 
             // 2. 키워드 부분 일치 검색 (우선순위에 주의)
-            // 명확한 키워드부터 순차적으로 체크
-            if (name.includes('욕실') || name.includes('UBR')) return '11';
-            if (name.includes('타일')) return '10'; // 욕실보다 타일을 나중에 체크 (욕실 타일은 11로 가길 원할 수 있음, 하지만 '욕실'이 포함 안된 타일은 10)
+            // 욕실 관련 키워드를 가장 먼저 체크 (욕실공사에 다양한 세부 공정이 포함됨)
+            if (name.includes('욕실') || name.includes('UBR') || name.includes('수도') ||
+                name.includes('조적') || name.includes('참고') || name.includes('악세') ||
+                name.includes('액세') || name.includes('라디에이터') || name.includes('돔') ||
+                name.includes('천장') || name.includes('환풍') || name.includes('변기') ||
+                name.includes('세면') || name.includes('샤워') || name.includes('욕조')) return '11';
+            if (name.includes('타일')) return '10';
             if (name.includes('목공') || name.includes('도어') || name.includes('문')) return '08';
             if (name.includes('필름')) return '09';
             if (name.includes('도배')) return '13';
             if (name.includes('바닥') || name.includes('마루') || name.includes('장판')) return '14';
-            if (name.includes('가구') || name.includes('싱크') || name.includes('장')) return '15';
+            if (name.includes('가구') || name.includes('싱크')) return '15';
             if (name.includes('전기') || name.includes('조명') || name.includes('스위치')) return '06';
             if (name.includes('설비') || name.includes('방수') || name.includes('보일러')) return '03';
-            if (name.includes('철거')) return '02'; // 다른 공종에 '철거'가 포함되면 그 공종으로 가도록 철거를 뒤에 배치
+            if (name.includes('철거')) return '02';
             if (name.includes('창호') || name.includes('샤시') || name.includes('샷시')) return '05';
             if (name.includes('에어컨')) return '07';
             if (name.includes('도장') || name.includes('페인트')) return '12';
