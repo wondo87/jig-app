@@ -2528,7 +2528,7 @@
 
             /* 수량 */
             .estimate-table th:nth-child(6) {
-                width: 55px !important;
+                width: 65px !important;
             }
 
             /* 단가 */
@@ -3415,7 +3415,13 @@
                                 <h1>계약 견적서</h1>
                                 <div class="subtitle">Contract Estimate</div>
                             </div>
-                            <button class="pdf-btn" onclick="downloadPDF('estimateDoc', '계약견적서')">🖨️ 인쇄/PDF</button>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="sample-btn no-print" onclick="openSampleEstimateModal()"
+                                    style="background: #ff9500; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="샘플 견적서">📋 샘플</button>
+                                <button class="pdf-btn" onclick="downloadPDF('estimateDoc', '계약견적서')">🖨️
+                                    인쇄/PDF</button>
+                            </div>
                         </div>
                         <div class="doc-content">
                             <p class="no-print"
@@ -3444,6 +3450,11 @@
                                 <div class="total-row main"><label>총 견적금액</label>
                                     <div class="amount" id="estimateTotal">₩ 0</div>
                                 </div>
+                            </div>
+                            <!-- 작성자 표시 -->
+                            <div class="estimate-author no-print"
+                                style="text-align:right; margin-top:16px; padding:12px 16px; background:#f5f5f7; border-radius:8px; font-size:12px; color:#666;">
+                                📝 작성자: <span id="estimateAuthor">-</span>
                             </div>
                         </div>
                     </div>
@@ -5737,8 +5748,17 @@
                 if (a.createdAt && b.createdAt) {
                     return new Date(b.createdAt) - new Date(a.createdAt);
                 }
-                // customerId로 정렬 (내림차순)
-                return (b.customerId || '').localeCompare(a.customerId || '');
+                // customerId로 정렬 (내림차순) - YYMMDD-NNN 형식
+                const aId = a.customerId || '';
+                const bId = b.customerId || '';
+                const [aDate, aNum] = aId.split('-');
+                const [bDate, bNum] = bId.split('-');
+                // 날짜 비교 (내림차순)
+                if (aDate !== bDate) {
+                    return bDate.localeCompare(aDate);
+                }
+                // 같은 날짜면 번호 비교 (내림차순)
+                return parseInt(bNum || 0) - parseInt(aNum || 0);
             });
 
             // 페이지 리셋 (필터 변경 시)
@@ -6079,12 +6099,7 @@
             // Google Sheets 동기화 (백그라운드)
             syncToGoogleSheets({ ...currentData });
 
-            // 저장 후 고객 목록으로 이동
-            currentCustomerId = null;
-            currentData = {};
-            document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('customerView').style.display = 'none';
-            initYearFilter();
+            // 저장 후 화면 유지 (고객 목록만 갱신)
             updateCustomerList();
         }
 
@@ -6137,7 +6152,7 @@
                         <col style="width:160px;"><!-- 품명 -->
                         <col style="width:auto;"><!-- 상세내용 (나머지 공간) -->
                         <col style="width:55px;"><!-- 단위 -->
-                        <col style="width:45px;"><!-- 수량 -->
+                        <col style="width:65px;"><!-- 수량 -->
                         <col style="width:70px;"><!-- 단가 -->
                         <col style="width:80px;"><!-- 합계 -->
                     </colgroup>
@@ -6247,7 +6262,7 @@
                         <col style="width:auto;"><!-- 품명 (나머지 공간) -->
                         <col style="width:100px;"><!-- 상세내용 -->
                         <col style="width:40px;"><!-- 단위 -->
-                        <col style="width:40px;"><!-- 수량 -->
+                        <col style="width:65px;"><!-- 수량 -->
                         <col style="width:65px;"><!-- 단가 -->
                         <col style="width:75px;"><!-- 금액 -->
                         <col style="width:30px;" class="no-print"><!-- 삭제 -->
@@ -6869,6 +6884,12 @@
 
             updateEstimateTotals();
             syncCostMemoToEstimate(); // 원가관리표 메모를 견적서에 동기화
+
+            // 작성자 표시
+            const authorSpan = document.getElementById('estimateAuthor');
+            if (authorSpan) {
+                authorSpan.textContent = currentData?.createdBy || '-';
+            }
         }
 
         // textarea 자동 높이 조절
@@ -7515,7 +7536,7 @@
 
                                                 /* 수량 */
                                                 .data-table colgroup col:nth-child(7) {
-                                                    width: 50px;
+                                                    width: 65px;
                    }
 
                                                 /* 단가 */
@@ -7557,7 +7578,7 @@
 
                                                 /* 수량 */
                                                 .estimate-table colgroup col:nth-child(6) {
-                                                    width: 50px;
+                                                    width: 65px;
                    }
 
                                                 /* 단가 */
@@ -8024,6 +8045,169 @@
             const circle = document.getElementById('conversionCircle');
             circle.style.background = `conic-gradient(#34c759 0%, #34c759${rate}%, #e8e8ed${rate}%, #e8e8ed 100%)`;
         }
+
+        // =====================
+        // 샘플 견적서 기능
+        // =====================
+
+        // 샘플 견적서 모달 열기
+        function openSampleEstimateModal() {
+            document.getElementById('sampleEstimateModal').style.display = 'flex';
+            document.getElementById('sampleEstimateTitle').value = '';
+            loadSampleEstimateList();
+        }
+
+        // 샘플 견적서 모달 닫기
+        function closeSampleEstimateModal() {
+            document.getElementById('sampleEstimateModal').style.display = 'none';
+        }
+
+        // 샘플 견적서 목록 로드
+        async function loadSampleEstimateList() {
+            const listContainer = document.getElementById('sampleEstimateList');
+            listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">로딩 중...</div>';
+
+            try {
+                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleEstimates`);
+                const result = await response.json();
+
+                if (result.success && result.samples && result.samples.length > 0) {
+                    listContainer.innerHTML = result.samples.map(sample => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 4px;">${sample.title}</div>
+                                <div style="font-size: 11px; color: #999;">📅 ${sample.createdAt} | 👤 ${sample.createdBy || '-'}</div>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick="loadSampleEstimate('${sample.id}')" 
+                                    style="background: #007aff; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">불러오기</button>
+                                <button onclick="deleteSampleEstimate('${sample.id}', '${sample.title}')" 
+                                    style="background: #ff3b30; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">✕</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">저장된 샘플이 없습니다</div>';
+                }
+            } catch (error) {
+                console.error('샘플 목록 로드 실패:', error);
+                listContainer.innerHTML = '<div style="text-align: center; color: #ff3b30; padding: 20px;">목록을 불러오지 못했습니다</div>';
+            }
+        }
+
+        // 현재 견적을 샘플로 저장
+        async function saveSampleEstimate() {
+            const title = document.getElementById('sampleEstimateTitle').value.trim();
+            if (!title) {
+                showToast('샘플 제목을 입력하세요', 'error');
+                return;
+            }
+
+            // 현재 견적 데이터 수집
+            saveEstimateData(); // 먼저 현재 데이터 저장
+
+            const sampleData = {
+                action: 'saveSampleEstimate',
+                title: title,
+                estimateData: currentData.estimateData || {},
+                estimateProfitRate: currentData.estimateProfitRate || 15,
+                estimateMemos: {},
+                createdBy: currentAdmin?.id || 'unknown',
+                createdAt: new Date().toISOString()
+            };
+
+            // 메모 데이터 수집
+            categories.forEach(cat => {
+                if (currentData[`estMemo_${cat.no}`]) {
+                    sampleData.estimateMemos[cat.no] = currentData[`estMemo_${cat.no}`];
+                }
+            });
+
+            try {
+                showToast('저장 중...', 'info');
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(sampleData)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`샘플 "${title}" 저장 완료!`, 'success');
+                    document.getElementById('sampleEstimateTitle').value = '';
+                    loadSampleEstimateList();
+                } else {
+                    showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
+                }
+            } catch (error) {
+                console.error('샘플 저장 실패:', error);
+                showToast('저장 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        // 샘플 견적 불러오기
+        async function loadSampleEstimate(sampleId) {
+            if (!confirm('현재 견적 데이터를 샘플로 덮어쓰시겠습니까?')) return;
+
+            try {
+                showToast('불러오는 중...', 'info');
+                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleEstimate&id=${sampleId}`);
+                const result = await response.json();
+
+                if (result.success && result.sample) {
+                    const sample = result.sample;
+
+                    // 견적 데이터 적용
+                    currentData.estimateData = sample.estimateData || {};
+                    currentData.estimateProfitRate = sample.estimateProfitRate || 15;
+
+                    // 메모 적용
+                    if (sample.estimateMemos) {
+                        Object.keys(sample.estimateMemos).forEach(catNo => {
+                            currentData[`estMemo_${catNo}`] = sample.estimateMemos[catNo];
+                        });
+                    }
+
+                    // UI 새로고침
+                    loadEstimateData();
+
+                    closeSampleEstimateModal();
+                    showToast(`샘플 "${sample.title}" 적용 완료!`, 'success');
+                } else {
+                    showToast('샘플을 불러올 수 없습니다', 'error');
+                }
+            } catch (error) {
+                console.error('샘플 불러오기 실패:', error);
+                showToast('불러오기 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        // 샘플 삭제
+        async function deleteSampleEstimate(sampleId, sampleTitle) {
+            if (!confirm(`"${sampleTitle}" 샘플을 삭제하시겠습니까?`)) return;
+
+            try {
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'deleteSampleEstimate',
+                        id: sampleId
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('샘플이 삭제되었습니다', 'success');
+                    loadSampleEstimateList();
+                } else {
+                    showToast('삭제 실패', 'error');
+                }
+            } catch (error) {
+                console.error('샘플 삭제 실패:', error);
+                showToast('삭제 중 오류가 발생했습니다', 'error');
+            }
+        }
     </script>
     <!-- 로그인 오버레이 (최우선 표시) -->
     <div class="login-overlay" id="loginOverlay">
@@ -8040,6 +8224,42 @@
             Unauthorized access is strictly prohibited.
         </div>
     </div>
+
+    <!-- 샘플 견적서 모달 -->
+    <div id="sampleEstimateModal" class="modal" style="display: none;">
+        <div class="modal-backdrop" onclick="closeSampleEstimateModal()"></div>
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #ff9500, #ff6600); color: white; padding: 20px; border-radius: 16px 16px 0 0;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700;">📋 샘플 견적서</h3>
+                <button onclick="closeSampleEstimateModal()"
+                    style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <!-- 현재 견적 저장 -->
+                <div style="margin-bottom: 24px; padding: 16px; background: #f5f5f7; border-radius: 12px;">
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">💾 현재 견적을 샘플로 저장</h4>
+                    <input type="text" id="sampleEstimateTitle" placeholder="샘플 제목 입력 (예: 기본 욕실 공사)"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
+                    <button onclick="saveSampleEstimate()"
+                        style="width: 100%; padding: 12px; background: #ff9500; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                        샘플로 저장
+                    </button>
+                </div>
+
+                <!-- 저장된 샘플 목록 -->
+                <div>
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">📂 저장된 샘플 불러오기</h4>
+                    <div id="sampleEstimateList" style="max-height: 300px; overflow-y: auto;">
+                        <div style="text-align: center; color: #999; padding: 20px;">
+                            로딩 중...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

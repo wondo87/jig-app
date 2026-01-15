@@ -71,6 +71,14 @@ function doPost(e) {
             return handleCostUpdate(payload);
         }
 
+        // 1.5. 샘플 견적서 처리
+        if (payload.action === 'saveSampleEstimate') {
+            return handleSaveSampleEstimate(payload);
+        }
+        if (payload.action === 'deleteSampleEstimate') {
+            return handleDeleteSampleEstimate(payload);
+        }
+
         // 2. 관리자 데이터 동기화 요청인지 확인
         // 조건: action 필드가 있거나, 데이터 내에 customerId가 있음 (관리자 기능)
         var isAdminAction = (payload.action === 'admin' || payload.action === 'deleteAdmin');
@@ -112,6 +120,15 @@ function doGet(e) {
         // 2. 고객관리/관리자 데이터 요청인 경우 (파라미터가 명시적인 경우)
         if (sheetParam === '관리자' || sheetParam === '고객관리' || sheetParam === '고객관리_견적서' || sheetParam === '계약완료고객' || sheetParam === '계약완료') {
             return handleCustomerGet(e);
+        }
+
+        // 2.5. 샘플 견적서 조회
+        var actionParam = e.parameter.action;
+        if (actionParam === 'getSampleEstimates') {
+            return handleGetSampleEstimates();
+        }
+        if (actionParam === 'getSampleEstimate') {
+            return handleGetSampleEstimate(e.parameter.id);
         }
 
         // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
@@ -1337,6 +1354,186 @@ function handleCostUpdate(payload) {
         return ContentService.createTextOutput(JSON.stringify({
             error: err.toString(),
             stack: err.stack
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// ==========================================
+// 10. 샘플 견적서 기능
+// ==========================================
+
+const SAMPLE_ESTIMATE_SHEET_NAME = '샘플견적시트';
+
+/**
+ * 샘플 견적서 저장
+ */
+function handleSaveSampleEstimate(payload) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SAMPLE_ESTIMATE_SHEET_NAME);
+
+        if (!sheet) {
+            // 시트가 없으면 생성
+            sheet = spreadsheet.insertSheet(SAMPLE_ESTIMATE_SHEET_NAME);
+            sheet.appendRow(['ID', '제목', '견적데이터', '이윤율', '메모', '작성자', '작성일']);
+        }
+
+        var sampleId = 'SAMPLE_' + new Date().getTime();
+        var createdAt = new Date().toLocaleDateString('ko-KR');
+
+        sheet.appendRow([
+            sampleId,
+            payload.title || '제목 없음',
+            JSON.stringify(payload.estimateData || {}),
+            payload.estimateProfitRate || 15,
+            JSON.stringify(payload.estimateMemos || {}),
+            payload.createdBy || 'unknown',
+            createdAt
+        ]);
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            id: sampleId,
+            message: '샘플이 저장되었습니다'
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 샘플 견적서 목록 조회
+ */
+function handleGetSampleEstimates() {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SAMPLE_ESTIMATE_SHEET_NAME);
+
+        if (!sheet || sheet.getLastRow() < 2) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: true,
+                samples: []
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var samples = [];
+
+        for (var i = 1; i < data.length; i++) {
+            samples.push({
+                id: data[i][0],
+                title: data[i][1],
+                createdBy: data[i][5],
+                createdAt: data[i][6]
+            });
+        }
+
+        // 최신순 정렬
+        samples.reverse();
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            samples: samples
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 샘플 견적서 상세 조회
+ */
+function handleGetSampleEstimate(sampleId) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SAMPLE_ESTIMATE_SHEET_NAME);
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '샘플 시트가 없습니다'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+
+        for (var i = 1; i < data.length; i++) {
+            if (data[i][0] === sampleId) {
+                var sample = {
+                    id: data[i][0],
+                    title: data[i][1],
+                    estimateData: JSON.parse(data[i][2] || '{}'),
+                    estimateProfitRate: data[i][3],
+                    estimateMemos: JSON.parse(data[i][4] || '{}'),
+                    createdBy: data[i][5],
+                    createdAt: data[i][6]
+                };
+
+                return ContentService.createTextOutput(JSON.stringify({
+                    success: true,
+                    sample: sample
+                })).setMimeType(ContentService.MimeType.JSON);
+            }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: '샘플을 찾을 수 없습니다'
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 샘플 견적서 삭제
+ */
+function handleDeleteSampleEstimate(payload) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SAMPLE_ESTIMATE_SHEET_NAME);
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '샘플 시트가 없습니다'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+
+        for (var i = 1; i < data.length; i++) {
+            if (data[i][0] === payload.id) {
+                sheet.deleteRow(i + 1);
+
+                return ContentService.createTextOutput(JSON.stringify({
+                    success: true,
+                    message: '샘플이 삭제되었습니다'
+                })).setMimeType(ContentService.MimeType.JSON);
+            }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: '샘플을 찾을 수 없습니다'
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
         })).setMimeType(ContentService.MimeType.JSON);
     }
 }
