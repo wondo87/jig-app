@@ -6818,7 +6818,7 @@
             localStorage.setItem('dz_global_cost', JSON.stringify(globalCostData));
 
             // Google Sheets 동기화 (메인관리자만)
-            if (loggedInAdmin && loggedInAdmin.role === 'main') {
+            if (currentAdmin && currentAdmin.role === 'main') {
                 syncCostToCloud(globalCostData);
             } else {
                 showToast('원가관리표가 로컬에 저장되었습니다.', 'success');
@@ -6828,7 +6828,7 @@
         // 원가관리표 저장 요청 (비밀번호 확인 필요)
         function requestCostSave() {
             // 이미 메인관리자로 로그인된 경우
-            if (loggedInAdmin && loggedInAdmin.role === 'main') {
+            if (currentAdmin && currentAdmin.role === 'main') {
                 saveCostData();
                 return;
             }
@@ -6840,13 +6840,13 @@
 
             if (password === MAIN_ADMIN.password) {
                 // 임시 메인관리자 권한 부여
-                const tempAdmin = loggedInAdmin;
-                loggedInAdmin = { ...MAIN_ADMIN };
+                const tempAdmin = currentAdmin;
+                currentAdmin = { ...MAIN_ADMIN };
 
                 saveCostData();
 
                 // 원래 상태로 복원
-                loggedInAdmin = tempAdmin;
+                currentAdmin = tempAdmin;
             } else {
                 showToast('비밀번호가 일치하지 않습니다.', 'error');
             }
@@ -6971,7 +6971,7 @@
 
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'updateCost',
                         data: flatData,
