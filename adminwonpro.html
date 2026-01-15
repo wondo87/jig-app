@@ -1769,7 +1769,7 @@
 
         .estimate-table th {
             background: #f5f5f7;
-            padding: 8px 6px;
+            padding: 8px 4px;
             text-align: center;
             font-weight: 600;
             border: 1px solid #e8e8ed;
@@ -1778,11 +1778,24 @@
         }
 
         .estimate-table td {
-            padding: 5px 6px;
+            padding: 5px 4px;
             border: 1px solid #e8e8ed;
             text-align: center;
             vertical-align: middle;
             white-space: nowrap;
+        }
+
+        /* No 셀 (1번째) - 최소 너비 */
+        .estimate-table td:nth-child(1) {
+            width: 25px;
+            min-width: 25px;
+            max-width: 30px;
+        }
+
+        /* 구분 셀 (2번째) - 최소 너비 */
+        .estimate-table td:nth-child(2) {
+            width: 50px;
+            min-width: 50px;
         }
 
         /* 품명 셀 (3번째) - 좌측정렬 */
@@ -1798,9 +1811,27 @@
             text-align: left;
         }
 
-        /* 비고 셀 (9번째) - 좌측정렬 */
+        /* 단위 셀 (5번째) - 최소 너비 */
+        .estimate-table td:nth-child(5) {
+            width: 30px;
+            min-width: 30px;
+            max-width: 35px;
+        }
+
+        /* 수량 셀 (6번째) - 최소 너비, 중앙정렬 */
+        .estimate-table td:nth-child(6) {
+            width: 45px;
+            min-width: 45px;
+            max-width: 55px;
+            text-align: center;
+        }
+
+        /* 비고 셀 (9번째) - 넓게, 좌측정렬, 줄바꿈 허용 */
         .estimate-table td:nth-child(9) {
             text-align: left;
+            white-space: normal;
+            word-break: keep-all;
+            min-width: 100px;
         }
 
         .estimate-table select {
@@ -1814,7 +1845,7 @@
         }
 
         .estimate-table .qty-input {
-            width: 100%;
+            width: 50px;
             padding: 5px 3px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
@@ -1829,21 +1860,30 @@
             text-align: center;
         }
 
-        /* 단가/금액 - 우측정렬 */
+        /* 단가/금액 - ₩ 좌측, 숫자 우측 */
         .estimate-table .price-cell,
         .estimate-table .amount-cell {
             background: #fafafa;
             font-size: var(--font-size-md);
             white-space: nowrap;
-            text-align: right;
-            padding-right: 8px;
+            min-width: 80px;
         }
 
-        /* 금액에 ₩ 기호 추가 */
-        .estimate-table .amount-cell::before {
-            content: '₩ ';
-            float: left;
-            padding-left: 4px;
+        .estimate-table .price-cell span,
+        .estimate-table .amount-cell span {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 비고 입력칸 스타일 */
+        .estimate-table .remark-input {
+            width: 100%;
+            min-width: 80px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 11px;
+            resize: none;
         }
 
         .estimate-table .del-btn {
@@ -6337,7 +6377,7 @@
                                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
                             <td class="price-cell" data-price="0">-</td>
                             <td class="amount-cell">-</td>
-                            <td><input type="text" class="remark-input" placeholder="" style="width:100%; border:1px solid #ddd; border-radius:4px; padding:2px 4px; font-size:11px;"></td>
+                            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
                             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
                                     title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
                         </tr>
@@ -6431,7 +6471,7 @@
             </td>
             <td class="price-cell" data-price="0">-</td>
             <td class="amount-cell">-</td>
-            <td><input type="text" class="remark-input" placeholder="" style="width:100%; border:1px solid #ddd; border-radius:4px; padding:2px 4px; font-size:11px;"></td>
+            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${catNo}')"
                     title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
             `;
@@ -6909,7 +6949,7 @@
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
             <td class="price-cell" data-price="${price}">${price > 0 ? formatNumber(price) : '-'}</td>
             <td class="amount-cell">${amount > 0 ? formatNumber(amount) : '-'}</td>
-            <td><input type="text" class="remark-input" value="${item.remark || ''}" placeholder="" style="width:100%; border:1px solid #ddd; border-radius:4px; padding:2px 4px; font-size:11px;"></td>
+            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
                     title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
                         `;
