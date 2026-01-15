@@ -6273,14 +6273,15 @@
                 <table class="estimate-table">
                     <colgroup>
                         <col style="width:25px;"><!-- No-->
-                        <col style="width:60px;" class="col-div"><!-- 구분 (인쇄시 숨김) -->
+                        <col style="width:55px;" class="col-div"><!-- 구분 (인쇄시 숨김) -->
                         <col style="width:auto;"><!-- 품명 (나머지 공간) -->
-                        <col style="width:100px;"><!-- 상세내용 -->
-                        <col style="width:40px;"><!-- 단위 -->
-                        <col style="width:65px;"><!-- 수량 -->
-                        <col style="width:65px;"><!-- 단가 -->
-                        <col style="width:75px;"><!-- 금액 -->
-                        <col style="width:30px;" class="no-print"><!-- 삭제 -->
+                        <col style="width:130px;"><!-- 상세내용 -->
+                        <col style="width:35px;"><!-- 단위 -->
+                        <col style="width:50px;"><!-- 수량 -->
+                        <col style="width:60px;"><!-- 단가 -->
+                        <col style="width:70px;"><!-- 금액 -->
+                        <col style="width:80px;"><!-- 비고 -->
+                        <col style="width:25px;" class="no-print"><!-- 삭제 -->
                     </colgroup>
                     <thead>
                         <tr>
@@ -6292,6 +6293,7 @@
                             <th>수량</th>
                             <th>단가</th>
                             <th>금액</th>
+                            <th>비고</th>
                             <th class="no-print"></th>
                         </tr>
                     </thead>
@@ -6310,8 +6312,9 @@
                                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
                             <td class="price-cell" data-price="0">-</td>
                             <td class="amount-cell">-</td>
+                            <td><input type="text" class="remark-input" placeholder="" style="width:100%; border:1px solid #ddd; border-radius:4px; padding:2px 4px; font-size:11px;"></td>
                             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
-                                    title="삭제">✕</button></td>
+                                    title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -6403,8 +6406,9 @@
             </td>
             <td class="price-cell" data-price="0">-</td>
             <td class="amount-cell">-</td>
+            <td><input type="text" class="remark-input" placeholder="" style="width:100%; border:1px solid #ddd; border-radius:4px; padding:2px 4px; font-size:11px;"></td>
             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${catNo}')"
-                    title="삭제">✕</button></td>
+                    title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -6759,6 +6763,10 @@
                         }
                     }
 
+                    // 비고 입력값 가져오기
+                    const remarkInput = row.querySelector('.remark-input');
+                    const remarkValue = remarkInput?.value || '';
+
                     rows.push({
                         div: divSelect?.value || '',
                         nameIndex: nameSelect?.value || '',
@@ -6766,7 +6774,8 @@
                         spec: specValue,
                         unit: row.querySelector('.unit-cell')?.textContent || '-',
                         qty: qtyInput?.value || '1',
-                        price: row.querySelector('.price-cell')?.dataset.price || '0'
+                        price: row.querySelector('.price-cell')?.dataset.price || '0',
+                        remark: remarkValue
                     });
                 });
 
@@ -6875,8 +6884,9 @@
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
             <td class="price-cell" data-price="${price}">${price > 0 ? formatNumber(price) : '-'}</td>
             <td class="amount-cell">${amount > 0 ? formatNumber(amount) : '-'}</td>
+            <td><input type="text" class="remark-input" value="${item.remark || ''}" placeholder="" style="width:100%; border:1px solid #ddd; border-radius:4px; padding:2px 4px; font-size:11px;"></td>
             <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
-                    title="삭제">✕</button></td>
+                    title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
                         `;
                         tbody.appendChild(tr);
                     });
