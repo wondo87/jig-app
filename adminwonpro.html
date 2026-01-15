@@ -3677,13 +3677,14 @@
 
         // (performLogin function has been moved to script top)
         // 오버레이 로그인 처리 (스크립트 최상단 이동)
-        function performLogin() {
+        async function performLogin() {
             console.log('performLogin function executed');
             const inputId = document.getElementById('loginId').value.trim();
             const inputPw = document.getElementById('loginPw').value;
 
-            // 메인관리자 확인
-            if (inputId === MAIN_ADMIN.id && inputPw === MAIN_ADMIN.password) {
+            // 메인관리자 확인 (해시 비교)
+            const inputHash = await hashPassword(inputPw);
+            if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
                 currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
                 document.getElementById('loginOverlay').style.display = 'none';
                 activateAdminMode();
@@ -3691,9 +3692,9 @@
                 return;
             }
 
-            // 일반관리자 확인
+            // 일반관리자 확인 (해시 비교)
             const admins = getRegularAdmins();
-            const found = admins.find(a => a.id === inputId && a.password === inputPw);
+            const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
             if (found) {
                 currentAdmin = { id: found.id, role: 'regular' };
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -4586,6 +4587,20 @@
         // ========== 다중 관리자 시스템 ==========
         // 설정값은 admin_config.js 에서 로드됨
 
+        // ========== 비밀번호 보안 (SHA-256 해싱) ==========
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function verifyPassword(inputPassword, storedHash) {
+            const inputHash = await hashPassword(inputPassword);
+            return inputHash === storedHash;
+        }
+
 
         // 일반관리자 목록 (localStorage + 클라우드 동기화)
         function getRegularAdmins() {
@@ -4690,9 +4705,10 @@
             return true;
         }
 
-        function unlockCustomerAccess() {
+        async function unlockCustomerAccess() {
             const pw = document.getElementById('lockedPasswordInput').value;
-            if (pw === DELETE_PASSWORD) {
+            const pwHash = await hashPassword(pw);
+            if (pwHash === DELETE_PASSWORD_HASH) {
                 currentData.unlockedForSession = true;
                 document.getElementById('accessDeniedOverlay').style.display = 'none';
                 showToast('접근이 허용되었습니다', 'success');
@@ -4804,9 +4820,10 @@
             window.pendingDeleteCallback = null;
         }
 
-        function confirmDeletePassword() {
+        async function confirmDeletePassword() {
             const inputPw = document.getElementById('deletePassword').value;
-            if (inputPw === DELETE_PASSWORD) {
+            const pwHash = await hashPassword(inputPw);
+            if (pwHash === DELETE_PASSWORD_HASH) {
                 closeDeletePasswordModal();
                 if (window.pendingDeleteCallback) {
                     window.pendingDeleteCallback();
@@ -4868,9 +4885,11 @@
                 return;
             }
 
+            // 비밀번호를 해시로 변환하여 저장
+            const pwHash = await hashPassword(pw);
             const newAdmin = {
                 id,
-                password: pw,
+                passwordHash: pwHash,  // 해시값 저장 (원본 비밀번호 저장 안 함)
                 name: id,
                 createdAt: new Date().toISOString()
             };
@@ -4902,12 +4921,13 @@
 
 
         // 관리자 로그인
-        function loginAdmin() {
+        async function loginAdmin() {
             const inputId = document.getElementById('adminId').value.trim();
             const inputPw = document.getElementById('adminPassword').value;
+            const inputHash = await hashPassword(inputPw);
 
-            // 메인관리자 확인
-            if (inputId === MAIN_ADMIN.id && inputPw === MAIN_ADMIN.password) {
+            // 메인관리자 확인 (해시 비교)
+            if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
                 currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
                 closeAdminModal();
                 activateAdminMode();
@@ -4915,9 +4935,9 @@
                 return;
             }
 
-            // 일반관리자 확인
+            // 일반관리자 확인 (해시 비교)
             const admins = getRegularAdmins();
-            const found = admins.find(a => a.id === inputId && a.password === inputPw);
+            const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
             if (found) {
                 currentAdmin = { id: found.id, role: 'regular' };
                 closeAdminModal();
@@ -6941,7 +6961,7 @@
         }
 
         // 원가관리표 저장 요청 (비밀번호 확인 필요)
-        function requestCostSave() {
+        async function requestCostSave() {
             // 이미 메인관리자로 로그인된 경우
             if (currentAdmin && currentAdmin.role === 'main') {
                 saveCostData();
@@ -6953,7 +6973,8 @@
 
             if (password === null) return; // 취소됨
 
-            if (password === MAIN_ADMIN.password) {
+            const pwHash = await hashPassword(password);
+            if (pwHash === MAIN_ADMIN.passwordHash) {
                 // 임시 메인관리자 권한 부여
                 const tempAdmin = currentAdmin;
                 currentAdmin = { ...MAIN_ADMIN };

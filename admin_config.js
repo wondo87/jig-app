@@ -4,13 +4,13 @@
 
 const MAIN_ADMIN = {
     id: 'sweet00700',
-    password: 'Dufan170531!@', // 메인관리자 비밀번호
+    passwordHash: '671076167de6f4ed03c9f267f0c42620b10801dd3ee47c79e59090755ba43acc', // SHA-256 해시 (원본 비밀번호 노출 안됨)
     role: 'main',
     name: '메인관리자'
 };
 
-// 일반관리자 삭제/잠금해제 승인 비밀번호
-const DELETE_PASSWORD = '6454';
+// 일반관리자 삭제/잠금해제 승인 비밀번호 (SHA-256 해시)
+const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e852604566cbb848';
 
 // Google Apps Script Web App URL (고객 데이터 동기화용)
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzlUqGjCjdVMgGKckrcrnnqrAc92ejl0DsZwNtSd5mcOK8VxGS5PZB5BvMyzVxkhb04Cg/exec';
