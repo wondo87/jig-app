@@ -1762,7 +1762,7 @@
         .estimate-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: auto;
+            table-layout: fixed;
             font-size: var(--font-size-md);
             margin-bottom: 8px;
         }
@@ -1775,6 +1775,7 @@
             border: 1px solid #e8e8ed;
             font-size: var(--font-size-sm);
             white-space: nowrap;
+            overflow: visible;
         }
 
         .estimate-table td {
@@ -1782,56 +1783,106 @@
             border: 1px solid #e8e8ed;
             text-align: center;
             vertical-align: middle;
-            white-space: nowrap;
+            overflow: visible;
         }
 
-        /* No 셀 (1번째) - 최소 너비 */
+        /* No 셀 (1번째) */
+        .estimate-table th:nth-child(1),
         .estimate-table td:nth-child(1) {
-            width: 25px;
-            min-width: 25px;
-            max-width: 30px;
+            width: 28px;
         }
 
-        /* 구분 셀 (2번째) - 최소 너비 */
+        /* 구분 셀 (2번째) - 넉넉하게 */
+        .estimate-table th:nth-child(2),
         .estimate-table td:nth-child(2) {
-            width: 50px;
-            min-width: 50px;
+            width: 75px;
         }
 
-        /* 품명 셀 (3번째) - 좌측정렬 */
+        /* 품명 셀 (3번째) - 자동확장, 좌측정렬 */
+        .estimate-table th:nth-child(3),
         .estimate-table td:nth-child(3) {
             text-align: left;
+            width: auto;
         }
 
         /* 상세내용 셀 (4번째) - 좌측정렬 */
+        .estimate-table th:nth-child(4),
+        .estimate-table td:nth-child(4) {
+            text-align: left;
+            width: auto;
+        }
+
         .estimate-table .spec-cell {
             background: #fafafa;
             font-size: var(--font-size-md);
-            white-space: nowrap;
             text-align: left;
         }
 
-        /* 단위 셀 (5번째) - 최소 너비 */
+        /* 단위 셀 (5번째) */
+        .estimate-table th:nth-child(5),
         .estimate-table td:nth-child(5) {
-            width: 30px;
-            min-width: 30px;
-            max-width: 35px;
+            width: 35px;
         }
 
-        /* 수량 셀 (6번째) - 최소 너비, 중앙정렬 */
-        .estimate-table td:nth-child(6) {
-            width: 45px;
-            min-width: 45px;
-            max-width: 55px;
+        .estimate-table .unit-cell {
+            background: #fafafa;
+            font-size: var(--font-size-md);
             text-align: center;
         }
 
+        /* 수량 셀 (6번째) - 중앙정렬 */
+        .estimate-table th:nth-child(6),
+        .estimate-table td:nth-child(6) {
+            width: 50px;
+            text-align: center;
+        }
+
+        /* 단가 셀 (7번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+        .estimate-table th:nth-child(7),
+        .estimate-table td:nth-child(7) {
+            width: 90px;
+        }
+
+        .estimate-table .price-cell {
+            background: #fafafa;
+            font-size: var(--font-size-md);
+            text-align: right;
+            padding-right: 6px;
+        }
+
+        /* 금액 셀 (8번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+        .estimate-table th:nth-child(8),
+        .estimate-table td:nth-child(8) {
+            width: 95px;
+        }
+
+        .estimate-table .amount-cell {
+            background: #fafafa;
+            font-size: var(--font-size-md);
+        }
+
+        .estimate-table .amount-cell .won-amount {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        .estimate-table .amount-cell .won-amount .won-symbol {
+            color: #666;
+        }
+
         /* 비고 셀 (9번째) - 넓게, 좌측정렬, 줄바꿈 허용 */
+        .estimate-table th:nth-child(9),
         .estimate-table td:nth-child(9) {
             text-align: left;
-            white-space: normal;
-            word-break: keep-all;
-            min-width: 100px;
+            width: auto;
+            min-width: 120px;
+        }
+
+        /* 삭제 셀 (10번째) */
+        .estimate-table th:nth-child(10),
+        .estimate-table td:nth-child(10) {
+            width: 30px;
         }
 
         .estimate-table select {
@@ -1845,7 +1896,7 @@
         }
 
         .estimate-table .qty-input {
-            width: 50px;
+            width: 45px;
             padding: 5px 3px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
@@ -1853,37 +1904,15 @@
             text-align: center;
         }
 
-        .estimate-table .unit-cell {
-            background: #fafafa;
-            font-size: var(--font-size-md);
-            white-space: nowrap;
-            text-align: center;
-        }
-
-        /* 단가/금액 - ₩ 좌측, 숫자 우측 */
-        .estimate-table .price-cell,
-        .estimate-table .amount-cell {
-            background: #fafafa;
-            font-size: var(--font-size-md);
-            white-space: nowrap;
-            min-width: 80px;
-        }
-
-        .estimate-table .price-cell span,
-        .estimate-table .amount-cell span {
-            display: flex;
-            justify-content: space-between;
-        }
-
         /* 비고 입력칸 스타일 */
         .estimate-table .remark-input {
             width: 100%;
-            min-width: 80px;
+            min-width: 100px;
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 4px 6px;
             font-size: 11px;
-            resize: none;
+            resize: vertical;
         }
 
         .estimate-table .del-btn {
@@ -7506,6 +7535,22 @@
                         section.style.display = 'none';
                     }
                 });
+
+                // 단가/금액에 ₩ 기호 추가 (인쇄용)
+                clonedElement.querySelectorAll('.estimate-table tbody tr').forEach(tr => {
+                    const priceCell = tr.querySelector('.price-cell');
+                    const amountCell = tr.querySelector('.amount-cell');
+
+                    if (priceCell && priceCell.textContent !== '-') {
+                        const priceValue = priceCell.textContent;
+                        priceCell.innerHTML = `<span class="won-amount"><span class="won-symbol">₩</span><span>${priceValue}</span></span>`;
+                    }
+
+                    if (amountCell && amountCell.textContent !== '-') {
+                        const amountValue = amountCell.textContent;
+                        amountCell.innerHTML = `<span class="won-amount"><span class="won-symbol">₩</span><span>${amountValue}</span></span>`;
+                    }
+                });
             }
 
             // 인쇄용 HTML 생성
@@ -7562,7 +7607,7 @@
                                                 .summary-table,
                                                 .estimate-select-table {
                                                     width: 100% !important;
-                                                table-layout: auto !important;
+                                                table-layout: fixed !important;
                                                 font-size: 10px !important;
                    }
 
@@ -7581,24 +7626,69 @@
                                                 .summary-table td {
                                                     padding: 4px 3px !important;
                                                 font-size: 10px !important;
-                                                white-space: nowrap !important;
                    }
 
-                                                /* 품명, 상세내용 열 - 좌측정렬 */
-                                                .estimate-table td:nth-child(2),
+                                                /* ===== 견적서 테이블 컬럼별 설정 ===== */
+                                                /* No (1번째) */
+                                                .estimate-table th:nth-child(1),
+                                                .estimate-table td:nth-child(1) {
+                                                    width: 20px !important;
+                                                text-align: center !important;
+                   }
+
+                                                /* 품명 (2번째) - 좌측정렬 */
+                                                .estimate-table th:nth-child(2),
+                                                .estimate-table td:nth-child(2) {
+                                                    width: auto !important;
+                                                text-align: left !important;
+                   }
+
+                                                /* 상세내용 (3번째) - 좌측정렬 */
+                                                .estimate-table th:nth-child(3),
                                                 .estimate-table td:nth-child(3) {
-                                                    text-align: left !important;
+                                                    width: auto !important;
+                                                text-align: left !important;
                    }
 
-                                                /* 금액 열 - 우측정렬 */
-                                                .estimate-table td:nth-child(6),
+                                                /* 단위 (4번째) - 중앙, 고정 */
+                                                .estimate-table th:nth-child(4),
+                                                .estimate-table td:nth-child(4) {
+                                                    width: 28px !important;
+                                                text-align: center !important;
+                   }
+
+                                                /* 수량 (5번째) - 중앙, 고정 */
+                                                .estimate-table th:nth-child(5),
+                                                .estimate-table td:nth-child(5) {
+                                                    width: 35px !important;
+                                                text-align: center !important;
+                   }
+
+                                                /* 단가 (6번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+                                                .estimate-table th:nth-child(6),
+                                                .estimate-table td:nth-child(6) {
+                                                    width: 70px !important;
+                   }
+                                                .estimate-table td:nth-child(6) .won-amount {
+                                                    display: flex !important;
+                                                justify-content: space-between !important;
+                   }
+
+                                                /* 금액 (7번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+                                                .estimate-table th:nth-child(7),
                                                 .estimate-table td:nth-child(7) {
-                                                    text-align: right !important;
+                                                    width: 75px !important;
+                   }
+                                                .estimate-table td:nth-child(7) .won-amount {
+                                                    display: flex !important;
+                                                justify-content: space-between !important;
                    }
 
-                                                /* 비고 열 - 좌측정렬 */
+                                                /* 비고 (8번째) - 넓게, 좌측정렬 */
+                                                .estimate-table th:nth-child(8),
                                                 .estimate-table td:nth-child(8) {
-                                                    text-align: left !important;
+                                                    width: auto !important;
+                                                text-align: left !important;
                    }
 
                                                 /* 원가관리표 컬럼 너비 */
@@ -7648,7 +7738,7 @@
 
                                                 /* 비고 */
 
-                                                /* 견적서 컬럼 - 자동 너비 */
+                                                /* 견적서 컬럼 - 고정 너비 */
                                                 .estimate-table colgroup col {
                                                     width: auto !important;
                    }
