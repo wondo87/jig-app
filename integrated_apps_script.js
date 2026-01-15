@@ -309,7 +309,8 @@ designjig.com
     try {
         GmailApp.sendEmail(data.email, subject, plainTextBody, {
             htmlBody: htmlBody,
-            name: SENDER_NAME
+            name: SENDER_NAME,
+            from: SENDER_EMAIL
         });
         console.log('이메일 발송 성공: ' + data.email);
     } catch (error) {
@@ -1119,7 +1120,8 @@ function sendBasicAsExpirationEmail(email, name) {
 
     try {
         GmailApp.sendEmail(email, subject, body, {
-            name: SENDER_NAME
+            name: SENDER_NAME,
+            from: SENDER_EMAIL
         });
         console.log('기본 A/S 완료 메일 발송: ' + email);
     } catch (e) {
@@ -1152,7 +1154,8 @@ function sendBathroomAsExpirationEmail(email, name) {
 
     try {
         GmailApp.sendEmail(email, subject, body, {
-            name: SENDER_NAME
+            name: SENDER_NAME,
+            from: SENDER_EMAIL
         });
         console.log('화장실 A/S 완료 메일 발송: ' + email);
     } catch (e) {
