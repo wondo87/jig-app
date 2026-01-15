@@ -1785,6 +1785,24 @@
             white-space: nowrap;
         }
 
+        /* 품명 셀 (3번째) - 좌측정렬 */
+        .estimate-table td:nth-child(3) {
+            text-align: left;
+        }
+
+        /* 상세내용 셀 (4번째) - 좌측정렬 */
+        .estimate-table .spec-cell {
+            background: #fafafa;
+            font-size: var(--font-size-md);
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        /* 비고 셀 (9번째) - 좌측정렬 */
+        .estimate-table td:nth-child(9) {
+            text-align: left;
+        }
+
         .estimate-table select {
             width: 100%;
             padding: 5px 3px;
@@ -1804,13 +1822,14 @@
             text-align: center;
         }
 
-        .estimate-table .spec-cell,
         .estimate-table .unit-cell {
             background: #fafafa;
             font-size: var(--font-size-md);
             white-space: nowrap;
+            text-align: center;
         }
 
+        /* 단가/금액 - 우측정렬 */
         .estimate-table .price-cell,
         .estimate-table .amount-cell {
             background: #fafafa;
@@ -1820,13 +1839,20 @@
             padding-right: 8px;
         }
 
+        /* 금액에 ₩ 기호 추가 */
+        .estimate-table .amount-cell::before {
+            content: '₩ ';
+            float: left;
+            padding-left: 4px;
+        }
+
         .estimate-table .del-btn {
             background: none;
             border: none;
             color: #ff3b30;
             cursor: pointer;
-            font-size: 14px;
-            padding: 2px 6px;
+            font-size: 12px;
+            padding: 2px 4px;
             border-radius: 4px;
         }
 
@@ -7496,7 +7522,7 @@
                                                 .summary-table,
                                                 .estimate-select-table {
                                                     width: 100% !important;
-                                                table-layout: fixed !important;
+                                                table-layout: auto !important;
                                                 font-size: 10px !important;
                    }
 
@@ -7516,16 +7542,23 @@
                                                     padding: 4px 3px !important;
                                                 font-size: 10px !important;
                                                 white-space: nowrap !important;
-                                                overflow: hidden !important;
-                                                text-overflow: ellipsis !important;
                    }
 
-                                                /* 품명/규격 열은 줄바꿈 허용 및 자동 확장 */
-                                                .data-table .col-name,
-                                                .estimate-table td:nth-child(2) {
-                                                    white-space: normal !important;
-                                                word-break: keep-all !important;
-                                                width: auto !important;
+                                                /* 품명, 상세내용 열 - 좌측정렬 */
+                                                .estimate-table td:nth-child(2),
+                                                .estimate-table td:nth-child(3) {
+                                                    text-align: left !important;
+                   }
+
+                                                /* 금액 열 - 우측정렬 */
+                                                .estimate-table td:nth-child(6),
+                                                .estimate-table td:nth-child(7) {
+                                                    text-align: right !important;
+                   }
+
+                                                /* 비고 열 - 좌측정렬 */
+                                                .estimate-table td:nth-child(8) {
+                                                    text-align: left !important;
                    }
 
                                                 /* 원가관리표 컬럼 너비 */
@@ -7575,42 +7608,10 @@
 
                                                 /* 비고 */
 
-                                                /* 견적서 컬럼 너비 */
-                                                .estimate-table colgroup col:nth-child(1) {
-                                                    width: 18px;
+                                                /* 견적서 컬럼 - 자동 너비 */
+                                                .estimate-table colgroup col {
+                                                    width: auto !important;
                    }
-
-                                                /* No */
-                                                .estimate-table colgroup col:nth-child(2) {
-                                                    width: auto;
-                   }
-
-                                                /* 품명 */
-                                                .estimate-table colgroup col:nth-child(3) {
-                                                    width: 70px;
-                   }
-
-                                                /* 규격 */
-                                                .estimate-table colgroup col:nth-child(4) {
-                                                    width: 28px;
-                   }
-
-                                                /* 단위 */
-                                                .estimate-table colgroup col:nth-child(5) {
-                                                    width: 28px;
-                   }
-
-                                                /* 수량 */
-                                                .estimate-table colgroup col:nth-child(6) {
-                                                    width: 65px;
-                   }
-
-                                                /* 단가 */
-                                                .estimate-table colgroup col:nth-child(7) {
-                                                    width: 60px;
-                   }
-
-                                                /* 금액 */
 
                                                 /* 구분 열 숨기기 */
                                                 .col-div,
