@@ -634,6 +634,11 @@
             color: #ff9500;
         }
 
+        .status-badge.estimate {
+            background: #e3f2fd;
+            color: #2196f3;
+        }
+
         .status-badge.hold {
             background: #f5f5f7;
             color: #8e8e93;
@@ -2885,6 +2890,7 @@
             <div class="status-filter">
                 <button class="filter-btn active" data-status="all" onclick="setStatusFilter('all')">전체</button>
                 <button class="filter-btn" data-status="consulting" onclick="setStatusFilter('consulting')">상담중</button>
+                <button class="filter-btn" data-status="estimate" onclick="setStatusFilter('estimate')">견적서</button>
                 <button class="filter-btn" data-status="hold" onclick="setStatusFilter('hold')">보류</button>
                 <button class="filter-btn" data-status="budget_over"
                     onclick="setStatusFilter('budget_over')">예산초과</button>
@@ -2960,6 +2966,7 @@
                     <div class="customer-header-right">
                         <select id="customerStatus" onchange="updateStatus()">
                             <option value="consulting">🟡 상담중</option>
+                            <option value="estimate">📋 견적서</option>
                             <option value="hold">⚪ 보류(고민중)</option>
                             <option value="budget_over">🔴 예산초과(미계약)</option>
                             <option value="other_company">🟣 타업체선정(미계약)</option>
@@ -4562,6 +4569,7 @@
 
         const statusLabels = {
             consulting: '상담중',
+            estimate: '견적서',
             hold: '보류(고민중)',
             budget_over: '예산초과(미계약)',
             other_company: '타업체선정(미계약)',

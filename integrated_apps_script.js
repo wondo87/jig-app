@@ -744,7 +744,7 @@ function getAdmins(spreadsheet) {
         if (row[0]) {
             admins.push({
                 id: row[0],
-                password: row[1],
+                passwordHash: row[1],  // 해시값으로 저장된 비밀번호
                 name: row[2] || row[0],
                 createdAt: row[3]
             });
@@ -764,9 +764,12 @@ function saveAdmin(spreadsheet, adminData) {
         if (data[i][0] === adminData.id) { rowIndex = i + 1; break; }
     }
 
+    // passwordHash 또는 password 둘 다 지원
+    var passwordValue = adminData.passwordHash || adminData.password || '';
+
     var rowData = [
         adminData.id,
-        adminData.password,
+        passwordValue,  // 해시값 또는 비밀번호
         adminData.name || adminData.id,
         adminData.createdAt || new Date().toISOString()
     ];
