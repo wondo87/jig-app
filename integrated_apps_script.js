@@ -21,8 +21,8 @@ const CONSULTING_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 // [수정] Make 연동 시트로 통합하기 위해 ID를 상담용과 동일하게 설정
 const CUSTOMER_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 
-// [원가관리표용] 스프레드시트 ID
-const COST_SHEET_ID = '1oKt3Gritja2K6rE09oyf6Ea16k8lV1p_hXMfz5j3YeY';
+// [원가관리표용] 스프레드시트 ID (통합 시트에 추가됨)
+const COST_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 
 // [상담용] 설문 Form URL
 const FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdcsD1hjKMNezFTaPAZRlKovdRDfCW08cy4VfLHL_LJDcmbVw/viewform';
@@ -1165,68 +1165,71 @@ function sendBathroomAsExpirationEmail(email, name) {
 function handleCostGet(e) {
     try {
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
-        var sheets = spreadsheet.getSheets();
+
+        // '원가관리표' 시트만 읽기
+        var sheet = spreadsheet.getSheetByName('원가관리표');
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                error: '원가관리표 시트를 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
         var costData = [];
+        var memoData = {};  // 카테고리별 메모 저장
 
-        // 모든 시트를 순회
-        sheets.forEach(function (sheet) {
-            var sheetName = sheet.getName();
+        // 2행(인덱스 1)이 헤더, 3행(인덱스 2)부터 데이터
+        // 1행: 제목, 2행: 컬럼 헤더 (카테고리, NO, 구분, 품명...), 3행~: 데이터
+        var startRow = 2;
 
-            // 숨겨진 시트나 설정 시트 건너뛰기
-            if (sheetName.startsWith('_') || sheetName === '설정' || sheetName === 'config') {
-                return;
-            }
+        for (var i = startRow; i < data.length; i++) {
+            var row = data[i];
 
-            var data = sheet.getDataRange().getValues();
-            var currentCategory = sheetName; // 시트 이름을 기본 카테고리로 사용
+            // 빈 행 건너뛰기
+            if (!row[0] && !row[1] && !row[2]) continue;
 
-            // 헤더 행 건너뛰기 (첫 5행은 제목 및 헤더로 가정)
-            var startRow = 5;
-            // 시트1인 경우 기존 로직 유지, 아니면 첫 행부터 데이터 확인
-            if (sheetName !== '시트1') {
-                // 첫 번째 행이 헤더인지 확인 (No, 구분, 품명 등이 있으면 스킵)
-                if (data.length > 0 && (data[0][0] === 'No' || data[0][0] === 'NO' || data[0][1] === '구분')) {
-                    startRow = 1;
-                } else {
-                    startRow = 0;
+            // A열: 카테고리, B열: NO 또는 MEMO, C열: 구분/메모번호, D열: 품명/메모내용
+            var category = row[0] ? row[0].toString().trim() : '';
+            var noOrMemo = row[1] ? row[1].toString().trim() : '';
+            var div = row[2] ? row[2].toString().trim() : '';
+            var name = row[3] ? row[3].toString().trim() : '';
+
+            // 헤더 행 건너뛰기
+            if (category === '카테고리' || noOrMemo === 'NO' || div === '구분') continue;
+
+            // MEMO 행 처리
+            if (noOrMemo === 'MEMO' || noOrMemo === '메모') {
+                if (!memoData[category]) {
+                    memoData[category] = [];
                 }
-            }
-
-            for (var i = startRow; i < data.length; i++) {
-                var row = data[i];
-
-                // 빈 행 건너뛰기
-                if (!row[0] && !row[1] && !row[2]) continue;
-
-                // 구분(카테고리) 확인 - 시트1일 때만 헤더 행 인식
-                var div = row[1] ? row[1].toString().trim() : '';
-                if (sheetName === '시트1' && div && !row[2]) {
-                    // 카테고리만 있고 품명이 없으면 카테고리 헤더
-                    currentCategory = div;
-                    continue;
-                }
-
-                // 품명이 없으면 데이터 아님
-                if (!row[2]) continue;
-
-                costData.push({
-                    no: row[0] || '',
-                    category: currentCategory, // 시트 이름 또는 헤더에서 가져온 카테고리
-                    div: div,
-                    name: row[2] || '',
-                    spec: row[3] || '',
-                    unit: row[4] || '',
-                    qty: row[5] || '',
-                    price: row[6] || '',
-                    total: row[7] || ''
+                memoData[category].push({
+                    no: div,  // 메모 번호 (1, 2, 3...)
+                    content: name  // 메모 내용 (D열)
                 });
+                continue;
             }
-        });
+
+            // 카테고리가 없으면 데이터 아님
+            if (!category) continue;
+
+            // 일반 데이터 행
+            costData.push({
+                no: noOrMemo || '',
+                category: category,
+                div: div,
+                name: name,
+                spec: row[4] || '',
+                unit: row[5] || '',
+                qty: row[6] || '',
+                price: row[7] || '',
+                total: row[8] || ''
+            });
+        }
 
         return ContentService.createTextOutput(JSON.stringify({
             success: true,
             data: costData,
-            sheetCount: sheets.length,
+            memos: memoData,
             lastUpdated: new Date().toISOString()
         })).setMimeType(ContentService.MimeType.JSON);
 
@@ -1236,6 +1239,7 @@ function handleCostGet(e) {
         })).setMimeType(ContentService.MimeType.JSON);
     }
 }
+
 
 /**
  * 원가관리표 데이터 업데이트 (POST)
@@ -1252,7 +1256,7 @@ function handleCostUpdate(payload) {
         }
 
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName('시트1');
+        var sheet = spreadsheet.getSheetByName('원가관리표');
 
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
