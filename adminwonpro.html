@@ -5348,7 +5348,8 @@
 
         function showCustomerTab(tabId) {
             // [SECURITY CHECK] Cost Management Tab
-            if (tabId === 'cost' && !isCostUnlocked) {
+            // 메인관리자(isMainAdmin)는 패스; 일반관리자만 비밀번호 체크
+            if (tabId === 'cost' && !isMainAdmin() && !isCostUnlocked) {
                 // If not unlocked, show password modal and STOP.
                 document.getElementById('costPasswordModal').classList.add('show');
                 document.getElementById('costAccessPin').value = '';
