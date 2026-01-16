@@ -6,17 +6,42 @@ const app = express();
 const port = 3001;
 
 // Provided by user
-const NOTION_API_KEY = "ntn_W60962876671zXOYqiYKtlhW1IS8ort8H9fAhUekkeF3JY";
+const NOTION_API_KEY = "ntn_Z60962876671RUe2pR1vOcv1kPb3HretjAhTDWnwkHC7CZ";
 const DATABASE_ID = "6b993a15bb2643979ceb382460ed7e77";
+const MAINPAGE_DB_ID = '2d216b5df7b38076b153e5642eb299df';
 
 const notion = new Client({ auth: NOTION_API_KEY });
 
 app.use(cors());
 app.use(express.json());
 
+app.get('/api/mainpage', async (req, res) => {
+    const { category } = req.query;
+    try {
+        const queryOptions = {
+            database_id: MAINPAGE_DB_ID,
+            sorts: [{ property: '작성일', direction: 'descending' }],
+        };
+
+        if (category) {
+            queryOptions.filter = {
+                property: '선택',
+                select: { equals: category }
+            };
+        }
+
+        const response = await notion.databases.query(queryOptions);
+        res.status(200).json(response.results);
+    } catch (error) {
+        console.error("Mainpage API Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/projects', async (req, res) => {
     try {
         const PROJECT_DB_ID = "22bc2a12-1ce9-4ff2-8e17-1cf91bcdf3a8";
+
         const response = await notion.databases.query({
             database_id: PROJECT_DB_ID,
             sorts: [{ property: "현장명", direction: "ascending" }],

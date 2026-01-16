@@ -1479,7 +1479,6 @@
                         const img = container.querySelector('img');
                         const placeholder = container.querySelector('.feature-image-placeholder');
 
-                        img.src = coverUrl;
                         img.onload = function () {
                             img.style.display = 'block';
                             if (placeholder) placeholder.style.display = 'none';
@@ -1487,6 +1486,9 @@
                         img.onerror = function () {
                             if (placeholder) placeholder.textContent = '이미지를 불러올 수 없습니다';
                         };
+
+                        // src 할당은 이벤트 핸들러 등록 후에 수행
+                        img.src = coverUrl;
                     }
                 } catch (error) {
                     console.error(`피처 이미지 로드 오류 (${feature.category}):`, error);
