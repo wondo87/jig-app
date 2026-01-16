@@ -1357,7 +1357,7 @@ function handleCostGet(e) {
 
 
 /**
- * 원가관리표 데이터 업데이트 (POST)
+ * 원가관리표 데이터베이스 업데이트 (POST)
  * Google Sheets에 원가관리표 데이터를 저장합니다.
  * 새 구조: A열=카테고리, B열=NO/MEMO, C열=구분, D열=품명, E열=상세내용, F열=단위, G열=수량, H열=단가, I열=합계
  */
@@ -1389,18 +1389,20 @@ function handleCostUpdate(payload) {
             '욕실공사', '도장공사', '도배공사', '바닥재', '가구공사', '마감공사', '기타공사'];
 
         // 새 데이터 쓰기
-        var currentRow = 3;
         var rows = [];
+        var isFirstCategory = true;
 
         // 카테고리 순서대로 데이터 정렬
         categoryOrder.forEach(function (category) {
+            var categoryRows = [];
+
             // 해당 카테고리의 일반 데이터
             var categoryData = costData.filter(function (item) {
                 return item.category === category;
             });
 
             categoryData.forEach(function (item) {
-                rows.push([
+                categoryRows.push([
                     category,
                     item.no || '',
                     item.div || '',
@@ -1416,7 +1418,7 @@ function handleCostUpdate(payload) {
             // 해당 카테고리의 메모 데이터
             if (memoData[category] && memoData[category].length > 0) {
                 memoData[category].forEach(function (memo) {
-                    rows.push([
+                    categoryRows.push([
                         category,
                         'MEMO',
                         memo.no || '',
@@ -1425,9 +1427,23 @@ function handleCostUpdate(payload) {
                     ]);
                 });
             }
+
+            // [추가 요청] 공정이 끝나면 5행 여유공간 추가
+            if (categoryRows.length > 0) {
+                // 첫 번째 카테고리가 아니고, 데이터가 있다면 위에 5줄 공백 추가
+                if (!isFirstCategory) {
+                    for (var k = 0; k < 5; k++) {
+                        rows.push(['', '', '', '', '', '', '', '', '']);
+                    }
+                }
+
+                // 데이터 추가
+                rows = rows.concat(categoryRows);
+                isFirstCategory = false; // 이제 첫 번째가 아님
+            }
         });
 
-        // 데이터가 있으면 한 번에 쓰기 (성능 최적화)
+        // 데이터가 있으면 한 번에 쓰기
         if (rows.length > 0) {
             sheet.getRange(3, 1, rows.length, 9).setValues(rows);
         }
