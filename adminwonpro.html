@@ -202,6 +202,15 @@
             background: #0077ed;
         }
 
+        .header-btn.warning {
+            background: #ff9500;
+            color: #fff;
+        }
+
+        .header-btn.warning:hover {
+            background: #ffaa33;
+        }
+
         .header-btn.secondary {
             background: #424245;
             color: #fff;
@@ -1884,12 +1893,15 @@
 
 
 
-        /* 비고 셀 (9번째) - 넓게, 좌측정렬, 줄바꿈 허용 */
-        .estimate-table th:nth-child(9),
+        /* 비고 셀 (9번째) */
+        .estimate-table th:nth-child(9) {
+            text-align: center;
+        }
+
         .estimate-table td:nth-child(9) {
             text-align: left;
-            width: auto;
-            min-width: 120px;
+            white-space: pre-wrap;
+            word-break: keep-all;
         }
 
 
@@ -2888,6 +2900,8 @@
             </a>
         </div>
         <div class="header-actions">
+            <button class="header-btn warning" onclick="restoreCostDB()" style="background:#ff9500;color:#fff;">🔄
+                DB복구</button>
             <a href="index.html" class="header-btn secondary" style="text-decoration:none;">🏠 홈페이지</a>
             <!-- 관리자 상태 표시 -->
             <div id="adminStatus">
@@ -6013,6 +6027,89 @@
         }
 
         function filterCustomers() { updateCustomerList(); }
+
+
+        // ==========================================
+        // [원가관리표 DB 복구]
+        // ==========================================
+        async function restoreCostDB() {
+            if (!isMainAdmin()) {
+                showToast('메인관리자만 실행할 수 있습니다', 'error');
+                return;
+            }
+
+            if (!confirm('현재 화면에 보이는 원가관리표 데이터로\n구글 시트의 [원가관리표데이터베이스]를 덮어씁니다.\n\n구글 시트의 기존 데이터는 삭제됩니다.\n진행하시겠습니까?')) {
+                return;
+            }
+
+            showToast('DB 복구 데이터 생성 중...', 'info');
+
+            // DOM에서 데이터 추출
+            const rows = [];
+            const categoryDivs = document.querySelectorAll('#costCategories .category-section');
+            let totalItems = 0;
+
+            categoryDivs.forEach(div => {
+                // 카테고리명 추출 (예: "01 가설공사")
+                const catText = div.querySelector('h3')?.innerText || '';
+                // "01 " 제거 (선택사항이나 깔끔하게)
+                const catName = catText.replace(/^[0-9]+\s*/, '').trim();
+
+                const trs = div.querySelectorAll('tbody tr');
+
+                trs.forEach(tr => {
+                    const inputs = tr.querySelectorAll('input');
+                    const select = tr.querySelector('select');
+
+                    // inputs: 0=구분, 1=품명, 2=상세, 3=수량, 4=단가
+                    // (addCostRow 구조 기준)
+
+                    const noVal = tr.querySelector('.col-no')?.textContent.trim() || '';
+                    const name = inputs[1]?.value.trim() || '';
+                    const spec = inputs[2]?.value.trim() || '';
+                    const unit = select?.value || '';
+                    const price = inputs[4]?.value.replace(/,/g, '') || '0';
+
+                    // 품명이 있는 경우만 저장
+                    if (name) {
+                        // ['카테고리', 'No', '품명', '상세내용', '단위', '단가']
+                        rows.push([catName, noVal, name, spec, unit, price]);
+                        totalItems++;
+                    }
+                });
+            });
+
+            if (rows.length === 0) {
+                showToast('복구할 데이터가 없습니다', 'error');
+                return;
+            }
+
+            console.log(`Restoring ${rows.length} items to DB...`, rows);
+
+            try {
+                // CORS 모드: no-cors 제거
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'restoreCostDatabase',
+                        data: rows
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`DB 복구 완료! (${result.message})`, 'success');
+                } else {
+                    showToast('복구 실패: ' + result.message, 'error');
+                }
+
+            } catch (error) {
+                console.error('DB Restore Error:', error);
+                showToast('전송 오류: ' + error.message, 'error');
+            }
+        }
 
         // ==========================================
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기

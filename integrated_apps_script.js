@@ -78,6 +78,9 @@ function doPost(e) {
         if (payload.action === 'deleteSampleEstimate') {
             return handleDeleteSampleEstimate(payload);
         }
+        if (payload.action === 'restoreCostDatabase') {
+            return handleRestoreCostDatabase(payload);
+        }
 
         // 2. 관리자 데이터 동기화 요청인지 확인
         // 조건: action 필드가 있거나, 데이터 내에 customerId가 있음 (관리자 기능)
