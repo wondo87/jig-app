@@ -1904,6 +1904,44 @@
             text-align: center;
         }
 
+        /* 삭제 버튼 (테이블 왼쪽 여백에 띄우기) */
+        .del-btn-floating {
+            position: absolute;
+            left: -22px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            /* 조금 더 크게 */
+            height: 18px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            opacity: 1;
+            /* 항상 표시 */
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .del-btn-floating:hover {
+            background: #d70015;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        @media print {
+            .del-btn-floating {
+                display: none !important;
+            }
+        }
+
         /* 비고 입력칸 스타일 */
         .estimate-table .remark-input {
             width: 100%;
