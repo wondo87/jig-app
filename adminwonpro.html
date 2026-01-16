@@ -1883,11 +1883,7 @@
             min-width: 120px;
         }
 
-        /* 삭제 셀 (10번째) */
-        .estimate-table th:nth-child(10),
-        .estimate-table td:nth-child(10) {
-            width: 30px;
-        }
+
 
         .estimate-table select {
             width: 100%;
@@ -6380,7 +6376,7 @@
                         <col><!-- 단가 -->
                         <col><!-- 금액 -->
                         <col><!-- 비고 -->
-                        <col class="no-print"><!-- 삭제 -->
+
                     </colgroup>
                     <thead>
                         <tr>
@@ -6393,12 +6389,17 @@
                             <th>단가</th>
                             <th>금액</th>
                             <th>비고</th>
-                            <th class="no-print"></th>
+
                         </tr>
                     </thead>
                     <tbody id="estBody${cat.no}">
                         <tr>
-                            <td>1</td>
+                            <td style="position: relative;">
+                                <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
+                                     <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
+                                </button>
+                                1
+                            </td>
                             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                                     <option value="">선택</option>
                                 </select></td>
@@ -6412,8 +6413,6 @@
                             <td class="price-cell" data-price="0">-</td>
                             <td class="amount-cell">-</td>
                             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
-                            <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
-                                    title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -6493,9 +6492,15 @@
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-            <td>${rowCount}</td>
+            <td style="position: relative;">
+                <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
+                     <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
+                </button>
+                ${rowCount}
+            </td>
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
-                    <option value="">선택</option>${divOptions}                </select></td>
+                    <option value="">선택</option>${divOptions}
+                </select></td>
             <td><select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
                     <option value="">구분 먼저 선택</option>
                 </select></td>
@@ -6506,8 +6511,6 @@
             <td class="price-cell" data-price="0">-</td>
             <td class="amount-cell">-</td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
-            <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${catNo}')"
-                    title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -6971,7 +6974,12 @@
 
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-            <td>${i + 1}</td>
+            <td style="position: relative;">
+                <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
+                     <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
+                </button>
+                ${i + 1}
+            </td>
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                     <option value="">선택</option>${divOptions.replace(`"${item.div}"`, `"${item.div}" selected`)}
                 </select></td>
@@ -6984,8 +6992,6 @@
             <td class="price-cell" data-price="${price}">${price > 0 ? formatNumber(price) : '-'}</td>
             <td class="amount-cell">${amount > 0 ? formatNumber(amount) : '-'}</td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
-            <td class="no-print"><button class="del-btn" onclick="deleteEstimateRow(this, '${cat.no}')"
-                    title="삭제" style="font-size:10px; padding:2px 4px;">✕</button></td>
                         `;
                         tbody.appendChild(tr);
                     });
