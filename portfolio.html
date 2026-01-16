@@ -202,6 +202,16 @@
             padding: 40px 3rem 80px;
         }
 
+        .br-mo {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .br-mo {
+                display: block;
+            }
+        }
+
         /* 필터 탭 */
         .filter-tabs {
             display: flex;
@@ -621,7 +631,7 @@
     <main>
         <section class="page-hero">
             <h1>PORTFOLIO</h1>
-            <p>아직 채워가는 중입니다. 다음 공간의 주인공이 되어주세요.</p>
+            <p>아직 채워가는 중입니다.<br class="br-mo"> 다음 공간의 주인공이 되어주세요.</p>
         </section>
 
         <section class="portfolio-section">
