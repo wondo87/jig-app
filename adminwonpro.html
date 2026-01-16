@@ -6425,6 +6425,9 @@
             }
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
+            // 리스트 UI 즉시 갱신 (최종수정일 등 반영)
+            updateCustomerList();
+
             if (isLoggedIn()) {
                 showToast('저장되었습니다 (원가관리표 제외)', 'success');
             } else {
