@@ -1,6 +1,7 @@
 import { Client } from '@notionhq/client';
 
-const notion = new Client({ auth: process.env.NOTION_API_KEY });
+// 하드코딩된 키 사용 (Vercel 환경변수 설정 어려움 해결용)
+const notion = new Client({ auth: 'ntn_Z60962876671RUe2pR1vOcv1kPb3HretjAhTDWnwkHC7CZ' });
 
 export default async function handler(req, res) {
     // 환경변수 확인
