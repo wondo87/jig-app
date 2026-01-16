@@ -3006,6 +3006,20 @@
         </div>
     </div>
 
+    <!-- 원가관리표 보안 접근 모달 -->
+    <div class="admin-modal" id="costPasswordModal">
+        <div class="admin-modal-content">
+            <h3>🔒 보안 접근</h3>
+            <p>원가관리표 접근을 위해<br>보안 비밀번호를 입력하세요.</p>
+            <input type="password" id="costAccessPin" placeholder="비밀번호 입력"
+                onkeypress="if(event.key==='Enter')checkCostPassword()">
+            <div class="admin-modal-btns">
+                <button class="cancel-btn" onclick="closeCostPasswordModal()">취소</button>
+                <button class="confirm-btn" onclick="checkCostPassword()">확인</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 메인 레이아웃 -->
     <div class="main-layout">
         <!-- 사이드바: 고객 목록 -->
@@ -3146,8 +3160,7 @@
                     <button class="customer-tab" onclick="showCustomerTab('cover')" data-tab="cover">📊 표지계약서</button>
                     <button class="customer-tab" onclick="showCustomerTab('estimate')" data-tab="estimate">📝
                         계약견적서</button>
-                    <button class="customer-tab" onclick="showCustomerTab('cost')" data-tab="cost"
-                        data-main-only="true">💰 원가관리표</button>
+                    <button class="customer-tab" onclick="showCustomerTab('cost')" data-tab="cost">💰 원가관리표</button>
                     <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats"
                         data-main-only="true">📈 통계</button>
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
@@ -5329,7 +5342,20 @@
             updateCustomerList();
         }
 
+        // Cost Tab Security
+        const COST_ACCESS_PIN = '6454';
+        let isCostUnlocked = false;
+
         function showCustomerTab(tabId) {
+            // [SECURITY CHECK] Cost Management Tab
+            if (tabId === 'cost' && !isCostUnlocked) {
+                // If not unlocked, show password modal and STOP.
+                document.getElementById('costPasswordModal').classList.add('show');
+                document.getElementById('costAccessPin').value = '';
+                document.getElementById('costAccessPin').focus();
+                return;
+            }
+
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.customer-tab').forEach(t => t.classList.remove('active'));
 
@@ -5347,6 +5373,24 @@
             syncAllFields();
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
+        }
+
+        function closeCostPasswordModal() {
+            document.getElementById('costPasswordModal').classList.remove('show');
+        }
+
+        function checkCostPassword() {
+            const input = document.getElementById('costAccessPin').value;
+            if (input === COST_ACCESS_PIN) {
+                isCostUnlocked = true;
+                closeCostPasswordModal();
+                showCustomerTab('cost'); // Retry opening the tab
+                showToast('원가관리표 접근이 허용되었습니다.', 'success');
+            } else {
+                showToast('비밀번호가 올바르지 않습니다.', 'error');
+                document.getElementById('costAccessPin').value = '';
+                document.getElementById('costAccessPin').focus();
+            }
         }
 
         let scheduleRows = [];
@@ -6305,7 +6349,8 @@
         }
 
         function performSaveData() {
-            // 관리자 모드일 때만 원가관리표 저장
+            // [수정] 원가관리표(CostData)는 고객 데이터(Quote)를 위해 저장합니다.
+            // 단, 글로벌 DB(Master Spec)에는 영향을 주지 않습니다. (Read-Only Policy)
             if (isLoggedIn()) {
                 saveCostData();
             }
@@ -6346,7 +6391,7 @@
             localStorage.setItem('dz_customers', JSON.stringify(customers));
 
             if (isLoggedIn()) {
-                showToast('저장되었습니다 (원가관리표 포함)', 'success');
+                showToast('저장되었습니다 (원가관리표 제외)', 'success');
             } else {
                 showToast('저장되었습니다', 'success');
             }
