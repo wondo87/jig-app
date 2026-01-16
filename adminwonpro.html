@@ -4815,7 +4815,7 @@
         // 관리자 클라우드 동기화 - 불러오기
         async function syncAdminsFromCloud() {
             try {
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=관리자');
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=' + encodeURIComponent('관리자'));
                 if (response.ok) {
                     const cloudAdmins = await response.json();
                     if (Array.isArray(cloudAdmins) && cloudAdmins.length > 0) {
