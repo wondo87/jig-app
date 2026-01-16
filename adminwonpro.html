@@ -6234,6 +6234,16 @@
                     }
                 });
 
+                // 중복 제거 로직 추가 (customerId 기준)
+                const uniqueCloudMap = new Map();
+                cloudCustomers.forEach(c => {
+                    // 나중에 나온 데이터가 덮어스도록 함 (최신 데이터 우선 가정)
+                    uniqueCloudMap.set(c.customerId, c);
+                });
+                // 중복이 제거된 배열로 재할당
+                cloudCustomers = Array.from(uniqueCloudMap.values());
+
+
                 // 클라우드 데이터 기준으로 업데이트/추가 카운트
                 const localMap = new Map(localCustomers.map(c => [c.customerId, c]));
                 cloudCustomers.forEach(cloud => {
@@ -6296,6 +6306,7 @@
                         totalAmount: data.totalAmount || '',
                         estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
                         manager: data.manager || '',              // 담당자 추가
+                        updatedAt: data.updatedAt || '',          // 최종수정일 추가
                         jsonData: JSON.stringify(data)
                     }
                 };
