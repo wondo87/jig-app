@@ -2900,8 +2900,8 @@
             </a>
         </div>
         <div class="header-actions">
-            <button class="header-btn warning" onclick="restoreCostDB()" style="background:#ff9500;color:#fff;">🔄
-                DB복구</button>
+            <button class="header-btn warning" onclick="restoreCostDB()" style="background:#ff9500;color:#fff;">💾
+                DB저장</button>
             <a href="index.html" class="header-btn secondary" style="text-decoration:none;">🏠 홈페이지</a>
             <!-- 관리자 상태 표시 -->
             <div id="adminStatus">
@@ -3633,7 +3633,7 @@
                                     title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
                                 <button class="no-print" onclick="restoreCostDB()"
                                     style="background: #ff9500; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="현재 데이터로 DB 복구">🔄 DB복구</button>
+                                    title="현재 데이터로 DB 업데이트">💾 DB저장</button>
                                 <button class="pdf-btn" onclick="downloadPDF('costDoc', '원가관리표')">🖨️ 인쇄/PDF</button>
                             </div>
                         </div>
@@ -6040,11 +6040,11 @@
                 return;
             }
 
-            if (!confirm('현재 화면에 보이는 원가관리표 데이터로\n구글 시트의 [원가관리표데이터베이스]를 덮어씁니다.\n\n구글 시트의 기존 데이터는 삭제됩니다.\n진행하시겠습니까?')) {
+            if (!confirm('현재 화면에 보이는 데이터로\n구글 시트의 [원가관리표데이터베이스]를 업데이트(저장)합니다.\n\n구글 시트의 기존 데이터는 현재 데이터로 대체됩니다.\n진행하시겠습니까?')) {
                 return;
             }
 
-            showToast('DB 복구 데이터 생성 중...', 'info');
+            showToast('DB 저장(동기화) 중...', 'info');
 
             // DOM에서 데이터 추출
             const rows = [];
@@ -6082,11 +6082,11 @@
             });
 
             if (rows.length === 0) {
-                showToast('복구할 데이터가 없습니다', 'error');
+                showToast('저장할 데이터가 없습니다', 'error');
                 return;
             }
 
-            console.log(`Restoring ${rows.length} items to DB...`, rows);
+            console.log(`Saving ${rows.length} items to DB...`, rows);
 
             try {
                 // CORS 모드: no-cors 제거
@@ -6102,9 +6102,9 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    showToast(`DB 복구 완료! (${result.message})`, 'success');
+                    showToast(`DB 저장 완료! (${result.message})`, 'success');
                 } else {
-                    showToast('복구 실패: ' + result.message, 'error');
+                    showToast('저장 실패: ' + result.message, 'error');
                 }
 
             } catch (error) {
