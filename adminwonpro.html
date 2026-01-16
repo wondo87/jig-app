@@ -1879,15 +1879,7 @@
             text-align: center;
         }
 
-        .estimate-table .amount-cell .won-amount {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 4px;
-        }
 
-        .estimate-table .amount-cell .won-amount .won-symbol {
-            color: #666;
-        }
 
         /* 비고 셀 (9번째) - 넓게, 좌측정렬, 줄바꿈 허용 */
         .estimate-table th:nth-child(9),
@@ -6462,8 +6454,8 @@
                             <td class="unit-cell">-</td>
                             <td><input type="number" class="qty-input" value="1" min="0"
                                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
-                            <td class="price-cell" data-price="0">-</td>
-                            <td class="amount-cell">-</td>
+                            <td class="price-cell" data-price="0" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important; white-space: nowrap !important;"><span style="margin:auto">-</span></td>
+                            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important; white-space: nowrap !important;"><span style="margin:auto">-</span></td>
                             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
                         </tr>
                     </tbody>
@@ -6560,8 +6552,8 @@
             <td class="unit-cell">-</td>
             <td><input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
             </td>
-            <td class="price-cell" data-price="0" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;"><span style="margin:auto">-</span></td>
-            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;"><span style="margin:auto">-</span></td>
+            <td class="price-cell" data-price="0" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important; white-space: nowrap !important;"><span style="margin:auto">-</span></td>
+            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important; white-space: nowrap !important;"><span style="margin:auto">-</span></td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             `;
             tbody.appendChild(tr);
@@ -7048,8 +7040,8 @@
             <td class="unit-cell">${item.unit || '-'}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
-            <td class="price-cell" data-price="${price}" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</td>
-            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</td>
+            <td class="price-cell" data-price="${price}" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important; white-space: nowrap !important;">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</td>
+            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important; white-space: nowrap !important;">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
                         `;
                         tbody.appendChild(tr);
