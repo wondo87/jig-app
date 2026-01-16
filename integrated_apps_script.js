@@ -1630,7 +1630,6 @@ function handleDeleteSampleEstimate(payload) {
  * 원가관리표 데이터베이스 복구 (전체 덮어쓰기)
  */
 function handleRestoreCostDatabase(payload) {
-    // [수정] doPost에서 이미 Lock을 잡고 있으므로 중복 Lock 제거
     try {
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
         var sheetName = '원가관리표데이터베이스';
@@ -1640,7 +1639,7 @@ function handleRestoreCostDatabase(payload) {
             sheet = spreadsheet.insertSheet(sheetName);
         }
 
-        var rows = payload.data; // [[대분류, No, 품명, 규격, 단위, 단가], ...]
+        var rows = payload.data; // [[대분류, No, 구분, 품명, ...], ...]
 
         if (!rows || !Array.isArray(rows)) {
             return ContentService.createTextOutput(JSON.stringify({
@@ -1649,20 +1648,60 @@ function handleRestoreCostDatabase(payload) {
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
+        // 1. 데이터 유실 방지: 모든 행 중 가장 긴 길이를 기준으로 통일
+        var maxCols = 0;
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].length > maxCols) maxCols = rows[i].length;
+        }
+
+        // 최소 9열 확보
+        if (maxCols < 9) maxCols = 9;
+
+        // 2. 모든 행의 길이를 maxCols로 맞춤 (빈 값 채우기)
+        var normalizedRows = rows.map(function (row) {
+            while (row.length < maxCols) {
+                row.push('');
+            }
+            return row;
+        });
+
+        // 3. [추가 요청] 공정(카테고리) 간 5줄 띄우기
+        var finalRows = [];
+        var lastCategory = '';
+        var emptyRow = new Array(maxCols).fill('');
+
+        for (var i = 0; i < normalizedRows.length; i++) {
+            var row = normalizedRows[i];
+            var currentCategory = String(row[0] || '').trim();
+
+            // 이전 카테고리가 있고, 현재 카테고리와 다르면 5줄 띄우기
+            if (lastCategory && currentCategory && currentCategory !== lastCategory) {
+                for (var k = 0; k < 5; k++) {
+                    finalRows.push([...emptyRow]);
+                }
+            }
+
+            finalRows.push(row);
+
+            // 카테고리 갱신 (빈 값이 아닐 때만)
+            if (currentCategory) lastCategory = currentCategory;
+        }
+
         // 전체 초기화 후 다시 쓰기
         sheet.clear();
 
-        // 헤더 작성 (대분류, No, 품명, 규격, 단위, 단가)
-        sheet.appendRow(['대분류', 'No', '품명', '규격', '단위', '단가']);
+        // 헤더 작성 (9개 컬럼 표준)
+        sheet.appendRow(['대분류', 'No', '구분', '품명', '규격', '단위', '수량', '단가', '합계']);
 
         // 데이터 쓰기
-        if (rows.length > 0) {
-            sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+        if (finalRows.length > 0) {
+            // 행 개수만큼 쓰기
+            sheet.getRange(2, 1, finalRows.length, maxCols).setValues(finalRows);
         }
 
         return ContentService.createTextOutput(JSON.stringify({
             success: true,
-            message: rows.length + "개 항목 저장 완료"
+            message: finalRows.length + "개 항목(공백 포함) 저장 완료"
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (err) {
