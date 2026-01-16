@@ -1630,15 +1630,7 @@ function handleDeleteSampleEstimate(payload) {
  * 원가관리표 데이터베이스 복구 (전체 덮어쓰기)
  */
 function handleRestoreCostDatabase(payload) {
-    var lock = LockService.getScriptLock();
-    // 30초 대기
-    if (!lock.tryLock(30000)) {
-        return ContentService.createTextOutput(JSON.stringify({
-            success: false,
-            message: "서버가 바쁜 상태입니다. 잠시 후 다시 시도해주세요."
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
-
+    // [수정] doPost에서 이미 Lock을 잡고 있으므로 중복 Lock 제거
     try {
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
         var sheetName = '원가관리표데이터베이스';
@@ -1678,8 +1670,5 @@ function handleRestoreCostDatabase(payload) {
             success: false,
             message: "서버 오류: " + err.toString()
         })).setMimeType(ContentService.MimeType.JSON);
-
-    } finally {
-        lock.releaseLock();
     }
 }
