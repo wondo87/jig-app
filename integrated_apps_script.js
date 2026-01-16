@@ -190,13 +190,18 @@ function handleConsultingInquiry(data) {
         data.email || '',
         data.location || '',
         data.message || '',
-        '설문발송',
+        '상담문의접수',
         ''
     ]);
 
     // 이메일 발송
     if (data.email) {
-        sendSurveyEmail(data);
+        var emailSent = sendSurveyEmail(data);
+        if (emailSent) {
+            // 이메일 발송 성공 시 상태를 "설문발송"으로 변경 (8번째 열)
+            var newRowIndex = sheet.getLastRow();
+            sheet.getRange(newRowIndex, 8).setValue('설문발송');
+        }
     }
 
     return ContentService.createTextOutput(JSON.stringify({ result: "success" }))
@@ -342,6 +347,7 @@ designjig.com
             from: SENDER_EMAIL
         });
         console.log('이메일 발송 성공 (Alias 사용): ' + data.email);
+        return true;
     } catch (error) {
         // 실패 시 로그 출력 후 기본 계정으로 재시도
         console.warn('Alias 발송 실패, 기본 계정으로 재시도합니다: ' + error.toString());
@@ -352,8 +358,10 @@ designjig.com
                 // from 옵션 제거 (현재 실행 중인 계정의 기본 주소 사용)
             });
             console.log('이메일 발송 성공 (기본 계정): ' + data.email);
+            return true;
         } catch (retryError) {
             console.error('이메일 발송 최종 실패: ' + retryError.toString());
+            return false;
         }
     }
 }
@@ -862,10 +870,51 @@ function onFormSubmit(e) {
     var row = e.range.getRow();
     var statusColumn = 6; // F열: 상담상태
 
-    // 상담상태 컬럼에 "설문응답" 자동 기입
+    // 1. 설문지 응답 시트: 상담상태 "설문응답" 자동 기입
     sheet.getRange(row, statusColumn).setValue('설문응답');
 
+    // 2. 상담관리_마스터 시트 동기화: 이름/연락처로 매칭하여 상태 업데이트
+    try {
+        updateMasterStatusIfExists(e.values);
+    } catch (err) {
+        console.error('Master sync failed: ' + err.toString());
+    }
+
     SpreadsheetApp.getActiveSpreadsheet().toast('새 설문 응답이 등록되었습니다.', '설문 접수');
+}
+
+// Helper: 설문 응답 정보를 바탕으로 상담관리_마스터 상태 업데이트
+function updateMasterStatusIfExists(rowValues) {
+    // 설문지 응답 컬럼 구조 (e.values):
+    // [0] 타임스탬프, [1] 성함, [2] 연락처, ...
+    if (!rowValues || rowValues.length < 3) return;
+
+    var name = rowValues[1];
+    var phone = rowValues[2];
+
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var masterSheet = spreadsheet.getSheetByName('상담관리_마스터');
+    if (!masterSheet) return;
+
+    var data = masterSheet.getDataRange().getValues();
+    // 상담관리_마스터: [0] No, [1] Date, [2] Name, [3] Phone, ..., [7] Status
+
+    // 최신 순으로 검색 (아래에서 위로)
+    for (var i = data.length - 1; i >= 1; i--) {
+        var rowName = data[i][2];
+        var rowPhone = data[i][3];
+
+        if (rowName == name && rowPhone == phone) {
+            // "상담문의접수" 또는 "설문발송" 상태일 때만 "설문응답"으로 변경
+            // (이미 상담이 진행 중이거나 계약된 건은 건드리지 않음)
+            var currentStatus = data[i][7];
+            if (currentStatus === '상담문의접수' || currentStatus === '설문발송' || currentStatus === '') {
+                masterSheet.getRange(i + 1, 8).setValue('설문응답'); // 8번째 열(H)이 상태
+                console.log('Updated Master Sheet status for: ' + name);
+            }
+            break; // 가장 최근 1건만 업데이트
+        }
+    }
 }
 
 // [트리거] onEdit (상담 시트용)
