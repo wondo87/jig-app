@@ -6104,7 +6104,9 @@
                 if (result.success) {
                     showToast(`DB 저장 완료! (${result.message})`, 'success');
                 } else {
-                    showToast('저장 실패: ' + result.message, 'error');
+                    // 에러 메시지가 message 혹은 error 프로퍼티에 있을 수 있음
+                    const errMsg = result.message || result.error || '알 수 없는 오류';
+                    showToast('저장 실패: ' + errMsg, 'error');
                 }
 
             } catch (error) {
