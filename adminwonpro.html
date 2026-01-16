@@ -5399,6 +5399,11 @@
             if (input === COST_ACCESS_PIN) {
                 isCostUnlocked = true;
                 closeCostPasswordModal();
+
+                // 잠금 해제 시 패널 강제 표시 (초기화 시 숨겨진 상태 해제)
+                const costPanel = document.getElementById('panel-cost');
+                if (costPanel) costPanel.style.display = '';
+
                 showCustomerTab('cost'); // Retry opening the tab
                 showToast('원가관리표 접근이 허용되었습니다.', 'success');
             } else {
