@@ -6560,8 +6560,8 @@
             <td class="unit-cell">-</td>
             <td><input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
             </td>
-            <td class="price-cell" data-price="0" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">-</td>
-            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">-</td>
+            <td class="price-cell" data-price="0" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;"><span style="margin:auto">-</span></td>
+            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;"><span style="margin:auto">-</span></td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             `;
             tbody.appendChild(tr);
@@ -6652,9 +6652,9 @@
 
                 // 단위/단가/금액은 아직 선택 안 됨
                 row.querySelector('.unit-cell').textContent = '-';
-                row.querySelector('.price-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
+                row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
                 row.querySelector('.price-cell').dataset.price = '0';
-                row.querySelector('.amount-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
+                row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
             } else if (sameNameItems.length === 1) {
                 // 같은 품명이 하나만 있으면 자동 입력
                 const item = sameNameItems[0];
@@ -6676,9 +6676,9 @@
 
                 row.querySelector('.spec-cell').textContent = spec;
                 row.querySelector('.unit-cell').textContent = unit;
-                row.querySelector('.price-cell').innerHTML = price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="width:100%; text-align:center">-</span>';
+                row.querySelector('.price-cell').innerHTML = price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>';
                 row.querySelector('.price-cell').dataset.price = price;
-                row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
+                row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>';
             } else {
                 // 항목을 찾지 못한 경우
                 resetEstRowValues(row);
@@ -6716,9 +6716,9 @@
 
             if (!option || !option.value) {
                 row.querySelector('.unit-cell').textContent = '-';
-                row.querySelector('.price-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
+                row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
                 row.querySelector('.price-cell').dataset.price = '0';
-                row.querySelector('.amount-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
+                row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
                 return;
             }
 
@@ -6739,9 +6739,9 @@
             const amount = price * qty;
 
             row.querySelector('.unit-cell').textContent = unit;
-            row.querySelector('.price-cell').innerHTML = price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="width:100%; text-align:center">-</span>';
+            row.querySelector('.price-cell').innerHTML = price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>';
             row.querySelector('.price-cell').dataset.price = price;
-            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
+            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>';
 
             // 소계 업데이트
             const effectiveCatNo = catNo || row.closest('tbody').id.replace('estBody', '');
@@ -6755,7 +6755,7 @@
             const price = parseInt(row.querySelector('.price-cell')?.dataset.price) || 0;
             const qty = parseInt(row.querySelector('.qty-input')?.value) || 1;
             const amount = price * qty;
-            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
+            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>';
         }
 
         // 수량 변경
@@ -6765,7 +6765,7 @@
             const qty = parseInt(input.value) || 0;
             const amount = price * qty;
 
-            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
+            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>';
             updateCategorySubtotal(catNo);
             updateEstimateTotals();
             saveEstimateData();
@@ -6775,9 +6775,9 @@
         function resetEstRowValues(row) {
             row.querySelector('.spec-cell').textContent = '-';
             row.querySelector('.unit-cell').textContent = '-';
-            row.querySelector('.price-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
+            row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
             row.querySelector('.price-cell').dataset.price = '0';
-            row.querySelector('.amount-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
+            row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
         }
 
         // 카테고리 소계 업데이트
@@ -7048,8 +7048,8 @@
             <td class="unit-cell">${item.unit || '-'}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
-            <td class="price-cell" data-price="${price}" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="width:100%; text-align:center">-</span>'}</td>
-            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>'}</td>
+            <td class="price-cell" data-price="${price}" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</td>
+            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 8px !important; box-sizing: border-box !important;">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
                         `;
                         tbody.appendChild(tr);
