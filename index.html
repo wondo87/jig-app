@@ -1455,7 +1455,7 @@
 
             for (const feature of featureCategories) {
                 try {
-                    const response = await fetch(`/api/mainpage?category=${encodeURIComponent(feature.category)}`);
+                    const response = await fetch(`/api/mainpage?category=${encodeURIComponent(feature.category)}&t=${Date.now()}`);
                     if (!response.ok) continue;
 
                     const articles = await response.json();
