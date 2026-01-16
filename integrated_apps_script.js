@@ -1064,49 +1064,76 @@ function sendWarrantyExpirationEmails() {
         return;
     }
 
-    var data = sheet.getDataRange().getValues();
+    var dataRange = sheet.getDataRange();
+    var values = dataRange.getValues();
+    if (values.length <= 1) return;
+
+    // 헤더에서 컬럼 인덱스 찾기 (스크린샷 기반 동적 매핑)
+    var headers = values[0];
+
+    var IDX_NAME = headers.indexOf('고객명');
+    var IDX_EMAIL = headers.indexOf('이메일');
+
+    var IDX_STATUS_BASIC = headers.indexOf('기본 A/S 상태');
+    var IDX_STATUS_BATH = headers.indexOf('화장실 A/S 상태');
+
+    // 기간(완료일) 컬럼 - '기본 A/S 기간' 또는 'A/S 완료일'
+    var IDX_END_BASIC = headers.indexOf('기본 A/S 기간');
+    if (IDX_END_BASIC === -1) IDX_END_BASIC = headers.indexOf('A/S 완료일');
+    if (IDX_END_BASIC === -1) IDX_END_BASIC = 10; // Fallback
+
+    var IDX_END_BATH = headers.indexOf('화장실 A/S 기간');
+    if (IDX_END_BATH === -1) IDX_END_BATH = headers.indexOf('화장실 누수 보증일');
+    if (IDX_END_BATH === -1) IDX_END_BATH = 12; // Fallback
+
     var today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    // 컬럼 인덱스 (0부터 시작)
-    // NO(0), 고객명(1), 연락처(2), 이메일(3), 현장주소(4), 기본A/S상태(5), 화장실A/S상태(6),
-    // 공사기간(7), 잔금일(8), A/S기간(9), A/S완료일(10), 화장실보증기간(11), 화장실보증일(12), 담당자(13), 비고(14)
-    var NAME_COL = 1;
-    var EMAIL_COL = 3;
-    var BASIC_AS_END_COL = 10;      // A/S 완료일
-    var BATHROOM_AS_END_COL = 12;   // 화장실 누수 보증일
 
     var basicSentCount = 0;
     var bathroomSentCount = 0;
 
-    for (var i = 1; i < data.length; i++) {
-        var row = data[i];
-        var name = row[NAME_COL];
-        var email = row[EMAIL_COL];
-        var basicAsEndDate = row[BASIC_AS_END_COL];
-        var bathroomAsEndDate = row[BATHROOM_AS_END_COL];
+    for (var i = 1; i < values.length; i++) {
+        var row = values[i];
+
+        // 인덱스를 못 찾았으면 기본값(1, 3) 사용
+        var name = (IDX_NAME > -1) ? row[IDX_NAME] : row[1];
+        var email = (IDX_EMAIL > -1) ? row[IDX_EMAIL] : row[3];
 
         if (!email) continue;
 
         // 1. 기본 A/S 완료일 체크
-        if (basicAsEndDate) {
-            var basicDate = (basicAsEndDate instanceof Date) ? basicAsEndDate : new Date(basicAsEndDate);
+        var endDateVal = (IDX_END_BASIC > -1) ? row[IDX_END_BASIC] : '';
+        if (endDateVal) {
+            var basicDate = (endDateVal instanceof Date) ? endDateVal : new Date(endDateVal);
             if (!isNaN(basicDate.getTime())) {
                 basicDate.setHours(0, 0, 0, 0);
                 if (basicDate.getTime() === today.getTime()) {
                     sendBasicAsExpirationEmail(email, name);
+
+                    // 상태 자동 '기간만료'로 변경
+                    if (IDX_STATUS_BASIC > -1) {
+                        sheet.getRange(i + 1, IDX_STATUS_BASIC + 1).setValue('A/S 기간만료')
+                            .setBackground('#e0e0e0'); // 회색 배경 (선택사항)
+                    }
                     basicSentCount++;
                 }
             }
         }
 
         // 2. 화장실 누수 보증일 체크
-        if (bathroomAsEndDate) {
-            var bathDate = (bathroomAsEndDate instanceof Date) ? bathroomAsEndDate : new Date(bathroomAsEndDate);
+        var bathDateVal = (IDX_END_BATH > -1) ? row[IDX_END_BATH] : '';
+        if (bathDateVal) {
+            var bathDate = (bathDateVal instanceof Date) ? bathDateVal : new Date(bathDateVal);
             if (!isNaN(bathDate.getTime())) {
                 bathDate.setHours(0, 0, 0, 0);
                 if (bathDate.getTime() === today.getTime()) {
                     sendBathroomAsExpirationEmail(email, name);
+
+                    // 상태 자동 '기간만료'로 변경
+                    if (IDX_STATUS_BATH > -1) {
+                        sheet.getRange(i + 1, IDX_STATUS_BATH + 1).setValue('A/S 기간만료')
+                            .setBackground('#e0e0e0'); // 회색 배경
+                    }
                     bathroomSentCount++;
                 }
             }
@@ -1538,5 +1565,63 @@ function handleDeleteSampleEstimate(payload) {
             success: false,
             error: err.toString()
         })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 원가관리표 데이터베이스 복구 (전체 덮어쓰기)
+ */
+function handleRestoreCostDatabase(payload) {
+    var lock = LockService.getScriptLock();
+    // 30초 대기
+    if (!lock.tryLock(30000)) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            message: "서버가 바쁜 상태입니다. 잠시 후 다시 시도해주세요."
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    try {
+        var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
+        var sheetName = '원가관리표데이터베이스';
+        var sheet = spreadsheet.getSheetByName(sheetName);
+
+        if (!sheet) {
+            sheet = spreadsheet.insertSheet(sheetName);
+        }
+
+        var rows = payload.data; // [[대분류, No, 품명, 규격, 단위, 단가], ...]
+
+        if (!rows || !Array.isArray(rows)) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                message: "데이터 형식이 올바르지 않습니다."
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 전체 초기화 후 다시 쓰기
+        sheet.clear();
+
+        // 헤더 작성 (대분류, No, 품명, 규격, 단위, 단가)
+        sheet.appendRow(['대분류', 'No', '품명', '규격', '단위', '단가']);
+
+        // 데이터 쓰기
+        if (rows.length > 0) {
+            sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            message: rows.length + "개 항목 저장 완료"
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            message: "서버 오류: " + err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } finally {
+        lock.releaseLock();
     }
 }
