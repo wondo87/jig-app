@@ -3868,6 +3868,11 @@
             const inputId = document.getElementById('loginId').value.trim();
             const inputPw = document.getElementById('loginPw').value;
 
+            if (!inputId || !inputPw) {
+                showToast('아이디와 비밀번호를 입력해주세요', 'warning');
+                return;
+            }
+
             // 메인관리자 확인 (해시 비교)
             const inputHash = await hashPassword(inputPw);
             if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
@@ -3878,9 +3883,18 @@
                 return;
             }
 
-            // 일반관리자 확인 (해시 비교)
-            const admins = getRegularAdmins();
-            const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+            // 일반관리자 확인 (1차: 로컬 데이터)
+            let admins = getRegularAdmins();
+            let found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+
+            // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
+            if (!found) {
+                // showToast('서버에서 관리자 정보를 확인 중입니다...', 'info'); // UX상 생략 가능하지만 있으면 좋음
+                await syncAdminsFromCloud();
+                admins = getRegularAdmins();
+                found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+            }
+
             if (found) {
                 currentAdmin = { id: found.id, role: 'regular' };
                 document.getElementById('loginOverlay').style.display = 'none';
