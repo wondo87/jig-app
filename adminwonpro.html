@@ -1849,14 +1849,28 @@
         .estimate-table .price-cell {
             background: #fafafa;
             font-size: var(--font-size-md);
-            text-align: center;
-            padding-right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px;
+            /* 양쪽 여백 */
         }
 
         /* 금액 셀 (8번째) - 너비 축소, 중앙정렬 */
         .estimate-table th:nth-child(8),
         .estimate-table td:nth-child(8) {
-            width: 85px;
+            width: 100px;
+            /* 금액이 잘리지 않도록 너비 확보 */
+        }
+
+        .estimate-table .amount-cell {
+            /* background: #fafafa; 금액 셀은 흰색 유지? */
+            font-size: var(--font-size-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px;
+            /* 양쪽 여백 */
         }
 
         .estimate-table .amount-cell {
@@ -6546,8 +6560,8 @@
             <td class="unit-cell">-</td>
             <td><input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
             </td>
-            <td class="price-cell" data-price="0">-</td>
-            <td class="amount-cell">-</td>
+            <td class="price-cell" data-price="0" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">-</td>
+            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">-</td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             `;
             tbody.appendChild(tr);
@@ -6718,9 +6732,9 @@
             const amount = price * qty;
 
             row.querySelector('.unit-cell').textContent = unit;
-            row.querySelector('.price-cell').textContent = formatNumber(price);
+            row.querySelector('.price-cell').innerHTML = price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="width:100%; text-align:center">-</span>';
             row.querySelector('.price-cell').dataset.price = price;
-            row.querySelector('.amount-cell').textContent = formatNumber(amount);
+            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
 
             // 소계 업데이트
             const effectiveCatNo = catNo || row.closest('tbody').id.replace('estBody', '');
@@ -6734,7 +6748,7 @@
             const price = parseInt(row.querySelector('.price-cell')?.dataset.price) || 0;
             const qty = parseInt(row.querySelector('.qty-input')?.value) || 1;
             const amount = price * qty;
-            row.querySelector('.amount-cell').textContent = formatNumber(amount);
+            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
         }
 
         // 수량 변경
@@ -6744,7 +6758,7 @@
             const qty = parseInt(input.value) || 0;
             const amount = price * qty;
 
-            row.querySelector('.amount-cell').textContent = formatNumber(amount);
+            row.querySelector('.amount-cell').innerHTML = amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>';
             updateCategorySubtotal(catNo);
             updateEstimateTotals();
             saveEstimateData();
@@ -6754,9 +6768,9 @@
         function resetEstRowValues(row) {
             row.querySelector('.spec-cell').textContent = '-';
             row.querySelector('.unit-cell').textContent = '-';
-            row.querySelector('.price-cell').textContent = '-';
+            row.querySelector('.price-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
             row.querySelector('.price-cell').dataset.price = '0';
-            row.querySelector('.amount-cell').textContent = '-';
+            row.querySelector('.amount-cell').innerHTML = '<span style="width:100%; text-align:center">-</span>';
         }
 
         // 카테고리 소계 업데이트
@@ -7027,8 +7041,8 @@
             <td class="unit-cell">${item.unit || '-'}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
-            <td class="price-cell" data-price="${price}">${price > 0 ? formatNumber(price) : '-'}</td>
-            <td class="amount-cell">${amount > 0 ? formatNumber(amount) : '-'}</td>
+            <td class="price-cell" data-price="${price}" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="width:100%; text-align:center">-</span>'}</td>
+            <td class="amount-cell" style="display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 0 4px !important;">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="width:100%; text-align:center">-</span>'}</td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
                         `;
                         tbody.appendChild(tr);
