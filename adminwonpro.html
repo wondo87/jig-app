@@ -6573,9 +6573,16 @@
             const tbody = row.closest('tbody');
             row.remove();
 
-            // 번호 재정렬
+            // 번호 재정렬 및 삭제 버튼 유지
             tbody.querySelectorAll('tr').forEach((tr, i) => {
-                tr.querySelector('td:first-child').textContent = i + 1;
+                const firstTd = tr.querySelector('td:first-child');
+                firstTd.style.position = 'relative'; // 안전장치
+                firstTd.innerHTML = `
+                <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
+                     <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
+                </button>
+                ${i + 1}
+                `;
             });
 
             updateCategorySubtotal(catNo);
