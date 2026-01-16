@@ -335,14 +335,26 @@ designjig.com
     `;
 
     try {
+        // 1차 시도: 지정된 Sender Email(Alias)로 발송 시도
         GmailApp.sendEmail(data.email, subject, plainTextBody, {
             htmlBody: htmlBody,
             name: SENDER_NAME,
             from: SENDER_EMAIL
         });
-        console.log('이메일 발송 성공: ' + data.email);
+        console.log('이메일 발송 성공 (Alias 사용): ' + data.email);
     } catch (error) {
-        console.log('이메일 발송 실패: ' + error.toString());
+        // 실패 시 로그 출력 후 기본 계정으로 재시도
+        console.warn('Alias 발송 실패, 기본 계정으로 재시도합니다: ' + error.toString());
+        try {
+            GmailApp.sendEmail(data.email, subject, plainTextBody, {
+                htmlBody: htmlBody,
+                name: SENDER_NAME
+                // from 옵션 제거 (현재 실행 중인 계정의 기본 주소 사용)
+            });
+            console.log('이메일 발송 성공 (기본 계정): ' + data.email);
+        } catch (retryError) {
+            console.error('이메일 발송 최종 실패: ' + retryError.toString());
+        }
     }
 }
 
