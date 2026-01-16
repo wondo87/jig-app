@@ -4884,7 +4884,7 @@
             if (!currentAdmin) return false;
             // Legacy support: if no createdBy, default to Main Admin
             if (!customer.createdBy) return isMainAdmin();
-            return String(customer.createdBy).trim() === String(currentAdmin.id).trim();
+            return String(customer.createdBy).trim().toLowerCase() === String(currentAdmin.id).trim().toLowerCase();
         }
 
         function canEdit(customer) {
@@ -6391,7 +6391,7 @@
                 }
 
                 // 작성자 권한 체크: 작성자 또는 메인관리자만 수정 가능
-                if (original.createdBy && String(original.createdBy).trim() !== String(currentAdmin?.id).trim() && !isMainAdmin()) {
+                if (original.createdBy && String(original.createdBy).trim().toLowerCase() !== String(currentAdmin?.id).trim().toLowerCase() && !isMainAdmin()) {
                     showToast(`수정 권한이 없습니다. (작성자: ${original.createdBy})`, 'error');
                     return;
                 }
