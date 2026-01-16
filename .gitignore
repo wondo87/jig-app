@@ -1,8 +1,6 @@
 # Dependencies
 node_modules/
 
-# 보안 설정 파일 (비밀번호 해시 포함 - 절대 업로드 금지!)
-admin_config.js
 
 # 환경 변수 (민감한 정보 - Vercel에서 관리)
 .env
