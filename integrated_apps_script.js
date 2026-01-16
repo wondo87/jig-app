@@ -197,17 +197,19 @@ function handleConsultingInquiry(data) {
     // 이메일 발송
     if (data.email) {
         var emailSent = sendSurveyEmail(data);
+        var newRowIndex = sheet.getLastRow();
+
         if (emailSent) {
             // 이메일 발송 성공 시 상태를 "설문발송"으로 변경 (8번째 열)
-            var newRowIndex = sheet.getLastRow();
             sheet.getRange(newRowIndex, 8).setValue('설문발송');
+        } else {
+            sheet.getRange(newRowIndex, 8).setValue('발송실패');
         }
     }
 
     return ContentService.createTextOutput(JSON.stringify({ result: "success" }))
         .setMimeType(ContentService.MimeType.JSON);
 }
-
 function handleConsultingGet(e) {
     var spreadsheet = SpreadsheetApp.openById(CONSULTING_SHEET_ID);
     var sheet = spreadsheet.getSheetByName('상담관리_마스터');
