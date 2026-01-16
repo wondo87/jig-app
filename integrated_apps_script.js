@@ -143,6 +143,14 @@ function doGet(e) {
     }
 }
 
+/**
+ * [트리거] onEdit
+ * 스프레드시트 편집 시 호출됩니다.
+ */
+function onEdit(e) {
+    processStatusChange(e);
+}
+
 
 // ==========================================
 // 3. 상담 문의 처리 로직 (Consulting Logic)
@@ -560,7 +568,8 @@ function handleCustomerGet(e) {
                     customers.push(parsedData);
                 }
             } catch (e) {
-                // 파싱 실패 시 기본 구조로 생성
+                // 파싱 실패 시 로깅 및 기본 구조로 생성
+                console.warn('JSON 파싱 실패 (행 ' + (i + 1) + '): ' + e.toString());
                 customers.push(buildCustomerFromRow(row));
             }
         } else {
@@ -573,6 +582,11 @@ function handleCustomerGet(e) {
 
 // Helper: Build customer object from sheet row
 function buildCustomerFromRow(row) {
+    // JSON 데이터 파싱 시도 (finalPaymentDate 추출용)
+    var jsonStr = row[17] || '{}';
+    var jsonData = {};
+    try { jsonData = JSON.parse(jsonStr); } catch (e) { }
+
     return {
         customerId: row[0] || '',
         status: row[1] || '',
@@ -592,7 +606,8 @@ function buildCustomerFromRow(row) {
         constructionPeriod: row[13] || '',
         warrantyPeriod: row[14] || '',
         totalAmount: row[15] || '',
-        estimateProfitRate: row[16] || ''
+        estimateProfitRate: row[16] || '',
+        finalPaymentDate: jsonData.finalPaymentDate || '' // JSON에서 추출
     };
 }
 
@@ -934,9 +949,9 @@ function copyFromSurveyToCustomer(sourceSheet, rowNum) {
         '',                             // 주소 (별도 입력)
         '',                             // 공사명
         rowValues[4] || '',             // 현장주소
-        rowValues[8] || '',             // 평형 (Q3.평수) - I열(인덱스8)
-        rowValues[6] || '',             // 유입경로 (Q1.유입경로) - G열(인덱스6)
-        rowValues[7] || '',             // 건물유형 (Q2.건물유형) - H열(인덱스7)
+        rowValues[8] || '',             // 평형 (Q3.평수) - I열
+        rowValues[6] || '',             // 유입경로 (Q1.유입경로) - G열
+        rowValues[7] || '',             // 건물유형 (Q2.건물유형) - H열
         '',                             // 계약일
         '',                             // 공사기간
         '',                             // A/S 기간
@@ -1053,6 +1068,11 @@ function moveRowToAS(sourceSheet, rowNum) {
     spreadsheet.toast('고객 정보를 [사후관리_A/S] 시트로 복사했습니다.', '복사 완료');
 }
 
+// [호환성 유지] 기존 트리거(sendExpirationEmail)가 이 함수를 호출할 수 있도록 연결
+function sendExpirationEmail() {
+    sendWarrantyExpirationEmails();
+}
+
 // [트리거] 시간 기반 (일 1회) - 기본 A/S 및 화장실 A/S 완료 이메일 자동 발송
 function sendWarrantyExpirationEmails() {
     var targetSheetName = '사후관리_A/S';
@@ -1060,16 +1080,20 @@ function sendWarrantyExpirationEmails() {
     var sheet = spreadsheet.getSheetByName(targetSheetName);
 
     if (!sheet) {
-        console.log('[' + targetSheetName + '] 시트를 찾을 수 없습니다.');
+        console.error('오류: [' + targetSheetName + '] 시트를 찾을 수 없습니다. 시트 이름을 확인해주세요.');
         return;
     }
 
     var dataRange = sheet.getDataRange();
     var values = dataRange.getValues();
-    if (values.length <= 1) return;
+    if (values.length <= 1) {
+        console.warn('경고: 시트에 데이터가 없습니다.');
+        return;
+    }
 
-    // 헤더에서 컬럼 인덱스 찾기 (스크린샷 기반 동적 매핑)
-    var headers = values[0];
+    // 헤더에서 컬럼 인덱스 찾기 (공백 제거 후 비교)
+    var headers = values[0].map(function (h) { return String(h).trim(); });
+    console.log('감지된 헤더:', headers);
 
     var IDX_NAME = headers.indexOf('고객명');
     var IDX_EMAIL = headers.indexOf('이메일');
@@ -1080,43 +1104,67 @@ function sendWarrantyExpirationEmails() {
     // 기간(완료일) 컬럼 - '기본 A/S 기간' 또는 'A/S 완료일'
     var IDX_END_BASIC = headers.indexOf('기본 A/S 기간');
     if (IDX_END_BASIC === -1) IDX_END_BASIC = headers.indexOf('A/S 완료일');
-    if (IDX_END_BASIC === -1) IDX_END_BASIC = 10; // Fallback
 
     var IDX_END_BATH = headers.indexOf('화장실 A/S 기간');
     if (IDX_END_BATH === -1) IDX_END_BATH = headers.indexOf('화장실 누수 보증일');
-    if (IDX_END_BATH === -1) IDX_END_BATH = 12; // Fallback
+
+    console.log('인덱스 확인 - 기본상태:', IDX_STATUS_BASIC, ' / 기본기간:', IDX_END_BASIC);
+    console.log('인덱스 확인 - 화장실상태:', IDX_STATUS_BATH, ' / 화장실기간:', IDX_END_BATH);
+
+    if (IDX_STATUS_BASIC === -1 || IDX_END_BASIC === -1) {
+        console.error('오류: 필수 컬럼(기본 A/S 상태/기간)을 찾을 수 없습니다.');
+    }
 
     var today = new Date();
     today.setHours(0, 0, 0, 0);
+    console.log('오늘 날짜(기준):', today.toDateString());
 
     var basicSentCount = 0;
     var bathroomSentCount = 0;
+    var updatedCount = 0;
 
     for (var i = 1; i < values.length; i++) {
         var row = values[i];
+        var rowNum = i + 1;
 
-        // 인덱스를 못 찾았으면 기본값(1, 3) 사용
+        // 인덱스를 못 찾았으면 기본값(1, 3) 사용하지만, 위에서 찾았다고 가정
         var name = (IDX_NAME > -1) ? row[IDX_NAME] : row[1];
         var email = (IDX_EMAIL > -1) ? row[IDX_EMAIL] : row[3];
-
-        if (!email) continue;
+        var rowUpdated = false;
 
         // 1. 기본 A/S 완료일 체크
         var endDateVal = (IDX_END_BASIC > -1) ? row[IDX_END_BASIC] : '';
         if (endDateVal) {
+            // 날짜 파싱 시도
             var basicDate = (endDateVal instanceof Date) ? endDateVal : new Date(endDateVal);
+
             if (!isNaN(basicDate.getTime())) {
                 basicDate.setHours(0, 0, 0, 0);
-                if (basicDate.getTime() === today.getTime()) {
-                    sendBasicAsExpirationEmail(email, name);
 
-                    // 상태 자동 '기간만료'로 변경
-                    if (IDX_STATUS_BASIC > -1) {
-                        sheet.getRange(i + 1, IDX_STATUS_BASIC + 1).setValue('A/S 기간만료')
-                            .setBackground('#e0e0e0'); // 회색 배경 (선택사항)
+                // 디버깅: 첫 3개 행만 상세 로깅
+                if (i <= 3) {
+                    console.log('Row ' + rowNum + ' [기본] 만료일:', basicDate.toDateString(), '/ 오늘:', today.toDateString(), '/ 비교(오늘>만료):', (today.getTime() > basicDate.getTime()));
+                }
+
+                // 1-1. 기간 만료 체크 (오늘 > 종료일) -> 상태 업데이트
+                if (today.getTime() > basicDate.getTime()) {
+                    var currentStatus = (IDX_STATUS_BASIC > -1) ? row[IDX_STATUS_BASIC] : '';
+                    if (currentStatus !== 'A/S 기간완료' && IDX_STATUS_BASIC > -1) {
+                        console.log('Update Row ' + rowNum + ' [기본]: ' + currentStatus + ' -> A/S 기간완료');
+                        sheet.getRange(rowNum, IDX_STATUS_BASIC + 1).setValue('A/S 기간완료')
+                            .setBackground('#e0e0e0');
+                        rowUpdated = true;
                     }
+                }
+
+                // 1-2. 당일 알림 체크 (오늘 == 종료일) -> 이메일 발송
+                if (email && basicDate.getTime() === today.getTime()) {
+                    console.log('Email Row ' + rowNum + ' [기본]: 당일 알림 발송');
+                    sendBasicAsExpirationEmail(email, name);
                     basicSentCount++;
                 }
+            } else {
+                if (i <= 3) console.warn('Row ' + rowNum + ' [기본] 날짜 형식 오류:', endDateVal);
             }
         }
 
@@ -1126,20 +1174,30 @@ function sendWarrantyExpirationEmails() {
             var bathDate = (bathDateVal instanceof Date) ? bathDateVal : new Date(bathDateVal);
             if (!isNaN(bathDate.getTime())) {
                 bathDate.setHours(0, 0, 0, 0);
-                if (bathDate.getTime() === today.getTime()) {
-                    sendBathroomAsExpirationEmail(email, name);
 
-                    // 상태 자동 '기간만료'로 변경
-                    if (IDX_STATUS_BATH > -1) {
-                        sheet.getRange(i + 1, IDX_STATUS_BATH + 1).setValue('A/S 기간만료')
-                            .setBackground('#e0e0e0'); // 회색 배경
+                // 2-1. 기간 만료 체크 (오늘 > 종료일) -> 상태 업데이트
+                if (today.getTime() > bathDate.getTime()) {
+                    var currentStatus = (IDX_STATUS_BATH > -1) ? row[IDX_STATUS_BATH] : '';
+                    if (currentStatus !== 'A/S 기간완료' && IDX_STATUS_BATH > -1) {
+                        console.log('Update Row ' + rowNum + ' [화장실]: ' + currentStatus + ' -> A/S 기간완료');
+                        sheet.getRange(rowNum, IDX_STATUS_BATH + 1).setValue('A/S 기간완료')
+                            .setBackground('#e0e0e0');
+                        rowUpdated = true;
                     }
+                }
+
+                // 2-2. 당일 알림 체크 (오늘 == 종료일) -> 이메일 발송
+                if (email && bathDate.getTime() === today.getTime()) {
+                    console.log('Email Row ' + rowNum + ' [화장실]: 당일 알림 발송');
+                    sendBathroomAsExpirationEmail(email, name);
                     bathroomSentCount++;
                 }
             }
         }
+
+        if (rowUpdated) updatedCount++;
     }
-    console.log('기본 A/S 완료 메일: ' + basicSentCount + '건, 화장실 A/S 완료 메일: ' + bathroomSentCount + '건 발송');
+    console.log('완료: 기본메일(' + basicSentCount + '), 화장실메일(' + bathroomSentCount + '), 상태변경(' + updatedCount + ')');
 }
 
 // 기본 A/S 보증 기간 완료 이메일
