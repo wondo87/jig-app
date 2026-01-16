@@ -1803,13 +1803,16 @@
         .estimate-table td:nth-child(3) {
             text-align: left;
             width: auto;
+            min-width: 150px;
         }
 
-        /* 상세내용 셀 (4번째) - 좌측정렬 */
+        /* 상세내용 셀 (4번째) - 좌측정렬, 넓게 */
         .estimate-table th:nth-child(4),
         .estimate-table td:nth-child(4) {
             text-align: left;
             width: auto;
+            min-width: 250px;
+            /* 너비 대폭 확대 */
         }
 
         .estimate-table .spec-cell {
@@ -1837,28 +1840,29 @@
             text-align: center;
         }
 
-        /* 단가 셀 (7번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+        /* 단가 셀 (7번째) - 너비 축소, 중앙정렬 */
         .estimate-table th:nth-child(7),
         .estimate-table td:nth-child(7) {
-            width: 90px;
+            width: 80px;
         }
 
         .estimate-table .price-cell {
             background: #fafafa;
             font-size: var(--font-size-md);
-            text-align: right;
-            padding-right: 6px;
+            text-align: center;
+            padding-right: 0;
         }
 
-        /* 금액 셀 (8번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+        /* 금액 셀 (8번째) - 너비 축소, 중앙정렬 */
         .estimate-table th:nth-child(8),
         .estimate-table td:nth-child(8) {
-            width: 95px;
+            width: 85px;
         }
 
         .estimate-table .amount-cell {
             background: #fafafa;
             font-size: var(--font-size-md);
+            text-align: center;
         }
 
         .estimate-table .amount-cell .won-amount {
@@ -7642,57 +7646,68 @@
                                                 text-align: center !important;
                    }
 
-                                                /* 품명 (2번째) - 좌측정렬 */
+                                                /* 구분 (2번째) - 인쇄 시 좁게 */
                                                 .estimate-table th:nth-child(2),
                                                 .estimate-table td:nth-child(2) {
-                                                    width: auto !important;
+                                                    width: 50px !important;
                                                 text-align: left !important;
                    }
 
-                                                /* 상세내용 (3번째) - 좌측정렬 */
+                                                /* 품명 (3번째) - 좌측정렬 */
                                                 .estimate-table th:nth-child(3),
                                                 .estimate-table td:nth-child(3) {
-                                                    width: auto !important;
+                                                    width: 15% !important;
                                                 text-align: left !important;
                    }
 
-                                                /* 단위 (4번째) - 중앙, 고정 */
+                                                /* 상세내용 (4번째) - 좌측정렬, 가장 넓게 */
                                                 .estimate-table th:nth-child(4),
                                                 .estimate-table td:nth-child(4) {
-                                                    width: 28px !important;
+                                                    width: 25% !important;
+                                                text-align: left !important;
+                   }
+
+                                                /* 단위 (5번째) - 중앙, 고정 */
+                                                .estimate-table th:nth-child(5),
+                                                .estimate-table td:nth-child(5) {
+                                                    width: 30px !important;
                                                 text-align: center !important;
                    }
 
-                                                /* 수량 (5번째) - 중앙, 고정 */
-                                                .estimate-table th:nth-child(5),
-                                                .estimate-table td:nth-child(5) {
+                                                /* 수량 (6번째) - 중앙, 고정 */
+                                                .estimate-table th:nth-child(6),
+                                                .estimate-table td:nth-child(6) {
                                                     width: 35px !important;
                                                 text-align: center !important;
                    }
 
-                                                /* 단가 (6번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
-                                                .estimate-table th:nth-child(6),
-                                                .estimate-table td:nth-child(6) {
-                                                    width: 70px !important;
-                   }
-                                                .estimate-table td:nth-child(6) .won-amount {
-                                                    display: flex !important;
-                                                justify-content: space-between !important;
-                   }
-
-                                                /* 금액 (7번째) - 고정너비, ₩ 좌측 + 숫자 우측 */
+                                                /* 단가 (7번째) - 너비 축소, 중앙 정렬 */
                                                 .estimate-table th:nth-child(7),
                                                 .estimate-table td:nth-child(7) {
                                                     width: 75px !important;
+                                                text-align: center !important;
                    }
                                                 .estimate-table td:nth-child(7) .won-amount {
                                                     display: flex !important;
-                                                justify-content: space-between !important;
+                                                justify-content: center !important;
+                                                gap: 4px !important;
                    }
 
-                                                /* 비고 (8번째) - 넓게, 좌측정렬 */
+                                                /* 금액 (8번째) - 너비 축소, 중앙 정렬 */
                                                 .estimate-table th:nth-child(8),
                                                 .estimate-table td:nth-child(8) {
+                                                    width: 80px !important;
+                                                text-align: center !important;
+                   }
+                                                .estimate-table td:nth-child(8) .won-amount {
+                                                    display: flex !important;
+                                                justify-content: center !important;
+                                                gap: 4px !important;
+                   }
+
+                                                /* 비고 (9번째) - 나머지 공간 */
+                                                .estimate-table th:nth-child(9),
+                                                .estimate-table td:nth-child(9) {
                                                     width: auto !important;
                                                 text-align: left !important;
                    }
