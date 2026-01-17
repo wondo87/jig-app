@@ -3843,8 +3843,11 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="pdf-btn" onclick="downloadPDF('scheduleDoc', '공사스케줄')">🖨️
-                                    인쇄/PDF</button>
+                                인쇄/PDF</button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="syncScheduleToNotion()"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">📥
+                                    Notion
+                                    동기화</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
                                     추가</button>
@@ -5822,7 +5825,7 @@
                     }
                     managerInput.value = currentData.manager;
 
-                    managerInput.oninput = functio n () {
+                    managerInput.oninput = functio n() {
                         updateCustomerField(this);
                     };
                     managerInput.onchange = function () {
@@ -9372,7 +9375,50 @@
                 }
             } catch (error) {
                 console.error('샘플 삭제 실패:', error);
-                showToast('삭제 중 오류가 발생했습니다', 'er);
+                showToast('삭제 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        async function syncScheduleToNotion() {
+            if (!currentData.clientName) {
+                alert('고객명이 없습니다. 고객을 먼저 선택하거나 생성해주세요.');
+                return;
+            }
+
+            if (confirm(`'${currentData.clientName}' 고객의 스케줄을 Notion으로 전송하시겠습니까?`)) {
+                try {
+                    const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
+                    if (btn) {
+                        btn.innerHTML = '⏳ 전송 중...';
+                        btn.disabled = true;
+                    }
+
+                    const response = await fetch('/api/sync-schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            project: currentData.clientName,
+                            schedules: scheduleRows
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        alert(`✅ Notion 동기화 성공! (${result.count}건)`);
+                    } else {
+                        throw new Error(result.message || '동기화 실패');
+                    }
+                } catch (error) {
+                    console.error('Notion Sync Error:', error);
+                    alert(`❌ Notion 동기화 중 오류가 발생했습니다.\n${error.message}`);
+                } finally {
+                    const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
+                    if (btn) {
+                        btn.innerHTML = '📥 Notion 동기화';
+                        btn.disabled = false;
+                    }
+                }
             }
         }
     </script>
