@@ -1382,11 +1382,14 @@ function handleCostGet(e) {
     try {
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
 
-        // '원가관리표' 시트만 읽기
-        var sheet = spreadsheet.getSheetByName('원가관리표');
+        // '원가관리표데이터베이스' 시트만 읽기
+        var sheet = spreadsheet.getSheetByName('원가관리표데이터베이스');
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('원가관리표'); // 혹시 모를 짧은 이름도 체크
+        }
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
-                error: '원가관리표 시트를 찾을 수 없습니다.'
+                error: '원가관리표데이터베이스 시트를 찾을 수 없습니다.'
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
@@ -1468,11 +1471,14 @@ function handleCostUpdate(payload) {
         var memoData = payload.memos || {};
 
         var spreadsheet = SpreadsheetApp.openById(COST_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName('원가관리표');
+        var sheet = spreadsheet.getSheetByName('원가관리표데이터베이스');
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('원가관리표');
+        }
 
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
-                error: '원가관리표 시트를 찾을 수 없습니다.'
+                error: '원가관리표데이터베이스 시트를 찾을 수 없습니다.'
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
