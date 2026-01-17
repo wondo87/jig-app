@@ -1393,6 +1393,62 @@ function sendBathroomAsExpirationEmail(email, name) {
 // ==========================================
 
 /**
+ * A/S 관리 리스트 데이터 조회 (GET)
+ * 'AS 관리 리스트' 시트에서 데이터를 읽어와 반환
+ */
+function handleASListGet(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        // 시트 이름 확인 (띄어쓰기 유무 등 유연하게 처리)
+        var sheet = spreadsheet.getSheetByName('AS 관리 리스트');
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('AS관리리스트');
+        }
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('as_list');
+        }
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                result: 'error',
+                message: "'AS 관리 리스트' 시트를 찾을 수 없습니다."
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var rows = sheet.getDataRange().getValues();
+        var data = [];
+
+        // 1행은 헤더일 가능성이 높으므로 2행부터 읽음
+        // 헤더: 카테고리 | 세부항목 | 브랜드 | 서비스센터 | 보증기간 | 비고
+        for (var i = 1; i < rows.length; i++) {
+            var row = rows[i];
+            // 빈 행 건너뛰기
+            if (!row[0] && !row[1]) continue;
+
+            data.push({
+                category: row[0] || '',
+                item: row[1] || '',
+                brand: row[2] || '',
+                service: row[3] || '',
+                warranty: row[4] || '', // 데이터가 날짜 객체일 경우 문자열로 변환 필요할 수 있음
+                note: row[5] || ''
+            });
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            data: data
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'error',
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
  * 원가관리표 데이터 조회 (GET)
  * Google Sheets에서 원가관리표 데이터를 읽어옵니다.
  */

@@ -12,9 +12,9 @@ const MAIN_ADMIN = {
 // 일반관리자 삭제/잠금해제 승인 비밀번호 (SHA-256 해시)
 const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e852604566cbb848';
 
-// [고객관리] Apps Script Web App URL (배포 후 생성된 URL을 여기에 입력)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxHizvc4RMvjK6ZLqn4m_YBW_kkrgIvi8hNFNxOlo6Zmrncb78xFQimqHa-EfSN87BFGg/exec'; // 구글 시트 연동용
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxHizvc4RMvjK6ZLqn4m_YBW_kkrgIvi8hNFNxOlo6Zmrncb78xFQimqHa-EfSN87BFGg/exec'; // 데이터 동기화용
+// [통합] 고객관리/상담관리/원가관리 등 모든 데이터 동기화를// [고객관리] Apps Script Web App URL (배포 후 생성된 URL을 여기에 입력)
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzaMgHh023bzXnqyeMnIOomIaA-0Ozim4IWJqq3asgIYJzazcFZH9jbpYzOvtFN6_VgDA/exec"; // 구글 시트 연동용
+const CUSTOMER_SYNC_URL = "https://script.google.com/macros/s/AKfycbzaMgHh023bzXnqyeMnIOomIaA-0Ozim4IWJqq3asgIYJzazcFZH9jbpYzOvtFN6_VgDA/exec"; // 데이터 동기화용
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
