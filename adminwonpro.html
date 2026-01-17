@@ -3861,7 +3861,8 @@
                                         <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
                                         <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
-                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                        <th class="no-print"
+                                            style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                     </tr>
                                 </thead>
                                 <tbody id="scheduleTableBody">
@@ -5631,7 +5632,7 @@
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
         </td>
-        <td style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
+        <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
             <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)"
                 style="padding:2px 4px;">▲</button>
             <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)"
