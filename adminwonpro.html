@@ -3392,7 +3392,7 @@
                                             onblur="autoFormatProfit(this); updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
-                                        <label>담당자</label>
+                                        <label>공사 담당자</label>
                                         <input type="text" class="customer-field" data-field="manager"
                                             placeholder="담당자명" oninput="updateCustomerField(this)">
                                     </div>
@@ -3862,12 +3862,12 @@
                                 <tbody style="text-align: center;">
                                     <tr>
                                         <!-- Row 1 -->
-                                        <th style="border:1px solid #000; padding:8px;">공사 관리자</th>
+                                        <th style="border:1px solid #000; padding:8px;">공사 담당자</th>
                                         <td style="border:1px solid #000; padding:8px;">
                                             <input type="text" class="sch-input" id="schManagerInput"
                                                 data-field="manager"
                                                 style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;"
-                                                value="원도연 소장 (010-4650-7013)">
+                                                value="원프로 소장 (010-4650-7013)">
                                         </td>
                                         <th style="border:1px solid #000; padding:8px;">공사기간(시작~종료)</th>
                                         <td style="border:1px solid #000; padding:8px;" id="schPeriod"></td>
@@ -3948,7 +3948,18 @@
                             </table>
                             <div class="no-print"
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                <strong>💡 사용법:</strong> 공정을 추가한 후 날짜/담당자를 입력하세요. 드래그로 순서 변경이 가능합니다.
+                                <strong>💡 공사 진행 안내사항</strong>
+                                <ul style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                    <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
+                                    <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
+                                        <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할
+                                            수 있습니다)</span>
+                                    </li>
+                                    <li>공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.</li>
+                                    <li>공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.</li>
+                                    <li>공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 공사 담당자와 먼저 협의 부탁드립니다.</li>
+                                    <li>공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다.</li>
+                                </ul>
                             </div>
                             <table class="data-table" style="width:100%; border-collapse:collapse;">
                                 <thead>
@@ -4037,18 +4048,27 @@
                                                 화장실 누수<br>A/S 기간</th>
                                             <td style="padding:12px; border:1px solid #ddd;" id="bathroomLeakWarranty">-
                                             </td>
-                                            <!-- 담당자 -->
                                             <th
                                                 style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
-                                                담당자</th>
-                                            <td style="padding:12px; border:1px solid #ddd;">원프로 (010-4650-7013)</td>
+                                                공사 담당자</th>
+                                            <td style="padding:12px; border:1px solid #ddd;" class="synced-display"
+                                                data-sync="manager">-</td>
                                         </tr>
                                     </table>
                                 </div>
 
                                 <div class="no-print"
                                     style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                    <strong>💡 안내:</strong> 각 업체의 A/S 연락처 및 브랜드 정보를 관리하는 페이지입니다. 필요에 따라 항목을 수정하거나 추가하세요.
+                                    <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
+                                    <ul
+                                        style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                        <li>기본 A/S 기간은 공사 완료일로부터 12개월입니다.</li>
+                                        <li>자재 A/S는 자재 입고일 기준 1년이며, 제조사 기준이 우선 적용됩니다.</li>
+                                        <li>화장실 누수 A/S는 공사 완료일로부터 최대 30개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
+                                        <li>사용 부주의, 자연 노후, 고객 직접 발주 자재로 인한 하자는 A/S 대상에서 제외됩니다.</li>
+                                        <li>A/S 접수는 관련 이미지 및 동영상을 반드시 첨부해 주셔야 원활하게 진행됩니다.</li>
+                                        <li>A/S 기간 만료 후에는 사전에 안내드린 고객센터를 통해 접수해 주셔야 합니다.</li>
+                                    </ul>
                                 </div>
                                 <table class="data-table" style="width:100%; border-collapse:collapse;">
                                     <thead>
@@ -5797,7 +5817,7 @@
                 if (managerInput) {
                     // Force default if empty
                     if (!currentData.manager || currentData.manager.trim() === '') {
-                        currentData.manager = '원도연 소장 (010-4650-7013)';
+                        currentData.manager = '원프로 소장 (010-4650-7013)';
                     }
                     managerInput.value = currentData.manager;
 
@@ -6366,7 +6386,8 @@
                 createdAt: new Date().toISOString().split('T')[0],
                 profitRate: '15%',
                 createdBy: currentAdmin?.id || 'unknown', // 작성자 관리자 ID
-                isLocked: false // 잠금 상태
+                isLocked: false, // 잠금 상태
+                manager: '원프로 소장 (010-4650-7013)' // 기본 공사 담당자
             };
 
             // 고객 목록에 즉시 추가
@@ -6422,6 +6443,11 @@
                 let rate = String(customer.estimateProfitRate);
                 if (/^\d+$/.test(rate)) rate += '%';
                 customer.profitRate = rate;
+            }
+
+
+            if (!customer.manager || customer.manager.trim() === '') {
+                customer.manager = '원프로 소장 (010-4650-7013)';
             }
 
 
