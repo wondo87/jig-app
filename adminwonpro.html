@@ -3987,6 +3987,9 @@
                                     <div class="subtitle">A/S Management List</div>
                                 </div>
                                 <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="sync-btn no-print" onclick="syncASListFromCloud()"
+                                        style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                        title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
                                     <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
                                         인쇄/PDF</button>
                                     <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"
@@ -6041,6 +6044,47 @@
             if (!currentData) return;
             currentData.as_list = asListRows;
             saveCustomers();
+        }
+
+        async function syncASListFromCloud() {
+            if (!confirm('Google Sheets에서 데이터를 불러오시겠습니까? 기존 데이터는 덮어씌워집니다.')) return;
+
+            const btn = document.querySelector('button[onclick="syncASListFromCloud()"]');
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = '⏳ 불러오는 중...';
+                btn.disabled = true;
+            }
+
+            try {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    asListRows = result.data.map(item => ({
+                        category: item.category || '',
+                        item: item.item || '',
+                        brand: item.brand || '',
+                        service: item.service || '',
+                        warranty: item.warranty || '',
+                        note: item.note || ''
+                    }));
+                    renderASListTable();
+                    saveASList();
+                    alert('데이터를 성공적으로 불러왔습니다.');
+                } else {
+                    throw new Error(result.error || '데이터를 불러오는데 실패했습니다.');
+                }
+
+            } catch (error) {
+                console.error('Error syncing AS list:', error);
+                alert('오류 발생: ' + error.message);
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
         }
 
         // syncScheduleToNotion 함수 제거됨 (Notion 통합 제거)

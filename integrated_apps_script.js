@@ -125,6 +125,11 @@ function doGet(e) {
             return handleCustomerGet(e);
         }
 
+        // 2.1. A/S 관리 리스트 데이터 요청
+        if (sheetParam === 'AS관리리스트' || sheetParam === 'as_list') {
+            return handleASListGet(e);
+        }
+
         // 2.5. 샘플 견적서 조회
         var actionParam = e.parameter.action;
         if (actionParam === 'getSampleEstimates') {
