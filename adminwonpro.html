@@ -6199,7 +6199,7 @@
                     throw new Error(`HTTP${response.status} `);
                 }
 
-                const cloudCustomers = await response.json();
+                let cloudCustomers = await response.json();
                 console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
 
                 if (!Array.isArray(cloudCustomers)) {
