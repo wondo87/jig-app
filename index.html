@@ -465,44 +465,40 @@
         }
 
         /* Footer */
+        /* Footer */
         .footer {
-            padding: 4rem 2rem;
-            background: white;
-            border-top: 1px solid #eee;
-        }
-
-        .footer-container {
-            max-width: 1200px;
-            margin: 0 auto;
+            background: #f8f8f8;
+            color: #333;
+            padding: 30px 2rem;
             text-align: center;
         }
 
         .footer-brand {
-            margin-bottom: 2rem;
-        }
-
-        .footer-logo {
-            font-size: 1.5rem;
+            font-size: 1rem;
             font-weight: 700;
+            margin-bottom: 0.2rem;
             color: #1a1a1a;
         }
 
         .footer-tagline {
+            font-size: 0.7rem;
             color: #666;
-            margin-top: 0.5rem;
+            margin-bottom: 1rem;
         }
 
         .footer-info {
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-info p {
             color: #666;
-            font-size: 0.95rem;
-            line-height: 2;
+            font-size: 0.7rem;
+            margin: 0.2rem 0;
         }
 
         .footer-info a {
             color: #666;
             text-decoration: none;
-            transition: color 0.3s ease;
         }
 
         .footer-info a:hover {
@@ -511,24 +507,33 @@
 
         .footer-sns {
             display: flex;
-            gap: 1.5rem;
+            gap: 0.8rem;
             justify-content: center;
-            margin-bottom: 2rem;
+            margin: 1rem 0;
         }
 
-        .sns-link {
+        .footer-sns a {
             color: #666;
-            transition: color 0.3s ease, transform 0.3s ease;
+            transition: color 0.3s, transform 0.3s;
         }
 
-        .sns-link:hover {
+        .footer-sns a:hover {
             color: #B4956F;
-            transform: translateY(-3px);
+            transform: translateY(-2px);
+        }
+
+        .footer-sns svg {
+            width: 18px;
+            height: 18px;
         }
 
         .footer-copyright {
             color: #999;
-            font-size: 0.85rem;
+            font-size: 0.65rem;
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+            display: inline-block;
         }
 
         /* Guide Modal */
@@ -1380,58 +1385,42 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <span class="footer-logo">디자인지그</span>
-                <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
-            </div>
-
-            <div class="footer-info">
-                <p>경기도 용인시</p>
-                <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
-                <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
-            </div>
-
-            <div class="footer-sns">
-                <a href="https://blog.naver.com/sweet00700" class="sns-link" target="_blank" rel="noopener noreferrer"
-                    title="네이버 블로그">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="currentColor">
-                        <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" />
-                    </svg>
-                </a>
-                <a href="https://cafe.naver.com/supermanhome" class="sns-link" target="_blank" rel="noopener noreferrer"
-                    title="네이버 카페">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="currentColor">
-                        <path
-                            d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
-                        <path d="M2 20h20v2H2z" />
-                    </svg>
-                </a>
-                <a href="https://www.instagram.com/design__jig" class="sns-link" target="_blank"
-                    rel="noopener noreferrer" title="인스타그램">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                    </svg>
-                </a>
-                <a href="https://www.youtube.com/@DESIGN_JIG" class="sns-link" target="_blank" rel="noopener noreferrer"
-                    title="유튜브">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="currentColor">
-                        <path
-                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                    </svg>
-                </a>
-            </div>
-
-            <div class="footer-copyright">
-                <p>Copyright Rimdesign interior. All Right Reserved.</p>
-            </div>
+        <h2 class="footer-brand">디자인지그</h2>
+        <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
+        <div class="footer-info">
+            <p>경기도 용인시</p>
+            <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+            <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
         </div>
+        <div class="footer-sns">
+            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                </svg>
+            </a>
+            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                    <path d="M2 20h20v2H2z" />
+                </svg>
+            </a>
+            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </a>
+            <a href="https://www.youtube.com/@DESIGN_JIG" target="_blank" title="유튜브" aria-label="유튜브">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
     </footer>
 
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
