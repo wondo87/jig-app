@@ -3782,22 +3782,20 @@
                 <div class="tab-panel" id="panel-schedule">
                     <div class="document-wrapper" id="scheduleDoc"
                         style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
-                        <div class="doc-header"
-                            style="padding:30px; background:#fff; border-bottom:1px solid #f2f2f7; display:flex; justify-content:space-between; align-items:center;">
+                        <div class="doc-header">
                             <div>
                                 <div
-                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#0071e3;">
+                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
                                     DESIGN JIG</div>
-                                <h1 style="font-size:24px; font-weight:700; color:#1d1d1f; margin:0;">📅 공사 스케줄 관리</h1>
-                                <div class="subtitle" style="font-size:13px; color:#86868b; margin-top:4px;">
-                                    Construction Schedule Manager</div>
+                                <h1>📅 공사 스케줄 관리</h1>
+                                <div class="subtitle">Construction Schedule Manager</div>
                             </div>
-                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-                                <div style="display:flex; gap:8px;">
-                                    <button class="pdf-btn" onclick="downloadPDF('scheduleDoc', '공사스케줄')">🖨️
-                                        인쇄/PDF</button>
-                                    <button class="btn btn-secondary btn-sm" onclick="addScheduleRow()">➕ 공정 추가</button>
-                                </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="pdf-btn" onclick="downloadPDF('scheduleDoc', '공사스케줄')">🖨️
+                                    인쇄/PDF</button>
+                                <button class="btn btn-secondary btn-sm" onclick="addScheduleRow()"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
+                                    추가</button>
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
