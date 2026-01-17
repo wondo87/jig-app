@@ -3862,9 +3862,10 @@
                                         <!-- Row 1 -->
                                         <th style="border:1px solid #000; padding:8px;">공사 관리자</th>
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" class="sch-input" data-field="manager"
+                                            <input type="text" class="sch-input" id="schManagerInput"
+                                                data-field="manager"
                                                 style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;"
-                                                placeholder="입력">
+                                                value="원도연 소장 (010-4650-7013)">
                                         </td>
                                         <th style="border:1px solid #000; padding:8px;">공사기간(시작~종료)</th>
                                         <td style="border:1px solid #000; padding:8px;" id="schPeriod"></td>
@@ -5690,7 +5691,7 @@
                 document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
 
                 // 2. Manager Input (Special handling)
-                const managerInput = document.querySelector('input[data-field="manager"]');
+                const managerInput = document.getElementById('schManagerInput');
                 if (managerInput) {
                     // Force default if empty
                     if (!currentData.manager || currentData.manager.trim() === '') {
