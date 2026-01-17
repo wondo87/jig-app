@@ -523,10 +523,16 @@
         }
 
         .modal-body .content p {
-            margin: 6px 0;
-            /* 노션과 유사한 블록 간격 */
+            margin: 2px 0;
+            /* 노션처럼 텍스트 블록 간격을 좁게 */
             min-height: 1.5em;
+            /* 빈 줄(엔터)이 있을 경우 높이 확보 */
             letter-spacing: -0.01em;
+        }
+
+        /* 빈 문단(<p><br></p>)이 확실히 공간을 차지하도록 */
+        .modal-body .content p br {
+            display: inline-block;
         }
 
         .modal-body .content ul,
