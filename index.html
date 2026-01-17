@@ -704,6 +704,17 @@
             .column-grid {
                 grid-template-columns: 1fr;
             }
+
+            /* 모바일에서도 강제로 4:3 비율 및 꽉 차게(Cover) 적용 */
+            .feature-image {
+                aspect-ratio: 4/3;
+                height: auto;
+            }
+
+            .feature-image img {
+                height: 100%;
+                object-fit: cover;
+            }
         }
 
         /* Responsive Line Breaks */
