@@ -526,13 +526,15 @@
             margin: 2px 0;
             /* 노션처럼 텍스트 블록 간격을 좁게 */
             min-height: 1.5em;
-            /* 빈 줄(엔터)이 있을 경우 높이 확보 */
+            /* 최소 높이 */
             letter-spacing: -0.01em;
         }
 
-        /* 빈 문단(<p><br></p>)이 확실히 공간을 차지하도록 */
-        .modal-body .content p br {
-            display: inline-block;
+        /* 빈 문단(Spacer) 스타일: 확실한 높이 확보 */
+        .notion-spacer {
+            height: 1.5em;
+            display: block;
+            /* 블록 요소로 처리 */
         }
 
         .modal-body .content ul,
@@ -1409,7 +1411,8 @@
             switch (type) {
                 case 'paragraph':
                     const pText = renderRichText(value.rich_text);
-                    return pText ? `<p>${pText}</p>` : '<p><br></p>';
+                    // 빈 문단은 명시적인 spacer 클래스 적용 (내용이 없어도 높이 차지하도록)
+                    return pText ? `<p>${pText}</p>` : '<p class="notion-spacer"></p>';
 
                 case 'heading_1':
                     return `<h2 class="notion-h1">${renderRichText(value.rich_text)}</h2>`;
