@@ -3999,35 +3999,82 @@
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
-                            <div class="no-print"
-                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                <strong>💡 안내:</strong> 각 업체의 A/S 연락처 및 브랜드 정보를 관리하는 페이지입니다. 필요에 따라 항목을 수정하거나 추가하세요.
+                            <div class="doc-content" style="padding:30px;">
+                                <!-- [New] Customer & Warranty Info Table -->
+                                <div style="margin-bottom:30px;">
+                                    <table
+                                        style="width:100%; border-collapse:collapse; font-size:13px; border:2px solid #333;">
+                                        <tr>
+                                            <!-- 성명 -->
+                                            <th
+                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; width:100px; text-align:center;">
+                                                성명</th>
+                                            <td style="padding:12px; border:1px solid #ddd;"><span
+                                                    class="synced-display" data-sync="clientName">-</span></td>
+                                            <!-- 연락처 -->
+                                            <th
+                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; width:100px; text-align:center;">
+                                                연락처</th>
+                                            <td style="padding:12px; border:1px solid #ddd;"><span
+                                                    class="synced-display" data-sync="clientPhone">-</span></td>
+                                            <!-- 주소 -->
+                                            <th
+                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; width:100px; text-align:center;">
+                                                주소</th>
+                                            <td style="padding:12px; border:1px solid #ddd;"><span
+                                                    class="synced-display" data-sync="siteAddress">-</span></td>
+                                        </tr>
+                                        <tr>
+                                            <!-- A/S 기간 -->
+                                            <th
+                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
+                                                A/S 기간</th>
+                                            <td style="padding:12px; border:1px solid #ddd;"><span
+                                                    class="synced-display" data-sync="warrantyPeriod">-</span></td>
+                                            <!-- 화장실 누수 A/S -->
+                                            <th
+                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
+                                                화장실 누수<br>A/S 기간</th>
+                                            <td style="padding:12px; border:1px solid #ddd;" id="bathroomLeakWarranty">-
+                                            </td>
+                                            <!-- 담당자 -->
+                                            <th
+                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
+                                                담당자</th>
+                                            <td style="padding:12px; border:1px solid #ddd;">원프로 (010-4650-7013)</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <div class="no-print"
+                                    style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
+                                    <strong>💡 안내:</strong> 각 업체의 A/S 연락처 및 브랜드 정보를 관리하는 페이지입니다. 필요에 따라 항목을 수정하거나 추가하세요.
+                                </div>
+                                <table class="data-table" style="width:100%; border-collapse:collapse;">
+                                    <thead>
+                                        <tr style="background:#f5f5f7;">
+                                            <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">세부항목</th>
+                                            <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">브랜드 (제조사)
+                                            </th>
+                                            <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
+                                            <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                            <th class="no-print"
+                                                style="width:80px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="asListTableBody">
+                                        <!-- Dynamic Rows -->
+                                    </tbody>
+                                </table>
                             </div>
-                            <table class="data-table" style="width:100%; border-collapse:collapse;">
-                                <thead>
-                                    <tr style="background:#f5f5f7;">
-                                        <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
-                                        <th style="padding:12px; border:1px solid #d2d2d7;">세부항목</th>
-                                        <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">브랜드 (제조사)
-                                        </th>
-                                        <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
-                                        <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
-                                        <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
-                                        <th class="no-print"
-                                            style="width:80px; padding:12px; border:1px solid #d2d2d7;">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="asListTableBody">
-                                    <!-- Dynamic Rows -->
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </div>
 
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
@@ -5968,6 +6015,55 @@
                 asListRows = []; // Start empty for new selection
             }
             renderASListTable();
+            updateASInfoHeaders();
+        }
+
+        function updateASInfoHeaders() {
+            // Manually sync fields in A/S header (since syncAllFields might not target these specific IDs if they are refreshed or not caught)
+            // But they use 'data-sync' class, so syncAllFields() handles them IF called.
+            // Let's call syncAllFields() just in case OR just handle the specific ID for bathroom leak.
+            // We'll rely on syncAllFields() for the standard ones, but calculate bathroom leak.
+
+            // Calculate Bathroom Leak A/S (General A/S + 18 months)
+            const leakEl = document.getElementById('bathroomLeakWarranty');
+            if (leakEl) {
+                let endDate = currentData.asEndDate || '';
+                // If no asEndDate, try to parse from warrantyPeriod string if it ends with date
+                if (!endDate && currentData.warrantyPeriod) {
+                    // Try to match date pattern like "~YY.MM.DD" or "~YYYY.MM.DD" or "YYYY.MM.DD"
+                    const matches = currentData.warrantyPeriod.match(/(\d{2,4})[-\.](\d{2})[-\.](\d{2})$/);
+                    if (matches) {
+                        // Reconstruct full date
+                        let year = parseInt(matches[1]);
+                        if (year < 100) year += 2000;
+                        const month = matches[2];
+                        const day = matches[3];
+                        endDate = `${year}-${month}-${day}`;
+                    }
+                }
+
+                if (endDate) {
+                    try {
+                        const date = new Date(endDate);
+                        if (!isNaN(date.getTime())) {
+                            // Add 18 months
+                            date.setMonth(date.getMonth() + 18);
+
+                            // Format
+                            const yy = String(date.getFullYear()).slice(-2);
+                            const mm = String(date.getMonth() + 1).padStart(2, '0');
+                            const dd = String(date.getDate()).padStart(2, '0');
+                            leakEl.textContent = `~${yy}.${mm}.${dd}`;
+                        } else {
+                            leakEl.textContent = '-';
+                        }
+                    } catch (e) {
+                        leakEl.textContent = '-';
+                    }
+                } else {
+                    leakEl.textContent = '-';
+                }
+            }
         }
 
         function addASListItem() {
