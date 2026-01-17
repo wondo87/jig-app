@@ -3394,7 +3394,7 @@
                                     <div class="info-item">
                                         <label>공사 담당자</label>
                                         <input type="text" class="customer-field" data-field="manager"
-                                            placeholder="담당자명" oninput="updateCustomerField(this)">
+                                            placeholder="원프로 소장 (010-4650-7013)" value="원프로 소장 (010-4650-7013)" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>계약일</label>
@@ -3968,7 +3968,7 @@
                                         <th style="padding:12px; border:1px solid #d2d2d7;">공정명</th>
                                         <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
                                         <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
-                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
+                                        <th style="width:180px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                         <th class="no-print"
                                             style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
@@ -5911,8 +5911,8 @@
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.inCharge || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
-                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="담당자">
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.memo || ''}" class="customer-field"
@@ -5937,7 +5937,7 @@
                 name: '',
                 start: '',
                 end: '',
-                inCharge: '',
+                inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
                 memo: ''
             });
             renderScheduleTable();
