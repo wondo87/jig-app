@@ -5831,17 +5831,17 @@
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="date" value="${row.start || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="handleStartDateChange(${index}, this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="date" value="${row.end || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.inCharge || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="담당자">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
@@ -5947,7 +5947,7 @@
             { category: "도배/필름", item: "인테리어 필름", brand: "LX/현대/레놀릿", service: "시공사 문의", warranty: "", note: "제품 하자 시 본사 문의" },
             { category: "수전/도기", item: "싱크볼/수입싱크", brand: "백조싱크", service: "1544-0511", warranty: "", note: "포스터(Foster) 포함" },
             { category: "수전/도기", item: "디자인 수전", brand: "더죤테크", service: "02-511-1334", warranty: "", note: "슈티에(Sutier) 포함" },
-            { category: "수전/도기", item: "위생도기/수전", brand: "대림바스", service: "1588-4360", warranty: "", note: "" },
+            { category: "수전/도기", item: "위생도기/수전", brand: "대림바스", service: "1588-4360", warranty: "", note: "아메리칸 스탠다드 포함" },
             { category: "수전/도기", item: "위생도기/수전", brand: "아메리칸 스탠다드", service: "1588-5906", warranty: "", note: "" },
             { category: "전기/제어", item: "조명 제어 시스템", brand: "루트론 (Lutron)", service: "02-540-3660", warranty: "", note: "" },
             { category: "전기/제어", item: "프리미엄 스위치", brand: "융 (JUNG)", service: "02-556-5477", warranty: "", note: "융코리아" },
@@ -6057,7 +6057,7 @@
                             <input type="text" class="mh-input" value="${row.warranty || ''}" 
                                 id="warrantyInput_${index}"
                                 onchange="updateASListRow(${index}, 'warranty', this.value)"
-                                placeholder="보증기간" style="width:100%; border:none; outline:none; text-align:center;">
+                                placeholder="보증기간" style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
                         </div>
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
@@ -6106,10 +6106,10 @@
             const schedules = (scheduleRows && scheduleRows.length > 0) ? scheduleRows : (currentData.schedules || []);
 
             return schedules.map((sch, idx) => {
-                const name = sch.taskName || '이름 없음';
-                const end = sch.endDate || '';
+                const name = sch.name || '이름 없음'; // fixed property name from taskName to name
+                const end = sch.end || ''; // fixed property name from endDate to end
                 if (!end) return ''; // Skip if no end date
-                return `<option value="${end}">${name} (${end})</option>`;
+                return `<option value="${end}">${name}</option>`;
             }).join('');
         }
 
