@@ -733,16 +733,19 @@
         }
 
         /* Notion Styles (High Fidelity) */
-        .modal-body .content {
+        /* Notion Styles (High Fidelity) */
+        .modal-body .content,
+        .guide-modal-body .content {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 1.75;
             color: #37352f;
+            word-break: break-word;
         }
 
         .notion-h1 {
             font-size: 1.875em;
-            font-weight: 600;
+            font-weight: 700;
             line-height: 1.3;
             margin: 1.4em 0 0.5em 0;
             color: #37352f;
@@ -764,9 +767,21 @@
             color: #37352f;
         }
 
-        .modal-body .content p {
-            margin: 2px 0;
+        .modal-body .content p,
+        .guide-modal-body .content p {
+            margin: 0 0 2px 0;
+            /* 글줄 간격은 좁게 */
             min-height: 1.5em;
+            letter-spacing: -0.01em;
+            padding: 0;
+        }
+
+        /* 빈 문단(Spacer) 스타일 */
+        .notion-spacer {
+            height: 12px;
+            min-height: 12px;
+            display: block;
+            margin: 0;
         }
 
         .notion-color-gray {
@@ -1667,7 +1682,7 @@
             switch (type) {
                 case 'paragraph':
                     const pText = renderRichText(value.rich_text);
-                    return pText ? `<p>${pText}</p>` : '<p><br></p>';
+                    return pText ? `<p>${pText}</p>` : '<p class="notion-spacer"></p>';
 
                 case 'heading_1':
                     return `<h2>${renderRichText(value.rich_text)}</h2>`;
