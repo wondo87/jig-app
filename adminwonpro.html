@@ -3316,6 +3316,17 @@
                                             placeholder="연도. 월. 일." oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
+                                        <label>잔금일</label>
+                                        <input type="date" class="customer-field" data-field="finalPaymentDate"
+                                            oninput="updateCustomerField(this); calculateAsEndDate();">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>A/S 기간 (잔금일 +12개월)</label>
+                                        <input type="text" class="customer-field" data-field="asEndDate"
+                                            placeholder="자동 계산" readonly
+                                            style="background:#f0f7ff; color:#0071e3; font-weight:600;">
+                                    </div>
+                                    <div class="info-item">
                                         <label>기업이율</label>
                                         <input type="text" class="customer-field" data-field="profitRate"
                                             placeholder="15%" value="15%" oninput="updateCustomerField(this)"
@@ -3335,17 +3346,6 @@
                                         <label>총 계약금액 (VAT 포함)</label>
                                         <input type="text" class="customer-field" data-field="totalAmount"
                                             placeholder="₩ 0,000,000" oninput="updateCustomerField(this)">
-                                    </div>
-                                    <div class="info-item">
-                                        <label>잔금일</label>
-                                        <input type="date" class="customer-field" data-field="finalPaymentDate"
-                                            oninput="updateCustomerField(this); calculateAsEndDate();">
-                                    </div>
-                                    <div class="info-item">
-                                        <label>A/S 기간 (잔금일 +12개월)</label>
-                                        <input type="text" class="customer-field" data-field="asEndDate"
-                                            placeholder="자동 계산" readonly
-                                            style="background:#f0f7ff; color:#0071e3; font-weight:600;">
                                     </div>
                                 </div>
                             </div>
