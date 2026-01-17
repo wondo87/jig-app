@@ -537,10 +537,11 @@
         }
 
         /* 빈 문단(Spacer) 스타일: 문단 간격 12px 확보 */
-        .notion-spacer {
-            height: 12px;
-            /* 눈에 보이는 공백 높이 */
-            min-height: 12px;
+        /* 빈 문단(Spacer) 스타일: 엔터 두 번 친 효과 (한 줄 높이 확보) */
+        .modal-body .content p.notion-spacer {
+            height: 28px;
+            /* 일반 줄 높이(약 1.75em)와 비슷하게 설정하여 확실한 공백 제공 */
+            min-height: 28px;
             display: block;
             margin: 0;
         }
