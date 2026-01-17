@@ -5915,7 +5915,8 @@
 
         // [New] A/S List Logic
         let asListRows = [];
-        const initialASData = [
+        // Master Database for A/S Items
+        const AS_DB = [
             { category: "냉난방", item: "시스템 에어컨", brand: "LG전자", service: "1544-7777", warranty: "", note: "" },
             { category: "냉난방", item: "시스템 에어컨", brand: "삼성전자", service: "1588-3366", warranty: "", note: "" },
             { category: "주방기기", item: "주방 후드 (국내)", brand: "SK매직", service: "1600-1661", warranty: "", note: "" },
@@ -5956,15 +5957,15 @@
             { category: "조명", item: "디자인 조명", brand: "플로스/앤트레디션", service: "02-512-3403", warranty: "", note: "공식 수입사" },
             { category: "조명", item: "스마트 조명", brand: "필립스 휴 (Hue)", service: "080-600-6600", warranty: "", note: "시그니파이 코리아" },
             { category: "조명", item: "매입등/간접조명", brand: "솔라루체/라온", service: "구매처 문의", warranty: "", note: "" },
-            { category: "타일", item: "욕실 타일", brand: "코크랜 (다나디자인)", service: "031-123-4567", warranty: "~26.07.06", note: "" }
+            { category: "타일", item: "욕실 타일", brand: "코크랜 (다나디자인)", service: "031-123-4567", warranty: "~26.07.06", note: "" },
+            // 기타 직접입력용 빈 항목 (필요 시 로직에서 처리)
         ];
 
         function loadASList() {
-            if (currentData && currentData.as_list && currentData.as_list.length > 0) {
+            if (currentData && currentData.as_list) {
                 asListRows = currentData.as_list;
             } else {
-                asListRows = JSON.parse(JSON.stringify(initialASData));
-                saveASList();
+                asListRows = []; // Start empty for new selection
             }
             renderASListTable();
         }
@@ -5987,19 +5988,54 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            // Unique Categories for Dropdown
+            const categories = [...new Set(AS_DB.map(d => d.category))];
+
             asListRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
+
+                // Category Select Options
+                let catOptions = '<option value="">선택</option>';
+                categories.forEach(cat => {
+                    catOptions += `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`;
+                });
+
+                // Item Select Options (dependent on category)
+                let itemOptions = '<option value="">선택</option>';
+                if (row.category) {
+                    const filteredItems = AS_DB.filter(d => d.category === row.category);
+                    filteredItems.forEach(d => {
+                        // Use a composite key or just item name? Use item name for now, or brand combined.
+                        // Assuming Item Names + Brand are unique enough or user selects specifically.
+                        // Let's show "Item (Brand)" in dropdown for clarity
+                        const label = `${d.item} (${d.brand})`;
+                        // We store just the label or the item name? 
+                        // Let's match by comparing both or just storing the index? 
+                        // Simplest: store the item name and brand in the row, but for the SELECT value, we can use an index or unique ID if we had one.
+                        // Let's simply use the index in the filtered array or JSON stringify to pass data.
+                        // Simpler: Just generic items.
+                        // Let's just use the item Name as value, but that might be duplicate.
+                        // Let's use stringified object index or a composite value.
+                        // Actually, let's just use the index of the item IN THE MASTER DB.
+                        const dbIndex = AS_DB.findIndex(x => x === d);
+                        const isSelected = (row.item === d.item && row.brand === d.brand);
+                        itemOptions += `<option value="${dbIndex}" ${isSelected ? 'selected' : ''}>${label}</option>`;
+                    });
+                }
+
                 tr.innerHTML = `
                     <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.category || ''}" 
-                            onchange="updateASListRow(${index}, 'category', this.value)"
-                            placeholder="카테고리" style="width:100%; border:none; outline:none;">
+                        <select class="mh-input" onchange="updateASCategory(${index}, this.value)"
+                            style="width:100%; border:none; outline:none; background:transparent;">
+                            ${catOptions}
+                        </select>
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.item || ''}" 
-                            onchange="updateASListRow(${index}, 'item', this.value)"
-                            placeholder="세부항목" style="width:100%; border:none; outline:none;">
+                        <select class="mh-input" onchange="updateASItem(${index}, this.value)"
+                            style="width:100%; border:none; outline:none; background:transparent;">
+                            ${itemOptions}
+                        </select>
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.brand || ''}" 
@@ -6027,6 +6063,34 @@
                  `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function updateASCategory(index, category) {
+            asListRows[index].category = category;
+            asListRows[index].item = ''; // Reset item when category changes
+            asListRows[index].brand = '';
+            asListRows[index].service = '';
+            asListRows[index].note = '';
+            saveASList();
+            renderASListTable(); // Re-render to update item dropdown
+        }
+
+        function updateASItem(index, dbIndex) {
+            if (dbIndex === "") {
+                asListRows[index].item = '';
+                return;
+            }
+            const selectedData = AS_DB[dbIndex];
+            if (selectedData) {
+                asListRows[index].item = selectedData.item;
+                asListRows[index].brand = selectedData.brand;
+                asListRows[index].service = selectedData.service;
+                asListRows[index].note = selectedData.note; // Optional: Overwrite note? Yes, usually
+                // Warranty is usually empty in DB, so keep it empty or overwrite if DB has value
+                if (selectedData.warranty) asListRows[index].warranty = selectedData.warranty;
+            }
+            saveASList();
+            renderASListTable();
         }
 
         function updateASListRow(index, field, value) {
