@@ -3968,7 +3968,7 @@
                                         <th style="padding:12px; border:1px solid #d2d2d7;">공정명</th>
                                         <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
                                         <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
-                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                         <th class="no-print"
                                             style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
@@ -5821,8 +5821,11 @@
                     }
                     managerInput.value = currentData.manager;
 
+                    managerInput.oninput = function () {
+                        updateCustomerField(this);
+                    };
                     managerInput.onchange = function () {
-                        currentData.manager = this.value;
+                        updateCustomerField(this);
                         saveCustomers();
                     };
                 }
