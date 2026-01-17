@@ -2760,6 +2760,21 @@
             /* 정보 그리드 */
             .info-grid {
                 gap: 6px !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                width: 100% !important;
+            }
+
+            .info-grid.cols-3 {
+                grid-template-columns: repeat(3, 1fr) !important;
+            }
+
+            .info-grid.cols-4 {
+                grid-template-columns: repeat(4, 1fr) !important;
+            }
+
+            .info-item.full {
+                grid-column: span 2 !important;
             }
 
             .info-item {
