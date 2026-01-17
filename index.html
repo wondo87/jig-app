@@ -562,8 +562,13 @@
 
         .guide-modal-header img {
             width: 100%;
-            height: 300px;
-            object-fit: cover;
+            height: auto;
+            /* 높이를 자동으로 조절하여 원래 비율 유지 */
+            max-height: 600px;
+            /* 너무 커지지 않도록 최대 높이 제한 */
+            object-fit: contain;
+            /* 이미지가 잘리지 않고 다 보이도록 설정 */
+            background: #f8f8f8;
         }
 
         .guide-modal-close {
