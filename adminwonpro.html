@@ -2844,6 +2844,21 @@
                 font-size: 9px !important;
             }
 
+            /* 페이지 매김 방지: 내용이 잘리지 않고 다음 페이지로 넘어가도록 설정 */
+            .section,
+            .info-grid,
+            .signature-card,
+            .clause,
+            .contract-article,
+            .category-box,
+            tr,
+            .estimate-row,
+            .category-memo,
+            .estimate-memo {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
             /* 조항 */
             .clause {
                 padding: 8px !important;
