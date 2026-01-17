@@ -3280,6 +3280,8 @@
                         data-main-only="true">📈 통계</button>
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
                         스케줄</button>
+                    <button class="customer-tab" onclick="showCustomerTab('manager_home')" data-tab="manager_home">🏠
+                        관리자홈페이지</button>
                 </div>
 
                 <!-- 고객정보 패널 -->
@@ -3891,7 +3893,7 @@
                                     <tr>
                                         <!-- Row 4 -->
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="추가 연락처"
+                                            <input type="text" placeholder="이름 (연락처)"
                                                 style="width:100%; border:none; outline:none; text-align:center;"
                                                 class="sch-input" data-field="client2">
                                         </td>
@@ -3911,8 +3913,8 @@
                                         <!-- Row 5 -->
                                         <th style="border:1px solid #000; padding:8px;">인수인계</th>
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="입력"
-                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                            <input type="date"
+                                                style="width:100%; border:none; outline:none; text-align:center; font-family:inherit; background:transparent;"
                                                 class="sch-input" data-field="handover">
                                         </td>
                                         <th style="border:1px solid #000; padding:8px;">공사 동의서</th>
@@ -3968,6 +3970,52 @@
                             <div id="scheduleEmptyState"
                                 style="text-align:center; padding:40px; color:#86868b; display:none;">
                                 등록된 스케줄이 없습니다. 공정을 추가해주세요.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 관리자 홈페이지 패널 -->
+                    <div class="tab-panel" id="panel-manager_home">
+                        <div class="document-wrapper" id="managerHomeDoc"
+                            style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                            <div class="doc-header">
+                                <div>
+                                    <div
+                                        style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
+                                        DESIGN JIG</div>
+                                    <h1>🏠 관리자 홈페이지</h1>
+                                    <div class="subtitle">Manager Homepage Checklist</div>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="pdf-btn" onclick="downloadPDF('managerHomeDoc', '관리자홈페이지')">🖨️
+                                        인쇄/PDF</button>
+                                    <button class="btn btn-secondary btn-sm no-print" onclick="addManagerHomeItem()"
+                                        style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 항목
+                                        추가</button>
+                                </div>
+                            </div>
+                            <div class="doc-content" style="padding:30px;">
+                                <div class="no-print"
+                                    style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
+                                    <strong>💡 안내:</strong> 구글 시트 접근 권한 문제로 항목을 불러오지 못했습니다. 직접 추가하거나 시트 권한을 '링크가 있는 모든
+                                    사용자'로 변경해주세요.
+                                </div>
+                                <table class="data-table" style="width:100%; border-collapse:collapse;">
+                                    <thead>
+                                        <tr style="background:#f5f5f7;">
+                                            <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">항목명</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">내용</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">상태</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                            <th class="no-print"
+                                                style="width:80px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="managerHomeTableBody">
+                                        <!-- Dynamic Rows -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -5600,6 +5648,7 @@
             syncAllFields();
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
+            if (tabId === 'manager_home') loadManagerHome();
         }
 
         function closeCostPasswordModal() {
@@ -5712,6 +5761,13 @@
 
                     const key = 'sch_' + field;
                     input.value = currentData[key] || '';
+
+                    // [추가] 추가 연락처 자동 포맷 (010-XXXX-XXXX)
+                    if (field === 'client2') {
+                        input.addEventListener('input', function () {
+                            this.value = this.value.replace(/(010)(\d{4})(\d{4})(?!\d)/g, '$1-$2-$3');
+                        });
+                    }
 
                     input.onchange = function () {
                         currentData[key] = this.value;
@@ -5849,6 +5905,88 @@
         function saveScheduleToCustomer() {
             currentData.schedules = [...scheduleRows];
             syncAllFields();
+        }
+
+        // [New] Manager Homepage Logic
+        let managerHomeRows = [];
+
+        function loadManagerHome() {
+            if (currentData && currentData.manager_home) {
+                managerHomeRows = currentData.manager_home || [];
+            } else {
+                managerHomeRows = [];
+            }
+            renderManagerHomeTable();
+        }
+
+        function addManagerHomeItem() {
+            managerHomeRows.push({
+                id: Date.now() + Math.random(),
+                name: '',
+                content: '',
+                status: '미완료',
+                note: ''
+            });
+            renderManagerHomeTable();
+            saveManagerHome();
+        }
+
+        function renderManagerHomeTable() {
+            const tbody = document.getElementById('managerHomeTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            managerHomeRows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
+                    <td style="padding:12px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.name || ''}" 
+                            onchange="updateManagerHomeRow(${index}, 'name', this.value)"
+                            placeholder="항목명" style="width:100%; border:none; outline:none;">
+                    </td>
+                    <td style="padding:12px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.content || ''}" 
+                            onchange="updateManagerHomeRow(${index}, 'content', this.value)"
+                            placeholder="내용" style="width:100%; border:none; outline:none;">
+                    </td>
+                    <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
+                        <select class="mh-select" onchange="updateManagerHomeRow(${index}, 'status', this.value)" 
+                            style="border:none; outline:none; background:transparent;">
+                            <option value="미완료" ${row.status === '미완료' ? 'selected' : ''}>미완료</option>
+                            <option value="진행중" ${row.status === '진행중' ? 'selected' : ''}>진행중</option>
+                            <option value="완료" ${row.status === '완료' ? 'selected' : ''}>완료</option>
+                        </select>
+                    </td>
+                    <td style="padding:12px; border:1px solid #d2d2d7;">
+                         <input type="text" class="mh-input" value="${row.note || ''}" 
+                             onchange="updateManagerHomeRow(${index}, 'note', this.value)"
+                             placeholder="비고" style="width:100%; border:none; outline:none;">
+                    </td>
+                    <td class="no-print" style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
+                        <button onclick="removeManagerHomeRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
+                    </td>
+                 `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateManagerHomeRow(index, field, value) {
+            managerHomeRows[index][field] = value;
+            saveManagerHome();
+        }
+
+        function removeManagerHomeRow(index) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            managerHomeRows.splice(index, 1);
+            renderManagerHomeTable();
+            saveManagerHome();
+        }
+
+        function saveManagerHome() {
+            if (!currentData) return;
+            currentData.manager_home = managerHomeRows;
+            saveCustomers();
         }
 
         // syncScheduleToNotion 함수 제거됨 (Notion 통합 제거)
