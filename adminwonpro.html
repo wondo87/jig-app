@@ -6048,9 +6048,17 @@
                              placeholder="서비스센터" style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
-                         <input type="text" class="mh-input" value="${row.warranty || ''}" 
-                             onchange="updateASListRow(${index}, 'warranty', this.value)"
-                             placeholder="보증기간" style="width:100%; border:none; outline:none; text-align:center;">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <select class="mh-input no-print" onchange="applyScheduleToWarranty(${index}, this.value)"
+                                style="font-size:11px; color:#555; width:100%; border:none; border-bottom:1px dashed #ddd; outline:none; background:transparent;">
+                                <option value="">📅 스케줄 연동 선택</option>
+                                ${getScheduleOptions()}
+                            </select>
+                            <input type="text" class="mh-input" value="${row.warranty || ''}" 
+                                id="warrantyInput_${index}"
+                                onchange="updateASListRow(${index}, 'warranty', this.value)"
+                                placeholder="보증기간" style="width:100%; border:none; outline:none; text-align:center;">
+                        </div>
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
@@ -6091,6 +6099,42 @@
             }
             saveASList();
             renderASListTable();
+        }
+
+        function getScheduleOptions() {
+            // Use currentData.schedules if scheduleRows is empty
+            const schedules = (scheduleRows && scheduleRows.length > 0) ? scheduleRows : (currentData.schedules || []);
+
+            return schedules.map((sch, idx) => {
+                const name = sch.taskName || '이름 없음';
+                const end = sch.endDate || '';
+                if (!end) return ''; // Skip if no end date
+                return `<option value="${end}">${name} (${end})</option>`;
+            }).join('');
+        }
+
+        function applyScheduleToWarranty(index, endDate) {
+            if (!endDate) return;
+            // endDate format: YYYY-MM-DD
+            // Add 1 year
+            try {
+                const date = new Date(endDate);
+                date.setFullYear(date.getFullYear() + 1);
+
+                // Format format: ~YY.MM.DD
+                const yy = String(date.getFullYear()).slice(-2);
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const warrantyText = `~${yy}.${mm}.${dd}`;
+
+                asListRows[index].warranty = warrantyText;
+
+                // Update input view
+                document.getElementById(`warrantyInput_${index}`).value = warrantyText;
+                saveASList();
+            } catch (e) {
+                console.error("Invalid Date", e);
+            }
         }
 
         function updateASListRow(index, field, value) {
