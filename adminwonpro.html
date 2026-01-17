@@ -3286,6 +3286,17 @@
                                             placeholder="현장 주소" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
+                                        <label>평수</label>
+                                        <input type="text" class="customer-field" data-field="area" placeholder="00평"
+                                            oninput="updateCustomerField(this)"
+                                            onblur="autoFormatArea(this); updateCustomerField(this)">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>건물유형</label>
+                                        <input type="text" class="customer-field" data-field="buildingType"
+                                            placeholder="아파트, 빌라 등" oninput="updateCustomerField(this)">
+                                    </div>
+                                    <div class="info-item">
                                         <label>공사기간 (시작 ~ 종료)</label>
                                         <div style="display: flex; gap: 8px; align-items: center;">
                                             <input type="date" id="constructionStartInput" class="customer-field"
@@ -3305,15 +3316,15 @@
                                             placeholder="연도. 월. 일." oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
-                                        <label>평수</label>
-                                        <input type="text" class="customer-field" data-field="area" placeholder="00평"
-                                            oninput="updateCustomerField(this)"
-                                            onblur="autoFormatArea(this); updateCustomerField(this)">
+                                        <label>기업이율</label>
+                                        <input type="text" class="customer-field" data-field="profitRate"
+                                            placeholder="15%" value="15%" oninput="updateCustomerField(this)"
+                                            onblur="autoFormatProfit(this); updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
-                                        <label>건물유형</label>
-                                        <input type="text" class="customer-field" data-field="buildingType"
-                                            placeholder="아파트, 빌라 등" oninput="updateCustomerField(this)">
+                                        <label>담당자</label>
+                                        <input type="text" class="customer-field" data-field="manager"
+                                            placeholder="담당자명" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>계약일</label>
@@ -3324,17 +3335,6 @@
                                         <label>총 계약금액 (VAT 포함)</label>
                                         <input type="text" class="customer-field" data-field="totalAmount"
                                             placeholder="₩ 0,000,000" oninput="updateCustomerField(this)">
-                                    </div>
-                                    <div class="info-item">
-                                        <label>기업이율</label>
-                                        <input type="text" class="customer-field" data-field="profitRate"
-                                            placeholder="15%" value="15%" oninput="updateCustomerField(this)"
-                                            onblur="autoFormatProfit(this); updateCustomerField(this)">
-                                    </div>
-                                    <div class="info-item">
-                                        <label>담당자</label>
-                                        <input type="text" class="customer-field" data-field="manager"
-                                            placeholder="담당자명" oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
                                         <label>잔금일</label>
