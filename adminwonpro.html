@@ -3861,7 +3861,11 @@
                                     <tr>
                                         <!-- Row 1 -->
                                         <th style="border:1px solid #000; padding:8px;">공사 관리자</th>
-                                        <td style="border:1px solid #000; padding:8px;" id="schManager"></td>
+                                        <td style="border:1px solid #000; padding:8px;">
+                                            <input type="text" class="sch-input" data-field="manager"
+                                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;"
+                                                placeholder="입력">
+                                        </td>
                                         <th style="border:1px solid #000; padding:8px;">공사기간(시작~종료)</th>
                                         <td style="border:1px solid #000; padding:8px;" id="schPeriod"></td>
                                     </tr>
@@ -3869,7 +3873,7 @@
                                         <!-- Row 2 -->
                                         <th style="border:1px solid #000; padding:8px;">관리사무소</th>
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="텍스트"
+                                            <input type="text" placeholder="입력"
                                                 style="width:100%; border:none; outline:none; text-align:center;"
                                                 class="sch-input" data-field="office">
                                         </td>
@@ -3886,30 +3890,36 @@
                                     <tr>
                                         <!-- Row 4 -->
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="텍스트"
+                                            <input type="text" placeholder="추가 연락처"
                                                 style="width:100%; border:none; outline:none; text-align:center;"
                                                 class="sch-input" data-field="client2">
                                         </td>
                                         <th style="border:1px solid #000; padding:8px;">행위허가 필증</th>
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="확장 (완료/미완료)"
-                                                style="width:100%; border:none; outline:none; text-align:center;"
-                                                class="sch-input" data-field="permit">
+                                            <input type="text" placeholder="비고(예: 확장)" class="sch-input"
+                                                data-field="permit_memo"
+                                                style="width:80px; text-align:center; border:none; border-bottom:1px solid #eee;">
+                                            &nbsp;
+                                            <label><input type="radio" name="permit_status" value="완료" class="sch-radio"
+                                                    data-field="permit_status"> 완료</label>
+                                            <label><input type="radio" name="permit_status" value="미완료"
+                                                    class="sch-radio" data-field="permit_status"> 미완료</label>
                                         </td>
                                     </tr>
                                     <tr>
                                         <!-- Row 5 -->
                                         <th style="border:1px solid #000; padding:8px;">인수인계</th>
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="텍스트"
+                                            <input type="text" placeholder="입력"
                                                 style="width:100%; border:none; outline:none; text-align:center;"
                                                 class="sch-input" data-field="handover">
                                         </td>
                                         <th style="border:1px solid #000; padding:8px;">공사 동의서</th>
                                         <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="완료/미완료"
-                                                style="width:100%; border:none; outline:none; text-align:center;"
-                                                class="sch-input" data-field="consent">
+                                            <label><input type="radio" name="consent_status" value="완료"
+                                                    class="sch-radio" data-field="consent_status"> 완료</label>
+                                            <label><input type="radio" name="consent_status" value="미완료"
+                                                    class="sch-radio" data-field="consent_status"> 미완료</label>
                                         </td>
                                     </tr>
                                     <tr>
@@ -5669,8 +5679,8 @@
             }
 
             // [추가] 스케줄 상단 정보 자동 채우기
-            if (document.getElementById('schManager')) {
-                document.getElementById('schManager').textContent = currentData.manager || '';
+            if (document.getElementById('schPeriod')) {
+                // 1. Static/Auto Fields
                 document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
                 document.getElementById('schArea').textContent = currentData.area ? currentData.area + ' PY' : '';
                 document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
@@ -5679,9 +5689,21 @@
                 document.getElementById('schClient1').textContent = clientInfo;
                 document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
 
-                // 수동 입력 항목 바인딩
+                // 2. Manager Input (Special handling)
+                const managerInput = document.querySelector('input[data-field="manager"]');
+                if (managerInput) {
+                    managerInput.value = currentData.manager || '원도연 소장 (010-4650-7013)';
+                    managerInput.onchange = function () {
+                        currentData.manager = this.value;
+                        saveCustomers();
+                    };
+                }
+
+                // 3. Text Inputs (sch_*)
                 document.querySelectorAll('.sch-input').forEach(input => {
                     const field = input.dataset.field;
+                    if (field === 'manager') return; // Skip manager
+
                     const key = 'sch_' + field;
                     input.value = currentData[key] || '';
 
@@ -5689,6 +5711,24 @@
                         currentData[key] = this.value;
                         saveCustomers();
                     };
+                });
+
+                // 4. Radio Buttons (sch_*)
+                const radioFields = ['permit_status', 'consent_status'];
+                radioFields.forEach(field => {
+                    const key = 'sch_' + field;
+                    const savedValue = currentData[key];
+                    const radios = document.querySelectorAll(`input[name="${field}"]`);
+
+                    radios.forEach(radio => {
+                        radio.checked = (radio.value === savedValue);
+                        radio.onchange = function () {
+                            if (this.checked) {
+                                currentData[key] = this.value;
+                                saveCustomers();
+                            }
+                        };
+                    });
                 });
             }
             renderScheduleTable();
