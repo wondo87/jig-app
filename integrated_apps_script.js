@@ -464,7 +464,8 @@ function handleCustomerSync(payload) {
         customerData.warrantyPeriod || '',
         customerData.totalAmount || '',
         customerData.estimateProfitRate || '',
-        customerData.jsonData || JSON.stringify(customerData)
+        customerData.jsonData || JSON.stringify(customerData),
+        formatScheduleToString(customerData.schedules) // 공사 스케줄 (가독성 문자열)
     ];
 
     // 기존 데이터 위치 검색 (Main)
@@ -709,11 +710,23 @@ function buildAsRowData(customerData) {
 
 // --- Customer Sync Helpers ---
 
+function formatScheduleToString(schedules) {
+    if (!schedules || !Array.isArray(schedules) || schedules.length === 0) return '';
+    return schedules.map(function (s, idx) {
+        var start = s.start || '';
+        var end = s.end || '';
+        var dateStr = (start || end) ? ' (' + start + ' ~ ' + end + ')' : '';
+        var managerStr = s.inCharge ? ' - ' + s.inCharge : '';
+        var memoStr = s.memo ? ' [' + s.memo + ']' : '';
+        return (idx + 1) + '. ' + (s.name || '') + dateStr + managerStr + memoStr;
+    }).join('\n');
+}
+
 function initializeCustomerSheet(sheet) {
     var headers = [
         '고객ID', '상태', '생성일', '성명', '연락처', '이메일', '주소', '공사명', '현장주소',
         '평수', '유입경로', '건물유형',
-        '계약일', '공사기간', 'A/S 기간', '계약금액', '이윤율', 'JSON데이터'
+        '계약일', '공사기간', 'A/S 기간', '계약금액', '이윤율', 'JSON데이터', '공사 스케줄'
     ];
     sheet.appendRow(headers);
     var headerRange = sheet.getRange(1, 1, 1, headers.length);

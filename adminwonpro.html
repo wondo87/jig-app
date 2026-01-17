@@ -3848,6 +3848,91 @@
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
+                            <!-- 스케줄 상단 정보 (Schedule Info Table) -->
+                            <table class="schedule-info-table"
+                                style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px; border:1px solid #000;">
+                                <colgroup>
+                                    <col style="width: 15%; background: #fff;">
+                                    <col style="width: 35%;">
+                                    <col style="width: 15%; background: #fff;">
+                                    <col style="width: 35%;">
+                                </colgroup>
+                                <tbody style="text-align: center;">
+                                    <tr>
+                                        <!-- Row 1 -->
+                                        <th style="border:1px solid #000; padding:8px;">공사 관리자</th>
+                                        <td style="border:1px solid #000; padding:8px;" id="schManager"></td>
+                                        <th style="border:1px solid #000; padding:8px;">공사기간(시작~종료)</th>
+                                        <td style="border:1px solid #000; padding:8px;" id="schPeriod"></td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 2 -->
+                                        <th style="border:1px solid #000; padding:8px;">관리사무소</th>
+                                        <td style="border:1px solid #000; padding:8px;">
+                                            <input type="text" placeholder="텍스트"
+                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                                class="sch-input" data-field="office">
+                                        </td>
+                                        <th style="border:1px solid #000; padding:8px;">평수</th>
+                                        <td style="border:1px solid #000; padding:8px;" id="schArea"></td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 3 -->
+                                        <th style="border:1px solid #000; padding:8px;" rowspan="2">공사 의뢰인</th>
+                                        <td style="border:1px solid #000; padding:8px;" id="schClient1"></td>
+                                        <th style="border:1px solid #000; padding:8px;">이사예정일</th>
+                                        <td style="border:1px solid #000; padding:8px;" id="schMoveDate"></td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 4 -->
+                                        <td style="border:1px solid #000; padding:8px;">
+                                            <input type="text" placeholder="텍스트"
+                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                                class="sch-input" data-field="client2">
+                                        </td>
+                                        <th style="border:1px solid #000; padding:8px;">행위허가 필증</th>
+                                        <td style="border:1px solid #000; padding:8px;">
+                                            <input type="text" placeholder="확장 (완료/미완료)"
+                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                                class="sch-input" data-field="permit">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 5 -->
+                                        <th style="border:1px solid #000; padding:8px;">인수인계</th>
+                                        <td style="border:1px solid #000; padding:8px;">
+                                            <input type="text" placeholder="텍스트"
+                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                                class="sch-input" data-field="handover">
+                                        </td>
+                                        <th style="border:1px solid #000; padding:8px;">공사 동의서</th>
+                                        <td style="border:1px solid #000; padding:8px;">
+                                            <input type="text" placeholder="완료/미완료"
+                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                                class="sch-input" data-field="consent">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 6 -->
+                                        <th style="border:1px solid #000; padding:8px;">현장주소</th>
+                                        <td style="border:1px solid #000; padding:8px;" colspan="3" id="schSiteAddr">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 7 -->
+                                        <th style="border:1px solid #000; padding:8px;">비밀번호</th>
+                                        <td style="border:1px solid #000; padding:8px;" colspan="3">
+                                            공동현관 : <input type="text"
+                                                style="width:100px; border:none; border-bottom:1px solid #eee; outline:none; text-align:center;"
+                                                class="sch-input" data-field="gatePw">
+                                            &nbsp;&nbsp;
+                                            세대현관 : <input type="text"
+                                                style="width:100px; border:none; border-bottom:1px solid #eee; outline:none; text-align:center;"
+                                                class="sch-input" data-field="doorPw">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div class="no-print"
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
                                 <strong>💡 사용법:</strong> 공정을 추가한 후 날짜/담당자를 입력하세요. 드래그로 순서 변경이 가능합니다.
@@ -5581,6 +5666,30 @@
                     inCharge: s.inCharge || '',
                     memo: ''
                 }));
+            }
+
+            // [추가] 스케줄 상단 정보 자동 채우기
+            if (document.getElementById('schManager')) {
+                document.getElementById('schManager').textContent = currentData.manager || '';
+                document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
+                document.getElementById('schArea').textContent = currentData.area ? currentData.area + ' PY' : '';
+                document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
+
+                const clientInfo = currentData.clientName ? (currentData.clientName + (currentData.clientPhone ? ' (' + currentData.clientPhone + ')' : '')) : '';
+                document.getElementById('schClient1').textContent = clientInfo;
+                document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
+
+                // 수동 입력 항목 바인딩
+                document.querySelectorAll('.sch-input').forEach(input => {
+                    const field = input.dataset.field;
+                    const key = 'sch_' + field;
+                    input.value = currentData[key] || '';
+
+                    input.onchange = function () {
+                        currentData[key] = this.value;
+                        saveCustomers();
+                    };
+                });
             }
             renderScheduleTable();
 
