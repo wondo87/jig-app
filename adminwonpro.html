@@ -3280,8 +3280,8 @@
                         data-main-only="true">📈 통계</button>
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
                         스케줄</button>
-                    <button class="customer-tab" onclick="showCustomerTab('manager_home')" data-tab="manager_home">🏠
-                        관리자홈페이지</button>
+                    <button class="customer-tab" onclick="showCustomerTab('as_list')" data-tab="as_list">🛠️
+                        A/S 관리 리스트</button>
                 </div>
 
                 <!-- 고객정보 패널 -->
@@ -3974,22 +3974,22 @@
                         </div>
                     </div>
 
-                    <!-- 관리자 홈페이지 패널 -->
-                    <div class="tab-panel" id="panel-manager_home">
-                        <div class="document-wrapper" id="managerHomeDoc"
+                    <!-- A/S 관리 리스트 패널 -->
+                    <div class="tab-panel" id="panel-as_list">
+                        <div class="document-wrapper" id="asListDoc"
                             style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
                             <div class="doc-header">
                                 <div>
                                     <div
                                         style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
                                         DESIGN JIG</div>
-                                    <h1>🏠 관리자 홈페이지</h1>
-                                    <div class="subtitle">Manager Homepage Checklist</div>
+                                    <h1>🛠️ A/S 관리 리스트</h1>
+                                    <div class="subtitle">A/S Management List</div>
                                 </div>
                                 <div style="display: flex; gap: 8px; align-items: center;">
-                                    <button class="pdf-btn" onclick="downloadPDF('managerHomeDoc', '관리자홈페이지')">🖨️
+                                    <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
                                         인쇄/PDF</button>
-                                    <button class="btn btn-secondary btn-sm no-print" onclick="addManagerHomeItem()"
+                                    <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"
                                         style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 항목
                                         추가</button>
                                 </div>
@@ -3997,22 +3997,24 @@
                             <div class="doc-content" style="padding:30px;">
                                 <div class="no-print"
                                     style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                    <strong>💡 안내:</strong> 구글 시트 접근 권한 문제로 항목을 불러오지 못했습니다. 직접 추가하거나 시트 권한을 '링크가 있는 모든
-                                    사용자'로 변경해주세요.
+                                    <strong>💡 안내:</strong> 각 업체의 A/S 연락처 및 브랜드 정보를 관리하는 페이지입니다. 필요에 따라 항목을 수정하거나 추가하세요.
                                 </div>
                                 <table class="data-table" style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         <tr style="background:#f5f5f7;">
                                             <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">항목명</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">내용</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">상태</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">세부항목</th>
+                                            <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">브랜드 (제조사)
+                                            </th>
+                                            <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
                                             <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                             <th class="no-print"
                                                 style="width:80px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="managerHomeTableBody">
+                                    <tbody id="asListTableBody">
                                         <!-- Dynamic Rows -->
                                     </tbody>
                                 </table>
@@ -5648,7 +5650,7 @@
             syncAllFields();
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
-            if (tabId === 'manager_home') loadManagerHome();
+            if (tabId === 'as_list') loadASList();
         }
 
         function closeCostPasswordModal() {
@@ -5907,85 +5909,137 @@
             syncAllFields();
         }
 
-        // [New] Manager Homepage Logic
-        let managerHomeRows = [];
+        // [New] A/S List Logic
+        let asListRows = [];
+        const initialASData = [
+            { category: "냉난방", item: "시스템 에어컨", brand: "LG전자", service: "1544-7777", warranty: "", note: "" },
+            { category: "냉난방", item: "시스템 에어컨", brand: "삼성전자", service: "1588-3366", warranty: "", note: "" },
+            { category: "주방기기", item: "주방 후드 (국내)", brand: "SK매직", service: "1600-1661", warranty: "", note: "" },
+            { category: "주방기기", item: "주방 후드 (국내)", brand: "한샘", service: "1544-0900", warranty: "", note: "" },
+            { category: "주방기기", item: "주방 후드 (국내)", brand: "파세코", service: "1588-1336", warranty: "", note: "" },
+            { category: "주방기기", item: "주방 후드 (국내)", brand: "하츠 (Haatz)", service: "1644-0806", warranty: "", note: "" },
+            { category: "주방기기", item: "주방 후드 (수입)", brand: "프랑케 (FRANKE)", service: "02-3451-9100", warranty: "", note: "프랑케 코리아" },
+            { category: "주방기기", item: "주방 후드 (수입)", brand: "팔멡 (FALMEC)", service: "수입사/대리점", warranty: "", note: "" },
+            { category: "주방기기", item: "주방 후드 (수입)", brand: "엘리카 (ELICA)", service: "02-3443-5300", warranty: "", note: "엘리카 코리아" },
+            { category: "도장", item: "국내 페인트", brand: "삼화페인트", service: "1588-3655", warranty: "", note: "" },
+            { category: "도장", item: "국내 페인트", brand: "노루페인트", service: "1588-2567", warranty: "", note: "" },
+            { category: "도장", item: "국내 페인트", brand: "KCC페인트", service: "080-022-8200", warranty: "", note: "" },
+            { category: "도장", item: "수입 친환경 페인트", brand: "벤자민무어", service: "1577-3103", warranty: "", note: "" },
+            { category: "도장", item: "수입 친환경 페인트", brand: "던에드워드", service: "1577-3103", warranty: "", note: "" },
+            { category: "하드웨어", item: "도어 손잡이", brand: "도무스 (DOMUS)", service: "032-570-2000", warranty: "", note: "" },
+            { category: "창호/도어", item: "창호 및 도어", brand: "LX하우시스", service: "1544-1893", warranty: "", note: "" },
+            { category: "창호/도어", item: "창호 및 도어", brand: "KCC", service: "080-022-8200", warranty: "", note: "" },
+            { category: "창호/도어", item: "도어/몰딩", brand: "영림홈앤리빙", service: "1577-5600", warranty: "", note: "" },
+            { category: "창호/도어", item: "도어/몰딩", brand: "예림", service: "고객센터 확인 필요", warranty: "", note: "" },
+            { category: "바닥재", item: "강마루 (라솔라 SB)", brand: "한솔홈데코", service: "1544-3977", warranty: "", note: "" },
+            { category: "바닥재", item: "강마루 (세라플렉스)", brand: "이건마루", service: "1588-7626", warranty: "", note: "" },
+            { category: "바닥재", item: "강마루 (마블러스)", brand: "구정마루", service: "1588-9955", warranty: "", note: "" },
+            { category: "바닥재", item: "강마루 (나투스진)", brand: "동화자연마루", service: "1588-3333", warranty: "", note: "" },
+            { category: "바닥재", item: "강마루/강그린", brand: "LX하우시스", service: "1544-1893", warranty: "", note: "" },
+            { category: "바닥재", item: "원목마루", brand: "지복득마루", service: "02-576-7736", warranty: "", note: "" },
+            { category: "바닥재", item: "원목마루", brand: "노바마루", service: "02-576-7736", warranty: "", note: "" },
+            { category: "도배/필름", item: "실크/합지 벽지", brand: "LX/개나리/신한", service: "시공사 문의", warranty: "", note: "제품 하자 시 본사 문의" },
+            { category: "도배/필름", item: "인테리어 필름", brand: "LX/현대/레놀릿", service: "시공사 문의", warranty: "", note: "제품 하자 시 본사 문의" },
+            { category: "수전/도기", item: "싱크볼/수입싱크", brand: "백조싱크", service: "1544-0511", warranty: "", note: "포스터(Foster) 포함" },
+            { category: "수전/도기", item: "디자인 수전", brand: "더죤테크", service: "02-511-1334", warranty: "", note: "슈티에(Sutier) 포함" },
+            { category: "수전/도기", item: "위생도기/수전", brand: "대림바스", service: "1588-4360", warranty: "", note: "" },
+            { category: "수전/도기", item: "위생도기/수전", brand: "아메리칸 스탠다드", service: "1588-5906", warranty: "", note: "" },
+            { category: "전기/제어", item: "조명 제어 시스템", brand: "루트론 (Lutron)", service: "02-540-3660", warranty: "", note: "" },
+            { category: "전기/제어", item: "프리미엄 스위치", brand: "융 (JUNG)", service: "02-556-5477", warranty: "", note: "융코리아" },
+            { category: "전기/제어", item: "스위치/콘센트", brand: "르그랑코리아", service: "02-550-3000", warranty: "", note: "아르테오 등" },
+            { category: "전기/제어", item: "스위치/콘센트", brand: "한샘전기", service: "1588-6588", warranty: "~28.01.02", note: "" },
+            { category: "조명", item: "하이엔드 수입조명", brand: "아르테미데/루이스폴센", service: "02-516-7711", warranty: "", note: "두오모앤코" },
+            { category: "조명", item: "디자인 조명", brand: "플로스/앤트레디션", service: "02-512-3403", warranty: "", note: "공식 수입사" },
+            { category: "조명", item: "스마트 조명", brand: "필립스 휴 (Hue)", service: "080-600-6600", warranty: "", note: "시그니파이 코리아" },
+            { category: "조명", item: "매입등/간접조명", brand: "솔라루체/라온", service: "구매처 문의", warranty: "", note: "" },
+            { category: "타일", item: "욕실 타일", brand: "코크랜 (다나디자인)", service: "031-123-4567", warranty: "~26.07.06", note: "" }
+        ];
 
-        function loadManagerHome() {
-            if (currentData && currentData.manager_home) {
-                managerHomeRows = currentData.manager_home || [];
+        function loadASList() {
+            if (currentData && currentData.as_list && currentData.as_list.length > 0) {
+                asListRows = currentData.as_list;
             } else {
-                managerHomeRows = [];
+                asListRows = JSON.parse(JSON.stringify(initialASData));
+                saveASList();
             }
-            renderManagerHomeTable();
+            renderASListTable();
         }
 
-        function addManagerHomeItem() {
-            managerHomeRows.push({
-                id: Date.now() + Math.random(),
-                name: '',
-                content: '',
-                status: '미완료',
+        function addASListItem() {
+            asListRows.push({
+                category: '',
+                item: '',
+                brand: '',
+                service: '',
+                warranty: '',
                 note: ''
             });
-            renderManagerHomeTable();
-            saveManagerHome();
+            renderASListTable();
+            saveASList();
         }
 
-        function renderManagerHomeTable() {
-            const tbody = document.getElementById('managerHomeTableBody');
+        function renderASListTable() {
+            const tbody = document.getElementById('asListTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            managerHomeRows.forEach((row, index) => {
+            asListRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.name || ''}" 
-                            onchange="updateManagerHomeRow(${index}, 'name', this.value)"
-                            placeholder="항목명" style="width:100%; border:none; outline:none;">
+                        <input type="text" class="mh-input" value="${row.category || ''}" 
+                            onchange="updateASListRow(${index}, 'category', this.value)"
+                            placeholder="카테고리" style="width:100%; border:none; outline:none;">
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.content || ''}" 
-                            onchange="updateManagerHomeRow(${index}, 'content', this.value)"
-                            placeholder="내용" style="width:100%; border:none; outline:none;">
+                        <input type="text" class="mh-input" value="${row.item || ''}" 
+                            onchange="updateASListRow(${index}, 'item', this.value)"
+                            placeholder="세부항목" style="width:100%; border:none; outline:none;">
+                    </td>
+                    <td style="padding:12px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.brand || ''}" 
+                            onchange="updateASListRow(${index}, 'brand', this.value)"
+                            placeholder="브랜드" style="width:100%; border:none; outline:none;">
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
-                        <select class="mh-select" onchange="updateManagerHomeRow(${index}, 'status', this.value)" 
-                            style="border:none; outline:none; background:transparent;">
-                            <option value="미완료" ${row.status === '미완료' ? 'selected' : ''}>미완료</option>
-                            <option value="진행중" ${row.status === '진행중' ? 'selected' : ''}>진행중</option>
-                            <option value="완료" ${row.status === '완료' ? 'selected' : ''}>완료</option>
-                        </select>
+                         <input type="text" class="mh-input" value="${row.service || ''}" 
+                             onchange="updateASListRow(${index}, 'service', this.value)"
+                             placeholder="서비스센터" style="width:100%; border:none; outline:none; text-align:center;">
+                    </td>
+                    <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
+                         <input type="text" class="mh-input" value="${row.warranty || ''}" 
+                             onchange="updateASListRow(${index}, 'warranty', this.value)"
+                             placeholder="보증기간" style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
                     <td style="padding:12px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
-                             onchange="updateManagerHomeRow(${index}, 'note', this.value)"
+                             onchange="updateASListRow(${index}, 'note', this.value)"
                              placeholder="비고" style="width:100%; border:none; outline:none;">
                     </td>
                     <td class="no-print" style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
-                        <button onclick="removeManagerHomeRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
+                        <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
                     </td>
                  `;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateManagerHomeRow(index, field, value) {
-            managerHomeRows[index][field] = value;
-            saveManagerHome();
+        function updateASListRow(index, field, value) {
+            asListRows[index][field] = value;
+            saveASList();
         }
 
-        function removeManagerHomeRow(index) {
+        function removeASListRow(index) {
             if (!confirm('삭제하시겠습니까?')) return;
-            managerHomeRows.splice(index, 1);
-            renderManagerHomeTable();
-            saveManagerHome();
+            asListRows.splice(index, 1);
+            renderASListTable();
+            saveASList();
         }
 
-        function saveManagerHome() {
+        function saveASList() {
             if (!currentData) return;
-            currentData.manager_home = managerHomeRows;
+            currentData.as_list = asListRows;
             saveCustomers();
         }
 
