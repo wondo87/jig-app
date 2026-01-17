@@ -386,6 +386,15 @@
             object-fit: cover;
         }
 
+        @media (max-width: 768px) {
+            .modal-header img {
+                height: auto;
+                min-height: 200px;
+                object-fit: contain;
+                background: #f8f8f8;
+            }
+        }
+
         .modal-close {
             position: absolute;
             top: 20px;
