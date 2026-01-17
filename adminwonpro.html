@@ -5692,7 +5692,12 @@
                 // 2. Manager Input (Special handling)
                 const managerInput = document.querySelector('input[data-field="manager"]');
                 if (managerInput) {
-                    managerInput.value = currentData.manager || '원도연 소장 (010-4650-7013)';
+                    // Force default if empty
+                    if (!currentData.manager || currentData.manager.trim() === '') {
+                        currentData.manager = '원도연 소장 (010-4650-7013)';
+                    }
+                    managerInput.value = currentData.manager;
+
                     managerInput.onchange = function () {
                         currentData.manager = this.value;
                         saveCustomers();
@@ -8001,8 +8006,30 @@
             // element 복제
             const clonedElement = element.cloneNode(true);
 
+            // [Fix] Clone does not copy dynamic values! Sync manually.
+            const originalInputs = element.querySelectorAll('input, textarea, select');
+            const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+            originalInputs.forEach((inp, i) => {
+                if (clonedInputs[i]) {
+                    if (inp.type === 'checkbox' || inp.type === 'radio') {
+                        clonedInputs[i].checked = inp.checked;
+                    } else {
+                        clonedInputs[i].value = inp.value;
+                    }
+                }
+            });
+
             // 모든 input을 텍스트로 변환
             clonedElement.querySelectorAll('input').forEach(input => {
+                // Radio/Checkbox handling
+                if (input.type === 'radio' || input.type === 'checkbox') {
+                    const span = document.createElement('span');
+                    span.textContent = input.checked ? '☑' : '☐';
+                    span.style.cssText = 'display:inline-block; margin-right:4px; font-weight:bold;';
+                    input.parentNode.replaceChild(span, input);
+                    return;
+                }
+
                 const span = document.createElement('span');
                 span.textContent = input.value || '-';
                 span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
