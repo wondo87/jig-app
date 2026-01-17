@@ -769,8 +769,24 @@
             margin: 0 0 2px 0;
             /* 글줄 간격은 좁게 */
             min-height: 1.5em;
+            /* 빈 줄 최소 높이 */
             letter-spacing: -0.01em;
             padding: 0;
+        }
+
+        .modal-body .content ul,
+        .modal-body .content ol,
+        .guide-modal-body .content ul,
+        .guide-modal-body .content ol {
+            margin: 4px 0 12px 24px;
+            /* 리스트 하단 여백 12px */
+            padding: 0;
+        }
+
+        .modal-body .content li,
+        .guide-modal-body .content li {
+            margin: 2px 0;
+            padding-left: 2px;
         }
 
         /* 빈 문단(Spacer) 스타일 */
