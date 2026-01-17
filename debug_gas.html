@@ -100,7 +100,7 @@
                 // 2. GET 테스트 (cors 허용 여부 확인용, 보통은 실패함)
                 log(resultsDiv, '2. GET 요청 시도 (일반 접속)...');
                 try {
-                    const response = await fetch(GAS_URL + '?test=1');
+                    const response = await fetch(GAS_URL + '?sheet=고객관리_견적서');
                     if (response.ok) {
                         log(resultsDiv, `✅ GET 요청 성공: ${response.status}`, 'success');
                     } else {
