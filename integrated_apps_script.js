@@ -130,6 +130,11 @@ function doGet(e) {
             return handleASListGet(e);
         }
 
+        // 2.2. 공사 스케줄 템플릿 요청
+        if (sheetParam === 'schedule_template' || sheetParam === '공사스케줄관리') {
+            return handleScheduleTemplateGet(e);
+        }
+
         // 2.5. 샘플 견적서 조회
         var actionParam = e.parameter.action;
         if (actionParam === 'getSampleEstimates') {
@@ -146,6 +151,44 @@ function doGet(e) {
         return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
             .setMimeType(ContentService.MimeType.JSON);
     }
+}
+
+function handleScheduleTemplateGet(e) {
+    var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+    var sheet = spreadsheet.getSheetByName('공사 스케줄 관리');
+
+    // 시트가 없으면 생성하고 헤더 설정
+    if (!sheet) {
+        sheet = spreadsheet.insertSheet('공사 스케줄 관리');
+        var headers = ['카테고리', '세부 공정명', '핵심 체크포인트', '시작일', '종료일', '담당자', '비고'];
+        sheet.appendRow(headers);
+        var headerRange = sheet.getRange(1, 1, 1, headers.length);
+        headerRange.setBackground('#6d9eeb');
+        headerRange.setFontColor('#ffffff');
+        headerRange.setFontWeight('bold');
+        sheet.setFrozenRows(1);
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+        return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+    var steps = data.map(function (row) {
+        return {
+            category: row[0] || '',
+            name: row[1] || '',
+            checkPoint: row[2] || '',
+            // 시작일/종료일은 템플릿에서 보통 비워두지만 값이 있으면 가져옴
+            start: row[3] instanceof Date ? Utilities.formatDate(row[3], Session.getScriptTimeZone(), 'yyyy-MM-dd') : (row[3] || ''),
+            end: row[4] instanceof Date ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), 'yyyy-MM-dd') : (row[4] || ''),
+            inCharge: row[5] || '',
+            memo: row[6] || ''
+        };
+    });
+
+    return ContentService.createTextOutput(JSON.stringify(steps)).setMimeType(ContentService.MimeType.JSON);
 }
 
 // [트리거] onEdit (단순 트리거)
@@ -1427,11 +1470,16 @@ function handleASListGet(e) {
 
             data.push({
                 category: row[0] || '',
-                item: row[1] || '',
-                brand: row[2] || '',
-                service: row[3] || '',
-                warranty: row[4] || '', // 데이터가 날짜 객체일 경우 문자열로 변환 필요할 수 있음
-                note: row[5] || ''
+                brand: row[1] || '',
+                item: row[2] || '',
+                modelNum: row[3] || '',
+                rank: row[4] || '',
+                size: row[5] || '',
+                price: row[6] || '',
+                website: row[7] || '',
+                service: row[8] || '',
+                warranty: row[9] || '',
+                note: row[10] || ''
             });
         }
 

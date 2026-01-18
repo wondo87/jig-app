@@ -3969,13 +3969,15 @@
                                 <thead>
                                     <tr style="background:#f5f5f7;">
                                         <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                        <th style="padding:12px; border:1px solid #d2d2d7;">공정명</th>
-                                        <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
-                                        <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
-                                        <th style="width:180px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7;">세부 공정명</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7;">핵심 체크포인트</th>
+                                        <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
+                                        <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
+                                        <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                         <th class="no-print"
-                                            style="width:100px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                            style="width:90px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                     </tr>
                                 </thead>
                                 <tbody id="scheduleTableBody">
@@ -4078,15 +4080,19 @@
                                     <thead>
                                         <tr style="background:#f5f5f7;">
                                             <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">세부항목</th>
-                                            <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">브랜드 (제조사)
-                                            </th>
-                                            <th style="width:140px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
-                                            <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
+                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">브랜드</th>
+                                            <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">세부항목</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">품번</th>
+                                            <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">인기</th>
+                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">치수</th>
+                                            <th style="width:90px; padding:12px; border:1px solid #d2d2d7;">가격</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">홈페이지</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
                                             <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                             <th class="no-print"
-                                                style="width:80px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                                style="width:50px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="asListTableBody">
@@ -5752,42 +5758,27 @@
         }
 
         let scheduleRows = [];
-        const defaultScheduleSteps = [
-            { name: "디자인 상담 및 설계", inCharge: "" },
-            { name: "민원 접수 및 보양", inCharge: "" },
-            { name: "보존 상태 확인", inCharge: "" },
-            { name: "가구 철거", inCharge: "" },
-            { name: "마루 철거", inCharge: "" },
-            { name: "일반 철거", inCharge: "" },
-            { name: "설비", inCharge: "" },
-            { name: "1차 방수", inCharge: "" },
-            { name: "창호", inCharge: "" },
-            { name: "2차 방수", inCharge: "" },
-            { name: "시스템 에어컨 선배관", inCharge: "" },
-            { name: "전기 배선", inCharge: "" },
-            { name: "3차 방수", inCharge: "" },
-            { name: "목공/도어", inCharge: "" },
-            { name: "현장정리", inCharge: "" },
-            { name: "타일", inCharge: "" },
-            { name: "화장실 천장 돔", inCharge: "" },
-            { name: "필름", inCharge: "" },
-            { name: "도어락 설치", inCharge: "" },
-            { name: "바닥재 시공", inCharge: "" },
-            { name: "도배", inCharge: "" },
-            { name: "인터폰 설치", inCharge: "" },
-            { name: "도장(탄성)", inCharge: "" },
-            { name: "가구(주방)", inCharge: "" },
-            { name: "가구(붙박이장/신발장)", inCharge: "" },
-            { name: "전기(조명/스위치/콘센트/실링팬)", inCharge: "" },
-            { name: "온도조절기", inCharge: "" },
-            { name: "도기/수전", inCharge: "" },
-            { name: "시스템 에어컨 기계 설치", inCharge: "" },
-            { name: "중문", inCharge: "" },
-            { name: "최종마감/검수", inCharge: "" },
-            { name: "준공청소", inCharge: "" },
-            { name: "최종 마감", inCharge: "" },
-            { name: "인수인계", inCharge: "" }
-        ];
+        let defaultScheduleSteps = [];
+
+        async function fetchScheduleTemplate() {
+            try {
+                // 스케줄 템플릿 가져오기 (Google Sheet: '공사 스케줄 관리')
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=schedule_template');
+                const data = await response.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    defaultScheduleSteps = data;
+                    console.log('스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+                } else {
+                    console.warn('스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
+                    defaultScheduleSteps = [
+                        { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
+                    ];
+                }
+            } catch (error) {
+                console.error('스케줄 템플릿 로드 오류:', error);
+            }
+        }
 
         function loadScheduleForCustomer() {
             // Notion 통합 제거됨
@@ -5819,17 +5810,16 @@
                 // 2. Manager Input (Special handling)
                 const managerInput = document.getElementById('schManagerInput');
                 if (managerInput) {
-                    // Force default if empty
                     if (!currentData.manager || currentData.manager.trim() === '') {
                         currentData.manager = '원프로 소장 (010-4650-7013)';
                     }
                     managerInput.value = currentData.manager;
 
-                    managerInput.oninput = functio n() {
-                        updateCustomerField(this);
+                    managerInput.oninput = function () {
+                        updateCustomerField('manager', this.value);
                     };
                     managerInput.onchange = function () {
-                        updateCustomerField(this);
+                        updateCustomerField('manager', this.value);
                         saveCustomers();
                     };
                 }
@@ -5842,7 +5832,6 @@
                     const key = 'sch_' + field;
                     input.value = currentData[key] || '';
 
-                    // [추가] 추가 연락처 자동 포맷 (010-XXXX-XXXX)
                     if (field === 'client2') {
                         input.addEventListener('input', function () {
                             this.value = this.value.replace(/(010)(\d{4})(\d{4})(?!\d)/g, '$1-$2-$3');
@@ -5874,12 +5863,8 @@
                 });
             }
             renderScheduleTable();
-
-            // 모든 연동 필드 업데이트
             syncAllFields();
         }
-
-        // fetchNotionProjects 함수 제거됨 (Notion 통합 제거)
 
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
@@ -5888,21 +5873,38 @@
 
             if (scheduleRows.length === 0) {
                 tbody.innerHTML = '';
-                empty.style.display = 'block';
+                if (empty) empty.style.display = 'block';
                 return;
             }
 
-            empty.style.display = 'none';
+            if (empty) empty.style.display = 'none';
             tbody.innerHTML = scheduleRows.map((row, index) => `
                 <tr draggable = "true" ondragstart = "handleDragStart(event, ${index})" ondragover = "handleDragOver(event)"
             ondrop = "handleDrop(event, ${index})" ondragend = "handleDragEnd(event)"
             style = "cursor:move; transition: background 0.2s;" >
         <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
+        
+        <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.name}" class="customer-field"
+            <input type="text" value="${row.category || ''}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'name', this.value)">
+                onchange="updateScheduleRow(${index}, 'category', this.value)" placeholder="카테고리">
         </td>
+        
+        <!-- Process Name -->
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="text" value="${row.name || ''}" class="customer-field"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                onchange="updateScheduleRow(${index}, 'name', this.value)" placeholder="공정명">
+        </td>
+
+        <!-- Checkpoint -->
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
+        </td>
+
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="date" value="${row.start || ''}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
@@ -5924,12 +5926,14 @@
                 onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
         </td>
         <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
-            <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)"
-                style="padding:2px 4px;">▲</button>
-            <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)"
-                style="padding:2px 4px;">▼</button>
-            <button class="btn btn-secondary btn-sm" onclick="removeScheduleRow(${index})"
-                style="padding:2px 4px; color:#ff3b30;">✕</button>
+            <div style="display:flex; justify-content:center; gap:2px;">
+                <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)"
+                    style="padding:2px 4px;">▲</button>
+                <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)"
+                    style="padding:2px 4px;">▼</button>
+                <button class="btn btn-secondary btn-sm" onclick="removeScheduleRow(${index})"
+                    style="padding:2px 4px; color:#ff3b30;">✕</button>
+            </div>
         </td>
     </tr>
                 `).join('');
@@ -5938,7 +5942,9 @@
         function addScheduleRow() {
             scheduleRows.push({
                 id: Date.now() + Math.random(),
+                category: '',
                 name: '',
+                checkPoint: '',
                 start: '',
                 end: '',
                 inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
@@ -5989,51 +5995,6 @@
 
         // [New] A/S List Logic
         let asListRows = [];
-        // Master Database for A/S Items
-        const AS_DB = [
-            { category: "냉난방", item: "시스템 에어컨", brand: "LG전자", service: "1544-7777", warranty: "", note: "" },
-            { category: "냉난방", item: "시스템 에어컨", brand: "삼성전자", service: "1588-3366", warranty: "", note: "" },
-            { category: "주방기기", item: "주방 후드 (국내)", brand: "SK매직", service: "1600-1661", warranty: "", note: "" },
-            { category: "주방기기", item: "주방 후드 (국내)", brand: "한샘", service: "1544-0900", warranty: "", note: "" },
-            { category: "주방기기", item: "주방 후드 (국내)", brand: "파세코", service: "1588-1336", warranty: "", note: "" },
-            { category: "주방기기", item: "주방 후드 (국내)", brand: "하츠 (Haatz)", service: "1644-0806", warranty: "", note: "" },
-            { category: "주방기기", item: "주방 후드 (수입)", brand: "프랑케 (FRANKE)", service: "02-3451-9100", warranty: "", note: "프랑케 코리아" },
-            { category: "주방기기", item: "주방 후드 (수입)", brand: "팔멡 (FALMEC)", service: "수입사/대리점", warranty: "", note: "" },
-            { category: "주방기기", item: "주방 후드 (수입)", brand: "엘리카 (ELICA)", service: "02-3443-5300", warranty: "", note: "엘리카 코리아" },
-            { category: "도장", item: "국내 페인트", brand: "삼화페인트", service: "1588-3655", warranty: "", note: "" },
-            { category: "도장", item: "국내 페인트", brand: "노루페인트", service: "1588-2567", warranty: "", note: "" },
-            { category: "도장", item: "국내 페인트", brand: "KCC페인트", service: "080-022-8200", warranty: "", note: "" },
-            { category: "도장", item: "수입 친환경 페인트", brand: "벤자민무어", service: "1577-3103", warranty: "", note: "" },
-            { category: "도장", item: "수입 친환경 페인트", brand: "던에드워드", service: "1577-3103", warranty: "", note: "" },
-            { category: "하드웨어", item: "도어 손잡이", brand: "도무스 (DOMUS)", service: "032-570-2000", warranty: "", note: "" },
-            { category: "창호/도어", item: "창호 및 도어", brand: "LX하우시스", service: "1544-1893", warranty: "", note: "" },
-            { category: "창호/도어", item: "창호 및 도어", brand: "KCC", service: "080-022-8200", warranty: "", note: "" },
-            { category: "창호/도어", item: "도어/몰딩", brand: "영림홈앤리빙", service: "1577-5600", warranty: "", note: "" },
-            { category: "창호/도어", item: "도어/몰딩", brand: "예림", service: "고객센터 확인 필요", warranty: "", note: "" },
-            { category: "바닥재", item: "강마루 (라솔라 SB)", brand: "한솔홈데코", service: "1544-3977", warranty: "", note: "" },
-            { category: "바닥재", item: "강마루 (세라플렉스)", brand: "이건마루", service: "1588-7626", warranty: "", note: "" },
-            { category: "바닥재", item: "강마루 (마블러스)", brand: "구정마루", service: "1588-9955", warranty: "", note: "" },
-            { category: "바닥재", item: "강마루 (나투스진)", brand: "동화자연마루", service: "1588-3333", warranty: "", note: "" },
-            { category: "바닥재", item: "강마루/강그린", brand: "LX하우시스", service: "1544-1893", warranty: "", note: "" },
-            { category: "바닥재", item: "원목마루", brand: "지복득마루", service: "02-576-7736", warranty: "", note: "" },
-            { category: "바닥재", item: "원목마루", brand: "노바마루", service: "02-576-7736", warranty: "", note: "" },
-            { category: "도배/필름", item: "실크/합지 벽지", brand: "LX/개나리/신한", service: "시공사 문의", warranty: "", note: "제품 하자 시 본사 문의" },
-            { category: "도배/필름", item: "인테리어 필름", brand: "LX/현대/레놀릿", service: "시공사 문의", warranty: "", note: "제품 하자 시 본사 문의" },
-            { category: "수전/도기", item: "싱크볼/수입싱크", brand: "백조싱크", service: "1544-0511", warranty: "", note: "포스터(Foster) 포함" },
-            { category: "수전/도기", item: "디자인 수전", brand: "더죤테크", service: "02-511-1334", warranty: "", note: "슈티에(Sutier) 포함" },
-            { category: "수전/도기", item: "위생도기/수전", brand: "대림바스", service: "1588-4360", warranty: "", note: "아메리칸 스탠다드 포함" },
-            { category: "수전/도기", item: "위생도기/수전", brand: "아메리칸 스탠다드", service: "1588-5906", warranty: "", note: "" },
-            { category: "전기/제어", item: "조명 제어 시스템", brand: "루트론 (Lutron)", service: "02-540-3660", warranty: "", note: "" },
-            { category: "전기/제어", item: "프리미엄 스위치", brand: "융 (JUNG)", service: "02-556-5477", warranty: "", note: "융코리아" },
-            { category: "전기/제어", item: "스위치/콘센트", brand: "르그랑코리아", service: "02-550-3000", warranty: "", note: "아르테오 등" },
-            { category: "전기/제어", item: "스위치/콘센트", brand: "한샘전기", service: "1588-6588", warranty: "~28.01.02", note: "" },
-            { category: "조명", item: "하이엔드 수입조명", brand: "아르테미데/루이스폴센", service: "02-516-7711", warranty: "", note: "두오모앤코" },
-            { category: "조명", item: "디자인 조명", brand: "플로스/앤트레디션", service: "02-512-3403", warranty: "", note: "공식 수입사" },
-            { category: "조명", item: "스마트 조명", brand: "필립스 휴 (Hue)", service: "080-600-6600", warranty: "", note: "시그니파이 코리아" },
-            { category: "조명", item: "매입등/간접조명", brand: "솔라루체/라온", service: "구매처 문의", warranty: "", note: "" },
-            { category: "타일", item: "욕실 타일", brand: "코크랜 (다나디자인)", service: "031-123-4567", warranty: "~26.07.06", note: "" },
-            // 기타 직접입력용 빈 항목 (필요 시 로직에서 처리)
-        ];
 
         function loadASList() {
             if (currentData && currentData.as_list) {
@@ -6096,8 +6057,13 @@
         function addASListItem() {
             asListRows.push({
                 category: '',
-                item: '',
                 brand: '',
+                item: '',
+                modelNum: '',
+                rank: '',
+                size: '',
+                price: '',
+                website: '',
                 service: '',
                 warranty: '',
                 note: ''
@@ -6111,84 +6077,86 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            // Unique Categories for Dropdown
-            const categories = [...new Set(AS_DB.map(d => d.category))];
-
             asListRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
-
-                // Category Select Options
-                let catOptions = '<option value="">선택</option>';
-                categories.forEach(cat => {
-                    catOptions += `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`;
-                });
-
-                // Item Select Options (dependent on category)
-                let itemOptions = '<option value="">선택</option>';
-                if (row.category) {
-                    const filteredItems = AS_DB.filter(d => d.category === row.category);
-                    filteredItems.forEach(d => {
-                        // Use a composite key or just item name? Use item name for now, or brand combined.
-                        // Assuming Item Names + Brand are unique enough or user selects specifically.
-                        // Let's show "Item (Brand)" in dropdown for clarity
-                        const label = `${d.item} (${d.brand})`;
-                        // We store just the label or the item name? 
-                        // Let's match by comparing both or just storing the index? 
-                        // Simplest: store the item name and brand in the row, but for the SELECT value, we can use an index or unique ID if we had one.
-                        // Let's simply use the index in the filtered array or JSON stringify to pass data.
-                        // Simpler: Just generic items.
-                        // Let's just use the item Name as value, but that might be duplicate.
-                        // Let's use stringified object index or a composite value.
-                        // Actually, let's just use the index of the item IN THE MASTER DB.
-                        const dbIndex = AS_DB.findIndex(x => x === d);
-                        const isSelected = (row.item === d.item && row.brand === d.brand);
-                        itemOptions += `<option value="${dbIndex}" ${isSelected ? 'selected' : ''}>${label}</option>`;
-                    });
-                }
-
                 tr.innerHTML = `
-                    <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
-                    <td style="padding:12px; border:1px solid #d2d2d7;">
-                        <select class="mh-input" onchange="updateASCategory(${index}, this.value)"
-                            style="width:100%; border:none; outline:none; background:transparent;">
-                            ${catOptions}
-                        </select>
+                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
+                    <!-- Category -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                         <input type="text" class="mh-input" value="${row.category || ''}" 
+                             onchange="updateASListRow(${index}, 'category', this.value)"
+                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    <td style="padding:12px; border:1px solid #d2d2d7;">
-                        <select class="mh-input" onchange="updateASItem(${index}, this.value)"
-                            style="width:100%; border:none; outline:none; background:transparent;">
-                            ${itemOptions}
-                        </select>
-                    </td>
-                    <td style="padding:12px; border:1px solid #d2d2d7;">
+                    <!-- Brand -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.brand || ''}" 
                             onchange="updateASListRow(${index}, 'brand', this.value)"
-                            placeholder="브랜드" style="width:100%; border:none; outline:none;">
+                            style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
+                    <!-- Item -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.item || ''}" 
+                            onchange="updateASListRow(${index}, 'item', this.value)"
+                            style="width:100%; border:none; outline:none;">
+                    </td>
+                    <!-- ModelNum -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.modelNum || ''}" 
+                            onchange="updateASListRow(${index}, 'modelNum', this.value)"
+                            style="width:100%; border:none; outline:none;">
+                    </td>
+                    <!-- Rank -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.rank || ''}" 
+                            onchange="updateASListRow(${index}, 'rank', this.value)"
+                            style="width:100%; border:none; outline:none; text-align:center;">
+                    </td>
+                     <!-- Size -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.size || ''}" 
+                            onchange="updateASListRow(${index}, 'size', this.value)"
+                            style="width:100%; border:none; outline:none; text-align:center;">
+                    </td>
+                     <!-- Price -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.price || ''}" 
+                            onchange="updateASListRow(${index}, 'price', this.value)"
+                            style="width:100%; border:none; outline:none; text-align:right;">
+                    </td>
+                     <!-- Website -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.website || ''}" 
+                            onchange="updateASListRow(${index}, 'website', this.value)"
+                            style="width:100%; border:none; outline:none;">
+                    </td>
+                    <!-- Service -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.service || ''}" 
                              onchange="updateASListRow(${index}, 'service', this.value)"
-                             placeholder="서비스센터" style="width:100%; border:none; outline:none; text-align:center;">
+                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    <td style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
+                    <!-- Warranty -->
+                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <select class="mh-input no-print" onchange="applyScheduleToWarranty(${index}, this.value)"
                                 style="font-size:11px; color:#555; width:100%; border:none; border-bottom:1px dashed #ddd; outline:none; background:transparent;">
-                                <option value="">📅 스케줄 연동 선택</option>
+                                <option value="">📅 스케줄 연동</option>
                                 ${getScheduleOptions()}
                             </select>
                             <input type="text" class="mh-input" value="${row.warranty || ''}" 
                                 id="warrantyInput_${index}"
                                 onchange="updateASListRow(${index}, 'warranty', this.value)"
-                                placeholder="보증기간" style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
+                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
                         </div>
                     </td>
-                    <td style="padding:12px; border:1px solid #d2d2d7;">
+                    <!-- Note -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
                              onchange="updateASListRow(${index}, 'note', this.value)"
-                             placeholder="비고" style="width:100%; border:none; outline:none;">
+                             style="width:100%; border:none; outline:none;">
                     </td>
-                    <td class="no-print" style="padding:12px; border:1px solid #d2d2d7; text-align:center;">
+                    <!-- Manage -->
+                    <td class="no-print" style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
                     </td>
                  `;
@@ -6295,8 +6263,13 @@
                 if (result.success && result.data) {
                     asListRows = result.data.map(item => ({
                         category: item.category || '',
-                        item: item.item || '',
                         brand: item.brand || '',
+                        item: item.item || '',
+                        modelNum: item.modelNum || '',
+                        rank: item.rank || '',
+                        size: item.size || '',
+                        price: item.price || '',
+                        website: item.website || '',
                         service: item.service || '',
                         warranty: item.warranty || '',
                         note: item.note || ''
@@ -9421,6 +9394,9 @@
                 }
             }
         }
+
+        // Initialize Master Data
+        fetchScheduleTemplate();
     </script>
     <!-- 로그인 오버레이 (최우선 표시) -->
     <div class="login-overlay" id="loginOverlay">

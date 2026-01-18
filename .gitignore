@@ -28,3 +28,5 @@ test_*.js
 test_*.cjs
 inspect_*.cjs
 list_*.cjs
+.vercel
+.env*.local
