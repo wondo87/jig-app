@@ -3079,7 +3079,7 @@
     </div>
 
     <script>
-        // (performLogin function - Standard Version)
+        // (performLogin function - Robust Test Mode Fallback)
         // 오버레이 로그인 처리
         async function performLogin() {
             try {
@@ -3091,27 +3091,26 @@
                     return;
                 }
 
-                // 1. 설정 파일 로드 확인
                 if (typeof MAIN_ADMINS === 'undefined') {
                     alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
                     return;
                 }
 
-                // 2. 암호화 기능 확인 및 실행
+                // [Robust Fallback] 암호화 시도 -> 실패 시(insecure context) 테스트 모드 제안
                 let inputHash;
                 try {
-                    // file:// 프로토콜 등에서 crypto.subtle 지원 여부 체크
+                    // Windows/Mac 로컬 파일 실행 시 crypto.subtle 미지원 대응
                     if (!window.crypto || !window.crypto.subtle) {
-                        throw new Error('Web Crypto API 미지원 환경 (HTTPS 또는 Localhost 필요)');
+                        throw new Error('Web Crypto API 미지원 (Local Context)');
                     }
                     inputHash = await hashPassword(inputPw);
                 } catch (e) {
-                    console.error('암호화 오류:', e);
-                    alert(`시스템 보안 오류: 비밀번호를 암호화할 수 없습니다.\n(HTTPS 또는 localhost 환경에서만 로그인이 가능합니다)\n\n오류: ${e.message}`);
+                    console.warn('암호화 실패 (Test Mode Fallback):', e);
+                    tryTestModeLogin(inputId, inputPw, e.message);
                     return;
                 }
 
-                // 3. 메인 관리자 확인
+                // 정상 암호화 성공 시 일반 로그인 진행
                 const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
                 if (mainAdmin) {
                     if (mainAdmin.passwordHash === inputHash) {
@@ -3126,7 +3125,6 @@
                     }
                 }
 
-                // 4. 일반 관리자 확인
                 if (typeof getRegularAdmins === 'function') {
                     const admins = getRegularAdmins();
                     const found = admins.find(a => a.id === inputId);
@@ -3152,6 +3150,55 @@
             }
         }
 
+        // [Helper] 테스트 모드 로그인 시도 (암호화 불가 환경 대응)
+        function tryTestModeLogin(inputId, inputPw, errorMsg) {
+            // 메인 관리자 ID 매칭 확인
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+            const isMain = !!mainAdmin;
+
+            // 일반 관리자 ID 매칭 확인
+            let isRegular = false;
+            let regularName = '';
+            if (!isMain && typeof getRegularAdmins === 'function') {
+                const admins = getRegularAdmins();
+                const found = admins.find(a => a.id === inputId);
+                if (found) {
+                    isRegular = true;
+                    regularName = found.name;
+                }
+            }
+
+            if (isMain || isRegular) {
+                const proceed = confirm(
+                    `[보안 경고: 암호화 기능 미지원]\n\n` +
+                    `현재 환경(Local/Non-HTTPS)에서는 암호화 로그인을 사용할 수 없습니다.\n` +
+                    `ID가 확인되었으므로 '테스트 모드'로 접속하시겠습니까?\n\n` +
+                    `(오류 원인: ${errorMsg})`
+                );
+
+                if (proceed) {
+                    if (isMain) {
+                        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                        showToast(`${mainAdmin.name}님 (테스트 모드) 접속`, 'warning');
+                    } else {
+                        currentAdmin = { id: inputId, role: 'regular', name: regularName };
+                        showToast('관리자 (테스트 모드) 접속', 'warning');
+                    }
+
+                    // 공통 처리
+                    const overlay = document.getElementById('loginOverlay');
+                    if (overlay) overlay.style.display = 'none';
+
+                    const modal = document.getElementById('adminModal');
+                    if (modal) modal.style.display = 'none';
+
+                    activateAdminMode();
+                }
+            } else {
+                alert(`시스템 보안 오류: 암호화 기능을 사용할 수 없으며, ID 또한 존재하지 않습니다.\n(${errorMsg})`);
+            }
+        }
+
         // 관리자 로그인 처리 (모달)
         async function loginAdmin() {
             try {
@@ -3164,19 +3211,19 @@
                 }
 
                 if (typeof MAIN_ADMINS === 'undefined') {
-                    alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
+                    alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.');
                     return;
                 }
 
                 let inputHash;
                 try {
                     if (!window.crypto || !window.crypto.subtle) {
-                        throw new Error('Web Crypto API 미지원 환경 (HTTPS 또는 Localhost 필요)');
+                        throw new Error('Web Crypto API 미지원 (Local Context)');
                     }
                     inputHash = await hashPassword(adminPassword);
                 } catch (e) {
-                    console.error('암호화 오류:', e);
-                    alert(`시스템 보안 오류: 비밀번호를 암호화할 수 없습니다.\n(HTTPS 또는 localhost 환경에서만 로그인이 가능합니다)\n\n오류: ${e.message}`);
+                    console.warn('암호화 실패 (Test Mode Fallback):', e);
+                    tryTestModeLogin(adminId, adminPassword, e.message);
                     return;
                 }
 
