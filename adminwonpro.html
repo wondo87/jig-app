@@ -2654,10 +2654,9 @@
             }
 
             /* 스케줄 관리 패널 인쇄 설정 */
+            /* A/S 리스트와 동일하게 헤더 및 정보 표시를 원복합니다. */
             #panel-schedule .data-table th:last-child,
-            #panel-schedule .data-table td:last-child,
-            #panel-schedule .doc-header,
-            #panel-schedule .schedule-info-table {
+            #panel-schedule .data-table td:last-child {
                 display: none !important;
             }
 
@@ -4020,9 +4019,9 @@
                                 <div class="subtitle">A/S Management List</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="sync-btn no-print" onclick="syncASListFromCloud()"
-                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
+                                <!-- Old cloud sync button removed as requested -->
+                                <!-- <button class="sync-btn no-print" onclick="syncASListFromCloud()" ...> -->
+
                                 <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
                                     인쇄/PDF</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"

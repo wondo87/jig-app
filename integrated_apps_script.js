@@ -182,13 +182,8 @@ function handleScheduleTemplateGet(e) {
     var notices = [];
 
     data.forEach(function (row) {
-        if (row[0] === '공사 진행 안내사항') {
-            // This is a notice row. The content is likely in Column B or spanned.
-            // Looking at the screenshot, the text is in the 2nd column (Index 1) or just spanned.
-            // Let's assume it is in the second column (row[1]) based on standard sheet structure,
-            // or concatenate non-empty cells if it spans.
-            // Actually, usually merged cells read from top-left.
-            // If the user put "공사 진행 안내사항" in Col A and the text in Col B:
+        // 유의사항 행 체크 (문구 유연성 확보)
+        if (row[0] && (row[0].toString().indexOf('안내') !== -1 || row[0].toString().indexOf('유의사항') !== -1)) {
             var text = row[1];
             if (text) notices.push(text);
         } else {
