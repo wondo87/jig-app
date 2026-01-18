@@ -5968,18 +5968,163 @@
         }
 
         function addScheduleRow() {
-            scheduleRows.push({
-                id: Date.now() + Math.random(),
-                category: '',
-                name: '',
-                checkPoint: '',
-                start: '',
-                end: '',
-                inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
-                memo: ''
+            // 드롭다운 모달 표시
+            showScheduleTemplateModal();
+        }
+
+        function showScheduleTemplateModal() {
+            const modal = document.createElement('div');
+            modal.id = 'scheduleTemplateModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            `;
+
+            // 카테고리 목록 추출
+            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+            const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
+            modalContent.innerHTML = `
+                <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">📋 공정 선택</h3>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">카테고리</label>
+                    <select id="categorySelect" onchange="updateProcessOptions()" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="">카테고리를 선택하세요</option>
+                        <option value="__CUSTOM__">🖊️ 직접 입력 (빈 행 추가)</option>
+                        ${categoryOptions}
+                    </select>
+                </div>
+
+                <div id="processSelectContainer" style="margin-bottom: 16px; display: none;">
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">공정명</label>
+                    <select id="processSelect" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="">공정을 선택하세요</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button onclick="closeScheduleTemplateModal()" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">취소</button>
+                    <button id="addScheduleBtn" onclick="addScheduleFromTemplate()" style="padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer;" disabled>추가</button>
+                </div>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // 모달 외부 클릭 시 닫기
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeScheduleTemplateModal();
+                }
             });
-            renderScheduleTable();
-            saveScheduleToCustomer();
+        }
+
+        function updateProcessOptions() {
+            const categorySelect = document.getElementById('categorySelect');
+            const processSelectContainer = document.getElementById('processSelectContainer');
+            const processSelect = document.getElementById('processSelect');
+            const addBtn = document.getElementById('addScheduleBtn');
+            const selectedCategory = categorySelect.value;
+
+            if (selectedCategory === '__CUSTOM__') {
+                // 직접 입력 선택 시
+                processSelectContainer.style.display = 'none';
+                addBtn.disabled = false;
+            } else if (selectedCategory) {
+                // 카테고리 선택 시 해당 카테고리의 공정들 필터링
+                const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
+                const processOptions = processes.map((proc, idx) =>
+                    `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
+                ).join('');
+
+                processSelect.innerHTML = '<option value="">공정을 선택하세요</option>' + processOptions;
+                processSelectContainer.style.display = 'block';
+                addBtn.disabled = true;
+
+                // 공정 선택 시 추가 버튼 활성화
+                processSelect.onchange = function() {
+                    addBtn.disabled = !this.value;
+                };
+            } else {
+                // 선택 안함
+                processSelectContainer.style.display = 'none';
+                addBtn.disabled = true;
+            }
+        }
+
+        function closeScheduleTemplateModal() {
+            const modal = document.getElementById('scheduleTemplateModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function addScheduleFromTemplate() {
+            const categorySelect = document.getElementById('categorySelect');
+            const processSelect = document.getElementById('processSelect');
+            const selectedCategory = categorySelect.value;
+
+            let newRow;
+
+            if (selectedCategory === '__CUSTOM__') {
+                // 빈 행 추가
+                newRow = {
+                    id: Date.now() + Math.random(),
+                    category: '',
+                    name: '',
+                    checkPoint: '',
+                    start: '',
+                    end: '',
+                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
+                    memo: ''
+                };
+            } else {
+                // 선택한 카테고리의 공정 찾기
+                const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
+                const selectedIndex = parseInt(processSelect.value);
+                const template = processes[selectedIndex];
+
+                if (template) {
+                    newRow = {
+                        id: Date.now() + Math.random(),
+                        category: template.category || '',
+                        name: template.name || '',
+                        checkPoint: template.checkPoint || '',
+                        start: '',
+                        end: '',
+                        inCharge: template.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
+                        memo: ''
+                    };
+                }
+            }
+
+            if (newRow) {
+                scheduleRows.push(newRow);
+                renderScheduleTable();
+                saveScheduleToCustomer();
+                closeScheduleTemplateModal();
+            }
         }
 
         function removeScheduleRow(index) {
