@@ -5982,6 +5982,20 @@
             )];
         }
 
+        function getFilteredManagers(category, processName) {
+            if (!defaultScheduleSteps) return [];
+            // Finds managers associated with this process in the master schedule
+            return [...new Set(
+                defaultScheduleSteps
+                    .filter(s =>
+                        (category ? s.category.trim() === category.trim() : true) &&
+                        (processName ? s.name.trim() === processName.trim() : true)
+                    )
+                    .map(s => s.inCharge)
+                    .filter(Boolean)
+            )];
+        }
+
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
             const empty = document.getElementById('scheduleEmptyState');
@@ -5997,12 +6011,8 @@
 
             // Global Category List (always same)
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            // Global Manager List
-            const managers = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
-            if (currentData.manager) managers.push(currentData.manager); // Add main site manager
-            const uniqueManagers = [...new Set(managers)];
 
-            // We need to render the global lists once if not exists
+            // We still keep Global Category List
             let globalLists = document.getElementById('globalDatalists');
             if (!globalLists) {
                 const div = document.createElement('div');
@@ -6010,9 +6020,12 @@
                 document.body.appendChild(div);
                 globalLists = div;
             }
+            // Update global list. Removed global manager list as we use per-row now, 
+            // BUT user might want fallback if no process selected.
+            // Let's keep a generic manager list just in case, or just not use it.
+            // We will rely on per-row list.
             globalLists.innerHTML = `
                 <datalist id="categoryList_Global">${categories.map(c => `<option value="${c}">`).join('')}</datalist>
-                <datalist id="managerList_Global">${uniqueManagers.map(m => `<option value="${m}">`).join('')}</datalist>
              `;
 
 
@@ -6020,6 +6033,14 @@
                 // Prepare options for this row based on current values
                 const processOptions = getFilteredProcesses(row.category);
                 const checkPointOptions = getFilteredCheckpoints(row.category, row.name);
+                let managerOptions = getFilteredManagers(row.category, row.name);
+
+                // If no specific managers for this process (or process empty), show ALL uniqueness
+                if (managerOptions.length === 0) {
+                    managerOptions = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
+                    if (currentData.manager) managerOptions.push(currentData.manager);
+                }
+                const finalManagerOptions = [...new Set(managerOptions)];
 
                 return `
                 <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
@@ -6068,9 +6089,13 @@
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
-                list="managerList_Global"
+                list="managerList_${index}"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
+                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자"
+                onfocus="refreshManagerOptions(${index})">
+            <datalist id="managerList_${index}">
+                ${finalManagerOptions.map(m => `<option value="${m}">`).join('')}
+            </datalist>
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.memo || ''}" class="customer-field"
@@ -6110,6 +6135,18 @@
             }
         }
 
+        function refreshManagerOptions(index) {
+            const row = scheduleRows[index];
+            let options = getFilteredManagers(row.category, row.name);
+            // Fallback to all if empty matching
+            if (options.length === 0) {
+                options = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
+                if (currentData.manager && !options.includes(currentData.manager)) options.push(currentData.manager);
+            }
+            const dataList = document.getElementById(`managerList_${index}`);
+            if (dataList) dataList.innerHTML = options.map(m => `<option value="${m}">`).join('');
+        }
+
         function addScheduleRow() {
             scheduleRows.push({
                 id: Date.now() + Math.random(),
@@ -6144,27 +6181,36 @@
                 refreshCheckpointOptions(index);
 
                 // Force input values clearing in DOM
-                // We could re-render, but that loses focus.
-                // Instead, find the input and update it?
-                // Actually, since we want to clear the 'Name' field input on screen:
-                // Let's just re-render row? Or let user clear it?
-                // "Cascading" usually implies clearing downstream.
                 renderScheduleTable();
-                // Re-render is safer to reflect the cleared 'name' and 'checkPoint'
             }
             else if (field === 'name') {
-                scheduleRows[index].checkPoint = '';
-
-                // Auto-fill InCharge if defined in master schedule for this process
-                const matchedStep = defaultScheduleSteps.find(s =>
-                    s.name === value &&
-                    (!scheduleRows[index].category || s.category === scheduleRows[index].category)
-                );
-                if (matchedStep && matchedStep.inCharge) {
-                    scheduleRows[index].inCharge = matchedStep.inCharge;
+                // 1. Auto-fill Checkpoint if only one exists
+                const availCheckpoints = getFilteredCheckpoints(scheduleRows[index].category, value);
+                if (availCheckpoints.length === 1) {
+                    scheduleRows[index].checkPoint = availCheckpoints[0];
+                } else {
+                    scheduleRows[index].checkPoint = ''; // Clear if multiple choice
                 }
 
-                refreshCheckpointOptions(index);
+                // 2. Auto-fill Manager if only one exists
+                const availManagers = getFilteredManagers(scheduleRows[index].category, value);
+                if (availManagers.length === 1) {
+                    scheduleRows[index].inCharge = availManagers[0];
+                } else if (availManagers.length > 1) {
+                    // If multiple managers (e.g. BR, ST, TW), we don't auto-fill, 
+                    // but the dropdown is already filtered by renderScheduleTable logic
+                    // Clear to force choice
+                    scheduleRows[index].inCharge = '';
+                }
+
+                // If 0 found means no specific mapping, reset to main manager?
+                // Or keep existing if user typed it?
+                // Logic: If availManagers is empty, it means this name doesn't exist in master schedule or has no manager.
+                // In this case, we default to Main Manager if currently empty.
+                if (availManagers.length === 0 && (!scheduleRows[index].inCharge || scheduleRows[index].inCharge === '')) {
+                    scheduleRows[index].inCharge = currentData.manager || '원프로 소장 (010-4650-7013)';
+                }
+
                 renderScheduleTable();
             }
 
