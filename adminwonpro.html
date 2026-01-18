@@ -7206,31 +7206,22 @@
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
         async function syncFromCloud() {
-            let debugInfo = '=== 클라우드 동기화 시작 ===\n';
-            debugInfo += '시작 시간: ' + new Date().toLocaleTimeString() + '\n';
-
             try {
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',
                     t: new Date().getTime()
                 });
-                const url = `${CUSTOMER_SYNC_URL}?${params}`;
-                debugInfo += '\n📡 요청 URL:\n' + url + '\n';
-
-                const response = await fetch(url, {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET'
                 });
 
-                debugInfo += '\n📥 응답 상태: ' + response.status + ' ' + response.statusText + '\n';
-
                 if (!response.ok) {
-                    alert(debugInfo + '\n❌ HTTP 오류 발생!');
-                    throw new Error(`HTTP${response.status} `);
+                    alert('❌ 클라우드 동기화 실패\n\nHTTP 오류: ' + response.status);
+                    return;
                 }
 
                 let cloudCustomers = await response.json();
-                debugInfo += '\n📊 받은 데이터 개수: ' + (Array.isArray(cloudCustomers) ? cloudCustomers.length : 'N/A') + '\n';
                 console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
 
                 if (!Array.isArray(cloudCustomers)) {
@@ -7296,18 +7287,12 @@
                 updateCustomerList();
                 initYearFilter();
 
-                debugInfo += '\n✅ 동기화 완료!\n';
-                debugInfo += '추가: ' + addedCount + '명\n';
-                debugInfo += '업데이트: ' + updatedCount + '명\n';
-                debugInfo += '삭제: ' + deletedCount + '명\n';
-                debugInfo += '총 고객 수: ' + cloudCustomers.length + '명';
-
                 console.log(`✅[Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
-                alert(debugInfo);
+                alert(`✅ 클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`);
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                alert(debugInfo + '\n\n❌ 오류 발생:\n' + error.toString());
+                alert('❌ 클라우드 동기화 실패\n\n' + error.message);
             }
         }
 
