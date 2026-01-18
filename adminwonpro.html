@@ -6061,12 +6061,27 @@
             } else {
                 scheduleRows = defaultScheduleSteps.map(s => ({
                     id: Date.now() + Math.random(),
+                    category: s.category || '',
                     name: s.name,
                     start: '',
                     end: '',
                     inCharge: s.inCharge || '',
                     memo: ''
                 }));
+            }
+
+            // [Request] Print layout: Ensure at least 50 rows for filling space
+            const MIN_ROWS = 50;
+            while (scheduleRows.length < MIN_ROWS) {
+                scheduleRows.push({
+                    id: Date.now() + Math.random(),
+                    category: '',
+                    name: '',
+                    start: '',
+                    end: '',
+                    inCharge: '',
+                    memo: ''
+                });
             }
 
             // [추가] 스케줄 상단 정보 자동 채우기
@@ -6552,9 +6567,27 @@
         function loadASList() {
             if (currentData && currentData.as_list) {
                 asListRows = currentData.as_list;
+            } else if (currentData && currentData.asList) {
+                // Compatibility with previous key name if exists
+                asListRows = currentData.asList;
             } else {
                 asListRows = []; // Start empty for new selection
             }
+
+            // [Request] Ensure at least 50 rows
+            const MIN_ROWS = 50;
+            while (asListRows.length < MIN_ROWS) {
+                asListRows.push({
+                    id: Date.now() + Math.random(),
+                    category: '',
+                    brand: '',
+                    item: '',
+                    model: '',
+                    spec: '',
+                    memo: ''
+                });
+            }
+
             renderASListTable();
             updateASInfoHeaders();
         }
