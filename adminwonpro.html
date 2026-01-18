@@ -6010,18 +6010,16 @@
                 <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">📋 공정 선택</h3>
 
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">카테고리</label>
-                    <select id="categorySelect" onchange="updateProcessOptions()" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px;">
-                        <option value="">카테고리를 선택하세요</option>
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">카테고리 (클릭하여 선택)</label>
+                    <select id="categorySelect" onchange="updateProcessOptions()" size="14" style="width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
                         <option value="__CUSTOM__">🖊️ 직접 입력 (빈 행 추가)</option>
                         ${categoryOptions}
                     </select>
                 </div>
 
                 <div id="processSelectContainer" style="margin-bottom: 16px; display: none;">
-                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">공정명</label>
-                    <select id="processSelect" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px;">
-                        <option value="">공정을 선택하세요</option>
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">세부 공정명 (클릭하여 선택)</label>
+                    <select id="processSelect" size="10" style="width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
                     </select>
                 </div>
 
@@ -6060,7 +6058,12 @@
                     `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
                 ).join('');
 
-                processSelect.innerHTML = '<option value="">공정을 선택하세요</option>' + processOptions;
+                processSelect.innerHTML = processOptions;
+
+                // size 속성 동적 조정 (최소 3, 최대 10)
+                const optionCount = processes.length;
+                processSelect.setAttribute('size', Math.min(Math.max(optionCount, 3), 10));
+
                 processSelectContainer.style.display = 'block';
                 addBtn.disabled = true;
 
