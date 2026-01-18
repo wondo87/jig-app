@@ -30,3 +30,6 @@ const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyR8dEEte1vzf
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
+
+// 통계 대시보드 접근용 PIN (선택값 — 클라이언트에서 사용됨)
+const STATS_ACCESS_PIN = '6454';
