@@ -3848,9 +3848,6 @@
                                 margin-right:4px;">📥
                                 Notion
                                 동기화</button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="importMasterSchedule()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">☁️↓
-                                    마스터 스케줄 불러오기</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
                                     추가</button>
@@ -5884,34 +5881,42 @@
 
             if (empty) empty.style.display = 'none';
 
-            // Extract unique values for datalists
+            // Extract unique values for dropdowns
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const names = [...new Set(defaultScheduleSteps.map(s => s.name).filter(Boolean))];
-            const checkPoints = [...new Set(defaultScheduleSteps.map(s => s.checkPoint).filter(Boolean))];
+            const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            tbody.innerHTML = scheduleRows.map((row, index) => `
-                <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
-            ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
-            style="cursor:move; transition: background 0.2s;" >
+            tbody.innerHTML = scheduleRows.map((row, index) => {
+                // 현재 행의 카테고리로 공정명 필터링
+                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
+                const processOptions = processes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+
+                return `
+    <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
+        ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
+        style="cursor:move; transition: background 0.2s;">
         <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
-        
+
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.category || ''}" class="customer-field" list="categoryList"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'category', this.value)" placeholder="카테고리">
+            <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;">
+                <option value="">선택</option>
+                ${categoryOptions.replace(`"${row.category}"`, `"${row.category}" selected`)}
+            </select>
         </td>
-        
+
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.name || ''}" class="customer-field" list="processNameList"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'name', this.value)" placeholder="공정명">
+            <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
+                ${row.category ? '' : 'disabled'}
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;">
+                ${row.category ? '<option value="">선택</option>' + processOptions.replace(`"${row.name}"`, `"${row.name}" selected`) : '<option value="">카테고리 먼저 선택</option>'}
+            </select>
         </td>
 
         <!-- Checkpoint -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.checkPoint || ''}" class="customer-field" list="checkPointList"
+            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
         </td>
@@ -5947,31 +5952,72 @@
             </div>
         </td>
     </tr>
-                `).join('');
-
-            // Append Datalists if not exist (or update them)
-            let datalistContainer = document.getElementById('scheduleDatalists');
-            if (!datalistContainer) {
-                datalistContainer = document.createElement('div');
-                datalistContainer.id = 'scheduleDatalists';
-                document.body.appendChild(datalistContainer);
-            }
-            datalistContainer.innerHTML = `
-                <datalist id="categoryList">
-                    ${categories.map(c => `<option value="${c}">`).join('')}
-                </datalist>
-                <datalist id="processNameList">
-                    ${names.map(n => `<option value="${n}">`).join('')}
-                </datalist>
-                <datalist id="checkPointList">
-                    ${checkPoints.map(p => `<option value="${p}">`).join('')}
-                </datalist>
-            `;
+                `;
+            }).join('');
         }
 
         function addScheduleRow() {
-            // 드롭다운 모달 표시
-            showScheduleTemplateModal();
+            // 빈 행 추가 (견적서 방식)
+            scheduleRows.push({
+                id: Date.now() + Math.random(),
+                category: '',
+                name: '',
+                checkPoint: '',
+                start: '',
+                end: '',
+                inCharge: '원프로 소장 (010-4650-7013)',
+                memo: ''
+            });
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        // 카테고리 선택 시 공정명 필터링 (견적서 패턴 참조)
+        function onScheduleCategoryChange(rowIndex, category) {
+            if (!scheduleRows[rowIndex]) return;
+
+            // 카테고리 변경 시 공정명, 체크포인트 초기화
+            scheduleRows[rowIndex].category = category;
+            scheduleRows[rowIndex].name = '';
+            scheduleRows[rowIndex].checkPoint = '';
+
+            // 테이블 다시 렌더링 (필터링된 공정명 드롭다운 표시)
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        // 공정명 선택 시 체크포인트/담당자 자동 기입 (견적서 패턴 참조)
+        function onScheduleProcessChange(rowIndex, processName) {
+            if (!scheduleRows[rowIndex]) return;
+
+            scheduleRows[rowIndex].name = processName;
+
+            if (!processName) {
+                scheduleRows[rowIndex].checkPoint = '';
+                renderScheduleTable();
+                saveScheduleToCustomer();
+                return;
+            }
+
+            // 선택된 공정명에 해당하는 템플릿 데이터 찾기
+            const selectedProcess = defaultScheduleSteps.find(s =>
+                s.category === scheduleRows[rowIndex].category && s.name === processName
+            );
+
+            if (selectedProcess) {
+                // 체크포인트 자동 기입
+                scheduleRows[rowIndex].checkPoint = selectedProcess.checkPoint || '';
+
+                // 담당자 자동 기입 (템플릿에 있으면 사용, 없으면 기본값)
+                if (selectedProcess.inCharge) {
+                    scheduleRows[rowIndex].inCharge = selectedProcess.inCharge;
+                } else if (!scheduleRows[rowIndex].inCharge) {
+                    scheduleRows[rowIndex].inCharge = currentData.manager || '원프로 소장 (010-4650-7013)';
+                }
+            }
+
+            renderScheduleTable();
+            saveScheduleToCustomer();
         }
 
         function showScheduleTemplateModal() {
