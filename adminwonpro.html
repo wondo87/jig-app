@@ -6038,21 +6038,23 @@
         // 스케줄 유의사항 불러오기 (구글 시트에서)
         async function loadScheduleGuidelines() {
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=공사_스케줄&action=getGuidelines`);
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=공사스케줄관리&action=getGuidelines`);
                 const result = await response.json();
 
                 if (result.success && result.guidelines && result.guidelines.length > 0) {
                     const guidelinesList = document.getElementById('scheduleGuidelinesList');
                     if (guidelinesList) {
                         guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
-                        showToast('유의사항을 성공적으로 불러왔습니다', 'success');
+                        alert('✅ 성공: 공사 스케줄 유의사항을 성공적으로 불러왔습니다.');
                     }
+                } else if (result.success) {
+                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
                 } else {
-                    showToast('불러올 유의사항이 없습니다', 'warning');
+                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
                 }
             } catch (error) {
                 console.error('Error loading schedule guidelines:', error);
-                showToast('유의사항을 불러오는데 실패했습니다: ' + error.message, 'error');
+                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
             }
         }
 
@@ -6066,14 +6068,16 @@
                     const guidelinesList = document.getElementById('asGuidelinesList');
                     if (guidelinesList) {
                         guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
-                        showToast('유의사항을 성공적으로 불러왔습니다', 'success');
+                        alert('✅ 성공: A/S 관리 유의사항을 성공적으로 불러왔습니다.');
                     }
+                } else if (result.success) {
+                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
                 } else {
-                    showToast('불러올 유의사항이 없습니다', 'warning');
+                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
                 }
             } catch (error) {
                 console.error('Error loading AS guidelines:', error);
-                showToast('유의사항을 불러오는데 실패했습니다: ' + error.message, 'error');
+                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
             }
         }
 
