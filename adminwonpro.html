@@ -10257,9 +10257,24 @@
 
         // Initialize Master Data
         fetchScheduleTemplate();
+
+        // [AUTO LOGIN FORCE]
+        // 사용자의 요청으로 로그인 절차 없이 즉시 메인 관리자로 진입하도록 설정
+        window.addEventListener('DOMContentLoaded', () => {
+            const loginOverlay = document.getElementById('loginOverlay');
+            if (loginOverlay) loginOverlay.style.display = 'none';
+
+            if (typeof MAIN_ADMINS !== 'undefined' && MAIN_ADMINS.length > 0) {
+                const autoAdmin = MAIN_ADMINS[0];
+                currentAdmin = { id: autoAdmin.id, role: 'main', name: autoAdmin.name };
+                activateAdminMode();
+                console.log('Auto-login enforced:', autoAdmin.id);
+                showToast('자동 로그인되었습니다. (클라우드 연결 확인 필요)', 'success');
+            }
+        });
     </script>
-    <!-- 로그인 오버레이 (최우선 표시) -->
-    <div class="login-overlay" id="loginOverlay">
+    <!-- 로그인 오버레이 (자동 로그인으로 인해 숨김 처리) -->
+    <div class="login-overlay" id="loginOverlay" style="display: none !important;">
         <div class="login-card">
             <div class="login-logo">DESIGN JIG</div>
             <div class="login-subtitle">통합 관리 시스템</div>
