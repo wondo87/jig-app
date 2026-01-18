@@ -2653,14 +2653,27 @@
                 display: none !important;
             }
 
-            /* 스케줄 관리 패널 인쇄 설정 */
-            /* A/S 리스트와 동일하게 헤더 및 정보 표시를 원복합니다. */
+            /* 스케줄 및 A/S 리스트 공통 인쇄 설정 */
+            #panel-schedule .data-table td,
+            #panel-schedule .data-table th,
+            #panel-as-list .data-table td,
+            #panel-as-list .data-table th {
+                white-space: normal !important;
+                word-break: break-all;
+                padding: 4px !important;
+                font-size: 10px !important;
+                vertical-align: middle;
+            }
+
+            /* 관리 컬럼 숨김 (마지막 컬럼) */
             #panel-schedule .data-table th:last-child,
-            #panel-schedule .data-table td:last-child {
+            #panel-schedule .data-table td:last-child,
+            #panel-as-list .data-table th:last-child,
+            #panel-as-list .data-table td:last-child {
                 display: none !important;
             }
 
-            /* 스케줄 테이블 컬럼 너비 조정 (인쇄용) */
+            /* 스케줄 테이블 컬럼 너비 조정 (인쇄용 - 8개 컬럼) */
             #panel-schedule .data-table th:nth-child(1),
             #panel-schedule .data-table td:nth-child(1) {
                 width: 5% !important;
@@ -2669,32 +2682,47 @@
             /* No */
             #panel-schedule .data-table th:nth-child(2),
             #panel-schedule .data-table td:nth-child(2) {
-                width: 30% !important;
+                width: 10% !important;
             }
 
-            /* 공정명 */
+            /* Category */
             #panel-schedule .data-table th:nth-child(3),
             #panel-schedule .data-table td:nth-child(3) {
-                width: 15% !important;
+                width: 12% !important;
             }
 
-            /* 시작일 */
+            /* Process */
             #panel-schedule .data-table th:nth-child(4),
             #panel-schedule .data-table td:nth-child(4) {
-                width: 15% !important;
+                width: 23% !important;
             }
 
-            /* 종료일 */
+            /* Checkpoint */
             #panel-schedule .data-table th:nth-child(5),
             #panel-schedule .data-table td:nth-child(5) {
                 width: 10% !important;
             }
 
-            /* 담당자 */
+            /* Start */
             #panel-schedule .data-table th:nth-child(6),
             #panel-schedule .data-table td:nth-child(6) {
-                width: 25% !important;
+                width: 10% !important;
             }
+
+            /* End */
+            #panel-schedule .data-table th:nth-child(7),
+            #panel-schedule .data-table td:nth-child(7) {
+                width: 10% !important;
+            }
+
+            /* Manager */
+            #panel-schedule .data-table th:nth-child(8),
+            #panel-schedule .data-table td:nth-child(8) {
+                width: 20% !important;
+            }
+
+            /* Memo */
+
 
             /* 비고 */
 
@@ -5723,7 +5751,21 @@
         async function loginAdmin() {
             const inputId = document.getElementById('adminId').value.trim();
             const inputPw = document.getElementById('adminPassword').value;
-            const inputHash = await hashPassword(inputPw);
+
+            let inputHash;
+            try {
+                if (!window.crypto || !window.crypto.subtle) {
+                    // [Fallback] If strictly local file, warn user or skip hash (Not recommended but handles file://)
+                    // But we cannot verify hash. So we must warn.
+                    alert('보안 컨텍스트 오류: file:// 프로토콜에서는 암호화 로그인이 제한될 수 있습니다. 로컬 서버(localhost)를 사용하거나 HTTPS 환경에서 실행하세요.');
+                    return;
+                }
+                inputHash = await hashPassword(inputPw);
+            } catch (e) {
+                console.error("Login Error:", e);
+                showToast('로그인 처리 중 오류 발생', 'error');
+                return;
+            }
 
             // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
             const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
@@ -6872,6 +6914,17 @@
 
         function updateASListRow(index, field, value) {
             asListRows[index][field] = value;
+            
+            // [New] Auto-populate logic for Item selection
+            if (field === 'item') {
+                const row = asListRows[index];
+                if (row.category && row.brand && AS_DB[row.category] && AS_DB[row.category].brands[row.brand]) {
+                    const brandData = AS_DB[row.category].brands[row.brand];
+                    // Ensure Service/URL are set if missing (Cascade down)
+                    if (brandData.service && !row.service) asListRows[index].service = brandData.service;
+                    if (brandData.url && !row.website) asListRows[index].website = brandData.url;
+                }
+            }
             saveASList();
         }
 
