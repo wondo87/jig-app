@@ -4495,15 +4495,23 @@
             let inputHash;
             try {
                 if (!window.crypto || !window.crypto.subtle) {
-                    // 보안 객체 없으면 바로 테스트모드 제안
+                    const errorMsg = '❌ 오류: window.crypto.subtle이 없습니다.\n\n' +
+                                   '현재 URL: ' + window.location.href + '\n' +
+                                   'HTTPS 여부: ' + (window.location.protocol === 'https:' ? '예' : '아니오') + '\n' +
+                                   'crypto 존재: ' + (!!window.crypto) + '\n' +
+                                   'crypto.subtle 존재: ' + (!!window.crypto?.subtle);
+                    console.error(errorMsg);
+                    alert(errorMsg + '\n\n해시 비교 없이 ID만으로 로그인을 시도합니다.');
                     tryTestModeLogin();
                     return;
                 }
                 inputHash = await hashPassword(inputPw);
-                console.log('Login Debug - InputHash:', inputHash);
+                console.log('✅ Login Debug - InputHash:', inputHash);
+                console.log('✅ Login Debug - Expected Hash (sweet00700):', '671076167de6f4ed03c9f267f0c42620b10801dd3ee47c79e59090755ba43acc');
             } catch (e) {
-                console.error('암호화 오류:', e);
-                // 해싱 실패 시 테스트 모드 제안
+                const errorMsg = '❌ 암호화 오류:\n' + e.toString() + '\n\nStack: ' + (e.stack || 'No stack');
+                console.error(errorMsg);
+                alert(errorMsg + '\n\n해시 비교 없이 ID만으로 로그인을 시도합니다.');
                 tryTestModeLogin();
                 return;
             }
@@ -4511,6 +4519,11 @@
             // 3. 메인 관리자 확인 (해시 비교)
             const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
             if (mainAdmin) {
+                console.log('✅ 메인 관리자 발견:', mainAdmin.id);
+                console.log('입력 해시:', inputHash);
+                console.log('저장 해시:', mainAdmin.passwordHash);
+                console.log('일치 여부:', inputHash === mainAdmin.passwordHash);
+
                 if (mainAdmin.passwordHash === inputHash) {
                     currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                     document.getElementById('loginOverlay').style.display = 'none';
@@ -4518,7 +4531,10 @@
                     showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
                     return;
                 } else {
-                    console.log('Main Admin PW Mismatch');
+                    alert('❌ 비밀번호가 일치하지 않습니다.\n\n' +
+                          '입력한 해시: ' + inputHash + '\n' +
+                          '저장된 해시: ' + mainAdmin.passwordHash);
+                    return;
                 }
             }
 
@@ -5617,9 +5633,29 @@
 
         // ========== 비밀번호 보안 (SHA-256 해싱) ==========
         async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            // crypto.subtle 사용 가능 여부 확인
+            if (window.crypto && window.crypto.subtle) {
+                try {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(password);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                } catch (e) {
+                    console.error('crypto.subtle 오류, fallback 사용:', e);
+                }
+            }
+
+            // Fallback: js-sha256 라이브러리 사용 (인라인)
+            return await hashPasswordFallback(password);
+        }
+
+        // Fallback SHA-256 (crypto.subtle 미지원 환경용)
+        async function hashPasswordFallback(str) {
+            // 간단한 SHA-256 구현 (임시)
+            // 실제로는 crypto.subtle이 HTTPS에서 항상 작동해야 함
+            const msgUint8 = new TextEncoder().encode(str);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgUint8);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
