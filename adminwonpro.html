@@ -7209,8 +7209,6 @@
             let debugInfo = '=== 클라우드 동기화 시작 ===\n';
             debugInfo += '시작 시간: ' + new Date().toLocaleTimeString() + '\n';
 
-            showToast('클라우드에서 데이터 불러오는 중...', 'info');
-
             try {
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
                 const params = new URLSearchParams({
@@ -7304,14 +7302,12 @@
                 debugInfo += '삭제: ' + deletedCount + '명\n';
                 debugInfo += '총 고객 수: ' + cloudCustomers.length + '명';
 
+                console.log(`✅[Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
                 alert(debugInfo);
-                showToast(`클라우드 동기화 완료! 추가: ${addedCount} 명, 업데이트: ${updatedCount} 명, 삭제: ${deletedCount} 명`, 'success');
-                console.log(`✅[Cloud Sync] Complete.Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                alert(debugInfo + '\n\n❌ 오류 발생:\n' + error.toString() + '\n\n' + error.stack);
-                showToast('클라우드 동기화 실패: ' + error.message, 'error');
+                alert(debugInfo + '\n\n❌ 오류 발생:\n' + error.toString());
             }
         }
 
