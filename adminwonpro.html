@@ -4216,13 +4216,14 @@
                 return;
             }
 
-            // 메인관리자 확인 (해시 비교)
+            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
             const inputHash = await hashPassword(inputPw);
-            if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
-                currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+            if (mainAdmin) {
+                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                 document.getElementById('loginOverlay').style.display = 'none';
                 activateAdminMode();
-                showToast('메인관리자로 로그인되었습니다', 'success');
+                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
                 return;
             }
 
@@ -5418,7 +5419,8 @@
                 return;
             }
 
-            if (id === MAIN_ADMIN.id) {
+            // 메인관리자 ID 중복 체크 (복수 관리자 지원)
+            if (MAIN_ADMINS.some(admin => admin.id === id)) {
                 showToast('메인관리자 ID는 사용할 수 없습니다', 'error');
                 return;
             }
@@ -5470,12 +5472,13 @@
             const inputPw = document.getElementById('adminPassword').value;
             const inputHash = await hashPassword(inputPw);
 
-            // 메인관리자 확인 (해시 비교)
-            if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
-                currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
+            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+            if (mainAdmin) {
+                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                 closeAdminModal();
                 activateAdminMode();
-                showToast('메인관리자로 로그인되었습니다', 'success');
+                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
                 return;
             }
 
@@ -8325,10 +8328,12 @@
             if (password === null) return; // 취소됨
 
             const pwHash = await hashPassword(password);
-            if (pwHash === MAIN_ADMIN.passwordHash) {
+            // 복수 메인관리자 중 하나라도 일치하면 허용
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.passwordHash === pwHash);
+            if (mainAdmin) {
                 // 임시 메인관리자 권한 부여
                 const tempAdmin = currentAdmin;
-                currentAdmin = { ...MAIN_ADMIN };
+                currentAdmin = { ...mainAdmin, role: 'main' };
 
                 saveCostData();
 
