@@ -3058,7 +3058,7 @@
                 <span class="font-size-value" id="fontSizeValue">12px</span>
             </div>
             <button class="header-btn secondary" onclick="exportAllData()">📤 백업 저장</button>
-            <button class="header-btn secondary" onclick="syncFromCloud()">📥 클라우드 동기화</button>
+            <button class="header-btn secondary" onclick="importData()">📥 불러오기</button>
             <button class="header-btn primary" onclick="saveData()">💾 변경사항 저장</button>
         </div>
     </header>
@@ -3068,16 +3068,158 @@
         <div class="admin-modal-content">
             <h3>🔐 관리자 로그인</h3>
             <p>관리자 아이디와 비밀번호를 입력하세요</p>
-            <input type="text" id="adminId" placeholder="아이디" style="margin-bottom:8px;"
-                onkeypress="if(event.key==='Enter')document.getElementById('adminPassword').focus()">
-            <input type="password" id="adminPassword" placeholder="비밀번호"
-                onkeypress="if(event.key==='Enter')loginAdmin()">
-            <div class="admin-modal-btns">
-                <button class="cancel-btn" onclick="closeAdminModal()">취소</button>
-                <button class="confirm-btn" onclick="loginAdmin()">로그인</button>
+            <input type="text" id="adminId" class="modal-input" placeholder="아이디" autocomplete="username">
+            <input type="password" id="adminPassword" class="modal-input" placeholder="비밀번호"
+                autocomplete="current-password" onkeypress="if(event.key==='Enter') loginAdmin()">
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeAdminModal()">취소</button>
+                <button class="btn btn-primary" onclick="loginAdmin()">로그인</button>
             </div>
         </div>
     </div>
+
+    <script>
+        // (performLogin function - Standard Version)
+        // 오버레이 로그인 처리
+        async function performLogin() {
+            try {
+                const inputId = document.getElementById('loginId').value.trim();
+                const inputPw = document.getElementById('loginPw').value;
+
+                if (!inputId || !inputPw) {
+                    alert('아이디와 비밀번호를 모두 입력해주세요.');
+                    return;
+                }
+
+                // 1. 설정 파일 로드 확인
+                if (typeof MAIN_ADMINS === 'undefined') {
+                    alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
+                    return;
+                }
+
+                // 2. 암호화 기능 확인 및 실행
+                let inputHash;
+                try {
+                    // file:// 프로토콜 등에서 crypto.subtle 지원 여부 체크
+                    if (!window.crypto || !window.crypto.subtle) {
+                        throw new Error('Web Crypto API 미지원 환경 (HTTPS 또는 Localhost 필요)');
+                    }
+                    inputHash = await hashPassword(inputPw);
+                } catch (e) {
+                    console.error('암호화 오류:', e);
+                    alert(`시스템 보안 오류: 비밀번호를 암호화할 수 없습니다.\n(HTTPS 또는 localhost 환경에서만 로그인이 가능합니다)\n\n오류: ${e.message}`);
+                    return;
+                }
+
+                // 3. 메인 관리자 확인
+                const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+                if (mainAdmin) {
+                    if (mainAdmin.passwordHash === inputHash) {
+                        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                        document.getElementById('loginOverlay').style.display = 'none';
+                        activateAdminMode();
+                        showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
+                        return;
+                    } else {
+                        alert('비밀번호가 일치하지 않습니다.');
+                        return;
+                    }
+                }
+
+                // 4. 일반 관리자 확인
+                if (typeof getRegularAdmins === 'function') {
+                    const admins = getRegularAdmins();
+                    const found = admins.find(a => a.id === inputId);
+                    if (found) {
+                        if (found.passwordHash === inputHash) {
+                            currentAdmin = { id: found.id, role: 'regular', name: found.name };
+                            document.getElementById('loginOverlay').style.display = 'none';
+                            activateAdminMode();
+                            showToast('관리자 로그인 성공', 'success');
+                            return;
+                        } else {
+                            alert('비밀번호가 일치하지 않습니다.');
+                            return;
+                        }
+                    }
+                }
+
+                alert('존재하지 않는 아이디입니다.');
+
+            } catch (err) {
+                console.error("Login Error:", err);
+                alert("로그인 중 알 수 없는 오류가 발생했습니다: " + err.message);
+            }
+        }
+
+        // 관리자 로그인 처리 (모달)
+        async function loginAdmin() {
+            try {
+                const adminId = document.getElementById('adminId').value.trim();
+                const adminPassword = document.getElementById('adminPassword').value;
+
+                if (!adminId || !adminPassword) {
+                    alert('아이디와 비밀번호를 모두 입력해주세요.');
+                    return;
+                }
+
+                if (typeof MAIN_ADMINS === 'undefined') {
+                    alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
+                    return;
+                }
+
+                let inputHash;
+                try {
+                    if (!window.crypto || !window.crypto.subtle) {
+                        throw new Error('Web Crypto API 미지원 환경 (HTTPS 또는 Localhost 필요)');
+                    }
+                    inputHash = await hashPassword(adminPassword);
+                } catch (e) {
+                    console.error('암호화 오류:', e);
+                    alert(`시스템 보안 오류: 비밀번호를 암호화할 수 없습니다.\n(HTTPS 또는 localhost 환경에서만 로그인이 가능합니다)\n\n오류: ${e.message}`);
+                    return;
+                }
+
+                const mainAdmin = MAIN_ADMINS.find(admin => admin.id === adminId);
+                if (mainAdmin) {
+                    if (mainAdmin.passwordHash === inputHash) {
+                        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                        closeAdminModal();
+                        activateAdminMode();
+                        showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
+                        return;
+                    } else {
+                        alert('비밀번호가 일치하지 않습니다.');
+                        return;
+                    }
+                }
+
+                if (typeof getRegularAdmins === 'function') {
+                    const admins = getRegularAdmins();
+                    const found = admins.find(a => a.id === adminId);
+                    if (found) {
+                        if (found.passwordHash === inputHash) {
+                            currentAdmin = { id: found.id, role: 'regular', name: found.name };
+                            closeAdminModal();
+                            activateAdminMode();
+                            showToast('관리자 로그인 성공', 'success');
+                            return;
+                        } else {
+                            alert('비밀번호가 일치하지 않습니다.');
+                            return;
+                        }
+                    }
+                }
+
+                alert('존재하지 않는 아이디입니다.');
+
+            } catch (err) {
+                console.error("Admin Login Error:", err);
+                alert("관리자 로그인 중 알 수 없는 오류가 발생했습니다: " + err.message);
+            }
+        }
+
+    </script>
 
     <!-- 삭제 비밀번호 모달 -->
     <div class="admin-modal" id="deletePasswordModal">
