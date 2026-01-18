@@ -2653,27 +2653,13 @@
                 display: none !important;
             }
 
-            /* 스케줄 및 A/S 리스트 공통 인쇄 설정 */
-            #panel-schedule .data-table td,
-            #panel-schedule .data-table th,
-            #panel-as-list .data-table td,
-            #panel-as-list .data-table th {
-                white-space: normal !important;
-                word-break: break-all;
-                padding: 4px !important;
-                font-size: 10px !important;
-                vertical-align: middle;
-            }
-
-            /* 관리 컬럼 숨김 (마지막 컬럼) */
+            /* 스케줄 관리 패널 인쇄 설정 */
             #panel-schedule .data-table th:last-child,
-            #panel-schedule .data-table td:last-child,
-            #panel-as-list .data-table th:last-child,
-            #panel-as-list .data-table td:last-child {
+            #panel-schedule .data-table td:last-child {
                 display: none !important;
             }
 
-            /* 스케줄 테이블 컬럼 너비 조정 (인쇄용 - 8개 컬럼) */
+            /* 스케줄 테이블 컬럼 너비 조정 (인쇄용) */
             #panel-schedule .data-table th:nth-child(1),
             #panel-schedule .data-table td:nth-child(1) {
                 width: 5% !important;
@@ -2682,47 +2668,32 @@
             /* No */
             #panel-schedule .data-table th:nth-child(2),
             #panel-schedule .data-table td:nth-child(2) {
-                width: 10% !important;
+                width: 30% !important;
             }
 
-            /* Category */
+            /* 공정명 */
             #panel-schedule .data-table th:nth-child(3),
             #panel-schedule .data-table td:nth-child(3) {
-                width: 12% !important;
+                width: 15% !important;
             }
 
-            /* Process */
+            /* 시작일 */
             #panel-schedule .data-table th:nth-child(4),
             #panel-schedule .data-table td:nth-child(4) {
-                width: 23% !important;
+                width: 15% !important;
             }
 
-            /* Checkpoint */
+            /* 종료일 */
             #panel-schedule .data-table th:nth-child(5),
             #panel-schedule .data-table td:nth-child(5) {
                 width: 10% !important;
             }
 
-            /* Start */
+            /* 담당자 */
             #panel-schedule .data-table th:nth-child(6),
             #panel-schedule .data-table td:nth-child(6) {
-                width: 10% !important;
+                width: 25% !important;
             }
-
-            /* End */
-            #panel-schedule .data-table th:nth-child(7),
-            #panel-schedule .data-table td:nth-child(7) {
-                width: 10% !important;
-            }
-
-            /* Manager */
-            #panel-schedule .data-table th:nth-child(8),
-            #panel-schedule .data-table td:nth-child(8) {
-                width: 20% !important;
-            }
-
-            /* Memo */
-
 
             /* 비고 */
 
@@ -3057,9 +3028,9 @@
                     onchange="changeFontSize(this.value)" oninput="changeFontSize(this.value)">
                 <span class="font-size-value" id="fontSizeValue">12px</span>
             </div>
-            <button class="header-btn secondary" onclick="exportAllData()">📤 백업 저장</button>
+            <button class="header-btn secondary" onclick="exportAllData()">📤 내보내기</button>
             <button class="header-btn secondary" onclick="importData()">📥 불러오기</button>
-            <button class="header-btn primary" onclick="saveData()">💾 변경사항 저장</button>
+            <button class="header-btn primary" onclick="saveData()">💾 저장</button>
         </div>
     </header>
 
@@ -3068,120 +3039,16 @@
         <div class="admin-modal-content">
             <h3>🔐 관리자 로그인</h3>
             <p>관리자 아이디와 비밀번호를 입력하세요</p>
-            <input type="text" id="adminId" class="modal-input" placeholder="아이디" autocomplete="username">
-            <input type="password" id="adminPassword" class="modal-input" placeholder="비밀번호"
-                autocomplete="current-password" onkeypress="if(event.key==='Enter') loginAdmin()">
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeAdminModal()">취소</button>
-                <button class="btn btn-primary" onclick="loginAdmin()">로그인</button>
+            <input type="text" id="adminId" placeholder="아이디" style="margin-bottom:8px;"
+                onkeypress="if(event.key==='Enter')document.getElementById('adminPassword').focus()">
+            <input type="password" id="adminPassword" placeholder="비밀번호"
+                onkeypress="if(event.key==='Enter')loginAdmin()">
+            <div class="admin-modal-btns">
+                <button class="cancel-btn" onclick="closeAdminModal()">취소</button>
+                <button class="confirm-btn" onclick="loginAdmin()">로그인</button>
             </div>
         </div>
     </div>
-
-    <script>
-        // [긴급 조치] 로그인 문제 해결을 위한 강제 접속 허용 코드
-
-        // 오버레이 로그인 처리 (개선된 버전 v3)
-        async function performLogin(idArg, pwArg) {
-            console.log("performLogin called");
-
-            // 인자가 없으면 오버레이 입력창에서 가져옴
-            const inputId = idArg || document.getElementById('loginId').value.trim();
-            const inputPw = pwArg || document.getElementById('loginPw').value;
-
-            if (!inputId) {
-                alert('아이디를 입력해주세요.');
-                return;
-            }
-
-            // 1. 설정 파일 로드 확인
-            if (typeof MAIN_ADMINS === 'undefined') {
-                alert('오류: admin_config.js 설정 파일이 로드되지 않았습니다.');
-                return;
-            }
-
-            // 2. 관리자 ID 확인
-            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
-            let regularAdmin = null;
-            if (!mainAdmin && typeof getRegularAdmins === 'function') {
-                const admins = getRegularAdmins();
-                regularAdmin = admins.find(a => a.id === inputId);
-            }
-
-            if (!mainAdmin && !regularAdmin) {
-                alert('존재하지 않는 아이디입니다: ' + inputId);
-                return;
-            }
-
-            const targetAdmin = mainAdmin || regularAdmin;
-            const role = mainAdmin ? 'main' : 'regular';
-
-            console.log("Found admin:", targetAdmin.name);
-
-            // 3. 비밀번호 검증 시도
-            try {
-                // 로컬/비보안 환경 체크
-                if (!window.crypto || !window.crypto.subtle) {
-                    throw new Error('보안 기능(Crypto) 미지원');
-                }
-
-                const inputHash = await hashPassword(inputPw);
-                console.log("Hash calc success");
-
-                if (targetAdmin.passwordHash === inputHash) {
-                    // 성공: 정상 로그인
-                    completeLogin(targetAdmin, role);
-                    return;
-                } else {
-                    console.warn("Password mismatch");
-                    throw new Error('비밀번호 불일치');
-                }
-            } catch (e) {
-                console.warn('로그인 프로세스 예외:', e);
-                // 4. [긴급] 비밀번호 불일치, 암호화 실패 등 모든 예외 상황에서 강제 로그인 제안
-                const confirmMsg = `[로그인 오류 해결]\n\n로그인 검증에 실패했습니다.\n(원인: ${e.message})\n\nID(${targetAdmin.name})는 확인되었습니다.\n강제로 로그인하시겠습니까?`;
-
-                // 브라우저가 confirm을 차단할 수도 있으므로 setTimeout 사용 고려했으나, click 이벤트 내이므로 즉시 실행
-                if (confirm(confirmMsg)) {
-                    completeLogin(targetAdmin, role, true);
-                }
-            }
-        }
-
-        function completeLogin(admin, role, isForced = false) {
-            console.log("Completing login for:", admin.name);
-            currentAdmin = { id: admin.id, role: role, name: admin.name };
-
-            // UI 숨김
-            const overlay = document.getElementById('loginOverlay');
-            if (overlay) overlay.style.display = 'none';
-            const modal = document.getElementById('adminModal');
-            if (modal) modal.style.display = 'none';
-
-            // 메인 화면 활성화
-            if (typeof activateAdminMode === 'function') {
-                activateAdminMode();
-            } else {
-                console.error("activateAdminMode function missing!");
-                alert("관리자 모드 활성화 함수(activateAdminMode)를 찾을 수 없습니다.");
-            }
-
-            if (isForced) {
-                showToast(`관리자 ${admin.name}님 (강제 접속) 환영합니다.`, 'warning');
-            } else {
-                showToast(`${admin.name}님 환영합니다!`, 'success');
-            }
-        }
-
-        // 관리자 로그인 처리 (모달)
-        async function loginAdmin() {
-            const adminId = document.getElementById('adminId').value.trim();
-            const adminPw = document.getElementById('adminPassword').value;
-            // 인자로 직접 전달하여 DOM 의존성 제거
-            await performLogin(adminId, adminPw);
-        }
-
-    </script>
 
     <!-- 삭제 비밀번호 모달 -->
     <div class="admin-modal" id="deletePasswordModal">
@@ -3275,7 +3142,8 @@
             <div class="sidebar-header">
                 <h3>고객 목록</h3>
                 <div style="display:flex;gap:6px;">
-                    <button class="btn btn-secondary btn-sm" onclick="syncFromCloud()" title="클라우드에서 불러오기">☁️↓</button>
+                    <button class="btn btn-sm" onclick="syncFromCloud();" title="클라우드에서 불러오기"
+                        style="background:#34c759; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">☁️↓</button>
                     <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
                 </div>
             </div>
@@ -3976,19 +3844,7 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="btn btn-sm" onclick="downloadPDF('scheduleDoc', '공사스케줄관리')"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">
-                                    🖨️ 인쇄/PDF
-                                </button>
-                                <!-- Notion Sync Button -->
-                                <button class="btn btn-sm" onclick="alert('Notion Sync Not Implemented')"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">
-                                    📥 Notion 동기화
-                                </button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">
-                                    ➕ 공정 추가
-                                </button>
+                                <button class="pdf-btn" onclick="downloadPDF('scheduleDoc', '공사스케줄관리')">🖨️ 인쇄/PDF</button>
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
@@ -4090,16 +3946,14 @@
                             </table>
                             <div
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                <div
-                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                     <strong>💡 공사 진행 안내 및 유의사항</strong>
                                     <button class="btn btn-sm no-print" onclick="loadScheduleGuidelines()"
                                         style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
                                         📥 유의사항 불러오기
                                     </button>
                                 </div>
-                                <ul id="scheduleGuidelinesList"
-                                    style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                <ul id="scheduleGuidelinesList" style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                     <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
                                     <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
                                         <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할
@@ -4120,10 +3974,10 @@
                                         <th style="padding:12px; border:1px solid #d2d2d7;">핵심 체크포인트</th>
                                         <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
                                         <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
-                                        <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
+                                        <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                         <th class="no-print"
-                                            style="width:90px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                            style="width:140px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                     </tr>
                                 </thead>
                                 <tbody id="scheduleTableBody">
@@ -4151,9 +4005,9 @@
                                 <div class="subtitle">A/S Management List</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <!-- Old cloud sync button removed as requested -->
-                                <!-- <button class="sync-btn no-print" onclick="syncASListFromCloud()" ...> -->
-
+                                <button class="sync-btn no-print" onclick="syncASListFromCloud()"
+                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
                                 <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
                                     인쇄/PDF</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"
@@ -4211,8 +4065,7 @@
 
                                 <div
                                     style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                    <div
-                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                         <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
                                         <button class="btn btn-sm no-print" onclick="loadASGuidelines()"
                                             style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
@@ -4357,6 +4210,50 @@
     <script>
         console.log('Main admin script loading...');
 
+        // (performLogin function has been moved to script top)
+        // 오버레이 로그인 처리 (스크립트 최상단 이동)
+        async function performLogin() {
+            console.log('performLogin function executed');
+            const inputId = document.getElementById('loginId').value.trim();
+            const inputPw = document.getElementById('loginPw').value;
+
+            if (!inputId || !inputPw) {
+                showToast('아이디와 비밀번호를 입력해주세요', 'warning');
+                return;
+            }
+
+            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+            const inputHash = await hashPassword(inputPw);
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+            if (mainAdmin) {
+                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                document.getElementById('loginOverlay').style.display = 'none';
+                activateAdminMode();
+                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
+                return;
+            }
+
+            // 일반관리자 확인 (1차: 로컬 데이터)
+            let admins = getRegularAdmins();
+            let found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+
+            // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
+            if (!found) {
+                // showToast('서버에서 관리자 정보를 확인 중입니다...', 'info'); // UX상 생략 가능하지만 있으면 좋음
+                await syncAdminsFromCloud();
+                admins = getRegularAdmins();
+                found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+            }
+
+            if (found) {
+                currentAdmin = { id: found.id, role: 'regular' };
+                document.getElementById('loginOverlay').style.display = 'none';
+                activateAdminMode();
+                showToast(`${found.name} 관리자로 로그인되었습니다`, 'success');
+            } else {
+                showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
+            }
+        }
 
         const categories = [
             { no: '01', name: '가설공사' }, { no: '02', name: '철거공사' }, { no: '03', name: '설비/방수공사' },
@@ -5225,194 +5122,6 @@
             as_done: 'A/S'
         };
 
-        // ==========================================
-        // 4. 데이터베이스 및 상수 정의 (복구 및 추가)
-        // ==========================================
-
-        // [복구] A/S 관리 품목 데이터베이스 (Cascading Dropdown용)
-        const AS_DB = {
-            "주방가구": {
-                brands: {
-                    "LG전자": {
-                        items: ["식기세척기", "인덕션", "광파오븐", "냉장고", "김치냉장고", "정수기"],
-                        service: "LG전자 서비스센터 (1544-7777)",
-                        url: "https://www.lgservice.co.kr"
-                    },
-                    "삼성전자": {
-                        items: ["식기세척기", "인덕션", "오븐", "냉장고", "김치냉장고", "정수기", "비스포크"],
-                        service: "삼성전자 서비스센터 (1588-3366)",
-                        url: "https://www.samsungsvc.co.kr"
-                    },
-                    "SK매직": {
-                        items: ["식기세척기", "인덕션", "가스레인지", "정수기"],
-                        service: "SK매직 고객센터 (1600-1661)",
-                        url: "https://www.skmagic.com"
-                    },
-                    "백조씽크": {
-                        items: ["씽크볼", "수전", "배수구"],
-                        service: "백조씽크 고객센터 (02-929-4443)",
-                        url: "https://www.conik.co.kr/"
-                    },
-                    "한샘": {
-                        items: ["씽크대", "수전", "후드", "쿡탑"],
-                        service: "한샘 서비스센터 (1588-0900)",
-                        url: "https://as.hanssem.com/"
-                    },
-                    "하츠(Haatz)": {
-                        items: ["후드", "전열교환기", "환풍기"],
-                        service: "하츠 고객센터 (1644-0806)",
-                        url: "https://www.haatz.com/"
-                    }
-                }
-            },
-            "욕실": {
-                brands: {
-                    "아메리칸스탠다드": {
-                        items: ["양변기", "세면기", "수전", "샤워기", "비데"],
-                        service: "릭실코리아 (1588-5903)",
-                        url: "https://www.lixil.co.kr/"
-                    },
-                    "이누스(inus)": {
-                        items: ["양변기", "세면기", "수전", "비데", "타일"],
-                        service: "이누스 서비스센터 (1588-8613)",
-                        url: "https://www.theinus.co.kr/"
-                    },
-                    "대림바스": {
-                        items: ["양변기", "세면기", "수전", "비데"],
-                        service: "대림바스 고객센터 (1588-1952)",
-                        url: "https://www.daelimbath.com/"
-                    },
-                    "힘펠": {
-                        items: ["환풍기", "휴젠뜨", "전동댐퍼"],
-                        service: "힘펠 고객센터 (1899-0991)",
-                        url: "https://www.himpel.co.kr/"
-                    }
-                }
-            },
-            "조명/전기": {
-                brands: {
-                    "르그랑(Legrand)": {
-                        items: ["스위치", "콘센트", "통신단자", "차단기"],
-                        service: "르그랑코리아 (080-310-8282)",
-                        url: "http://www.legrand.co.kr/"
-                    },
-                    "제일조명": {
-                        items: ["다운라이트", "라인조명", "간접조명"],
-                        service: "제일조명 (02-2267-6454)",
-                        url: ""
-                    },
-                    "필립스": {
-                        items: ["다운라이트", "전구", "스마트조명(Hue)"],
-                        service: "필립스 조명 고객센터 (1670-6210)",
-                        url: "https://www.lighting.philips.co.kr/"
-                    }
-                }
-            },
-            "창호/도어": {
-                brands: {
-                    "LX하우시스": {
-                        items: ["시스템창호", "이중창", "터닝도어", "중문"],
-                        service: "LX Z:IN 고객센터 (080-005-4000)",
-                        url: "https://www.lxzin.com/"
-                    },
-                    "KCC글라스": {
-                        items: ["창호", "유리", "중문"],
-                        service: "홈씨씨 (1588-9898)",
-                        url: "https://www.homecc.com/"
-                    },
-                    "예림도어": {
-                        items: ["ABS도어", "멤브레인도어", "중문", "몰딩"],
-                        service: "예림임업 (1899-5675)",
-                        url: "https://www.yerim.net/"
-                    },
-                    "영림도어": {
-                        items: ["ABS도어", "중문", "몰딩", "월판넬"],
-                        service: "영림임업 (1577-5600)",
-                        url: "https://www.younglim.net/"
-                    },
-                    "도어락(삼성/직방)": {
-                        items: ["푸시풀 도어락", "지문인식 도어락", "비디오폰"],
-                        service: "직방 스마트홈 (1588-4141)",
-                        url: "https://smarthome.zigbang.com/"
-                    }
-                }
-            },
-            "바닥재/벽지": {
-                brands: {
-                    "LX하우시스": {
-                        items: ["강마루", "장판(엑스컴포트)", "실크벽지(디아망)", "지아지물"],
-                        service: "LX Z:IN 고객센터 (080-005-4000)",
-                        url: "https://www.lxzin.com/"
-                    },
-                    "동화자연마루": {
-                        items: ["강마루(나투스진)", "강화마루", "디자인월"],
-                        service: "동화자연마루 (1899-2837)",
-                        url: "http://www.greendongwha.com/"
-                    },
-                    "구정마루": {
-                        items: ["강마루", "온돌마루", "천연마루"],
-                        service: "구정마루 (031-766-0700)",
-                        url: "https://www.kujungmaru.co.kr/"
-                    },
-                    "신한벽지": {
-                        items: ["실크벽지", "합지벽지"],
-                        service: "신한벽지 (02-817-6539)",
-                        url: "http://www.shinhanwall.com/"
-                    }
-                }
-            },
-            "시스템에어컨": {
-                brands: {
-                    "LG전자": {
-                        items: ["시스템에어컨(천장형)", "실외기"],
-                        service: "LG전자 서비스센터 (1544-7777)",
-                        url: "https://www.lgservice.co.kr"
-                    },
-                    "삼성전자": {
-                        items: ["시스템에어컨(무풍)", "실외기"],
-                        service: "삼성전자 서비스센터 (1588-3366)",
-                        url: "https://www.samsungsvc.co.kr"
-                    }
-                }
-            },
-            "기타": {
-                brands: {
-                    "기타": {
-                        items: ["기타 품목"],
-                        service: "업체별 문의",
-                        url: ""
-                    }
-                }
-            }
-        };
-
-        // [복구] 공사 스케줄 표준 템플릿 (DB missing fix)
-        // 실제 공정 순서와 체크포인트 반영
-        let defaultScheduleSteps = [
-            { category: "철거/설비", name: "전체 철거 및 폐기물 처리", checkPoint: "민원 주의, 엘리베이터 보양 확인", inCharge: "원프로 소장" },
-            { category: "철거/설비", name: "확장부 철거(날개벽/바닥)", checkPoint: "비내력벽 확인 필수, 엑셀 파이프 손상 주의", inCharge: "" },
-            { category: "철거/설비", name: "시스템에어컨 배관 선시공", checkPoint: "드레인 구배 확인, 배관 기밀 테스트", inCharge: "" },
-            { category: "철거/설비", name: "설비(수도/난방/미장)", checkPoint: "누수 테스트 24시간, 양생 기간 준수", inCharge: "" },
-            { category: "창호", name: "창호(샷시) 시공", checkPoint: "수직/수평 확인, 우레탄 폼 사춤 충진", inCharge: "" },
-            { category: "창호", name: "터닝도어 시공", checkPoint: "목공 단열 작업 병행, 밀폐력 확인", inCharge: "" },
-            { category: "목공", name: "목공사(단열/가벽/천장)", checkPoint: "아이소핑크 2중 시공, 틈새 우레탄폼", inCharge: "" },
-            { category: "목공", name: "도어 문틀 설치", checkPoint: "수직/수평 레이저 레벨링", inCharge: "" },
-            { category: "목공", name: "몰딩/걸레받이 시공", checkPoint: "코너 마감 확인, 타카핀 자국 최소화", inCharge: "" },
-            { category: "전기/조명", name: "전기 배선 및 타공", checkPoint: "도면 대로 위치 타공, 전열 라인 확인", inCharge: "" },
-            { category: "타일/욕실", name: "욕실 방수(2차)", checkPoint: "도막 방수 균열 확인, 담수 테스트 권장", inCharge: "" },
-            { category: "타일/욕실", name: "타일 시공(주방/현관/베란다)", checkPoint: "줄눈 간격, 타일 단차 확인 (졸리컷)", inCharge: "" },
-            { category: "타일/욕실", name: "욕식 도기 세팅", checkPoint: "실리콘 마감, 배수 원활 확인", inCharge: "" },
-            { category: "필름/도장", name: "인테리어 필름 시공", checkPoint: "기포/들뜸 확인, 프라이머 작업 필수", inCharge: "" },
-            { category: "필름/도장", name: "탄성코트(베란다)", checkPoint: "보양 철저, 균일 도포", inCharge: "" },
-            { category: "도배", name: "도배(퍼티/초배)", checkPoint: "요철 제거, 네바리/운용지 작업", inCharge: "" },
-            { category: "도배", name: "도배(정배)", checkPoint: "이음매 확인, 풀 자국 제거", inCharge: "" },
-            { category: "바닥재", name: "마루/장판 시공", checkPoint: "바닥 평활도 확인, 걸레받이 실리콘 마감", inCharge: "" },
-            { category: "가구", name: "시스템 가구(주방/붙박이) 시공", checkPoint: "도어 수평, 서랍 작동 확인", inCharge: "" },
-            { category: "조명/전기", name: "조명/콘센트/스위치 설치", checkPoint: "점등 테스트, 회로 분리 확인", inCharge: "" },
-            { category: "준공", name: "입주 청소", checkPoint: "공사 분진 제거, 창틀 청소", inCharge: "" },
-            { category: "준공", name: "준공 점검 및 인수인계", checkPoint: "고객 합동 점검, 하자 체크리스트", inCharge: "원프로 소장" }
-        ];
-
         let customers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
         let currentCustomerId = null;
         let currentData = {};
@@ -5431,29 +5140,9 @@
 
         // ========== 비밀번호 보안 (SHA-256 해싱) ==========
         async function hashPassword(password) {
-            // crypto.subtle 사용 가능 여부 확인
-            if (window.crypto && window.crypto.subtle) {
-                try {
-                    const encoder = new TextEncoder();
-                    const data = encoder.encode(password);
-                    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                    const hashArray = Array.from(new Uint8Array(hashBuffer));
-                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                } catch (e) {
-                    console.error('crypto.subtle 오류, fallback 사용:', e);
-                }
-            }
-
-            // Fallback: js-sha256 라이브러리 사용 (인라인)
-            return await hashPasswordFallback(password);
-        }
-
-        // Fallback SHA-256 (crypto.subtle 미지원 환경용)
-        async function hashPasswordFallback(str) {
-            // 간단한 SHA-256 구현 (임시)
-            // 실제로는 crypto.subtle이 HTTPS에서 항상 작동해야 함
-            const msgUint8 = new TextEncoder().encode(str);
-            const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgUint8);
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
@@ -5476,7 +5165,8 @@
         // 관리자 클라우드 동기화 - 불러오기
         async function syncAdminsFromCloud() {
             try {
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=' + encodeURIComponent('관리자'));
+                const params = new URLSearchParams({ sheet: '관리자' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 if (response.ok) {
                     const cloudAdmins = await response.json();
                     if (Array.isArray(cloudAdmins) && cloudAdmins.length > 0) {
@@ -5784,6 +5474,36 @@
 
 
         // 관리자 로그인
+        async function loginAdmin() {
+            const inputId = document.getElementById('adminId').value.trim();
+            const inputPw = document.getElementById('adminPassword').value;
+            const inputHash = await hashPassword(inputPw);
+
+            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+            if (mainAdmin) {
+                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                closeAdminModal();
+                activateAdminMode();
+                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
+                return;
+            }
+
+            // 일반관리자 확인 (해시 비교)
+            const admins = getRegularAdmins();
+            const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+            if (found) {
+                currentAdmin = { id: found.id, role: 'regular' };
+                closeAdminModal();
+                activateAdminMode();
+                showToast('관리자로 로그인되었습니다', 'success');
+                return;
+            }
+
+            showToast('아이디 또는 비밀번호가 틀렸습니다', 'error');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('adminPassword').focus();
+        }
 
         // 관리자 모드 활성화
         function activateAdminMode() {
@@ -5791,15 +5511,12 @@
             const adminId = currentAdmin?.id || '';
 
             // UI 업데이트
-            const badge = document.getElementById('adminBadge');
-            if (badge) {
-                badge.className = 'admin-badge admin';
-                badge.innerHTML = `${roleLabel}: ${adminId}`;
-            }
+            document.getElementById('adminBadge').className = 'admin-badge admin';
+            document.getElementById('adminBadge').innerHTML = `${roleLabel}: ${adminId} `;
 
             let statusHTML = `
-                <span class="admin-badge admin">${roleLabel}: ${adminId}</span>
-                <button class="admin-login-btn" onclick="logoutAdmin()">로그아웃</button>
+                <span class="admin-badge admin" id = "adminBadge" > ${roleLabel}: ${adminId}</span>
+                    <button class="admin-login-btn" onclick="logoutAdmin()">로그아웃</button>
             `;
 
             // 메인관리자만 관리자 관리 버튼 표시
@@ -6007,19 +5724,6 @@
                 return;
             }
 
-            // [SECURITY CHECK] Statistics Tab & Modal Access Re-verification
-            // (STATS_ACCESS_PIN is defined later in the script, available globally)
-            if (tabId === 'stats' && !isMainAdmin() && (typeof isStatsUnlocked !== 'undefined' && !isStatsUnlocked)) {
-                const pin = prompt('통계 대시보드는 관리자 전용입니다.\\n\\n비밀번호를 입력하세요:');
-                if (typeof STATS_ACCESS_PIN !== 'undefined' && pin === STATS_ACCESS_PIN) {
-                    isStatsUnlocked = true;
-                    showToast('통계 접근이 허용되었습니다.', 'success');
-                } else {
-                    showToast('비밀번호가 올바르지 않습니다.', 'error');
-                    return;
-                }
-            }
-
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.customer-tab').forEach(t => t.classList.remove('active'));
 
@@ -6064,29 +5768,49 @@
         }
 
         let scheduleRows = [];
-        // let defaultScheduleSteps = []; // Removed duplicate declaration
+        let defaultScheduleSteps = [];
 
         async function fetchScheduleTemplate() {
             try {
                 // 스케줄 템플릿 가져오기 (Google Sheet: '공사 스케줄 관리')
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=schedule_template');
+                const params = new URLSearchParams({
+                    sheet: '공사 스케줄 관리',
+                    t: Date.now()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const data = await response.json();
 
-                // [수정] 백엔드 응답이 {result:'success', steps:[], notices:[]} 형태임
-                if (data.result === 'success' && Array.isArray(data.steps) && data.steps.length > 0) {
-                    defaultScheduleSteps = data.steps;
-                    console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
-                } else if (Array.isArray(data) && data.length > 0) {
-                    // [호환성] 구형 백엔드가 배열을 반환할 경우
+                if (Array.isArray(data) && data.length > 0 && data[0].category) {
+                    // 올바른 스케줄 템플릿 데이터인지 확인 (category 필드가 있어야 함)
                     defaultScheduleSteps = data;
-                    console.log('✅ 스케줄 템플릿 로드 완료 (구형):', defaultScheduleSteps.length + '개 항목');
+                    console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+                    console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
                 } else {
-                    console.warn('⚠️ 스케줄 템플릿 데이터 없음. 기본(하드코딩된) 템플릿을 사용합니다.');
-                    // 덮어쓰지 않음 -> 상단에서 정의된 긴 리스트 유지
+                    console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
+                    defaultScheduleSteps = [
+                        { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' },
+                        { category: '기획·현장 사전 준비', name: '현장 실측', checkPoint: '실측 완료 여부', inCharge: '원프로 소장 (010-4650-7013)' },
+                        { category: '기획·현장 사전 준비', name: '철거 및 폐기물 처리', checkPoint: '철거 완료 및 폐기물 반출', inCharge: '원프로 소장 (010-4650-7013)' },
+                        { category: '목공·천장·벽체', name: '목공 작업', checkPoint: '구조물 설치 완료', inCharge: '목공팀' },
+                        { category: '목공·천장·벽체', name: '천장 마감', checkPoint: '천장 마감재 시공', inCharge: '목공팀' },
+                        { category: '목공·천장·벽체', name: '벽체 마감', checkPoint: '벽체 마감재 시공', inCharge: '목공팀' },
+                        { category: '전기·조명', name: '전기 배선', checkPoint: '배선 완료 및 점검', inCharge: '전기팀' },
+                        { category: '전기·조명', name: '조명 설치', checkPoint: '조명 설치 및 점등 확인', inCharge: '전기팀' },
+                        { category: '도배·장판', name: '도배 작업', checkPoint: '도배 완료', inCharge: '도배팀' },
+                        { category: '도배·장판', name: '장판 시공', checkPoint: '장판 시공 완료', inCharge: '장판팀' },
+                        { category: '주방·욕실', name: '주방 가구 설치', checkPoint: '주방 가구 설치 완료', inCharge: '주방팀' },
+                        { category: '주방·욕실', name: '욕실 타일', checkPoint: '타일 시공 완료', inCharge: '타일팀' },
+                        { category: '주방·욕실', name: '욕실 기구 설치', checkPoint: '위생기구 설치 완료', inCharge: '설비팀' },
+                        { category: '창호·유리', name: '창호 설치', checkPoint: '창호 설치 및 밀폐 확인', inCharge: '창호팀' },
+                        { category: '창호·유리', name: '유리 시공', checkPoint: '유리 시공 완료', inCharge: '창호팀' },
+                        { category: '마감·정리', name: '최종 청소', checkPoint: '청소 완료', inCharge: '원프로 소장 (010-4650-7013)' },
+                        { category: '마감·정리', name: '하자 점검', checkPoint: '하자 확인 및 보수', inCharge: '원프로 소장 (010-4650-7013)' },
+                        { category: '마감·정리', name: '준공 및 인계', checkPoint: '고객 인수 확인', inCharge: '원프로 소장 (010-4650-7013)' }
+                    ];
                 }
             } catch (error) {
                 console.error('❌ 스케줄 템플릿 로드 오류:', error);
-                // 에러 시에도 기본값 유지 (빈 배열로 초기화하지 않음)
+                defaultScheduleSteps = [];
             }
         }
 
@@ -6095,30 +5819,34 @@
 
             if (currentData.schedules && currentData.schedules.length > 0) {
                 scheduleRows = [...currentData.schedules];
+                // 기존 데이터가 20개 미만이면 20개까지 빈 행 추가
+                while (scheduleRows.length < 20) {
+                    scheduleRows.push({
+                        id: Date.now() + Math.random(),
+                        category: '',
+                        name: '',
+                        checkPoint: '',
+                        start: '',
+                        end: '',
+                        inCharge: '',
+                        memo: ''
+                    });
+                }
             } else {
-                scheduleRows = defaultScheduleSteps.map(s => ({
-                    id: Date.now() + Math.random(),
-                    category: s.category || '',
-                    name: s.name,
-                    start: '',
-                    end: '',
-                    inCharge: s.inCharge || '',
-                    memo: ''
-                }));
-            }
-
-            // [Request] Print layout: Ensure at least 50 rows for filling space
-            const MIN_ROWS = 50;
-            while (scheduleRows.length < MIN_ROWS) {
-                scheduleRows.push({
-                    id: Date.now() + Math.random(),
-                    category: '',
-                    name: '',
-                    start: '',
-                    end: '',
-                    inCharge: '',
-                    memo: ''
-                });
+                // 신규 고객: 20개 빈 행으로 시작
+                scheduleRows = [];
+                for (let i = 0; i < 20; i++) {
+                    scheduleRows.push({
+                        id: Date.now() + Math.random() + i,
+                        category: '',
+                        name: '',
+                        checkPoint: '',
+                        start: '',
+                        end: '',
+                        inCharge: '',
+                        memo: ''
+                    });
+                }
             }
 
             // [추가] 스케줄 상단 정보 자동 채우기
@@ -6206,102 +5934,95 @@
 
             // Extract unique values for dropdowns
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
             tbody.innerHTML = scheduleRows.map((row, index) => {
-                // 현재 행의 카테고리로 공정명 필터링
-                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
-                const processOptions = processes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-
-                // Manager Options
-                const MANAGER_OPTIONS = [
-                    'DESIGN JIG',
-                    '원프로 소장 (010-4650-7013)',
-                    '건축주 (직영)',
-                    'B·R', 'S·T', 'T·W', 'G·O·H', 'C·Y·G', 'K·Y·S', 'Y·J·S', 'F·A·C'
-                ];
-
-                // If current value is not in options, add it temporarily (to preserve historical data)
-                const currentManager = row.inCharge || currentData.manager || 'DESIGN JIG';
-                let managerOptionsHtml = MANAGER_OPTIONS.map(m =>
-                    `<option value="${m}" ${m === currentManager ? 'selected' : ''}>${m}</option>`
+                // 현재 행의 카테고리 옵션 생성 (selected 속성 포함)
+                const categoryOptions = categories.map(c =>
+                    `<option value="${c}"${c === row.category ? ' selected' : ''}>${c}</option>`
                 ).join('');
 
-                if (currentManager && !MANAGER_OPTIONS.includes(currentManager)) {
-                    managerOptionsHtml = `<option value="${currentManager}" selected>${currentManager}</option>` + managerOptionsHtml;
-                }
+                // 현재 행의 카테고리로 공정명 필터링
+                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
+                const processOptions = processes.map(p =>
+                    `<option value="${p.name}"${p.name === row.name ? ' selected' : ''}>${p.name}</option>`
+                ).join('');
+
+                // 빈 행 체크 (카테고리, 공정명, 체크포인트, 시작일, 종료일, 담당자, 비고가 모두 비어있으면 인쇄 제외)
+                const isEmpty = !row.category && !row.name && !row.checkPoint && !row.start && !row.end && !row.inCharge && !row.memo;
+                const printClass = isEmpty ? 'no-print' : '';
 
                 return `
-                    <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
-                        ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
-                        style="cursor:move; transition: background 0.2s;">
-                        <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
+    <tr class="${printClass}">
+        <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
 
-                        <!-- Category -->
-                        <td style="padding:5px; border:1px solid #d2d2d7;">
-                            <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
-                                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;">
-                                <option value="">선택</option>
-                                ${categoryOptions.replace(`"${row.category}"`, `"${row.category}" selected`)}
-                            </select>
-                        </td>
-
-                        <!-- Process Name -->
-                        <td style="padding:5px; border:1px solid #d2d2d7;">
-                            <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
-                                ${row.category ? '' : 'disabled'}
-                                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;">
-                                ${row.category ? '<option value="">선택</option>' + processOptions.replace(`"${row.name}"`, `"${row.name}" selected`) : '<option value="">카테고리 먼저 선택</option>'}
-                            </select>
-                        </td>
-
-                        <!-- Checkpoint -->
-                        <td style="padding:5px; border:1px solid #d2d2d7;">
-                            <input type="text" value="${row.checkPoint || '핵심 체크포인트'}" class="customer-field"
-                                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="핵심 체크포인트">
-                        </td>
-
-                        <td style="padding:5px; border:1px solid #d2d2d7;">
-                            <input type="date" value="${row.start || ''}" class="customer-field"
-                                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
-                                onchange="handleStartDateChange(${index}, this.value)">
-                        </td>
-                        <td style="padding:5px; border:1px solid #d2d2d7;">
-                            <input type="date" value="${row.end || ''}" class="customer-field"
-                                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
-                                onchange="updateScheduleRow(${index}, 'end', this.value)">
-                        </td>
-                        <!-- Manager Dropdown -->
-                        <td style="padding:5px; border:1px solid #d2d2d7;">
-                            <select class="customer-field" 
-                                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                                onchange="updateScheduleRow(${index}, 'inCharge', this.value)">
-                                ${managerOptionsHtml}
-                            </select>
-                        </td>
+        <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.memo || '비고'}" class="customer-field"
+            <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; cursor:pointer;">
+                <option value="">선택</option>
+                ${categoryOptions}
+            </select>
+        </td>
+
+        <!-- Process Name -->
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
+                ${row.category ? '' : 'disabled'}
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; cursor:pointer;">
+                ${row.category ? '<option value="">선택</option>' + processOptions : '<option value="">카테고리 먼저 선택</option>'}
+            </select>
+        </td>
+
+        <!-- Checkpoint -->
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고">
+                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
+        </td>
+
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="date" value="${row.start || ''}" class="customer-field"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
+                onchange="handleStartDateChange(${index}, this.value)">
+        </td>
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="date" value="${row.end || ''}" class="customer-field"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
+                onchange="updateScheduleRow(${index}, 'end', this.value)">
+        </td>
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
+        </td>
+        <td style="padding:5px; border:1px solid #d2d2d7;">
+            <input type="text" value="${row.memo || ''}" class="customer-field"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
+                onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
         </td>
         <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
-            <div style="display:flex; justify-content:center; gap:2px;">
-                <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)"
-                    style="padding:2px 4px;">▲</button>
-                <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)"
-                    style="padding:2px 4px;">▼</button>
-                <button class="btn btn-secondary btn-sm" onclick="removeScheduleRow(${index})"
-                    style="padding:2px 4px; color:#ff3b30;">✕</button>
+            <div style="display:flex; justify-content:center; gap:3px;">
+                <button onclick="moveScheduleRow(${index}, -1)"
+                    style="padding:4px 6px; font-size:12px; border:1px solid #d2d2d7; background:white; cursor:pointer; border-radius:4px;"
+                    title="위로 이동">▲</button>
+                <button onclick="moveScheduleRow(${index}, 1)"
+                    style="padding:4px 6px; font-size:12px; border:1px solid #d2d2d7; background:white; cursor:pointer; border-radius:4px;"
+                    title="아래로 이동">▼</button>
+                <button onclick="removeScheduleRow(${index})"
+                    style="padding:4px 6px; font-size:12px; border:1px solid #ff3b30; background:white; color:#ff3b30; cursor:pointer; border-radius:4px;"
+                    title="삭제">✕</button>
+                <button onclick="addScheduleRow()"
+                    style="padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #34c759; background:#34c759; color:white; cursor:pointer; border-radius:4px;"
+                    title="공정 추가">+</button>
             </div>
         </td>
-    </tr >
-                    `;
+    </tr>
+                `;
             }).join('');
         }
 
         function addScheduleRow() {
-            // 빈 행 추가 (견적서 방식)
+            // 빈 행 추가
             scheduleRows.push({
                 id: Date.now() + Math.random(),
                 category: '',
@@ -6309,7 +6030,7 @@
                 checkPoint: '',
                 start: '',
                 end: '',
-                inCharge: '원프로 소장 (010-4650-7013)',
+                inCharge: '',
                 memo: ''
             });
             renderScheduleTable();
@@ -6366,49 +6087,55 @@
 
         // 스케줄 유의사항 불러오기 (구글 시트에서)
         async function loadScheduleGuidelines() {
-            console.log('Fetching Schedule Guidelines...');
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet = 공사스케줄관리 & action=getGuidelines`);
+                const params = new URLSearchParams({
+                    sheet: '공사스케줄관리',
+                    action: 'getGuidelines'
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
-                if (result.result === 'success' && result.notices && result.notices.length > 0) {
+                if (result.success && result.guidelines && result.guidelines.length > 0) {
                     const guidelinesList = document.getElementById('scheduleGuidelinesList');
                     if (guidelinesList) {
-                        guidelinesList.innerHTML = result.notices.map(item => `< li > ${item}</li > `).join('');
-                        alert('✅ 성공: 공사 스케줄 유의사항을 성공적으로 불러왔습니다.');
+                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                        showPersistentAlert('공사 스케줄 유의사항을\n성공적으로 불러왔습니다.', 'success');
                     }
-                } else if (result.result === 'success') {
-                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
+                } else if (result.success) {
+                    showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
                 } else {
-                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
+                    showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
                 }
             } catch (error) {
                 console.error('Error loading schedule guidelines:', error);
-                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
+                showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
             }
         }
 
         // A/S 유의사항 불러오기 (구글 시트에서)
         async function loadASGuidelines() {
-            console.log('Fetching AS Guidelines...');
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet = AS관리리스트 & action=getGuidelines`);
+                const params = new URLSearchParams({
+                    sheet: 'AS관리리스트',
+                    action: 'getGuidelines'
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
-                if (result.result === 'success' && result.notices && result.notices.length > 0) {
+                if (result.success && result.guidelines && result.guidelines.length > 0) {
                     const guidelinesList = document.getElementById('asGuidelinesList');
                     if (guidelinesList) {
-                        guidelinesList.innerHTML = result.notices.map(item => `< li > ${item}</li > `).join('');
-                        alert('✅ 성공: A/S 관리 유의사항을 성공적으로 불러왔습니다.');
+                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                        showPersistentAlert('A/S 관리 유의사항을\n성공적으로 불러왔습니다.', 'success');
                     }
-                } else if (result.result === 'success') {
-                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
+                } else if (result.success) {
+                    showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
                 } else {
-                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
+                    showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
                 }
             } catch (error) {
                 console.error('Error loading AS guidelines:', error);
-                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
+                showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
             }
         }
 
@@ -6419,33 +6146,33 @@
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 100 %;
-                height: 100 %;
-                background: rgba(0, 0, 0, 0.5);
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
                 display: flex;
-                align - items: center;
-                justify - content: center;
-                z - index: 10000;
-                `;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
 
             const modalContent = document.createElement('div');
             modalContent.style.cssText = `
                 background: white;
-                border - radius: 12px;
+                border-radius: 12px;
                 padding: 24px;
-                max - width: 600px;
-                width: 90 %;
-                max - height: 80vh;
-                overflow - y: auto;
-                box - shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                `;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            `;
 
             // 카테고리 목록 추출
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const categoryOptions = categories.map(cat => `< option value = "${cat}" > ${cat}</option > `).join('');
+            const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
             modalContent.innerHTML = `
-                    < h3 style = "margin: 0 0 16px 0; font-size: 18px; color: #333;" >📋 공정 선택</h3 >
+                <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">📋 공정 선택</h3>
 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">카테고리 (클릭하여 선택)</label>
@@ -6465,7 +6192,7 @@
                     <button onclick="closeScheduleTemplateModal()" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">취소</button>
                     <button id="addScheduleBtn" onclick="addScheduleFromTemplate()" style="padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer;" disabled>추가</button>
                 </div>
-                `;
+            `;
 
             modal.appendChild(modalContent);
             document.body.appendChild(modal);
@@ -6493,7 +6220,7 @@
                 // 카테고리 선택 시 해당 카테고리의 공정들 필터링
                 const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
                 const processOptions = processes.map((proc, idx) =>
-                    `< option value = "${idx}" data - category="${selectedCategory}" > ${proc.name}</option > `
+                    `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
                 ).join('');
 
                 processSelect.innerHTML = processOptions;
@@ -6506,7 +6233,7 @@
                 addBtn.disabled = true;
 
                 // 공정 선택 시 추가 버튼 활성화
-                processSelect.onchange = function () {
+                processSelect.onchange = function() {
                     addBtn.disabled = !this.value;
                 };
             } else {
@@ -6625,27 +6352,9 @@
         function loadASList() {
             if (currentData && currentData.as_list) {
                 asListRows = currentData.as_list;
-            } else if (currentData && currentData.asList) {
-                // Compatibility with previous key name if exists
-                asListRows = currentData.asList;
             } else {
                 asListRows = []; // Start empty for new selection
             }
-
-            // [Request] Ensure at least 50 rows
-            const MIN_ROWS = 50;
-            while (asListRows.length < MIN_ROWS) {
-                asListRows.push({
-                    id: Date.now() + Math.random(),
-                    category: '',
-                    brand: '',
-                    item: '',
-                    model: '',
-                    spec: '',
-                    memo: ''
-                });
-            }
-
             renderASListTable();
             updateASInfoHeaders();
         }
@@ -6670,7 +6379,7 @@
                         if (year < 100) year += 2000;
                         const month = matches[2];
                         const day = matches[3];
-                        endDate = `${year} -${month} -${day} `;
+                        endDate = `${year}-${month}-${day}`;
                     }
                 }
 
@@ -6685,7 +6394,7 @@
                             const yy = String(date.getFullYear()).slice(-2);
                             const mm = String(date.getMonth() + 1).padStart(2, '0');
                             const dd = String(date.getDate()).padStart(2, '0');
-                            leakEl.textContent = `~${yy}.${mm}.${dd} `;
+                            leakEl.textContent = `~${yy}.${mm}.${dd}`;
                         } else {
                             leakEl.textContent = '-';
                         }
@@ -6723,96 +6432,63 @@
 
             asListRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
-
-                // --- [Category Options] ---
-                // AS_DB의 키값들을 카테고리 옵션으로 사용
-                const categoryOptions = Object.keys(AS_DB).map(cat =>
-                    `< option value = "${cat}" ${row.category === cat ? 'selected' : ''}> ${cat}</option > `
-                ).join('');
-
-                // --- [Brand Options] ---
-                // 선택된 카테고리에 해당하는 브랜드 목록 추출
-                let brandOptions = '<option value="">브랜드 선택</option>';
-                if (row.category && AS_DB[row.category]) {
-                    const brands = Object.keys(AS_DB[row.category].brands);
-                    brandOptions += brands.map(brand =>
-                        `< option value = "${brand}" ${row.brand === brand ? 'selected' : ''}> ${brand}</option > `
-                    ).join('');
-                } else if (row.category) { // 기타 직접입력 등 고려
-                    brandOptions += `< option value = "${row.brand}" selected > ${row.brand}</option > `;
-                }
-
-                // --- [Item Options] ---
-                // 선택된 브랜드에 해당하는 품목 목록 추출
-                let itemOptions = '<option value="">품목 선택</option>';
-                if (row.category && row.brand && AS_DB[row.category] && AS_DB[row.category].brands[row.brand]) {
-                    const items = AS_DB[row.category].brands[row.brand].items;
-                    itemOptions += items.map(item =>
-                        `< option value = "${item}" ${row.item === item ? 'selected' : ''}> ${item}</option > `
-                    ).join('');
-                } else if (row.brand) {
-                    itemOptions += `< option value = "${row.item}" selected > ${row.item}</option > `;
-                }
-
                 tr.innerHTML = `
-                    < td style = "padding:5px; border:1px solid #d2d2d7; text-align:center;" > ${index + 1}</td >
-                    < !--Category(Select) -->
+                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
+                    <!-- Category -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <select class="mh-input" onchange="updateASCategory(${index}, this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
-                            <option value="">카테고리 선택</option>
-                            ${categoryOptions}
-                        </select>
+                         <input type="text" class="mh-input" value="${row.category || ''}" 
+                             onchange="updateASListRow(${index}, 'category', this.value)"
+                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    <!--Brand(Select) -->
+                    <!-- Brand -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                         <select class="mh-input" onchange="updateASBrand(${index}, this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
-                            ${brandOptions}
-                        </select>
+                        <input type="text" class="mh-input" value="${row.brand || ''}" 
+                            onchange="updateASListRow(${index}, 'brand', this.value)"
+                            style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    <!--Item(Select) -->
+                    <!-- Item -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                         <select class="mh-input" onchange="updateASListRow(${index}, 'item', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
-                            ${itemOptions}
-                        </select>
+                        <input type="text" class="mh-input" value="${row.item || ''}" 
+                            onchange="updateASListRow(${index}, 'item', this.value)"
+                            style="width:100%; border:none; outline:none;">
                     </td>
-                    <!--ModelNum -->
+                    <!-- ModelNum -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.modelNum || ''}" 
                             onchange="updateASListRow(${index}, 'modelNum', this.value)"
                             style="width:100%; border:none; outline:none;">
                     </td>
-                    <!--Rank(삭제됨 / 이전됨 ? - 사용자 요청 화면에는 Rank없음, 하지만 이전 코드 유지) -->
-                    <td style="padding:5px; border:1px solid #d2d2d7; display:none;">
-                        <input type="text" class="mh-input" value="${row.rank || ''}" >
+                    <!-- Rank -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.rank || ''}" 
+                            onchange="updateASListRow(${index}, 'rank', this.value)"
+                            style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                     <!--Size -->
+                     <!-- Size -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.size || ''}" 
                             onchange="updateASListRow(${index}, 'size', this.value)"
                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                     <!--Price -->
+                     <!-- Price -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.price || ''}" 
                             onchange="updateASListRow(${index}, 'price', this.value)"
                             style="width:100%; border:none; outline:none; text-align:right;">
                     </td>
-                     <!--Website / URL-- >
+                     <!-- Website -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.website || ''}" 
-                            onchange="updateASListRow(${index}, 'website', this.value)" placeholder="URL"
-                            style="width:100%; border:none; outline:none; color:blue; text-decoration:underline; cursor:pointer;" onclick="if(this.value) window.open(this.value, '_blank')">
+                            onchange="updateASListRow(${index}, 'website', this.value)"
+                            style="width:100%; border:none; outline:none;">
                     </td>
-                    <!--Service Center(Auto - filled)-- >
+                    <!-- Service -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.service || ''}" 
                              onchange="updateASListRow(${index}, 'service', this.value)"
-                             style="width:100%; border:none; outline:none; text-align:center; color:#555;">
+                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    <!--Warranty -->
+                    <!-- Warranty -->
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <select class="mh-input no-print" onchange="applyScheduleToWarranty(${index}, this.value)"
@@ -6826,49 +6502,48 @@
                                 style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
                         </div>
                     </td>
-                    <!--Note -->
+                    <!-- Note -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
                              onchange="updateASListRow(${index}, 'note', this.value)"
                              style="width:100%; border:none; outline:none;">
                     </td>
-                    <!--Manage -->
+                    <!-- Manage -->
                     <td class="no-print" style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
                     </td>
-                `;
+                 `;
                 tbody.appendChild(tr);
             });
         }
 
         function updateASCategory(index, category) {
             asListRows[index].category = category;
-            asListRows[index].brand = ''; // Reset dependent fields
-            asListRows[index].item = '';
+            asListRows[index].item = ''; // Reset item when category changes
+            asListRows[index].brand = '';
             asListRows[index].service = '';
-            asListRows[index].website = '';
-
+            asListRows[index].note = '';
             saveASList();
-            renderASListTable(); // Re-render to update dependent dropdowns
+            renderASListTable(); // Re-render to update item dropdown
         }
 
-        function updateASBrand(index, brand) {
-            asListRows[index].brand = brand;
-            asListRows[index].item = ''; // Reset Item
-
-            // Auto-fill Service Center & URL if available
-            if (asListRows[index].category && AS_DB[asListRows[index].category] && AS_DB[asListRows[index].category].brands[brand]) {
-                const brandData = AS_DB[asListRows[index].category].brands[brand];
-                if (brandData.service) asListRows[index].service = brandData.service;
-                if (brandData.url) asListRows[index].website = brandData.url;
+        function updateASItem(index, dbIndex) {
+            if (dbIndex === "") {
+                asListRows[index].item = '';
+                return;
             }
-
+            const selectedData = AS_DB[dbIndex];
+            if (selectedData) {
+                asListRows[index].item = selectedData.item;
+                asListRows[index].brand = selectedData.brand;
+                asListRows[index].service = selectedData.service;
+                asListRows[index].note = selectedData.note; // Optional: Overwrite note? Yes, usually
+                // Warranty is usually empty in DB, so keep it empty or overwrite if DB has value
+                if (selectedData.warranty) asListRows[index].warranty = selectedData.warranty;
+            }
             saveASList();
             renderASListTable();
         }
-
-        // updateASItem function is now handled by generic updateASListRow or if specific logic needed:
-        // function updateASItem(index, item) { asListRows[index].item = item; saveASList(); renderASListTable(); }
 
         function getScheduleOptions() {
             // Use currentData.schedules if scheduleRows is empty
@@ -6878,7 +6553,7 @@
                 const name = sch.name || '이름 없음'; // fixed property name from taskName to name
                 const end = sch.end || ''; // fixed property name from endDate to end
                 if (!end) return ''; // Skip if no end date
-                return `< option value = "${end}" > ${name}</option > `;
+                return `<option value="${end}">${name}</option>`;
             }).join('');
         }
 
@@ -6894,12 +6569,12 @@
                 const yy = String(date.getFullYear()).slice(-2);
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const dd = String(date.getDate()).padStart(2, '0');
-                const warrantyText = `~${yy}.${mm}.${dd} `;
+                const warrantyText = `~${yy}.${mm}.${dd}`;
 
                 asListRows[index].warranty = warrantyText;
 
                 // Update input view
-                document.getElementById(`warrantyInput_${index} `).value = warrantyText;
+                document.getElementById(`warrantyInput_${index}`).value = warrantyText;
                 saveASList();
             } catch (e) {
                 console.error("Invalid Date", e);
@@ -6908,17 +6583,6 @@
 
         function updateASListRow(index, field, value) {
             asListRows[index][field] = value;
-
-            // [New] Auto-populate logic for Item selection
-            if (field === 'item') {
-                const row = asListRows[index];
-                if (row.category && row.brand && AS_DB[row.category] && AS_DB[row.category].brands[row.brand]) {
-                    const brandData = AS_DB[row.category].brands[row.brand];
-                    // Ensure Service/URL are set if missing (Cascade down)
-                    if (brandData.service && !row.service) asListRows[index].service = brandData.service;
-                    if (brandData.url && !row.website) asListRows[index].website = brandData.url;
-                }
-            }
             saveASList();
         }
 
@@ -6946,7 +6610,8 @@
             }
 
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet = AS관리리스트`);
+                const params = new URLSearchParams({ sheet: 'AS관리리스트' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
                 if (result.success && result.data) {
@@ -7084,7 +6749,7 @@
             currentData.estimateProfitRate = 15;
             // 견적서 메모를 원가관리표 메모로 초기화
             categories.forEach(cat => {
-                delete currentData[`estMemo_${cat.no} `]; // undefined로 설정
+                delete currentData[`estMemo_${cat.no}`]; // undefined로 설정
             });
             loadEstimateData();
             initYearFilter();
@@ -7167,7 +6832,7 @@
             // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
             // Convert any stored dots (YYYY.MM.DD) to dashes.
             ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
-                const el = document.querySelector(`.customer - field[data - field="${field}"]`);
+                const el = document.querySelector(`.customer-field[data-field="${field}"]`);
                 if (el && currentData[field]) {
                     el.value = currentData[field].replace(/\./g, '-');
                 }
@@ -7198,9 +6863,9 @@
 
             if (start && end) {
                 // 일관된 형식으로 저장: "YYYY.MM.DD ~ YYYY.MM.DD"
-                hiddenInput.value = `${start.replace(/-/g, '.')} ~${end.replace(/-/g, '.')} `;
+                hiddenInput.value = `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
             } else if (start) {
-                hiddenInput.value = `${start.replace(/-/g, '.')} `;
+                hiddenInput.value = `${start.replace(/-/g, '.')}`;
             } else {
                 hiddenInput.value = '';
             }
@@ -7272,7 +6937,7 @@
             }
             const asDisplay = document.getElementById('asEndDateDisplay');
             if (status === 'as_done' && currentData.asEndDate) {
-                asDisplay.textContent = `A / S ~${currentData.asEndDate} `;
+                asDisplay.textContent = `A/S ~${currentData.asEndDate}`;
                 asDisplay.style.display = 'block';
             } else {
                 asDisplay.style.display = 'none';
@@ -7407,7 +7072,7 @@
 
                 // 페이징 정보 업데이트
                 document.getElementById('paginationInfo').textContent =
-                    `전체 ${filteredCustomers.length}명 중 ${startIdx + 1} -${endIdx}명 표시`;
+                    `전체 ${filteredCustomers.length}명 중 ${startIdx + 1}-${endIdx}명 표시`;
                 document.getElementById('currentPageSpan').textContent =
                     `${currentPage} / ${totalPages}`;
                 document.getElementById('prevPageBtn').disabled = currentPage <= 1;
@@ -7585,23 +7250,99 @@
         }
 
         // ==========================================
+        // [커스텀 알림 함수] - 우측 상단 토스트 알림 (자동 사라짐)
+        // ==========================================
+        function showPersistentAlert(message, type = 'success') {
+            const toast = document.createElement('div');
+            const toastId = 'toast_' + Date.now();
+            toast.id = toastId;
+
+            const icon = type === 'success' ? '✅' : '❌';
+            const bgColor = type === 'success' ? '#34c759' : '#ff3b30';
+
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-size: 14px;
+                font-weight: 600;
+                max-width: 350px;
+                animation: slideIn 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+
+            toast.innerHTML = `
+                <span style="font-size: 20px;">${icon}</span>
+                <span style="white-space: pre-wrap;">${message}</span>
+            `;
+
+            document.body.appendChild(toast);
+
+            // 3초 후 자동으로 사라짐
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    if (document.getElementById(toastId)) {
+                        document.getElementById(toastId).remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 토스트 애니메이션 CSS 추가
+        if (!document.getElementById('toastAnimationStyle')) {
+            const style = document.createElement('style');
+            style.id = 'toastAnimationStyle';
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes slideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // ==========================================
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
         async function syncFromCloud() {
-            if (!confirm('클라우드에서 고객 데이터를 불러옵니다.\n\n기존 로컬 데이터와 병합됩니다.\n진행하시겠습니까?')) {
-                return;
-            }
-
-            showToast('클라우드에서 데이터 불러오는 중...', 'info');
-
             try {
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리_견적서&t=' + new Date().getTime(), {
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: new Date().getTime()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET'
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP${response.status} `);
+                    showPersistentAlert(`클라우드 동기화 실패\n\nHTTP 오류: ${response.status}`, 'error');
+                    return;
                 }
 
                 let cloudCustomers = await response.json();
@@ -7664,19 +7405,22 @@
                 // 클라우드 데이터로 완전 교체
                 localStorage.setItem('dz_customers', JSON.stringify(cloudCustomers));
 
-                // UI 업데이트
+                // UI 업데이트 먼저 실행
                 customers = cloudCustomers;
-                cachedCloudCount = cloudCustomers.length; // 캐시 업데이트
+                cachedCloudCount = cloudCustomers.length;
                 updateCustomerList();
                 initYearFilter();
 
-                showToast(`클라우드 동기화 완료! 추가: ${addedCount} 명, 업데이트: ${updatedCount} 명, 삭제: ${deletedCount} 명`, 'success');
-                console.log(`✅[Cloud Sync] Complete.Added: ${addedCount}, Updated: ${updatedCount}, Deleted:
-            ${deletedCount} `);
+                console.log(`✅[Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
+
+                // UI 업데이트 완료 후 즉시 알림 표시
+                setTimeout(() => {
+                    showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
+                }, 50);
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                showToast('클라우드 동기화 실패: ' + error.message, 'error');
+                showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
             }
         }
 
@@ -7767,20 +7511,6 @@
             }
         }
 
-        // 통계 로그 기록
-        async function logStatsAction(action) {
-            const statsPanel = document.getElementById('panel-stats');
-            if (statsPanel && statsPanel.classList.contains('active')) {
-                const user = currentAdmin ? (currentAdmin.name || currentAdmin.id) : 'Unknown';
-                try {
-                    // Fire and forget, or wait? Better not block UI.
-                    fetch(`${CUSTOMER_SYNC_URL}?action=logStats&user=${encodeURIComponent(user)}&act=${encodeURIComponent(action)}`, { keepalive: true }).catch(err => console.error(err));
-                } catch (e) {
-                    console.error('Failed to log stats action', e);
-                }
-            }
-        }
-
         async function saveData() {
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
@@ -7799,9 +7529,6 @@
             }
 
             performSaveData();
-
-            // [Stats Log] Final Save
-            logStatsAction('Final Save (Attempt)');
         }
 
         function performSaveData() {
@@ -8822,7 +8549,11 @@
             try {
                 showToast('원가관리표 불러오는 중...', 'info');
 
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=원가관리표&t=' + new Date().getTime(), {
+                const params = new URLSearchParams({
+                    sheet: '원가관리표',
+                    t: new Date().getTime()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
@@ -9136,9 +8867,6 @@
         }
 
         function downloadPDF(elementId, filename) {
-            // [Stats Log] Print/PDF
-            logStatsAction('Print (PDF) - ' + filename);
-
             const element = document.getElementById(elementId);
             if (!element) {
                 showToast('문서를 찾을 수 없습니다', 'error');
@@ -9177,55 +8905,6 @@
                     }
                 }
             });
-
-            // [New] Remove empty rows for Schedule & A/S List (Logic BEFORE converting to text)
-            if (elementId === 'scheduleDoc' || elementId === 'asListDoc') {
-                const tbody = clonedElement.querySelector('tbody');
-                if (tbody) {
-                    tbody.querySelectorAll('tr').forEach(tr => {
-                        const cells = tr.querySelectorAll('td');
-
-                        // Schedule Doc (Indices: 1=Category, 3=CheckPoint, 7=Memo based on render function)
-                        if (elementId === 'scheduleDoc' && cells.length >= 8) {
-                            const getVal = (cell) => {
-                                const inp = cell.querySelector('input, select, textarea');
-                                return inp ? (inp.value || inp.getAttribute('value')) : cell.textContent.trim();
-                            };
-
-                            const cat = getVal(cells[1]);
-                            const cp = getVal(cells[3]);
-                            const memo = getVal(cells[7]);
-
-                            // Remove if Category is empty/Select AND CheckPoint is default/empty AND Memo is default/empty
-                            if ((!cat || cat === '선택') &&
-                                (!cp || cp === '' || cp === '핵심 체크포인트') &&
-                                (!memo || memo === '' || memo === '비고')) {
-                                tr.remove();
-                            }
-                        }
-                        // AS List Doc (Indices: 1=Category, 2=Brand, 3=Item)
-                        else if (elementId === 'asListDoc' && cells.length >= 4) {
-                            const getVal = (cell) => {
-                                const inp = cell.querySelector('input, select, textarea');
-                                return inp ? (inp.value || inp.getAttribute('value')) : cell.textContent.trim();
-                            };
-                            const cat = getVal(cells[1]);
-                            const brand = getVal(cells[2]);
-                            const item = getVal(cells[3]);
-                            if ((!cat || cat === '선택') && (!brand || brand === '-' || brand === '') && (!item || item === '-' || item === '')) {
-                                tr.remove();
-                            }
-                        }
-                    });
-
-                    // Re-number rows
-                    let r = 1;
-                    tbody.querySelectorAll('tr').forEach(tr => {
-                        const cell = tr.querySelector('td:first-child');
-                        if (cell) cell.textContent = r++;
-                    });
-                }
-            }
 
             // 모든 input을 텍스트로 변환
             clonedElement.querySelectorAll('input').forEach(input => {
@@ -9714,22 +9393,7 @@
         // 통계 모달
         let chartInstances = {};
 
-        const STATS_ACCESS_PIN = '6454';
-        let isStatsUnlocked = false;
-
         function openStatsModal() {
-            // [SECURITY CHECK] Statistics Access
-            if (!isMainAdmin() && !isStatsUnlocked) {
-                const pin = prompt('통계 대시보드는 관리자 전용입니다.\\n\\n비밀번호를 입력하세요:');
-                if (pin === STATS_ACCESS_PIN) {
-                    isStatsUnlocked = true;
-                    showToast('통계 접근이 허용되었습니다.', 'success');
-                } else {
-                    showToast('비밀번호가 올바르지 않습니다.', 'error');
-                    return;
-                }
-            }
-
             document.getElementById('statsModal').classList.add('show');
             renderAllStats();
         }
@@ -10202,89 +9866,6 @@
 
         // Initialize Master Data
         fetchScheduleTemplate();
-
-        // === SIMPLE LOGIN OVERRIDE ===
-        window.performLogin = async function () {
-            try {
-                const inputId = (document.getElementById('loginId')?.value || '').trim();
-
-                let debugInfo = '=== 로그인 디버그 ===\n';
-                debugInfo += '입력 ID: ' + inputId + '\n';
-
-                if (!inputId) {
-                    alert('아이디를 입력해주세요.');
-                    return;
-                }
-
-                debugInfo += 'MAIN_ADMINS 체크...\n';
-
-                if (typeof MAIN_ADMINS === 'undefined') {
-                    alert('❌ 오류: MAIN_ADMINS가 로드되지 않음\n\nadmin_config.js 파일을 확인하세요.');
-                    return;
-                }
-
-                debugInfo += 'MAIN_ADMINS 존재: YES\n';
-                debugInfo += '관리자 수: ' + MAIN_ADMINS.length + '\n';
-                debugInfo += '등록된 ID: ' + MAIN_ADMINS.map(a => a.id).join(', ') + '\n\n';
-
-                const admin = MAIN_ADMINS.find(a => a.id === inputId);
-
-                if (admin) {
-                    debugInfo += '✅ 관리자 발견!\n';
-                    debugInfo += 'ID: ' + admin.id + '\n';
-                    debugInfo += '이름: ' + admin.name + '\n';
-
-                    window.currentAdmin = { id: admin.id, role: 'main', name: admin.name };
-
-                    const overlay = document.getElementById('loginOverlay');
-                    if (overlay) {
-                        overlay.style.display = 'none';
-                        debugInfo += '로그인 화면 숨김: OK\n';
-                    }
-
-                    if (typeof activateAdminMode === 'function') {
-                        activateAdminMode();
-                        debugInfo += 'activateAdminMode 실행: OK\n';
-                    } else {
-                        debugInfo += '⚠️ activateAdminMode 함수 없음\n';
-                    }
-
-                    console.log(debugInfo);
-                    alert(debugInfo + '\n🎉 로그인 성공!');
-                } else {
-                    debugInfo += '❌ 일치하는 관리자 없음\n';
-                    debugInfo += '입력한 ID: ' + inputId + '\n';
-                    debugInfo += '등록된 ID들:\n';
-                    MAIN_ADMINS.forEach(a => {
-                        debugInfo += '  - ' + a.id + ' (' + a.name + ')\n';
-                    });
-
-                    console.log(debugInfo);
-                    alert(debugInfo);
-                }
-            } catch (error) {
-                alert('❌ 로그인 오류:\n\n' + error.toString() + '\n\n' + error.stack);
-            }
-        };
-
-        // === 자동 로그인 (페이지 로드 시) ===
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                if (typeof MAIN_ADMINS !== 'undefined' && MAIN_ADMINS.length > 0) {
-                    const admin = MAIN_ADMINS[0]; // 첫 번째 관리자로 자동 로그인
-                    window.currentAdmin = { id: admin.id, role: 'main', name: admin.name };
-
-                    const overlay = document.getElementById('loginOverlay');
-                    if (overlay) overlay.style.display = 'none';
-
-                    if (typeof activateAdminMode === 'function') {
-                        activateAdminMode();
-                    }
-
-                    console.log('🚀 자동 로그인 완료:', admin.name);
-                }
-            }, 500);
-        });
     </script>
     <!-- 로그인 오버레이 (최우선 표시) -->
     <div class="login-overlay" id="loginOverlay">
@@ -10296,9 +9877,6 @@
             <input type="password" class="login-input" id="loginPw" placeholder="비밀번호" autocomplete="current-password"
                 onkeypress="if(event.key==='Enter') performLogin()">
             <button class="login-btn-primary" onclick="performLogin()">로그인</button>
-            <div id="loginDebug"
-                style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; font-family: monospace; text-align: left; max-height: 200px; overflow-y: auto; display: none;">
-            </div>
         </div>
         <div style="margin-top: 20px; font-size: 11px; color: #a1a1a6;">
             Unauthorized access is strictly prohibited.
