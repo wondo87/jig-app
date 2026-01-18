@@ -4445,8 +4445,23 @@
         // (performLogin function has been moved to script top)
         // 오버레이 로그인 처리 (스크립트 최상단 이동)
         async function performLogin() {
+            const debugDiv = document.getElementById('loginDebug');
+            const logDebug = (msg) => {
+                if (debugDiv) {
+                    debugDiv.style.display = 'block';
+                    debugDiv.innerHTML += msg + '<br>';
+                }
+                console.log(msg);
+            };
+
+            if (debugDiv) debugDiv.innerHTML = '';
+
             const inputId = document.getElementById('loginId').value.trim();
             const inputPw = document.getElementById('loginPw').value;
+
+            logDebug('🔍 로그인 시작...');
+            logDebug('입력 ID: ' + inputId);
+            logDebug('입력 PW: ' + (inputPw ? inputPw.substring(0, 3) + '***' : '없음'));
 
             if (!inputId || !inputPw) {
                 alert('아이디와 비밀번호를 모두 입력해주세요.');
@@ -4455,9 +4470,11 @@
 
             // 1. 설정 파일 로드 확인
             if (typeof MAIN_ADMINS === 'undefined') {
+                logDebug('❌ MAIN_ADMINS가 정의되지 않음');
                 alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
                 return;
             }
+            logDebug('✅ MAIN_ADMINS 로드 성공 (' + MAIN_ADMINS.length + '개)');
 
             // 내부 함수: 테스트 모드(ID만 검증) 로그인 처리
             const tryTestModeLogin = () => {
@@ -4495,23 +4512,20 @@
             let inputHash;
             try {
                 if (!window.crypto || !window.crypto.subtle) {
-                    const errorMsg = '❌ 오류: window.crypto.subtle이 없습니다.\n\n' +
-                                   '현재 URL: ' + window.location.href + '\n' +
-                                   'HTTPS 여부: ' + (window.location.protocol === 'https:' ? '예' : '아니오') + '\n' +
-                                   'crypto 존재: ' + (!!window.crypto) + '\n' +
-                                   'crypto.subtle 존재: ' + (!!window.crypto?.subtle);
-                    console.error(errorMsg);
-                    alert(errorMsg + '\n\n해시 비교 없이 ID만으로 로그인을 시도합니다.');
+                    logDebug('❌ crypto.subtle이 없습니다');
+                    logDebug('URL: ' + window.location.href);
+                    logDebug('HTTPS: ' + (window.location.protocol === 'https:'));
+                    alert('❌ 암호화 기능을 사용할 수 없습니다.\n\n테스트 모드로 로그인을 시도합니다.');
                     tryTestModeLogin();
                     return;
                 }
+                logDebug('🔐 비밀번호 해시 계산 중...');
                 inputHash = await hashPassword(inputPw);
-                console.log('✅ Login Debug - InputHash:', inputHash);
-                console.log('✅ Login Debug - Expected Hash (sweet00700):', '671076167de6f4ed03c9f267f0c42620b10801dd3ee47c79e59090755ba43acc');
+                logDebug('✅ 입력 해시: ' + inputHash.substring(0, 16) + '...');
+                logDebug('📋 정답 해시: 671076167de6f4ed03c...');
             } catch (e) {
-                const errorMsg = '❌ 암호화 오류:\n' + e.toString() + '\n\nStack: ' + (e.stack || 'No stack');
-                console.error(errorMsg);
-                alert(errorMsg + '\n\n해시 비교 없이 ID만으로 로그인을 시도합니다.');
+                logDebug('❌ 암호화 오류: ' + e.toString());
+                alert('❌ 암호화 오류가 발생했습니다.\n\n테스트 모드로 로그인을 시도합니다.');
                 tryTestModeLogin();
                 return;
             }
@@ -4519,23 +4533,28 @@
             // 3. 메인 관리자 확인 (해시 비교)
             const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
             if (mainAdmin) {
-                console.log('✅ 메인 관리자 발견:', mainAdmin.id);
-                console.log('입력 해시:', inputHash);
-                console.log('저장 해시:', mainAdmin.passwordHash);
-                console.log('일치 여부:', inputHash === mainAdmin.passwordHash);
+                logDebug('✅ 메인 관리자 발견: ' + mainAdmin.id);
+                const match = mainAdmin.passwordHash === inputHash;
+                logDebug('🔍 해시 일치: ' + (match ? 'YES ✅' : 'NO ❌'));
 
-                if (mainAdmin.passwordHash === inputHash) {
+                if (match) {
+                    logDebug('🎉 로그인 성공!');
                     currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                     document.getElementById('loginOverlay').style.display = 'none';
                     activateAdminMode();
                     showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
                     return;
                 } else {
-                    alert('❌ 비밀번호가 일치하지 않습니다.\n\n' +
-                          '입력한 해시: ' + inputHash + '\n' +
-                          '저장된 해시: ' + mainAdmin.passwordHash);
+                    logDebug('❌ 비밀번호 불일치');
+                    logDebug('입력: ' + inputHash);
+                    logDebug('저장: ' + mainAdmin.passwordHash);
+                    alert('❌ 비밀번호가 일치하지 않습니다.\n\n로그인 화면 아래 디버그 정보를 확인하세요.');
                     return;
                 }
+            } else {
+                logDebug('❌ ID를 찾을 수 없음: ' + inputId);
+                alert('❌ 존재하지 않는 아이디입니다.');
+                return;
             }
 
             // 4. 일반 관리자 확인 (해시 비교)
@@ -10493,6 +10512,7 @@
             <input type="password" class="login-input" id="loginPw" placeholder="비밀번호" autocomplete="current-password"
                 onkeypress="if(event.key==='Enter') performLogin()">
             <button class="login-btn-primary" onclick="performLogin()">로그인</button>
+            <div id="loginDebug" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 8px; font-size: 11px; font-family: monospace; text-align: left; max-height: 200px; overflow-y: auto; display: none;"></div>
         </div>
         <div style="margin-top: 20px; font-size: 11px; color: #a1a1a6;">
             Unauthorized access is strictly prohibited.
