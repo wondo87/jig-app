@@ -10266,6 +10266,25 @@
                 alert('❌ 로그인 오류:\n\n' + error.toString() + '\n\n' + error.stack);
             }
         };
+
+        // === 자동 로그인 (페이지 로드 시) ===
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof MAIN_ADMINS !== 'undefined' && MAIN_ADMINS.length > 0) {
+                    const admin = MAIN_ADMINS[0]; // 첫 번째 관리자로 자동 로그인
+                    window.currentAdmin = { id: admin.id, role: 'main', name: admin.name };
+
+                    const overlay = document.getElementById('loginOverlay');
+                    if (overlay) overlay.style.display = 'none';
+
+                    if (typeof activateAdminMode === 'function') {
+                        activateAdminMode();
+                    }
+
+                    console.log('🚀 자동 로그인 완료:', admin.name);
+                }
+            }, 500);
+        });
     </script>
     <!-- 로그인 오버레이 (최우선 표시) -->
     <div class="login-overlay" id="loginOverlay">
