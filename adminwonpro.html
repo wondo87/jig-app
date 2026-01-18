@@ -5771,15 +5771,17 @@
 
                 if (Array.isArray(data) && data.length > 0) {
                     defaultScheduleSteps = data;
-                    console.log('스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+                    console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+                    console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
                 } else {
-                    console.warn('스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
+                    console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
                     defaultScheduleSteps = [
                         { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
                     ];
                 }
             } catch (error) {
-                console.error('스케줄 템플릿 로드 오류:', error);
+                console.error('❌ 스케줄 템플릿 로드 오류:', error);
+                defaultScheduleSteps = [];
             }
         }
 
@@ -6106,6 +6108,14 @@
                 const template = processes[selectedIndex];
 
                 if (template) {
+                    // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
+                    let inChargeValue = '원프로 소장 (010-4650-7013)';
+                    if (template.inCharge && template.inCharge.trim()) {
+                        inChargeValue = template.inCharge;
+                    } else if (currentData.manager && currentData.manager.trim()) {
+                        inChargeValue = currentData.manager;
+                    }
+
                     newRow = {
                         id: Date.now() + Math.random(),
                         category: template.category || '',
@@ -6113,9 +6123,11 @@
                         checkPoint: template.checkPoint || '',
                         start: '',
                         end: '',
-                        inCharge: template.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
+                        inCharge: inChargeValue,
                         memo: ''
                     };
+
+                    console.log('📌 공정 추가:', newRow);
                 }
             }
 
