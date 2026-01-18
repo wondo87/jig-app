@@ -6177,9 +6177,28 @@
                 const processOptions = processes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
 
                 return `
-    <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
-        ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
-        style="cursor:move; transition: background 0.2s;">
+                // Manager Options
+                const MANAGER_OPTIONS = [
+                    'DESIGN JIG',
+                    '원프로 소장 (010-4650-7013)',
+                    '건축주 (직영)',
+                    'B·R', 'S·T', 'T·W', 'G·O·H', 'C·Y·G', 'K·Y·S', 'Y·J·S', 'F·A·C'
+                ];
+                
+                // If current value is not in options, add it temporarily (to preserve historical data)
+                const currentManager = row.inCharge || currentData.manager || 'DESIGN JIG';
+                let managerOptionsHtml = MANAGER_OPTIONS.map(m => 
+                    `< option value = "${m}" ${ m === currentManager ? 'selected' : '' }> ${ m }</option > `
+                ).join('');
+
+                if (currentManager && !MANAGER_OPTIONS.includes(currentManager)) {
+                     managerOptionsHtml = `< option value = "${currentManager}" selected > ${ currentManager }</option > ` + managerOptionsHtml;
+                }
+
+                return `
+                    < tr draggable = "true" ondragstart = "handleDragStart(event, ${index})" ondragover = "handleDragOver(event)"
+                ondrop = "handleDrop(event, ${index})" ondragend = "handleDragEnd(event)"
+                style = "cursor:move; transition: background 0.2s;" >
         <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
 
         <!-- Category -->
@@ -6191,7 +6210,7 @@
             </select>
         </td>
 
-        <!-- Process Name -->
+        <!--Process Name-- >
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
                 ${row.category ? '' : 'disabled'}
@@ -6200,11 +6219,11 @@
             </select>
         </td>
 
-        <!-- Checkpoint -->
+        <!--Checkpoint -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
+            <input type="text" value="${row.checkPoint || '핵심 체크포인트'}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
+                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="핵심 체크포인트">
         </td>
 
         <td style="padding:5px; border:1px solid #d2d2d7;">
@@ -6217,15 +6236,18 @@
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
+        <!--Manager Dropdown-- >
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
+            <select class="customer-field" 
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
+                onchange="updateScheduleRow(${index}, 'inCharge', this.value)">
+                ${managerOptionsHtml}
+            </select>
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.memo || ''}" class="customer-field"
+            <input type="text" value="${row.memo || '비고'}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
+                onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고">
         </td>
         <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
             <div style="display:flex; justify-content:center; gap:2px;">
@@ -6237,8 +6259,8 @@
                     style="padding:2px 4px; color:#ff3b30;">✕</button>
             </div>
         </td>
-    </tr>
-                `;
+    </tr >
+                    `;
             }).join('');
         }
 
@@ -6310,13 +6332,13 @@
         async function loadScheduleGuidelines() {
             console.log('Fetching Schedule Guidelines...');
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=공사스케줄관리&action=getGuidelines`);
+                const response = await fetch(`${ CUSTOMER_SYNC_URL }?sheet = 공사스케줄관리 & action=getGuidelines`);
                 const result = await response.json();
 
                 if (result.result === 'success' && result.notices && result.notices.length > 0) {
                     const guidelinesList = document.getElementById('scheduleGuidelinesList');
                     if (guidelinesList) {
-                        guidelinesList.innerHTML = result.notices.map(item => `<li>${item}</li>`).join('');
+                        guidelinesList.innerHTML = result.notices.map(item => `< li > ${ item }</li > `).join('');
                         alert('✅ 성공: 공사 스케줄 유의사항을 성공적으로 불러왔습니다.');
                     }
                 } else if (result.result === 'success') {
@@ -6334,13 +6356,13 @@
         async function loadASGuidelines() {
             console.log('Fetching AS Guidelines...');
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트&action=getGuidelines`);
+                const response = await fetch(`${ CUSTOMER_SYNC_URL }?sheet = AS관리리스트 & action=getGuidelines`);
                 const result = await response.json();
 
                 if (result.result === 'success' && result.notices && result.notices.length > 0) {
                     const guidelinesList = document.getElementById('asGuidelinesList');
                     if (guidelinesList) {
-                        guidelinesList.innerHTML = result.notices.map(item => `<li>${item}</li>`).join('');
+                        guidelinesList.innerHTML = result.notices.map(item => `< li > ${ item }</li > `).join('');
                         alert('✅ 성공: A/S 관리 유의사항을 성공적으로 불러왔습니다.');
                     }
                 } else if (result.result === 'success') {
@@ -6361,33 +6383,33 @@
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
+                width: 100 %;
+                height: 100 %;
+                background: rgba(0, 0, 0, 0.5);
                 display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-            `;
+                align - items: center;
+                justify - content: center;
+                z - index: 10000;
+                `;
 
             const modalContent = document.createElement('div');
             modalContent.style.cssText = `
                 background: white;
-                border-radius: 12px;
+                border - radius: 12px;
                 padding: 24px;
-                max-width: 600px;
-                width: 90%;
-                max-height: 80vh;
-                overflow-y: auto;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            `;
+                max - width: 600px;
+                width: 90 %;
+                max - height: 80vh;
+                overflow - y: auto;
+                box - shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                `;
 
             // 카테고리 목록 추출
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            const categoryOptions = categories.map(cat => `< option value = "${cat}" > ${ cat }</option > `).join('');
 
             modalContent.innerHTML = `
-                <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">📋 공정 선택</h3>
+                    < h3 style = "margin: 0 0 16px 0; font-size: 18px; color: #333;" >📋 공정 선택</h3 >
 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">카테고리 (클릭하여 선택)</label>
@@ -6407,7 +6429,7 @@
                     <button onclick="closeScheduleTemplateModal()" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">취소</button>
                     <button id="addScheduleBtn" onclick="addScheduleFromTemplate()" style="padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer;" disabled>추가</button>
                 </div>
-            `;
+                `;
 
             modal.appendChild(modalContent);
             document.body.appendChild(modal);
@@ -6435,7 +6457,7 @@
                 // 카테고리 선택 시 해당 카테고리의 공정들 필터링
                 const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
                 const processOptions = processes.map((proc, idx) =>
-                    `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
+                    `< option value = "${idx}" data - category="${selectedCategory}" > ${ proc.name }</option > `
                 ).join('');
 
                 processSelect.innerHTML = processOptions;
@@ -6612,7 +6634,7 @@
                         if (year < 100) year += 2000;
                         const month = matches[2];
                         const day = matches[3];
-                        endDate = `${year}-${month}-${day}`;
+                        endDate = `${ year } -${ month } -${ day } `;
                     }
                 }
 
@@ -6627,7 +6649,7 @@
                             const yy = String(date.getFullYear()).slice(-2);
                             const mm = String(date.getMonth() + 1).padStart(2, '0');
                             const dd = String(date.getDate()).padStart(2, '0');
-                            leakEl.textContent = `~${yy}.${mm}.${dd}`;
+                            leakEl.textContent = `~${ yy }.${ mm }.${ dd } `;
                         } else {
                             leakEl.textContent = '-';
                         }
@@ -6669,7 +6691,7 @@
                 // --- [Category Options] ---
                 // AS_DB의 키값들을 카테고리 옵션으로 사용
                 const categoryOptions = Object.keys(AS_DB).map(cat =>
-                    `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`
+                    `< option value = "${cat}" ${ row.category === cat ? 'selected' : '' }> ${ cat }</option > `
                 ).join('');
 
                 // --- [Brand Options] ---
@@ -6678,10 +6700,10 @@
                 if (row.category && AS_DB[row.category]) {
                     const brands = Object.keys(AS_DB[row.category].brands);
                     brandOptions += brands.map(brand =>
-                        `<option value="${brand}" ${row.brand === brand ? 'selected' : ''}>${brand}</option>`
+                        `< option value = "${brand}" ${ row.brand === brand ? 'selected' : '' }> ${ brand }</option > `
                     ).join('');
                 } else if (row.category) { // 기타 직접입력 등 고려
-                    brandOptions += `<option value="${row.brand}" selected>${row.brand}</option>`;
+                    brandOptions += `< option value = "${row.brand}" selected > ${ row.brand }</option > `;
                 }
 
                 // --- [Item Options] ---
@@ -6690,15 +6712,15 @@
                 if (row.category && row.brand && AS_DB[row.category] && AS_DB[row.category].brands[row.brand]) {
                     const items = AS_DB[row.category].brands[row.brand].items;
                     itemOptions += items.map(item =>
-                        `<option value="${item}" ${row.item === item ? 'selected' : ''}>${item}</option>`
+                        `< option value = "${item}" ${ row.item === item ? 'selected' : '' }> ${ item }</option > `
                     ).join('');
                 } else if (row.brand) {
-                    itemOptions += `<option value="${row.item}" selected>${row.item}</option>`;
+                    itemOptions += `< option value = "${row.item}" selected > ${ row.item }</option > `;
                 }
 
                 tr.innerHTML = `
-                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
-                    <!-- Category (Select) -->
+                    < td style = "padding:5px; border:1px solid #d2d2d7; text-align:center;" > ${ index + 1 }</td >
+                    < !--Category(Select) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <select class="mh-input" onchange="updateASCategory(${index}, this.value)"
                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
@@ -6706,55 +6728,55 @@
                             ${categoryOptions}
                         </select>
                     </td>
-                    <!-- Brand (Select) -->
+                    <!--Brand(Select) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <select class="mh-input" onchange="updateASBrand(${index}, this.value)"
                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
                             ${brandOptions}
                         </select>
                     </td>
-                    <!-- Item (Select) -->
+                    <!--Item(Select) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <select class="mh-input" onchange="updateASListRow(${index}, 'item', this.value)"
                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
                             ${itemOptions}
                         </select>
                     </td>
-                    <!-- ModelNum -->
+                    <!--ModelNum -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.modelNum || ''}" 
                             onchange="updateASListRow(${index}, 'modelNum', this.value)"
                             style="width:100%; border:none; outline:none;">
                     </td>
-                    <!-- Rank (삭제됨/이전됨? - 사용자 요청 화면에는 Rank없음, 하지만 이전 코드 유지) -->
+                    <!--Rank(삭제됨 / 이전됨 ? - 사용자 요청 화면에는 Rank없음, 하지만 이전 코드 유지) -->
                     <td style="padding:5px; border:1px solid #d2d2d7; display:none;">
                         <input type="text" class="mh-input" value="${row.rank || ''}" >
                     </td>
-                     <!-- Size -->
+                     <!--Size -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.size || ''}" 
                             onchange="updateASListRow(${index}, 'size', this.value)"
                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                     <!-- Price -->
+                     <!--Price -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.price || ''}" 
                             onchange="updateASListRow(${index}, 'price', this.value)"
                             style="width:100%; border:none; outline:none; text-align:right;">
                     </td>
-                     <!-- Website/URL -->
+                     <!--Website / URL-- >
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.website || ''}" 
                             onchange="updateASListRow(${index}, 'website', this.value)" placeholder="URL"
                             style="width:100%; border:none; outline:none; color:blue; text-decoration:underline; cursor:pointer;" onclick="if(this.value) window.open(this.value, '_blank')">
                     </td>
-                    <!-- Service Center (Auto-filled) -->
+                    <!--Service Center(Auto - filled)-- >
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.service || ''}" 
                              onchange="updateASListRow(${index}, 'service', this.value)"
                              style="width:100%; border:none; outline:none; text-align:center; color:#555;">
                     </td>
-                    <!-- Warranty -->
+                    <!--Warranty -->
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <select class="mh-input no-print" onchange="applyScheduleToWarranty(${index}, this.value)"
@@ -6768,17 +6790,17 @@
                                 style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
                         </div>
                     </td>
-                    <!-- Note -->
+                    <!--Note -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
                              onchange="updateASListRow(${index}, 'note', this.value)"
                              style="width:100%; border:none; outline:none;">
                     </td>
-                    <!-- Manage -->
+                    <!--Manage -->
                     <td class="no-print" style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
                     </td>
-                 `;
+                `;
                 tbody.appendChild(tr);
             });
         }
@@ -6820,7 +6842,7 @@
                 const name = sch.name || '이름 없음'; // fixed property name from taskName to name
                 const end = sch.end || ''; // fixed property name from endDate to end
                 if (!end) return ''; // Skip if no end date
-                return `<option value="${end}">${name}</option>`;
+                return `< option value = "${end}" > ${ name }</option > `;
             }).join('');
         }
 
@@ -6836,12 +6858,12 @@
                 const yy = String(date.getFullYear()).slice(-2);
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const dd = String(date.getDate()).padStart(2, '0');
-                const warrantyText = `~${yy}.${mm}.${dd}`;
+                const warrantyText = `~${ yy }.${ mm }.${ dd } `;
 
                 asListRows[index].warranty = warrantyText;
 
                 // Update input view
-                document.getElementById(`warrantyInput_${index}`).value = warrantyText;
+                document.getElementById(`warrantyInput_${ index } `).value = warrantyText;
                 saveASList();
             } catch (e) {
                 console.error("Invalid Date", e);
@@ -6877,7 +6899,7 @@
             }
 
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트`);
+                const response = await fetch(`${ CUSTOMER_SYNC_URL }?sheet = AS관리리스트`);
                 const result = await response.json();
 
                 if (result.success && result.data) {
@@ -6977,7 +6999,7 @@
 
             // Google Sheets 고객 수 + 1
             const seq = String(cloudCount + 1).padStart(3, '0');
-            currentCustomerId = `${yy}${mm}${dd} -${seq} `;
+            currentCustomerId = `${ yy }${ mm }${ dd } -${ seq } `;
             currentData = {
                 customerId: currentCustomerId,
                 clientName: name, // 입력받은 고객명 저장
@@ -7015,7 +7037,7 @@
             currentData.estimateProfitRate = 15;
             // 견적서 메모를 원가관리표 메모로 초기화
             categories.forEach(cat => {
-                delete currentData[`estMemo_${cat.no}`]; // undefined로 설정
+                delete currentData[`estMemo_${ cat.no } `]; // undefined로 설정
             });
             loadEstimateData();
             initYearFilter();
@@ -7078,7 +7100,7 @@
             // A/S 기간 표시
             const asDisplay = document.getElementById('asEndDateDisplay');
             if (currentData.status === 'as_done' && currentData.asEndDate) {
-                asDisplay.textContent = `A / S ~${currentData.asEndDate} `;
+                asDisplay.textContent = `A / S ~${ currentData.asEndDate } `;
                 asDisplay.style.display = 'block';
             } else {
                 asDisplay.style.display = 'none';
@@ -7098,7 +7120,7 @@
             // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
             // Convert any stored dots (YYYY.MM.DD) to dashes.
             ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
-                const el = document.querySelector(`.customer-field[data-field="${field}"]`);
+                const el = document.querySelector(`.customer - field[data - field="${field}"]`);
                 if (el && currentData[field]) {
                     el.value = currentData[field].replace(/\./g, '-');
                 }
@@ -7129,9 +7151,9 @@
 
             if (start && end) {
                 // 일관된 형식으로 저장: "YYYY.MM.DD ~ YYYY.MM.DD"
-                hiddenInput.value = `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
+                hiddenInput.value = `${ start.replace(/-/g, '.') } ~${ end.replace(/-/g, '.') } `;
             } else if (start) {
-                hiddenInput.value = `${start.replace(/-/g, '.')}`;
+                hiddenInput.value = `${ start.replace(/-/g, '.') } `;
             } else {
                 hiddenInput.value = '';
             }
@@ -7203,7 +7225,7 @@
             }
             const asDisplay = document.getElementById('asEndDateDisplay');
             if (status === 'as_done' && currentData.asEndDate) {
-                asDisplay.textContent = `A/S ~${currentData.asEndDate}`;
+                asDisplay.textContent = `A / S ~${ currentData.asEndDate } `;
                 asDisplay.style.display = 'block';
             } else {
                 asDisplay.style.display = 'none';
@@ -7338,9 +7360,9 @@
 
                 // 페이징 정보 업데이트
                 document.getElementById('paginationInfo').textContent =
-                    `전체 ${filteredCustomers.length}명 중 ${startIdx + 1}-${endIdx}명 표시`;
+                    `전체 ${ filteredCustomers.length }명 중 ${ startIdx + 1 } -${ endIdx }명 표시`;
                 document.getElementById('currentPageSpan').textContent =
-                    `${currentPage} / ${totalPages}`;
+                    `${ currentPage } / ${totalPages}`;
                 document.getElementById('prevPageBtn').disabled = currentPage <= 1;
                 document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
 
@@ -9108,6 +9130,55 @@
                     }
                 }
             });
+
+            // [New] Remove empty rows for Schedule & A/S List (Logic BEFORE converting to text)
+            if (elementId === 'scheduleDoc' || elementId === 'asListDoc') {
+                const tbody = clonedElement.querySelector('tbody');
+                if (tbody) {
+                    tbody.querySelectorAll('tr').forEach(tr => {
+                        const cells = tr.querySelectorAll('td');
+
+                        // Schedule Doc (Indices: 1=Category, 3=CheckPoint, 7=Memo based on render function)
+                        if (elementId === 'scheduleDoc' && cells.length >= 8) {
+                            const getVal = (cell) => {
+                                const inp = cell.querySelector('input, select, textarea');
+                                return inp ? (inp.value || inp.getAttribute('value')) : cell.textContent.trim();
+                            };
+
+                            const cat = getVal(cells[1]);
+                            const cp = getVal(cells[3]);
+                            const memo = getVal(cells[7]);
+
+                            // Remove if Category is empty/Select AND CheckPoint is default/empty AND Memo is default/empty
+                            if ((!cat || cat === '선택') &&
+                                (!cp || cp === '' || cp === '핵심 체크포인트') &&
+                                (!memo || memo === '' || memo === '비고')) {
+                                tr.remove();
+                            }
+                        }
+                        // AS List Doc (Indices: 1=Category, 2=Brand, 3=Item)
+                        else if (elementId === 'asListDoc' && cells.length >= 4) {
+                            const getVal = (cell) => {
+                                const inp = cell.querySelector('input, select, textarea');
+                                return inp ? (inp.value || inp.getAttribute('value')) : cell.textContent.trim();
+                            };
+                            const cat = getVal(cells[1]);
+                            const brand = getVal(cells[2]);
+                            const item = getVal(cells[3]);
+                            if ((!cat || cat === '선택') && (!brand || brand === '-' || brand === '') && (!item || item === '-' || item === '')) {
+                                tr.remove();
+                            }
+                        }
+                    });
+
+                    // Re-number rows
+                    let r = 1;
+                    tbody.querySelectorAll('tr').forEach(tr => {
+                        const cell = tr.querySelector('td:first-child');
+                        if (cell) cell.textContent = r++;
+                    });
+                }
+            }
 
             // 모든 input을 텍스트로 변환
             clonedElement.querySelectorAll('input').forEach(input => {
