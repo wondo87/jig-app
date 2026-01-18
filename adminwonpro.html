@@ -5932,8 +5932,11 @@
 
             if (empty) empty.style.display = 'none';
 
-            // Extract unique values for dropdowns
-            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+            // Extract unique values for dropdowns, include any categories already present in scheduleRows
+            const categories = [...new Set([
+                ...defaultScheduleSteps.map(s => s.category),
+                ...scheduleRows.map(r => r.category)
+            ].filter(Boolean))];
 
             tbody.innerHTML = scheduleRows.map((row, index) => {
                 // 현재 행의 카테고리 옵션 생성 (selected 속성 포함)
@@ -5942,10 +5945,16 @@
                 ).join('');
 
                 // 현재 행의 카테고리로 공정명 필터링
+                // Determine processes for this category. If the current row has a process
+                // name that's not in the template, preserve it so the select shows the value.
                 const processes = defaultScheduleSteps.filter(s => s.category === row.category);
-                const processOptions = processes.map(p =>
+                let processOptions = processes.map(p =>
                     `<option value="${p.name}"${p.name === row.name ? ' selected' : ''}>${p.name}</option>`
                 ).join('');
+                if (row.name && !processes.some(p => p.name === row.name)) {
+                    // Prepend the custom/legacy process name so it's selectable and visible
+                    processOptions = `<option value="${row.name}" selected>${row.name}</option>` + processOptions;
+                }
 
                 // 빈 행 체크 (카테고리, 공정명, 체크포인트, 시작일, 종료일, 담당자, 비고가 모두 비어있으면 인쇄 제외)
                 const isEmpty = !row.category && !row.name && !row.checkPoint && !row.start && !row.end && !row.inCharge && !row.memo;
