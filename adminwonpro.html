@@ -2574,7 +2574,9 @@
             .pdf-btn,
             .no-print,
             .font-size-control,
-            .header-actions {
+            .header-actions,
+            .empty-schedule-row,
+            .empty-as-row {
                 display: none !important;
             }
 
@@ -3954,18 +3956,11 @@
                                 </tbody>
                             </table>
                             <div
-                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
+                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #cce5ff;">
                                 <strong>💡 공사 진행 안내사항</strong>
-                                <ul style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
-                                    <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
-                                    <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
-                                        <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할
-                                            수 있습니다)</span>
-                                    </li>
-                                    <li>공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.</li>
-                                    <li>공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.</li>
-                                    <li>공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 공사 담당자와 먼저 협의 부탁드립니다.</li>
-                                    <li>공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다.</li>
+                                <ul id="constructionNoticeList"
+                                    style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                    <!-- Dynamic Content from Google Sheet -->
                                 </ul>
                             </div>
                             <table class="data-table" style="width:100%; border-collapse:collapse;">
@@ -5678,6 +5673,9 @@
             syncAdminsFromCloud().then(() => {
                 console.log('✅ 관리자 계정 동기화 완료');
             });
+
+            // A/S 리스트 템플릿 로드 (백그라운드)
+            fetchASListTemplate();
         });
 
         // 토스트 알림
@@ -5762,6 +5760,46 @@
 
         let scheduleRows = [];
         let defaultScheduleSteps = [];
+        let AS_DB = [];
+        let AS_NOTICES = [];
+
+        async function fetchASListTemplate() {
+            try {
+                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=as_list');
+                const data = await response.json();
+
+                if (data.items) {
+                    AS_DB = data.items;
+                } else if (Array.isArray(data)) {
+                    // Legacy support
+                    AS_DB = data;
+                }
+
+                if (data.notices) {
+                    AS_NOTICES = data.notices;
+                }
+
+                console.log('A/S DB 로드 완료:', AS_DB.length + '개 항목');
+
+                // 유의사항 렌더링 (만약 탭이 이미 열려있다면)
+                renderASNotices();
+
+            } catch (e) {
+                console.warn('A/S DB 로드 실패:', e);
+            }
+        }
+
+        function renderASNotices() {
+            const noticeList = document.getElementById('asNoticeList');
+            if (noticeList && AS_NOTICES.length > 0) {
+                noticeList.innerHTML = AS_NOTICES.map(notice => {
+                    const formattedNotice = notice.replace(/\(([^)]+)\)/g, '<br><span style="color:#666; font-size:0.9em;">($1)</span>');
+                    return `<li>${formattedNotice}</li>`;
+                }).join('');
+            } else if (noticeList) {
+                noticeList.innerHTML = '<li style="color:#aaa;">등록된 유의사항이 없습니다.</li>';
+            }
+        }
 
         async function fetchScheduleTemplate() {
             try {
@@ -5769,8 +5807,19 @@
                 const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=schedule_template');
                 const data = await response.json();
 
-                if (Array.isArray(data) && data.length > 0) {
-                    defaultScheduleSteps = data;
+                // Handle legacy array response or new object response
+                let steps = [];
+                let notices = [];
+
+                if (Array.isArray(data)) {
+                    steps = data;
+                } else if (data && typeof data === 'object') {
+                    steps = data.steps || [];
+                    notices = data.notices || [];
+                }
+
+                if (steps.length > 0) {
+                    defaultScheduleSteps = steps;
                     console.log('스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
                 } else {
                     console.warn('스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
@@ -5778,6 +5827,31 @@
                         { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
                     ];
                 }
+
+                // Render Notices
+                const noticeList = document.getElementById('constructionNoticeList');
+                if (noticeList) {
+                    if (notices.length > 0) {
+                        noticeList.innerHTML = notices.map(notice => {
+                            // Format text in parenthesis: (content) -> <br><span style="..."> (content) </span>
+                            const formattedNotice = notice.replace(/\(([^)]+)\)/g, '<br><span style="color:#666; font-size:0.9em;">($1)</span>');
+                            return `<li>${formattedNotice}</li>`;
+                        }).join('');
+                    } else {
+                        // Fallback default notices if none found
+                        noticeList.innerHTML = `
+                            <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
+                            <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
+                                <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할 수 있습니다)</span>
+                            </li>
+                            <li>공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.</li>
+                            <li>공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.</li>
+                            <li>공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 공사 담당자와 먼저 협의 부탁드립니다.</li>
+                            <li>공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다.</li>
+                        `;
+                    }
+                }
+
             } catch (error) {
                 console.error('스케줄 템플릿 로드 오류:', error);
             }
@@ -5789,15 +5863,15 @@
             if (currentData.schedules && currentData.schedules.length > 0) {
                 scheduleRows = [...currentData.schedules];
             } else {
-                // 데이터가 없으면 빈 줄 20개 생성 (기본값)
-                scheduleRows = Array.from({ length: 20 }, () => ({
+                // 데이터가 없으면 빈 줄 40개 생성 (기본값)
+                scheduleRows = Array.from({ length: 40 }, () => ({
                     id: Date.now() + Math.random(),
                     category: '',
                     name: '',
                     checkPoint: '',
                     start: '',
                     end: '',
-                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
+                    inCharge: '', // Default empty to show placeholder '담당자'
                     memo: ''
                 }));
             }
@@ -5928,7 +6002,7 @@
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
+            <input type="text" value="${row.inCharge || currentData.manager || '담당자'}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
         </td>
@@ -6041,10 +6115,12 @@
                     if (currentData.manager) managerOptions.push(currentData.manager);
                 }
                 const finalManagerOptions = [...new Set(managerOptions)];
+                const isEmpty = !row.category && !row.name && !row.checkPoint && !row.start && !row.end && (!row.inCharge || row.inCharge === '담당자') && !row.memo;
 
                 return `
                 <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
             ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
+            class="${isEmpty ? 'empty-schedule-row' : ''}"
             style="cursor:move; transition: background 0.2s;" >
         <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
         
@@ -6088,7 +6164,7 @@
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
+            <input type="text" value="${row.inCharge || ''}" class="customer-field"
                 list="managerList_${index}"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="담당자"
@@ -6141,7 +6217,6 @@
             // Fallback to all if empty matching
             if (options.length === 0) {
                 options = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
-                if (currentData.manager && !options.includes(currentData.manager)) options.push(currentData.manager);
             }
             const dataList = document.getElementById(`managerList_${index}`);
             if (dataList) dataList.innerHTML = options.map(m => `<option value="${m}">`).join('');
@@ -6155,7 +6230,7 @@
                 checkPoint: '',
                 start: '',
                 end: '',
-                inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
+                inCharge: '', // Default empty for new rows to trigger placeholder
                 memo: ''
             });
             renderScheduleTable();
@@ -6208,7 +6283,7 @@
                 // Logic: If availManagers is empty, it means this name doesn't exist in master schedule or has no manager.
                 // In this case, we default to Main Manager if currently empty.
                 if (availManagers.length === 0 && (!scheduleRows[index].inCharge || scheduleRows[index].inCharge === '')) {
-                    scheduleRows[index].inCharge = currentData.manager || '원프로 소장 (010-4650-7013)';
+                    scheduleRows[index].inCharge = ''; // Default to empty to show placeholder
                 }
 
                 renderScheduleTable();
@@ -6250,13 +6325,28 @@
         let asListRows = [];
 
         function loadASList() {
-            if (currentData && currentData.as_list) {
+            if (currentData && currentData.as_list && currentData.as_list.length > 0) {
                 asListRows = currentData.as_list;
             } else {
-                asListRows = []; // Start empty for new selection
+                // 데이터가 없으면 빈 줄 50개 생성 (기본값)
+                asListRows = Array.from({ length: 50 }, () => ({
+                    category: '',
+                    brand: '',
+                    item: '',
+                    modelNum: '',
+                    rank: '',
+                    size: '',
+                    price: '',
+                    website: '',
+                    service: '',
+                    warranty: '',
+                    warrantyPeriod: '', // 내부용: 보증기간 저장 (예: "1년", "2년")
+                    note: ''
+                }));
             }
             renderASListTable();
             updateASInfoHeaders();
+            renderASNotices(); // Ensure notices are rendered when tab loads
         }
 
         function updateASInfoHeaders() {
@@ -6330,13 +6420,43 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            // Datalists 생성 (필요시)
+            let globalLists = document.getElementById('asGlobalDatalists');
+            if (!globalLists) {
+                const div = document.createElement('div');
+                div.id = 'asGlobalDatalists';
+                document.body.appendChild(div);
+                globalLists = div;
+            }
+
+            // Unique Categories
+            const categories = [...new Set(AS_DB.map(i => i.category).filter(Boolean))];
+
+            const catDatalist = document.createElement('datalist');
+            catDatalist.id = 'asCategoryList';
+            catDatalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+
+            // Re-create datalists container
+            globalLists.innerHTML = '';
+            globalLists.appendChild(catDatalist);
+
+            // Items datalist (Global or filtered? Global for now)
+            const items = [...new Set(AS_DB.map(i => i.item).filter(Boolean))];
+            const itemDatalist = document.createElement('datalist');
+            itemDatalist.id = 'asItemList';
+            itemDatalist.innerHTML = items.map(i => `<option value="${i}">`).join('');
+            globalLists.appendChild(itemDatalist);
+
             asListRows.forEach((row, index) => {
+                const isEmpty = !row.category && !row.item && !row.brand && !row.modelNum && !row.warranty && !row.note;
                 const tr = document.createElement('tr');
+                tr.className = isEmpty ? 'empty-as-row' : '';
                 tr.innerHTML = `
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
                     <!-- Category -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.category || ''}" 
+                             list="asCategoryList"
                              onchange="updateASListRow(${index}, 'category', this.value)"
                              style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
@@ -6349,6 +6469,7 @@
                     <!-- Item -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.item || ''}" 
+                            list="asItemList"
                             onchange="updateASListRow(${index}, 'item', this.value)"
                             style="width:100%; border:none; outline:none;">
                     </td>
@@ -6415,6 +6536,23 @@
                  `;
                 tbody.appendChild(tr);
             });
+
+            // Check if notice container exists, if not add it
+            const panel = document.getElementById('panel-as_list');
+            if (panel && !document.getElementById('asNoticeContainer')) {
+                const noticeDiv = document.createElement('div');
+                noticeDiv.id = 'asNoticeContainer';
+                noticeDiv.innerHTML = `
+                  <div class="section" style="margin-top:20px;">
+                    <h3 class="section-title">A/S 관리 유의사항</h3>
+                    <ul class="construction-notice-list" id="asNoticeList">
+                         <!-- Notices loaded via JS -->
+                    </ul>
+                </div>
+                 `;
+                panel.appendChild(noticeDiv);
+                renderASNotices();
+            }
         }
 
         function updateASCategory(index, category) {
@@ -6427,22 +6565,9 @@
             renderASListTable(); // Re-render to update item dropdown
         }
 
+        // Legacy function, replaced by updateASListRow('item') logic
         function updateASItem(index, dbIndex) {
-            if (dbIndex === "") {
-                asListRows[index].item = '';
-                return;
-            }
-            const selectedData = AS_DB[dbIndex];
-            if (selectedData) {
-                asListRows[index].item = selectedData.item;
-                asListRows[index].brand = selectedData.brand;
-                asListRows[index].service = selectedData.service;
-                asListRows[index].note = selectedData.note; // Optional: Overwrite note? Yes, usually
-                // Warranty is usually empty in DB, so keep it empty or overwrite if DB has value
-                if (selectedData.warranty) asListRows[index].warranty = selectedData.warranty;
-            }
-            saveASList();
-            renderASListTable();
+            // Deprecated
         }
 
         function getScheduleOptions() {
@@ -6460,10 +6585,35 @@
         function applyScheduleToWarranty(index, endDate) {
             if (!endDate) return;
             // endDate format: YYYY-MM-DD
-            // Add 1 year
+
             try {
                 const date = new Date(endDate);
-                date.setFullYear(date.getFullYear() + 1);
+
+                // 보증기간 파싱 (기록된 보증기간이 있으면 사용)
+                let periodYears = 1; // 기본 1년
+                let periodMonths = 0;
+
+                const warrantyPeriod = asListRows[index].warrantyPeriod || asListRows[index].warranty || '1년';
+
+                // "20년", "2년", "1년6개월", "6개월" 등 파싱
+                if (warrantyPeriod) {
+                    // 년 추출
+                    const yearMatch = warrantyPeriod.match(/(\d+)\s*년/);
+                    if (yearMatch) periodYears = parseInt(yearMatch[1]);
+                    else periodYears = 0; // "6개월"인 경우
+
+                    // 개월 추출
+                    const monthMatch = warrantyPeriod.match(/(\d+)\s*개월/);
+                    if (monthMatch) periodMonths = parseInt(monthMatch[1]);
+
+                    if (!yearMatch && !monthMatch) {
+                        periodYears = 1; // Default fallback
+                    }
+                }
+
+                // 날짜 계산
+                date.setFullYear(date.getFullYear() + periodYears);
+                date.setMonth(date.getMonth() + periodMonths);
 
                 // Format format: ~YY.MM.DD
                 const yy = String(date.getFullYear()).slice(-2);
@@ -6474,8 +6624,12 @@
                 asListRows[index].warranty = warrantyText;
 
                 // Update input view
-                document.getElementById(`warrantyInput_${index}`).value = warrantyText;
+                const inputEl = document.getElementById(`warrantyInput_${index}`);
+                if (inputEl) inputEl.value = warrantyText;
+
                 saveASList();
+                showToast(`보증기간 ${periodYears > 0 ? periodYears + '년 ' : ''}${periodMonths > 0 ? periodMonths + '개월 ' : ''}적용됨`, 'success');
+
             } catch (e) {
                 console.error("Invalid Date", e);
             }
@@ -6483,6 +6637,27 @@
 
         function updateASListRow(index, field, value) {
             asListRows[index][field] = value;
+
+            // Auto complete from DB when Item changes
+            if (field === 'item') {
+                const matched = AS_DB.find(d => d.item === value && (asListRows[index].category ? d.category === asListRows[index].category : true));
+                if (matched) {
+                    if (!asListRows[index].category) asListRows[index].category = matched.category || '';
+                    if (!asListRows[index].brand) asListRows[index].brand = matched.brand || '';
+                    if (!asListRows[index].service) asListRows[index].service = matched.service || '';
+                    if (!asListRows[index].note) asListRows[index].note = matched.note || '';
+
+                    // Store Warranty Period
+                    if (matched.warranty) {
+                        asListRows[index].warrantyPeriod = matched.warranty; // Store hidden period
+                        asListRows[index].warranty = matched.warranty; // Show initially
+                    }
+                    renderASListTable(); // Re-render to show updates
+                }
+            } else if (field === 'category') {
+                renderASListTable(); // Re-render to update Item Datalist filter if implemented (currently global, but good practice)
+            }
+
             saveASList();
         }
 

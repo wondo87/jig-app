@@ -175,20 +175,37 @@ function handleScheduleTemplateGet(e) {
     }
 
     var data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
-    var steps = data.map(function (row) {
-        return {
-            category: row[0] || '',
-            name: row[1] || '',
-            checkPoint: row[2] || '',
-            // 시작일/종료일은 템플릿에서 보통 비워두지만 값이 있으면 가져옴
-            start: row[3] instanceof Date ? Utilities.formatDate(row[3], Session.getScriptTimeZone(), 'yyyy-MM-dd') : (row[3] || ''),
-            end: row[4] instanceof Date ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), 'yyyy-MM-dd') : (row[4] || ''),
-            inCharge: row[5] || '',
-            memo: row[6] || ''
-        };
+    var steps = [];
+    var notices = [];
+
+    data.forEach(function (row) {
+        if (row[0] === '공사 진행 안내사항') {
+            // This is a notice row. The content is likely in Column B or spanned.
+            // Looking at the screenshot, the text is in the 2nd column (Index 1) or just spanned.
+            // Let's assume it is in the second column (row[1]) based on standard sheet structure,
+            // or concatenate non-empty cells if it spans.
+            // Actually, usually merged cells read from top-left.
+            // If the user put "공사 진행 안내사항" in Col A and the text in Col B:
+            var text = row[1];
+            if (text) notices.push(text);
+        } else {
+            // Normal schedule step
+            steps.push({
+                category: row[0] || '',
+                name: row[1] || '',
+                checkPoint: row[2] || '',
+                start: row[3] instanceof Date ? Utilities.formatDate(row[3], Session.getScriptTimeZone(), 'yyyy-MM-dd') : (row[3] || ''),
+                end: row[4] instanceof Date ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), 'yyyy-MM-dd') : (row[4] || ''),
+                inCharge: row[5] || '',
+                memo: row[6] || ''
+            });
+        }
     });
 
-    return ContentService.createTextOutput(JSON.stringify(steps)).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({
+        steps: steps,
+        notices: notices
+    })).setMimeType(ContentService.MimeType.JSON);
 }
 
 // [트리거] onEdit (단순 트리거)
@@ -1462,30 +1479,41 @@ function handleASListGet(e) {
         var data = [];
 
         // 1행은 헤더일 가능성이 높으므로 2행부터 읽음
+        // 1행은 헤더일 가능성이 높으므로 2행부터 읽음
         // 헤더: 카테고리 | 세부항목 | 브랜드 | 서비스센터 | 보증기간 | 비고
+        var items = [];
+        var notices = [];
+
         for (var i = 1; i < rows.length; i++) {
             var row = rows[i];
             // 빈 행 건너뛰기
-            if (!row[0] && !row[1]) continue;
+            if (!row[0] && !row[1] && !row[2]) continue;
 
-            data.push({
-                category: row[0] || '',
-                brand: row[1] || '',
-                item: row[2] || '',
-                modelNum: row[3] || '',
-                rank: row[4] || '',
-                size: row[5] || '',
-                price: row[6] || '',
-                website: row[7] || '',
-                service: row[8] || '',
-                warranty: row[9] || '',
-                note: row[10] || ''
-            });
+            // 유의사항 행 체크 (스케줄표와 동일한 방식 "AS 관리 유의사항" 혹은 "안내사항")
+            if (row[0] && (row[0].toString().indexOf('유의사항') !== -1 || row[0].toString().indexOf('안내사항') !== -1)) {
+                var noticeText = row[1];
+                if (noticeText) notices.push(noticeText);
+            } else {
+                items.push({
+                    category: row[0] || '',
+                    brand: row[1] || '',
+                    item: row[2] || '',
+                    modelNum: row[3] || '',
+                    rank: row[4] || '',
+                    size: row[5] || '',
+                    price: row[6] || '',
+                    website: row[7] || '',
+                    service: row[8] || '',
+                    warranty: row[9] || '',
+                    note: row[10] || ''
+                });
+            }
         }
 
         return ContentService.createTextOutput(JSON.stringify({
             result: 'success',
-            data: data
+            items: items,
+            notices: notices
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (err) {
