@@ -5752,14 +5752,45 @@
             const inputId = document.getElementById('adminId').value.trim();
             const inputPw = document.getElementById('adminPassword').value;
 
-            let inputHash;
-            try {
-                if (!window.crypto || !window.crypto.subtle) {
-                    // [Fallback] If strictly local file, warn user or skip hash (Not recommended but handles file://)
-                    // But we cannot verify hash. So we must warn.
-                    alert('보안 컨텍스트 오류: file:// 프로토콜에서는 암호화 로그인이 제한될 수 있습니다. 로컬 서버(localhost)를 사용하거나 HTTPS 환경에서 실행하세요.');
+            // [보안 컨텍스트 확인 및 로컬 우회]
+            // file:// 프로토콜이거나 구형 브라우저라 crypto.subtle이 없는 경우
+            if (!window.crypto || !window.crypto.subtle) {
+                if (window.location.protocol === 'file:') {
+                    if (confirm('로컬 파일(file://) 환경이 감지되었습니다.\n보안 기능(암호화)을 사용할 수 없어 테스트 모드로 로그인합니다.\n\n[주의] 비밀번호 검증 없이 아이디만으로 로그인하시겠습니까?')) {
+                        // ID만 체크하여 로그인 허용
+                        const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+                        if (mainAdmin) {
+                            currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                            closeAdminModal();
+                            activateAdminMode();
+                            showToast(`[테스트 모드] ${mainAdmin.name}님 로그인`, 'success');
+                            return;
+                        }
+
+                        const admins = getRegularAdmins();
+                        const regularAdmin = admins.find(a => a.id === inputId);
+                        if (regularAdmin) {
+                            currentAdmin = { id: regularAdmin.id, role: 'regular' };
+                            closeAdminModal();
+                            activateAdminMode();
+                            showToast('[테스트 모드] 관리자 로그인', 'success');
+                            return;
+                        }
+
+                        showToast('존재하지 않는 아이디입니다.', 'error');
+                        return;
+                    } else {
+                        return; // 사용자가 취소함
+                    }
+                } else {
+                    alert('보안 컨텍스트 오류: HTTPS 환경이 아닙니다. 암호화 로그인을 사용할 수 없습니다.');
                     return;
                 }
+            }
+
+            // 정상적인 보안 환경 (HTTPS/Localhost)
+            let inputHash;
+            try {
                 inputHash = await hashPassword(inputPw);
             } catch (e) {
                 console.error("Login Error:", e);
@@ -5799,12 +5830,15 @@
             const adminId = currentAdmin?.id || '';
 
             // UI 업데이트
-            document.getElementById('adminBadge').className = 'admin-badge admin';
-            document.getElementById('adminBadge').innerHTML = `${roleLabel}: ${adminId} `;
+            const badge = document.getElementById('adminBadge');
+            if (badge) {
+                badge.className = 'admin-badge admin';
+                badge.innerHTML = `${roleLabel}: ${adminId}`;
+            }
 
             let statusHTML = `
-                <span class="admin-badge admin" id = "adminBadge" > ${roleLabel}: ${adminId}</span>
-                    <button class="admin-login-btn" onclick="logoutAdmin()">로그아웃</button>
+                <span class="admin-badge admin">${roleLabel}: ${adminId}</span>
+                <button class="admin-login-btn" onclick="logoutAdmin()">로그아웃</button>
             `;
 
             // 메인관리자만 관리자 관리 버튼 표시
