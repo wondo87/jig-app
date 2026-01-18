@@ -143,6 +143,9 @@ function doGet(e) {
         if (actionParam === 'getSampleEstimate') {
             return handleGetSampleEstimate(e.parameter.id);
         }
+        if (actionParam === 'logStats') {
+            return handleStatsLog(e);
+        }
 
         // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
         return handleConsultingGet(e);
@@ -203,6 +206,7 @@ function handleScheduleTemplateGet(e) {
     });
 
     return ContentService.createTextOutput(JSON.stringify({
+        result: 'success',
         steps: steps,
         notices: notices
     })).setMimeType(ContentService.MimeType.JSON);
@@ -212,6 +216,25 @@ function handleScheduleTemplateGet(e) {
 // 주의: "설치형 트리거"로 processStatusChange를 별도 설정했으므로,
 // 아래 단순 트리거가 활성화되면 코드가 중복 실행될 위험이 있습니다.
 // 따라서 아래 코드는 주석 처리하거나 삭제하는 것이 안전합니다.
+/*
+ * 통계 로그 기록
+ */
+function handleStatsLog(e) {
+    try {
+        var user = e.parameter.user || 'Unknown';
+        var act = e.parameter.act || 'Unknown';
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('통계로그');
+        if (!sheet) {
+            sheet = spreadsheet.insertSheet('통계로그');
+            sheet.appendRow(['Timestamp', 'User', 'Action']);
+        }
+        sheet.appendRow([new Date(), user, act]);
+        return ContentService.createTextOutput(JSON.stringify({ result: 'success' })).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ result: 'error', error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
 /*
 function onEdit(e) {
     processStatusChange(e);

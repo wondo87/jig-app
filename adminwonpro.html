@@ -2655,7 +2655,9 @@
 
             /* 스케줄 관리 패널 인쇄 설정 */
             #panel-schedule .data-table th:last-child,
-            #panel-schedule .data-table td:last-child {
+            #panel-schedule .data-table td:last-child,
+            #panel-schedule .doc-header,
+            #panel-schedule .schedule-info-table {
                 display: none !important;
             }
 
@@ -3843,14 +3845,19 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                인쇄/PDF</button>
-                                style="background: rgba(255,255,255,0.2); color:white; border:none;
-                                margin-right:4px;">📥
-                                Notion
-                                동기화</button>
+                                <button class="btn btn-sm" onclick="logStatsAction('Print'); window.print();"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">
+                                    🖨️ 인쇄/PDF
+                                </button>
+                                <!-- Notion Sync Button -->
+                                <button class="btn btn-sm" onclick="alert('Notion Sync Not Implemented')"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">
+                                    📥 Notion 동기화
+                                </button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
-                                    추가</button>
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">
+                                    ➕ 공정 추가
+                                </button>
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
@@ -3952,14 +3959,16 @@
                             </table>
                             <div
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                     <strong>💡 공사 진행 안내 및 유의사항</strong>
                                     <button class="btn btn-sm no-print" onclick="loadScheduleGuidelines()"
                                         style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
                                         📥 유의사항 불러오기
                                     </button>
                                 </div>
-                                <ul id="scheduleGuidelinesList" style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                <ul id="scheduleGuidelinesList"
+                                    style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                     <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
                                     <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
                                         <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할
@@ -4071,7 +4080,8 @@
 
                                 <div
                                     style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                         <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
                                         <button class="btn btn-sm no-print" onclick="loadASGuidelines()"
                                             style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
@@ -4219,45 +4229,89 @@
         // (performLogin function has been moved to script top)
         // 오버레이 로그인 처리 (스크립트 최상단 이동)
         async function performLogin() {
-            console.log('performLogin function executed');
-            const inputId = document.getElementById('loginId').value.trim();
-            const inputPw = document.getElementById('loginPw').value;
+            try {
+                console.log('performLogin 시작');
+                const inputId = document.getElementById('loginId').value.trim();
+                const inputPw = document.getElementById('loginPw').value;
 
-            if (!inputId || !inputPw) {
-                showToast('아이디와 비밀번호를 입력해주세요', 'warning');
-                return;
-            }
+                if (!inputId || !inputPw) {
+                    alert('아이디와 비밀번호를 모두 입력해주세요.');
+                    return;
+                }
 
-            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
-            const inputHash = await hashPassword(inputPw);
-            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
-            if (mainAdmin) {
-                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
-                document.getElementById('loginOverlay').style.display = 'none';
-                activateAdminMode();
-                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
-                return;
-            }
+                // 1. 설정 파일 로드 확인
+                if (typeof MAIN_ADMINS === 'undefined') {
+                    alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
+                    return;
+                }
 
-            // 일반관리자 확인 (1차: 로컬 데이터)
-            let admins = getRegularAdmins();
-            let found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+                // 2. 암호화 기능 확인 및 실행
+                let inputHash;
+                try {
+                    // file:// 프로토콜 등에서 crypto.subtle 지원 여부 체크
+                    if (!window.crypto || !window.crypto.subtle) {
+                        throw new Error('Web Crypto API 미지원 환경 (HTTPS 또는 Localhost 필요)');
+                    }
+                    inputHash = await hashPassword(inputPw);
+                    console.log('Login Debug - InputHash:', inputHash);
+                } catch (e) {
+                    console.error('암호화 오류:', e);
+                    alert(`시스템 보안 오류: 비밀번호를 암호화할 수 없습니다.\n브라우저 보안 정책 문제일 수 있습니다.\n\n오류 내용: ${e.message}\n\n(참고: Chrome 등 최신 브라우저는 로컬 파일(file://)에서 암호화 기능을 제한할 수 있습니다.)`);
+                    return;
+                }
 
-            // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
-            if (!found) {
-                // showToast('서버에서 관리자 정보를 확인 중입니다...', 'info'); // UX상 생략 가능하지만 있으면 좋음
-                await syncAdminsFromCloud();
-                admins = getRegularAdmins();
-                found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
-            }
+                // 3. 메인 관리자 확인
+                const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+                if (mainAdmin) {
+                    console.log('Main Admin Found:', mainAdmin.id);
+                    if (mainAdmin.passwordHash === inputHash) {
+                        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                        document.getElementById('loginOverlay').style.display = 'none';
+                        activateAdminMode();
+                        showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
+                        return;
+                    } else {
+                        console.warn(`Password Mismatch. Input: ${inputHash}`);
+                        alert('비밀번호가 일치하지 않습니다.');
+                        return;
+                    }
+                }
 
-            if (found) {
-                currentAdmin = { id: found.id, role: 'regular' };
-                document.getElementById('loginOverlay').style.display = 'none';
-                activateAdminMode();
-                showToast(`${found.name} 관리자로 로그인되었습니다`, 'success');
-            } else {
-                showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
+                // 4. 일반 관리자 확인 (1차: 로컬 데이터)
+                let admins = getRegularAdmins();
+                let found = admins.find(a => a.id === inputId);
+
+                // 로컬에 없으면 클라우드 동기화 시도 (2차)
+                if (!found) {
+                    console.log('Local admin not found, syncing from cloud...');
+                    try {
+                        await syncAdminsFromCloud();
+                        admins = getRegularAdmins();
+                        found = admins.find(a => a.id === inputId);
+                    } catch (syncError) {
+                        console.warn('Cloud sync failed', syncError);
+                    }
+                }
+
+                if (found) {
+                    if (found.passwordHash === inputHash) {
+                        // 로그인 성공
+                        currentAdmin = { id: found.id, role: 'regular' };
+                        document.getElementById('loginOverlay').style.display = 'none';
+                        activateAdminMode();
+                        showToast(`${found.name || found.id} 관리자님 환영합니다!`, 'success');
+                        return;
+                    } else {
+                        alert('비밀번호가 일치하지 않습니다.');
+                        return;
+                    }
+                }
+
+                // 5. ID 없음
+                alert(`등록되지 않은 관리자 아이디입니다.\n입력하신 ID: ${inputId}`);
+            } catch (err) {
+                console.error('Login Process Error:', err);
+                alert('로그인 처리 중 예기치 않은 오류가 발생했습니다.\n' + err.message);
             }
         }
 
@@ -5729,6 +5783,19 @@
                 return;
             }
 
+            // [SECURITY CHECK] Statistics Tab & Modal Access Re-verification
+            // (STATS_ACCESS_PIN is defined later in the script, available globally)
+            if (tabId === 'stats' && !isMainAdmin() && (typeof isStatsUnlocked !== 'undefined' && !isStatsUnlocked)) {
+                const pin = prompt('통계 대시보드는 관리자 전용입니다.\\n\\n비밀번호를 입력하세요:');
+                if (typeof STATS_ACCESS_PIN !== 'undefined' && pin === STATS_ACCESS_PIN) {
+                    isStatsUnlocked = true;
+                    showToast('통계 접근이 허용되었습니다.', 'success');
+                } else {
+                    showToast('비밀번호가 올바르지 않습니다.', 'error');
+                    return;
+                }
+            }
+
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.customer-tab').forEach(t => t.classList.remove('active'));
 
@@ -6037,17 +6104,18 @@
 
         // 스케줄 유의사항 불러오기 (구글 시트에서)
         async function loadScheduleGuidelines() {
+            console.log('Fetching Schedule Guidelines...');
             try {
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=공사스케줄관리&action=getGuidelines`);
                 const result = await response.json();
 
-                if (result.success && result.guidelines && result.guidelines.length > 0) {
+                if (result.result === 'success' && result.notices && result.notices.length > 0) {
                     const guidelinesList = document.getElementById('scheduleGuidelinesList');
                     if (guidelinesList) {
-                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                        guidelinesList.innerHTML = result.notices.map(item => `<li>${item}</li>`).join('');
                         alert('✅ 성공: 공사 스케줄 유의사항을 성공적으로 불러왔습니다.');
                     }
-                } else if (result.success) {
+                } else if (result.result === 'success') {
                     alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
                 } else {
                     alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
@@ -6060,17 +6128,18 @@
 
         // A/S 유의사항 불러오기 (구글 시트에서)
         async function loadASGuidelines() {
+            console.log('Fetching AS Guidelines...');
             try {
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트&action=getGuidelines`);
                 const result = await response.json();
 
-                if (result.success && result.guidelines && result.guidelines.length > 0) {
+                if (result.result === 'success' && result.notices && result.notices.length > 0) {
                     const guidelinesList = document.getElementById('asGuidelinesList');
                     if (guidelinesList) {
-                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                        guidelinesList.innerHTML = result.notices.map(item => `<li>${item}</li>`).join('');
                         alert('✅ 성공: A/S 관리 유의사항을 성공적으로 불러왔습니다.');
                     }
-                } else if (result.success) {
+                } else if (result.result === 'success') {
                     alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
                 } else {
                     alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
@@ -6175,7 +6244,7 @@
                 addBtn.disabled = true;
 
                 // 공정 선택 시 추가 버튼 활성화
-                processSelect.onchange = function() {
+                processSelect.onchange = function () {
                     addBtn.disabled = !this.value;
                 };
             } else {
@@ -7373,6 +7442,20 @@
             }
         }
 
+        // 통계 로그 기록
+        async function logStatsAction(action) {
+            const statsPanel = document.getElementById('panel-stats');
+            if (statsPanel && statsPanel.classList.contains('active')) {
+                const user = currentAdmin ? (currentAdmin.name || currentAdmin.id) : 'Unknown';
+                try {
+                    // Fire and forget, or wait? Better not block UI.
+                    fetch(`${CUSTOMER_SYNC_URL}?action=logStats&user=${encodeURIComponent(user)}&act=${encodeURIComponent(action)}`, { keepalive: true }).catch(err => console.error(err));
+                } catch (e) {
+                    console.error('Failed to log stats action', e);
+                }
+            }
+        }
+
         async function saveData() {
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
@@ -7391,6 +7474,9 @@
             }
 
             performSaveData();
+
+            // [Stats Log] Final Save
+            logStatsAction('Final Save (Attempt)');
         }
 
         function performSaveData() {
@@ -8725,6 +8811,9 @@
         }
 
         function downloadPDF(elementId, filename) {
+            // [Stats Log] Print/PDF
+            logStatsAction('Print (PDF) - ' + filename);
+
             const element = document.getElementById(elementId);
             if (!element) {
                 showToast('문서를 찾을 수 없습니다', 'error');
@@ -9251,7 +9340,22 @@
         // 통계 모달
         let chartInstances = {};
 
+        const STATS_ACCESS_PIN = '6454';
+        let isStatsUnlocked = false;
+
         function openStatsModal() {
+            // [SECURITY CHECK] Statistics Access
+            if (!isMainAdmin() && !isStatsUnlocked) {
+                const pin = prompt('통계 대시보드는 관리자 전용입니다.\\n\\n비밀번호를 입력하세요:');
+                if (pin === STATS_ACCESS_PIN) {
+                    isStatsUnlocked = true;
+                    showToast('통계 접근이 허용되었습니다.', 'success');
+                } else {
+                    showToast('비밀번호가 올바르지 않습니다.', 'error');
+                    return;
+                }
+            }
+
             document.getElementById('statsModal').classList.add('show');
             renderAllStats();
         }
