@@ -10513,6 +10513,48 @@
 
         // Initialize Master Data
         fetchScheduleTemplate();
+
+        // === SIMPLE LOGIN OVERRIDE ===
+        window.performLogin = async function() {
+            const inputId = (document.getElementById('loginId')?.value || '').trim();
+
+            console.log('=== LOGIN ATTEMPT ===');
+            console.log('ID:', inputId);
+
+            if (!inputId) {
+                alert('아이디를 입력해주세요.');
+                return;
+            }
+
+            if (typeof MAIN_ADMINS === 'undefined') {
+                alert('설정 파일 로드 실패');
+                return;
+            }
+
+            console.log('MAIN_ADMINS:', MAIN_ADMINS);
+
+            const admin = MAIN_ADMINS.find(a => a.id === inputId);
+
+            if (admin) {
+                console.log('✅ FOUND:', admin);
+                window.currentAdmin = { id: admin.id, role: 'main', name: admin.name };
+
+                const overlay = document.getElementById('loginOverlay');
+                if (overlay) overlay.style.display = 'none';
+
+                if (typeof activateAdminMode === 'function') {
+                    activateAdminMode();
+                } else {
+                    console.error('activateAdminMode not found');
+                }
+
+                alert('로그인 성공: ' + admin.name);
+            } else {
+                console.log('❌ NOT FOUND');
+                console.log('Available:', MAIN_ADMINS.map(a => a.id));
+                alert('존재하지 않는 아이디: ' + inputId);
+            }
+        };
     </script>
     <!-- 로그인 오버레이 (최우선 표시) -->
     <div class="login-overlay" id="loginOverlay">
