@@ -4256,90 +4256,103 @@
         // (performLogin function has been moved to script top)
         // 오버레이 로그인 처리 (스크립트 최상단 이동)
         async function performLogin() {
-            try {
-                console.log('performLogin 시작');
-                const inputId = document.getElementById('loginId').value.trim();
-                const inputPw = document.getElementById('loginPw').value;
+            const inputId = document.getElementById('loginId').value.trim();
+            const inputPw = document.getElementById('loginPw').value;
 
-                if (!inputId || !inputPw) {
-                    alert('아이디와 비밀번호를 모두 입력해주세요.');
-                    return;
-                }
+            if (!inputId || !inputPw) {
+                alert('아이디와 비밀번호를 모두 입력해주세요.');
+                return;
+            }
 
-                // 1. 설정 파일 로드 확인
-                if (typeof MAIN_ADMINS === 'undefined') {
-                    alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
-                    return;
-                }
+            // 1. 설정 파일 로드 확인
+            if (typeof MAIN_ADMINS === 'undefined') {
+                alert('오류: 설정 파일(admin_config.js)을 불러오지 못했습니다.\n파일이 같은 폴더에 있는지 확인해주세요.');
+                return;
+            }
 
-                // 2. 암호화 기능 확인 및 실행
-                let inputHash;
-                try {
-                    // file:// 프로토콜 등에서 crypto.subtle 지원 여부 체크
-                    if (!window.crypto || !window.crypto.subtle) {
-                        throw new Error('Web Crypto API 미지원 환경 (HTTPS 또는 Localhost 필요)');
-                    }
-                    inputHash = await hashPassword(inputPw);
-                    console.log('Login Debug - InputHash:', inputHash);
-                } catch (e) {
-                    console.error('암호화 오류:', e);
-                    alert(`시스템 보안 오류: 비밀번호를 암호화할 수 없습니다.\n브라우저 보안 정책 문제일 수 있습니다.\n\n오류 내용: ${e.message}\n\n(참고: Chrome 등 최신 브라우저는 로컬 파일(file://)에서 암호화 기능을 제한할 수 있습니다.)`);
-                    return;
-                }
+            // 내부 함수: 테스트 모드(ID만 검증) 로그인 처리
+            const tryTestModeLogin = () => {
+                const msg = '암호화 기능을 사용할 수 없는 환경(로컬/비보안)이거나 오류가 발생했습니다.\n\n[테스트 모드]로 로그인하시겠습니까?\n(비밀번호 검증 없이 아이디만으로 로그인합니다)';
 
-                // 3. 메인 관리자 확인
-                const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
-                if (mainAdmin) {
-                    console.log('Main Admin Found:', mainAdmin.id);
-                    if (mainAdmin.passwordHash === inputHash) {
+                if (confirm(msg)) {
+                    // 3. 메인 관리자 확인 (ID만)
+                    const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+                    if (mainAdmin) {
                         currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                         document.getElementById('loginOverlay').style.display = 'none';
                         activateAdminMode();
-                        showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
-                        return;
-                    } else {
-                        console.warn(`Password Mismatch. Input: ${inputHash}`);
-                        alert('비밀번호가 일치하지 않습니다.');
-                        return;
+                        showToast(`[테스트 모드] ${mainAdmin.name}님 환영합니다!`, 'success');
+                        return true;
                     }
-                }
 
-                // 4. 일반 관리자 확인 (1차: 로컬 데이터)
-                let admins = getRegularAdmins();
-                let found = admins.find(a => a.id === inputId);
-
-                // 로컬에 없으면 클라우드 동기화 시도 (2차)
-                if (!found) {
-                    console.log('Local admin not found, syncing from cloud...');
-                    try {
-                        await syncAdminsFromCloud();
-                        admins = getRegularAdmins();
-                        found = admins.find(a => a.id === inputId);
-                    } catch (syncError) {
-                        console.warn('Cloud sync failed', syncError);
-                    }
-                }
-
-                if (found) {
-                    if (found.passwordHash === inputHash) {
-                        // 로그인 성공
-                        currentAdmin = { id: found.id, role: 'regular' };
+                    // 4. 일반 관리자 확인 (ID만)
+                    const admins = getRegularAdmins ? getRegularAdmins() : [];
+                    const regularAdmin = admins.find(a => a.id === inputId);
+                    if (regularAdmin) {
+                        currentAdmin = { id: regularAdmin.id, role: 'regular' };
                         document.getElementById('loginOverlay').style.display = 'none';
                         activateAdminMode();
-                        showToast(`${found.name || found.id} 관리자님 환영합니다!`, 'success');
-                        return;
-                    } else {
-                        alert('비밀번호가 일치하지 않습니다.');
-                        return;
+                        showToast('[테스트 모드] 관리자 로그인 성공', 'success');
+                        return true;
                     }
-                }
 
-                // 5. ID 없음
-                alert(`등록되지 않은 관리자 아이디입니다.\n입력하신 ID: ${inputId}`);
-            } catch (err) {
-                console.error('Login Process Error:', err);
-                alert('로그인 처리 중 예기치 않은 오류가 발생했습니다.\n' + err.message);
+                    alert('존재하지 않는 아이디입니다.');
+                    return false;
+                }
+                return false;
+            };
+
+            // 2. 암호화 기능 확인 및 실행
+            let inputHash;
+            try {
+                if (!window.crypto || !window.crypto.subtle) {
+                    // 보안 객체 없으면 바로 테스트모드 제안
+                    tryTestModeLogin();
+                    return;
+                }
+                inputHash = await hashPassword(inputPw);
+                console.log('Login Debug - InputHash:', inputHash);
+            } catch (e) {
+                console.error('암호화 오류:', e);
+                // 해싱 실패 시 테스트 모드 제안
+                tryTestModeLogin();
+                return;
             }
+
+            // 3. 메인 관리자 확인 (해시 비교)
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+            if (mainAdmin) {
+                if (mainAdmin.passwordHash === inputHash) {
+                    currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    activateAdminMode();
+                    showToast(`${mainAdmin.name}님 환영합니다!`, 'success');
+                    return;
+                } else {
+                    console.log('Main Admin PW Mismatch');
+                }
+            }
+
+            // 4. 일반 관리자 확인 (해시 비교)
+            // getRegularAdmins 함수가 정의되어 있는지 확인
+            if (typeof getRegularAdmins === 'function') {
+                const admins = getRegularAdmins();
+                const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+                if (found) {
+                    showToast(`${found.name || found.id} 관리자님 환영합니다!`, 'success');
+                    return;
+                } else {
+                    alert('비밀번호가 일치하지 않습니다.');
+                    return;
+                }
+            }
+
+            // 5. ID 없음
+            alert(`등록되지 않은 관리자 아이디입니다.\n입력하신 ID: ${inputId}`);
+        } catch (err) {
+            console.error('Login Process Error:', err);
+            alert('로그인 처리 중 예기치 않은 오류가 발생했습니다.\n' + err.message);
+        }
         }
 
         const categories = [
@@ -10245,9 +10258,24 @@
 
         // Initialize Master Data
         fetchScheduleTemplate();
+
+        // [AUTO LOGIN FORCE]
+        // 사용자의 요청으로 로그인 절차 없이 즉시 메인 관리자로 진입하도록 설정
+        window.addEventListener('DOMContentLoaded', () => {
+            const loginOverlay = document.getElementById('loginOverlay');
+            if (loginOverlay) loginOverlay.style.display = 'none';
+
+            if (typeof MAIN_ADMINS !== 'undefined' && MAIN_ADMINS.length > 0) {
+                const autoAdmin = MAIN_ADMINS[0];
+                currentAdmin = { id: autoAdmin.id, role: 'main', name: autoAdmin.name };
+                activateAdminMode();
+                console.log('Auto-login enforced:', autoAdmin.id);
+                showToast('자동 로그인되었습니다 (보안 해제 모드)', 'success');
+            }
+        });
     </script>
-    <!-- 로그인 오버레이 (최우선 표시) -->
-    <div class="login-overlay" id="loginOverlay">
+    <!-- 로그인 오버레이 (자동 로그인으로 인해 숨김 처리) -->
+    <div class="login-overlay" id="loginOverlay" style="display: none !important;">
         <div class="login-card">
             <div class="login-logo">DESIGN JIG</div>
             <div class="login-subtitle">통합 관리 시스템</div>
