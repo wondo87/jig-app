@@ -174,7 +174,11 @@ function handleScheduleTemplateGet(e) {
 
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) {
-        return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            steps: [],
+            notices: []
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 
     var data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
@@ -1488,8 +1492,9 @@ function handleASListGet(e) {
 
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
-                result: 'error',
-                message: "'AS 관리 리스트' 시트를 찾을 수 없습니다."
+                result: 'success', // Or 'error' but returning empty list is safer
+                items: [],
+                notices: []
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
@@ -1508,7 +1513,8 @@ function handleASListGet(e) {
             if (!row[0] && !row[1] && !row[2]) continue;
 
             // 유의사항 행 체크 (스케줄표와 동일한 방식 "AS 관리 유의사항" 혹은 "안내사항")
-            if (row[0] && (row[0].toString().indexOf('유의사항') !== -1 || row[0].toString().indexOf('안내사항') !== -1)) {
+            // [수정] '안내사항' 뿐만 아니라 '안내'만 있어도 포함되도록 완화
+            if (row[0] && (row[0].toString().indexOf('유의사항') !== -1 || row[0].toString().indexOf('안내') !== -1)) {
                 var noticeText = row[1];
                 if (noticeText) notices.push(noticeText);
             } else {
