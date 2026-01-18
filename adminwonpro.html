@@ -5967,7 +5967,14 @@
                 // 현재 행의 카테고리로 공정명 필터링
                 // Determine processes for this category. If the current row has a process
                 // name that's not in the template, preserve it so the select shows the value.
-                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
+                let processes = defaultScheduleSteps.filter(s => s.category === row.category);
+                // If exact category match yields no processes, try fuzzy matching by substring
+                if ((!processes || processes.length === 0) && row.category) {
+                    const fallback = defaultScheduleSteps.filter(s =>
+                        (s.category && s.category.includes(row.category)) || (row.category && row.category.includes(s.category))
+                    );
+                    if (fallback && fallback.length > 0) processes = fallback;
+                }
                 let processOptions = processes.map(p =>
                     `<option value="${p.name}"${p.name === row.name ? ' selected' : ''}>${p.name}</option>`
                 ).join('');
