@@ -5172,7 +5172,8 @@
         // 관리자 클라우드 동기화 - 불러오기
         async function syncAdminsFromCloud() {
             try {
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=' + encodeURIComponent('관리자'));
+                const params = new URLSearchParams({ sheet: '관리자' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 if (response.ok) {
                     const cloudAdmins = await response.json();
                     if (Array.isArray(cloudAdmins) && cloudAdmins.length > 0) {
@@ -5779,7 +5780,8 @@
         async function fetchScheduleTemplate() {
             try {
                 // 스케줄 템플릿 가져오기 (Google Sheet: '공사 스케줄 관리')
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=schedule_template');
+                const params = new URLSearchParams({ sheet: 'schedule_template' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const data = await response.json();
 
                 if (Array.isArray(data) && data.length > 0) {
@@ -6561,7 +6563,8 @@
             }
 
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트`);
+                const params = new URLSearchParams({ sheet: 'AS관리리스트' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
                 if (result.success && result.data) {
@@ -7211,7 +7214,11 @@
 
             try {
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=고객관리_견적서&t=' + new Date().getTime(), {
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: new Date().getTime()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET'
                 });
 
@@ -8420,7 +8427,11 @@
             try {
                 showToast('원가관리표 불러오는 중...', 'info');
 
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=원가관리표&t=' + new Date().getTime(), {
+                const params = new URLSearchParams({
+                    sheet: '원가관리표',
+                    t: new Date().getTime()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
