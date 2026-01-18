@@ -5752,39 +5752,37 @@
             const inputId = document.getElementById('adminId').value.trim();
             const inputPw = document.getElementById('adminPassword').value;
 
-            // [보안 컨텍스트 확인 및 로컬 우회]
-            // file:// 프로토콜이거나 구형 브라우저라 crypto.subtle이 없는 경우
+            // [보안 컨텍스트 확인 및 테스트 모드 전환]
+            // HTTPS가 아니거나 file://, 혹은 구형 브라우저라 crypto.subtle이 없는 경우
+            // 경고창만 띄우고 차단하는 것이 아니라, 사용자가 명시적으로 동의하면 테스트 모드(비번검증생략)로 진입 허용
             if (!window.crypto || !window.crypto.subtle) {
-                if (window.location.protocol === 'file:') {
-                    if (confirm('로컬 파일(file://) 환경이 감지되었습니다.\n보안 기능(암호화)을 사용할 수 없어 테스트 모드로 로그인합니다.\n\n[주의] 비밀번호 검증 없이 아이디만으로 로그인하시겠습니까?')) {
-                        // ID만 체크하여 로그인 허용
-                        const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
-                        if (mainAdmin) {
-                            currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
-                            closeAdminModal();
-                            activateAdminMode();
-                            showToast(`[테스트 모드] ${mainAdmin.name}님 로그인`, 'success');
-                            return;
-                        }
+                const msg = '보안 컨텍스트(HTTPS/Localhost)가 아닙니다.\n암호화 기능을 사용할 수 없어 [테스트 모드]로 로그인합니다.\n\n[주의] 비밀번호 검증 없이 아이디만으로 로그인하시겠습니까?';
 
-                        const admins = getRegularAdmins();
-                        const regularAdmin = admins.find(a => a.id === inputId);
-                        if (regularAdmin) {
-                            currentAdmin = { id: regularAdmin.id, role: 'regular' };
-                            closeAdminModal();
-                            activateAdminMode();
-                            showToast('[테스트 모드] 관리자 로그인', 'success');
-                            return;
-                        }
-
-                        showToast('존재하지 않는 아이디입니다.', 'error');
+                if (confirm(msg)) {
+                    // ID만 체크하여 로그인 허용
+                    const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
+                    if (mainAdmin) {
+                        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+                        closeAdminModal();
+                        activateAdminMode();
+                        showToast(`[테스트 모드] ${mainAdmin.name}님 로그인`, 'success');
                         return;
-                    } else {
-                        return; // 사용자가 취소함
                     }
-                } else {
-                    alert('보안 컨텍스트 오류: HTTPS 환경이 아닙니다. 암호화 로그인을 사용할 수 없습니다.');
+
+                    const admins = getRegularAdmins();
+                    const regularAdmin = admins.find(a => a.id === inputId);
+                    if (regularAdmin) {
+                        currentAdmin = { id: regularAdmin.id, role: 'regular' };
+                        closeAdminModal();
+                        activateAdminMode();
+                        showToast('[테스트 모드] 관리자 로그인', 'success');
+                        return;
+                    }
+
+                    showToast('존재하지 않는 아이디입니다.', 'error');
                     return;
+                } else {
+                    return; // 사용자가 취소함
                 }
             }
 
