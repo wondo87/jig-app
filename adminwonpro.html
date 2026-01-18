@@ -1357,6 +1357,7 @@
             text-align: center;
             border-bottom: 2px solid #e8e8ed;
             white-space: nowrap;
+            box-sizing: border-box;
         }
 
         .data-table td {
@@ -1366,6 +1367,7 @@
             vertical-align: middle;
             overflow: hidden;
             text-overflow: ellipsis;
+            box-sizing: border-box;
         }
 
         .data-table tbody tr:hover {
@@ -3966,6 +3968,17 @@
                                 </ul>
                             </div>
                             <table class="data-table" style="width:100%; border-collapse:collapse;">
+                                <colgroup>
+                                    <col style="width:40px">
+                                    <col style="width:100px">
+                                    <col>
+                                    <col>
+                                    <col style="width:130px">
+                                    <col style="width:130px">
+                                    <col style="width:120px">
+                                    <col>
+                                    <col style="width:140px">
+                                </colgroup>
                                 <thead>
                                     <tr style="background:#f5f5f7;">
                                         <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
@@ -5994,7 +6007,7 @@
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; cursor:pointer;">
+                style="width:100%; border:1px solid #d2d2d7; background:white; font-size:12px; padding:5px; cursor:pointer; border-radius:4px; -webkit-appearance:auto; appearance:auto;">
                 <option value="">선택</option>
                 ${categoryOptions}
             </select>
@@ -6003,7 +6016,7 @@
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; cursor:pointer;">
+                style="width:100%; border:1px solid #d2d2d7; background:white; font-size:12px; padding:5px; cursor:pointer; border-radius:4px; -webkit-appearance:auto; appearance:auto;">
                 ${row.category ? '<option value="">선택</option>' + processOptions : '<option value="" disabled selected>카테고리 먼저 선택</option>'}
             </select>
         </td>
@@ -6054,6 +6067,34 @@
     </tr>
                 `;
             }).join('');
+
+            // 컬럼 헤더 너비를 colgroup에 반영하여 thead와 tbody의 정렬을 안정화
+            try {
+                // 약간의 지연을 주어 렌더링이 완료된 후 측정
+                setTimeout(() => {
+                    try {
+                        const table = tbody.closest('.data-table');
+                        if (!table) return;
+                        const ths = Array.from(table.querySelectorAll('thead th'));
+                        const cols = Array.from(table.querySelectorAll('col'));
+                        ths.forEach((th, idx) => {
+                            if (cols[idx]) {
+                                const w = th.offsetWidth;
+                                if (w && w > 0) cols[idx].style.width = w + 'px';
+                            }
+                        });
+                        // 강제 리플로우: display 토글로 레이아웃 재계산 유도
+                        const prev = table.style.display;
+                        table.style.display = 'none';
+                        // 강제 리플로우에 접근
+                        // eslint-disable-next-line no-unused-expressions
+                        table.offsetWidth;
+                        table.style.display = prev || '';
+                    } catch (e) {
+                        // 안전하게 무시
+                    }
+                }, 30);
+            } catch (e) {}
         }
 
         function addScheduleRow() {
