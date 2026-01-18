@@ -10516,43 +10516,65 @@
 
         // === SIMPLE LOGIN OVERRIDE ===
         window.performLogin = async function() {
-            const inputId = (document.getElementById('loginId')?.value || '').trim();
+            try {
+                const inputId = (document.getElementById('loginId')?.value || '').trim();
 
-            console.log('=== LOGIN ATTEMPT ===');
-            console.log('ID:', inputId);
+                let debugInfo = '=== 로그인 디버그 ===\n';
+                debugInfo += '입력 ID: ' + inputId + '\n';
 
-            if (!inputId) {
-                alert('아이디를 입력해주세요.');
-                return;
-            }
-
-            if (typeof MAIN_ADMINS === 'undefined') {
-                alert('설정 파일 로드 실패');
-                return;
-            }
-
-            console.log('MAIN_ADMINS:', MAIN_ADMINS);
-
-            const admin = MAIN_ADMINS.find(a => a.id === inputId);
-
-            if (admin) {
-                console.log('✅ FOUND:', admin);
-                window.currentAdmin = { id: admin.id, role: 'main', name: admin.name };
-
-                const overlay = document.getElementById('loginOverlay');
-                if (overlay) overlay.style.display = 'none';
-
-                if (typeof activateAdminMode === 'function') {
-                    activateAdminMode();
-                } else {
-                    console.error('activateAdminMode not found');
+                if (!inputId) {
+                    alert('아이디를 입력해주세요.');
+                    return;
                 }
 
-                alert('로그인 성공: ' + admin.name);
-            } else {
-                console.log('❌ NOT FOUND');
-                console.log('Available:', MAIN_ADMINS.map(a => a.id));
-                alert('존재하지 않는 아이디: ' + inputId);
+                debugInfo += 'MAIN_ADMINS 체크...\n';
+
+                if (typeof MAIN_ADMINS === 'undefined') {
+                    alert('❌ 오류: MAIN_ADMINS가 로드되지 않음\n\nadmin_config.js 파일을 확인하세요.');
+                    return;
+                }
+
+                debugInfo += 'MAIN_ADMINS 존재: YES\n';
+                debugInfo += '관리자 수: ' + MAIN_ADMINS.length + '\n';
+                debugInfo += '등록된 ID: ' + MAIN_ADMINS.map(a => a.id).join(', ') + '\n\n';
+
+                const admin = MAIN_ADMINS.find(a => a.id === inputId);
+
+                if (admin) {
+                    debugInfo += '✅ 관리자 발견!\n';
+                    debugInfo += 'ID: ' + admin.id + '\n';
+                    debugInfo += '이름: ' + admin.name + '\n';
+
+                    window.currentAdmin = { id: admin.id, role: 'main', name: admin.name };
+
+                    const overlay = document.getElementById('loginOverlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                        debugInfo += '로그인 화면 숨김: OK\n';
+                    }
+
+                    if (typeof activateAdminMode === 'function') {
+                        activateAdminMode();
+                        debugInfo += 'activateAdminMode 실행: OK\n';
+                    } else {
+                        debugInfo += '⚠️ activateAdminMode 함수 없음\n';
+                    }
+
+                    console.log(debugInfo);
+                    alert(debugInfo + '\n🎉 로그인 성공!');
+                } else {
+                    debugInfo += '❌ 일치하는 관리자 없음\n';
+                    debugInfo += '입력한 ID: ' + inputId + '\n';
+                    debugInfo += '등록된 ID들:\n';
+                    MAIN_ADMINS.forEach(a => {
+                        debugInfo += '  - ' + a.id + ' (' + a.name + ')\n';
+                    });
+
+                    console.log(debugInfo);
+                    alert(debugInfo);
+                }
+            } catch (error) {
+                alert('❌ 로그인 오류:\n\n' + error.toString() + '\n\n' + error.stack);
             }
         };
     </script>
