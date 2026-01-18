@@ -7203,6 +7203,56 @@
         }
 
         // ==========================================
+        // [커스텀 알림 함수] - 사라지지 않는 알림창
+        // ==========================================
+        function showPersistentAlert(message, type = 'success') {
+            // 기존 알림창 제거
+            const existing = document.getElementById('persistentAlert');
+            if (existing) existing.remove();
+
+            // 새 알림창 생성
+            const overlay = document.createElement('div');
+            overlay.id = 'persistentAlert';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const box = document.createElement('div');
+            box.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                max-width: 500px;
+                text-align: center;
+            `;
+
+            const icon = type === 'success' ? '✅' : '❌';
+            const color = type === 'success' ? '#34c759' : '#ff3b30';
+
+            box.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
+                <div style="font-size: 18px; font-weight: 600; color: #000; margin-bottom: 20px; white-space: pre-wrap;">${message}</div>
+                <button onclick="document.getElementById('persistentAlert').remove()"
+                    style="background: ${color}; color: white; border: none; padding: 12px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    확인
+                </button>
+            `;
+
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+        }
+
+        // ==========================================
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
         async function syncFromCloud() {
@@ -7217,7 +7267,7 @@
                 });
 
                 if (!response.ok) {
-                    alert('❌ 클라우드 동기화 실패\n\nHTTP 오류: ' + response.status);
+                    showPersistentAlert(`클라우드 동기화 실패\n\nHTTP 오류: ${response.status}`, 'error');
                     return;
                 }
 
@@ -7288,11 +7338,11 @@
                 initYearFilter();
 
                 console.log(`✅[Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
-                alert(`✅ 클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`);
+                showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                alert('❌ 클라우드 동기화 실패\n\n' + error.message);
+                showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
             }
         }
 
