@@ -2655,10 +2655,29 @@
                 display: none !important;
             }
 
-            /* 스케줄 관리 패널 인쇄 설정 */
+            /* 스케줄 관리 패널 인쇄 설정 - 마지막 '관리' 컬럼 숨김 (비고는 보여야 함) */
+            /* 
+               Table structure: 
+               1: No 
+               2: Category
+               3: Process Name
+               4: CheckPoint 
+               5: Start 
+               6: End 
+               7: InCharge 
+               8: Memo(Remarks) 
+               9: Manage(Buttons) - This is the last-child 
+            */
             #panel-schedule .data-table th:last-child,
-            #panel-schedule .data-table td:last-child {
+            #panel-schedule .data-table td:last-child,
+            #panel-as_list .data-table th:last-child,
+            #panel-as_list .data-table td:last-child {
                 display: none !important;
+            }
+
+            #panel-schedule .data-table td {
+                white-space: normal !important;
+                word-break: break-all;
             }
 
             /* 스케줄 테이블 컬럼 너비 조정 (인쇄용) */
@@ -2669,6 +2688,51 @@
 
             /* No */
             #panel-schedule .data-table th:nth-child(2),
+
+            /* Notice Box Style */
+            .notice-box {
+                background: #f1f8ff;
+                /* Light blue background */
+                border: 1px solid #d0e3ff;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 10px;
+            }
+
+            .notice-box h3 {
+                margin-top: 0;
+                margin-bottom: 15px;
+                font-size: 14px;
+                font-weight: 700;
+                color: #004d99;
+                /* Darker blue for title */
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .notice-box h3::before {
+                content: '💡';
+                font-size: 16px;
+            }
+
+            .notice-box ul {
+                padding-left: 20px;
+                margin: 0;
+            }
+
+            .notice-box li {
+                margin-bottom: 8px;
+                font-size: 13px;
+                color: #333;
+                line-height: 1.5;
+            }
+
+            .notice-box li span {
+                display: block;
+                margin-top: 2px;
+            }
+
             #panel-schedule .data-table td:nth-child(2) {
                 width: 30% !important;
             }
@@ -3845,6 +3909,9 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="sync-btn no-print" onclick="fetchScheduleTemplate()"
+                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="Google Sheets에서 유의사항 불러오기">유의사항 불러오기</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="window.print()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">🖨️
                                     인쇄/PDF</button>
@@ -3990,6 +4057,14 @@
                     </div>
                 </div>
 
+                <!-- 공사 진행 안내 및 유의사항 -->
+                <div class="section notice-box" style="margin-top:20px;">
+                    <h3 class="section-title" style="border:none; padding:0;">공사 진행 안내 및 유의사항</h3>
+                    <ul class="construction-notice-list" id="constructionNoticeList">
+                        <!-- JS Load -->
+                    </ul>
+                </div>
+
                 <!-- A/S 관리 리스트 패널 -->
                 <div class="tab-panel" id="panel-as_list">
                     <div class="document-wrapper" id="asListDoc"
@@ -4003,9 +4078,9 @@
                                 <div class="subtitle">A/S Management List</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="sync-btn no-print" onclick="syncASListFromCloud()"
+                                <button class="sync-btn no-print" onclick="fetchASListTemplate()"
                                     style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
+                                    title="Google Sheets에서 유의사항 불러오기">유의사항 불러오기</button>
                                 <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
                                     인쇄/PDF</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"
@@ -4077,20 +4152,40 @@
                                 <table class="data-table" style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         <tr style="background:#f5f5f7;">
-                                            <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">브랜드</th>
-                                            <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">세부항목</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">품번</th>
-                                            <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">인기</th>
-                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">치수</th>
-                                            <th style="width:90px; padding:12px; border:1px solid #d2d2d7;">가격</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">홈페이지</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                            <th
+                                                style="width:40px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                No</th>
+                                            <th
+                                                style="width:80px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                카테고리</th>
+                                            <th
+                                                style="width:100px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                브랜드</th>
+                                            <th
+                                                style="width:120px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                세부항목</th>
+                                            <th style="padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">품번
+                                            </th>
+                                            <th
+                                                style="width:70px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                치수</th>
+                                            <th
+                                                style="width:90px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                가격</th>
+                                            <th
+                                                style="width:100px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                홈페이지</th>
+                                            <th
+                                                style="width:100px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                서비스센터</th>
+                                            <th
+                                                style="width:80px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                보증기간</th>
+                                            <th style="padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">비고
+                                            </th>
                                             <th class="no-print"
-                                                style="width:50px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                                style="width:50px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
+                                                관리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="asListTableBody">
@@ -5790,14 +5885,28 @@
         }
 
         function renderASNotices() {
-            const noticeList = document.getElementById('asNoticeList');
-            if (noticeList && AS_NOTICES.length > 0) {
-                noticeList.innerHTML = AS_NOTICES.map(notice => {
+            const container = document.getElementById('asNoticeContainer');
+            // If container doesn't exist yet (e.g. tab not opened), do nothing. renderASListTable will call us when it creates it.
+            // Or we can try to find the list directly if we are using the old ID.
+            // BUT, with the new logic, we target 'asNoticeContainer' to set its innerHTML entirely.
+
+            if (!container) return;
+
+            if (AS_NOTICES.length > 0) {
+                container.innerHTML = `
+                    <h3 class="section-title" style="border:none; padding:0;">A/S(사후관리) 안내 및 유의사항</h3>
+                    <ul>
+                        ${AS_NOTICES.map(notice => {
                     const formattedNotice = notice.replace(/\(([^)]+)\)/g, '<br><span style="color:#666; font-size:0.9em;">($1)</span>');
                     return `<li>${formattedNotice}</li>`;
-                }).join('');
-            } else if (noticeList) {
-                noticeList.innerHTML = '<li style="color:#aaa;">등록된 유의사항이 없습니다.</li>';
+                }).join('')}
+                    </ul>
+                 `;
+            } else {
+                container.innerHTML = `
+                    <h3 class="section-title" style="border:none; padding:0;">A/S(사후관리) 안내 및 유의사항</h3>
+                    <ul><li style="color:#aaa;">등록된 유의사항이 없습니다.</li></ul>
+                 `;
             }
         }
 
@@ -6012,7 +6121,7 @@
                 onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
         </td>
         <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
-            <div style="display:flex; justify-content:center; gap:2px;">
+            <div class="no-print" style="display:flex; justify-content:center; gap:2px;">
                 <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)"
                     style="padding:2px 4px;">▲</button>
                 <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)"
@@ -6420,32 +6529,23 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            // Datalists 생성 (필요시)
-            let globalLists = document.getElementById('asGlobalDatalists');
-            if (!globalLists) {
+            // 1. Dynamic Datalists Container
+            let dynamicLists = document.getElementById('asDynamicLists');
+            if (!dynamicLists) {
                 const div = document.createElement('div');
-                div.id = 'asGlobalDatalists';
+                div.id = 'asDynamicLists';
                 document.body.appendChild(div);
-                globalLists = div;
+                dynamicLists = div;
+            } else {
+                dynamicLists.innerHTML = ''; // Clear previous
             }
 
-            // Unique Categories
+            // 2. Create Global Category List (Fixed)
             const categories = [...new Set(AS_DB.map(i => i.category).filter(Boolean))];
-
             const catDatalist = document.createElement('datalist');
-            catDatalist.id = 'asCategoryList';
+            catDatalist.id = 'asGlobalCategoryList';
             catDatalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
-
-            // Re-create datalists container
-            globalLists.innerHTML = '';
-            globalLists.appendChild(catDatalist);
-
-            // Items datalist (Global or filtered? Global for now)
-            const items = [...new Set(AS_DB.map(i => i.item).filter(Boolean))];
-            const itemDatalist = document.createElement('datalist');
-            itemDatalist.id = 'asItemList';
-            itemDatalist.innerHTML = items.map(i => `<option value="${i}">`).join('');
-            globalLists.appendChild(itemDatalist);
+            dynamicLists.appendChild(catDatalist);
 
             asListRows.forEach((row, index) => {
                 const isEmpty = !row.category && !row.item && !row.brand && !row.modelNum && !row.warranty && !row.note;
@@ -6453,62 +6553,70 @@
                 tr.className = isEmpty ? 'empty-as-row' : '';
                 tr.innerHTML = `
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
+                    
                     <!-- Category -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.category || ''}" 
-                             list="asCategoryList"
+                             list="asGlobalCategoryList"
                              onchange="updateASListRow(${index}, 'category', this.value)"
-                             style="width:100%; border:none; outline:none; text-align:center;">
+                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
                     </td>
+                    
                     <!-- Brand -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.brand || ''}" 
+                            list="asBrandList_${index}"
+                            onfocus="updateASBrandList(${index})"
                             onchange="updateASListRow(${index}, 'brand', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center;">
+                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
+                         <datalist id="asBrandList_${index}"></datalist>
                     </td>
-                    <!-- Item -->
+                    
+                    <!-- Item (Detail) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.item || ''}" 
-                            list="asItemList"
+                            list="asItemList_${index}"
+                            onfocus="updateASItemList(${index})"
                             onchange="updateASListRow(${index}, 'item', this.value)"
-                            style="width:100%; border:none; outline:none;">
+                            style="width:100%; border:none; outline:none; background:transparent;">
+                        <datalist id="asItemList_${index}"></datalist>
                     </td>
-                    <!-- ModelNum -->
+                    
+                    <!-- ModelNum (Part Number) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.modelNum || ''}" 
                             onchange="updateASListRow(${index}, 'modelNum', this.value)"
-                            style="width:100%; border:none; outline:none;">
+                            style="width:100%; border:none; outline:none; background:transparent;">
                     </td>
-                    <!-- Rank -->
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.rank || ''}" 
-                            onchange="updateASListRow(${index}, 'rank', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center;">
-                    </td>
-                     <!-- Size -->
+                    
+                     <!-- Size (Dimension) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.size || ''}" 
                             onchange="updateASListRow(${index}, 'size', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center;">
+                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
                     </td>
+                    
                      <!-- Price -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.price || ''}" 
                             onchange="updateASListRow(${index}, 'price', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:right;">
+                            style="width:100%; border:none; outline:none; text-align:right; background:transparent;">
                     </td>
+                    
                      <!-- Website -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.website || ''}" 
                             onchange="updateASListRow(${index}, 'website', this.value)"
-                            style="width:100%; border:none; outline:none;">
+                            style="width:100%; border:none; outline:none; background:transparent;">
                     </td>
-                    <!-- Service -->
+                    
+                    <!-- Service Center -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.service || ''}" 
                              onchange="updateASListRow(${index}, 'service', this.value)"
-                             style="width:100%; border:none; outline:none; text-align:center;">
+                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
                     </td>
+                    
                     <!-- Warranty -->
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
@@ -6520,15 +6628,17 @@
                             <input type="text" class="mh-input" value="${row.warranty || ''}" 
                                 id="warrantyInput_${index}"
                                 onchange="updateASListRow(${index}, 'warranty', this.value)"
-                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
+                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold; background:transparent;">
                         </div>
                     </td>
+                    
                     <!-- Note -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
                              onchange="updateASListRow(${index}, 'note', this.value)"
-                             style="width:100%; border:none; outline:none;">
+                             style="width:100%; border:none; outline:none; background:transparent;">
                     </td>
+                    
                     <!-- Manage -->
                     <td class="no-print" style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
@@ -6542,14 +6652,9 @@
             if (panel && !document.getElementById('asNoticeContainer')) {
                 const noticeDiv = document.createElement('div');
                 noticeDiv.id = 'asNoticeContainer';
-                noticeDiv.innerHTML = `
-                  <div class="section" style="margin-top:20px;">
-                    <h3 class="section-title">A/S 관리 유의사항</h3>
-                    <ul class="construction-notice-list" id="asNoticeList">
-                         <!-- Notices loaded via JS -->
-                    </ul>
-                </div>
-                 `;
+                noticeDiv.className = 'section notice-box'; // Apply new style class
+                noticeDiv.style.marginTop = '20px';
+                // Inner HTML will be set by renderASNotices
                 panel.appendChild(noticeDiv);
                 renderASNotices();
             }
@@ -6636,26 +6741,53 @@
         }
 
         function updateASListRow(index, field, value) {
+            // Previous value check
+            const prevVal = asListRows[index][field];
             asListRows[index][field] = value;
 
-            // Auto complete from DB when Item changes
+            // If Category changes, clear dependent fields
+            if (field === 'category' && prevVal !== value) {
+                asListRows[index].brand = '';
+                asListRows[index].item = '';
+                renderASListTable(); // Re-render to update inputs
+                return;
+            }
+
+            // If Brand changes, clear Item
+            if (field === 'brand' && prevVal !== value) {
+                asListRows[index].item = '';
+                renderASListTable();
+                return;
+            }
+
+            // Auto complete from DB when Item changes (End of chain)
             if (field === 'item') {
-                const matched = AS_DB.find(d => d.item === value && (asListRows[index].category ? d.category === asListRows[index].category : true));
+                // Find matching entry based on current context
+                const matched = AS_DB.find(d =>
+                    d.item === value &&
+                    (asListRows[index].category ? d.category === asListRows[index].category : true) &&
+                    (asListRows[index].brand ? d.brand === asListRows[index].brand : true)
+                );
+
                 if (matched) {
                     if (!asListRows[index].category) asListRows[index].category = matched.category || '';
                     if (!asListRows[index].brand) asListRows[index].brand = matched.brand || '';
+
+                    asListRows[index].modelNum = matched.modelNum || '';
+                    asListRows[index].size = matched.size || '';
+                    asListRows[index].price = matched.price || '';
+                    asListRows[index].website = matched.website || '';
+
                     if (!asListRows[index].service) asListRows[index].service = matched.service || '';
                     if (!asListRows[index].note) asListRows[index].note = matched.note || '';
 
                     // Store Warranty Period
                     if (matched.warranty) {
-                        asListRows[index].warrantyPeriod = matched.warranty; // Store hidden period
-                        asListRows[index].warranty = matched.warranty; // Show initially
+                        asListRows[index].warrantyPeriod = matched.warranty;
+                        asListRows[index].warranty = matched.warranty;
                     }
-                    renderASListTable(); // Re-render to show updates
+                    renderASListTable();
                 }
-            } else if (field === 'category') {
-                renderASListTable(); // Re-render to update Item Datalist filter if implemented (currently global, but good practice)
             }
 
             saveASList();
