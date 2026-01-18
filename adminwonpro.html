@@ -7206,6 +7206,8 @@
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
         async function syncFromCloud() {
+            alert('🔍 syncFromCloud 함수가 호출되었습니다!');
+
             if (!confirm('클라우드에서 고객 데이터를 불러옵니다.\n\n기존 로컬 데이터와 병합됩니다.\n진행하시겠습니까?')) {
                 alert('❌ 사용자가 취소했습니다.');
                 return;
