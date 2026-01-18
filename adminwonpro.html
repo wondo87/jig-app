@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
-    <script src="admin_config.js"></script>
+    <script src="admin_config.js?v=202601181602"></script>
 
     <!-- 페이지 접근 및 다중 관리자 시스템 -->
     <script>
@@ -3843,14 +3843,14 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                인쇄/PDF</button>
-                                style="background: rgba(255,255,255,0.2); color:white; border:none;
-                                margin-right:4px;">📥
-                                Notion
-                                동기화</button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="importMasterSchedule()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">☁️↓
-                                    마스터 스케줄 불러오기</button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="window.print()"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">🖨️
+                                    인쇄/PDF</button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="syncScheduleToNotion()"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">📥
+                                    Notion
+                                    동기화</button>
+
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
                                     추가</button>
@@ -9380,35 +9380,7 @@
             }
         }
 
-        function importMasterSchedule() {
-            if (scheduleRows.length > 0) {
-                if (!confirm('현재 작성된 스케줄이 모두 삭제되고, 마스터 스케줄 템플릿으로 대체됩니다. 계속하시겠습니까?')) {
-                    return;
-                }
-            }
 
-            if (!defaultScheduleSteps || defaultScheduleSteps.length === 0) {
-                alert('마스터 스케줄 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-                fetchScheduleTemplate(); // Try fetching again
-                return;
-            }
-
-            // Copy template
-            scheduleRows = defaultScheduleSteps.map(step => ({
-                id: Date.now() + Math.random(),
-                category: step.category || '',
-                name: step.name || '',
-                checkPoint: step.checkPoint || '',
-                start: '', // Date is usually empty in template
-                end: '',
-                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
-                memo: step.memo || ''
-            }));
-
-            renderScheduleTable();
-            saveScheduleToCustomer();
-            alert('마스터 스케줄을 불러왔습니다.');
-        }
 
         async function syncScheduleToNotion() {
             if (!currentData.clientName) {
