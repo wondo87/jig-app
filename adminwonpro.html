@@ -3136,56 +3136,6 @@
             }
         }
 
-        // [Helper] 테스트 모드 로그인 시도 (암호화 불가 환경 대응)
-        function tryTestModeLogin(inputId, inputPw, errorMsg) {
-            // 메인 관리자 ID 매칭 확인
-            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
-            const isMain = !!mainAdmin;
-
-            // 일반 관리자 ID 매칭 확인
-            let isRegular = false;
-            let regularName = '';
-            if (!isMain && typeof getRegularAdmins === 'function') {
-                const admins = getRegularAdmins();
-                const found = admins.find(a => a.id === inputId);
-                if (found) {
-                    isRegular = true;
-                    regularName = found.name;
-                }
-            }
-
-            if (isMain || isRegular) {
-                const proceed = confirm(
-                    `[보안 경고: 암호화 기능 미지원]\n\n` +
-                    `현재 환경(Local/Non-HTTPS)에서는 암호화 로그인을 사용할 수 없습니다.\n` +
-                    `ID가 확인되었으므로 '테스트 모드'로 접속하시겠습니까?\n\n` +
-                    `(오류 원인: ${errorMsg})`
-                );
-
-                if (proceed) {
-                    if (isMain) {
-                        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
-                        showToast(`${mainAdmin.name}님 (테스트 모드) 접속`, 'warning');
-                    } else {
-                        currentAdmin = { id: inputId, role: 'regular', name: regularName };
-                        showToast('관리자 (테스트 모드) 접속', 'warning');
-                    }
-
-                    // 공통 처리
-                    const overlay = document.getElementById('loginOverlay');
-                    if (overlay) overlay.style.display = 'none';
-
-                    const modal = document.getElementById('adminModal');
-                    if (modal) modal.style.display = 'none';
-
-                    activateAdminMode();
-                }
-            } else {
-                alert(`시스템 보안 오류: 암호화 기능을 사용할 수 없으며, ID 또한 존재하지 않습니다.\n(${errorMsg})`);
-            }
-        }
-
-        // 로그인 완료 처리
         function completeLogin(admin, role, isForced = false) {
             currentAdmin = { id: admin.id, role: role, name: admin.name };
 
