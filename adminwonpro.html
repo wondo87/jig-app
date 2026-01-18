@@ -6039,7 +6039,11 @@
         // 스케줄 유의사항 불러오기 (구글 시트에서)
         async function loadScheduleGuidelines() {
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=공사스케줄관리&action=getGuidelines`);
+                const params = new URLSearchParams({
+                    sheet: '공사스케줄관리',
+                    action: 'getGuidelines'
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
                 if (result.success && result.guidelines && result.guidelines.length > 0) {
@@ -6062,7 +6066,11 @@
         // A/S 유의사항 불러오기 (구글 시트에서)
         async function loadASGuidelines() {
             try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트&action=getGuidelines`);
+                const params = new URLSearchParams({
+                    sheet: 'AS관리리스트',
+                    action: 'getGuidelines'
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
                 if (result.success && result.guidelines && result.guidelines.length > 0) {
