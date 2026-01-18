@@ -3844,10 +3844,13 @@
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 인쇄/PDF</button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="syncScheduleToNotion()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">📥
-                                    Notion
-                                    동기화</button>
+                                style="background: rgba(255,255,255,0.2); color:white; border:none;
+                                margin-right:4px;">📥
+                                Notion
+                                동기화</button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="importMasterSchedule()"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">☁️↓
+                                    마스터 스케줄 불러오기</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
                                     추가</button>
@@ -5878,29 +5881,35 @@
             }
 
             if (empty) empty.style.display = 'none';
+
+            // Extract unique values for datalists
+            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+            const names = [...new Set(defaultScheduleSteps.map(s => s.name).filter(Boolean))];
+            const checkPoints = [...new Set(defaultScheduleSteps.map(s => s.checkPoint).filter(Boolean))];
+
             tbody.innerHTML = scheduleRows.map((row, index) => `
-                <tr draggable = "true" ondragstart = "handleDragStart(event, ${index})" ondragover = "handleDragOver(event)"
-            ondrop = "handleDrop(event, ${index})" ondragend = "handleDragEnd(event)"
-            style = "cursor:move; transition: background 0.2s;" >
+                <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
+            ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
+            style="cursor:move; transition: background 0.2s;" >
         <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
         
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.category || ''}" class="customer-field"
+            <input type="text" value="${row.category || ''}" class="customer-field" list="categoryList"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'category', this.value)" placeholder="카테고리">
         </td>
         
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.name || ''}" class="customer-field"
+            <input type="text" value="${row.name || ''}" class="customer-field" list="processNameList"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'name', this.value)" placeholder="공정명">
         </td>
 
         <!-- Checkpoint -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
+            <input type="text" value="${row.checkPoint || ''}" class="customer-field" list="checkPointList"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
         </td>
@@ -5916,7 +5925,7 @@
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || ''}" class="customer-field"
+            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
         </td>
@@ -5937,6 +5946,25 @@
         </td>
     </tr>
                 `).join('');
+
+            // Append Datalists if not exist (or update them)
+            let datalistContainer = document.getElementById('scheduleDatalists');
+            if (!datalistContainer) {
+                datalistContainer = document.createElement('div');
+                datalistContainer.id = 'scheduleDatalists';
+                document.body.appendChild(datalistContainer);
+            }
+            datalistContainer.innerHTML = `
+                <datalist id="categoryList">
+                    ${categories.map(c => `<option value="${c}">`).join('')}
+                </datalist>
+                <datalist id="processNameList">
+                    ${names.map(n => `<option value="${n}">`).join('')}
+                </datalist>
+                <datalist id="checkPointList">
+                    ${checkPoints.map(p => `<option value="${p}">`).join('')}
+                </datalist>
+            `;
         }
 
         function addScheduleRow() {
@@ -9350,6 +9378,36 @@
                 console.error('샘플 삭제 실패:', error);
                 showToast('삭제 중 오류가 발생했습니다', 'error');
             }
+        }
+
+        function importMasterSchedule() {
+            if (scheduleRows.length > 0) {
+                if (!confirm('현재 작성된 스케줄이 모두 삭제되고, 마스터 스케줄 템플릿으로 대체됩니다. 계속하시겠습니까?')) {
+                    return;
+                }
+            }
+
+            if (!defaultScheduleSteps || defaultScheduleSteps.length === 0) {
+                alert('마스터 스케줄 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+                fetchScheduleTemplate(); // Try fetching again
+                return;
+            }
+
+            // Copy template
+            scheduleRows = defaultScheduleSteps.map(step => ({
+                id: Date.now() + Math.random(),
+                category: step.category || '',
+                name: step.name || '',
+                checkPoint: step.checkPoint || '',
+                start: '', // Date is usually empty in template
+                end: '',
+                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
+                memo: step.memo || ''
+            }));
+
+            renderScheduleTable();
+            saveScheduleToCustomer();
+            alert('마스터 스케줄을 불러왔습니다.');
         }
 
         async function syncScheduleToNotion() {
