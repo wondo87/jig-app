@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
-    <script src="admin_config.js?v=202601181602"></script>
+    <script src="admin_config.js"></script>
 
     <!-- 페이지 접근 및 다중 관리자 시스템 -->
     <script>
@@ -2574,9 +2574,7 @@
             .pdf-btn,
             .no-print,
             .font-size-control,
-            .header-actions,
-            .empty-schedule-row,
-            .empty-as-row {
+            .header-actions {
                 display: none !important;
             }
 
@@ -2655,29 +2653,10 @@
                 display: none !important;
             }
 
-            /* 스케줄 관리 패널 인쇄 설정 - 마지막 '관리' 컬럼 숨김 (비고는 보여야 함) */
-            /* 
-               Table structure: 
-               1: No 
-               2: Category
-               3: Process Name
-               4: CheckPoint 
-               5: Start 
-               6: End 
-               7: InCharge 
-               8: Memo(Remarks) 
-               9: Manage(Buttons) - This is the last-child 
-            */
+            /* 스케줄 관리 패널 인쇄 설정 */
             #panel-schedule .data-table th:last-child,
-            #panel-schedule .data-table td:last-child,
-            #panel-as_list .data-table th:last-child,
-            #panel-as_list .data-table td:last-child {
+            #panel-schedule .data-table td:last-child {
                 display: none !important;
-            }
-
-            #panel-schedule .data-table td {
-                white-space: normal !important;
-                word-break: break-all;
             }
 
             /* 스케줄 테이블 컬럼 너비 조정 (인쇄용) */
@@ -2688,51 +2667,6 @@
 
             /* No */
             #panel-schedule .data-table th:nth-child(2),
-
-            /* Notice Box Style */
-            .notice-box {
-                background: #f1f8ff;
-                /* Light blue background */
-                border: 1px solid #d0e3ff;
-                border-radius: 8px;
-                padding: 20px;
-                margin-top: 10px;
-            }
-
-            .notice-box h3 {
-                margin-top: 0;
-                margin-bottom: 15px;
-                font-size: 14px;
-                font-weight: 700;
-                color: #004d99;
-                /* Darker blue for title */
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-
-            .notice-box h3::before {
-                content: '💡';
-                font-size: 16px;
-            }
-
-            .notice-box ul {
-                padding-left: 20px;
-                margin: 0;
-            }
-
-            .notice-box li {
-                margin-bottom: 8px;
-                font-size: 13px;
-                color: #333;
-                line-height: 1.5;
-            }
-
-            .notice-box li span {
-                display: block;
-                margin-top: 2px;
-            }
-
             #panel-schedule .data-table td:nth-child(2) {
                 width: 30% !important;
             }
@@ -3909,17 +3843,11 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="sync-btn no-print" onclick="fetchScheduleTemplate()"
-                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="Google Sheets에서 유의사항 불러오기">유의사항 불러오기</button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="window.print()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">🖨️
-                                    인쇄/PDF</button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="syncScheduleToNotion()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none; margin-right:4px;">📥
-                                    Notion
-                                    동기화</button>
-
+                                인쇄/PDF</button>
+                                style="background: rgba(255,255,255,0.2); color:white; border:none;
+                                margin-right:4px;">📥
+                                Notion
+                                동기화</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addScheduleRow()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 공정
                                     추가</button>
@@ -4023,11 +3951,24 @@
                                 </tbody>
                             </table>
                             <div
-                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #cce5ff;">
-                                <strong>💡 공사 진행 안내사항</strong>
-                                <ul id="constructionNoticeList"
-                                    style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
-                                    <!-- Dynamic Content from Google Sheet -->
+                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <strong>💡 공사 진행 안내 및 유의사항</strong>
+                                    <button class="btn btn-sm no-print" onclick="loadScheduleGuidelines()"
+                                        style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
+                                        📥 유의사항 불러오기
+                                    </button>
+                                </div>
+                                <ul id="scheduleGuidelinesList" style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                    <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
+                                    <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
+                                        <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할
+                                            수 있습니다)</span>
+                                    </li>
+                                    <li>공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.</li>
+                                    <li>공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.</li>
+                                    <li>공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 공사 담당자와 먼저 협의 부탁드립니다.</li>
+                                    <li>공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다.</li>
                                 </ul>
                             </div>
                             <table class="data-table" style="width:100%; border-collapse:collapse;">
@@ -4039,7 +3980,7 @@
                                         <th style="padding:12px; border:1px solid #d2d2d7;">핵심 체크포인트</th>
                                         <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
                                         <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
-                                        <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
+                                        <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">공사 담당자</th>
                                         <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                         <th class="no-print"
                                             style="width:90px; padding:12px; border:1px solid #d2d2d7;">관리</th>
@@ -4057,14 +3998,6 @@
                     </div>
                 </div>
 
-                <!-- 공사 진행 안내 및 유의사항 -->
-                <div class="section notice-box" style="margin-top:20px;">
-                    <h3 class="section-title" style="border:none; padding:0;">공사 진행 안내 및 유의사항</h3>
-                    <ul class="construction-notice-list" id="constructionNoticeList">
-                        <!-- JS Load -->
-                    </ul>
-                </div>
-
                 <!-- A/S 관리 리스트 패널 -->
                 <div class="tab-panel" id="panel-as_list">
                     <div class="document-wrapper" id="asListDoc"
@@ -4078,9 +4011,9 @@
                                 <div class="subtitle">A/S Management List</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="sync-btn no-print" onclick="fetchASListTemplate()"
+                                <button class="sync-btn no-print" onclick="syncASListFromCloud()"
                                     style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="Google Sheets에서 유의사항 불러오기">유의사항 불러오기</button>
+                                    title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
                                 <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
                                     인쇄/PDF</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"
@@ -4138,8 +4071,14 @@
 
                                 <div
                                     style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                    <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
-                                    <ul
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                        <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
+                                        <button class="btn btn-sm no-print" onclick="loadASGuidelines()"
+                                            style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
+                                            📥 유의사항 불러오기
+                                        </button>
+                                    </div>
+                                    <ul id="asGuidelinesList"
                                         style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                         <li>기본 A/S 기간은 공사 완료일로부터 12개월입니다.</li>
                                         <li>자재 A/S는 자재 입고일 기준 1년이며, 제조사 기준이 우선 적용됩니다.</li>
@@ -4152,40 +4091,20 @@
                                 <table class="data-table" style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         <tr style="background:#f5f5f7;">
-                                            <th
-                                                style="width:40px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                No</th>
-                                            <th
-                                                style="width:80px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                카테고리</th>
-                                            <th
-                                                style="width:100px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                브랜드</th>
-                                            <th
-                                                style="width:120px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                세부항목</th>
-                                            <th style="padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">품번
-                                            </th>
-                                            <th
-                                                style="width:70px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                치수</th>
-                                            <th
-                                                style="width:90px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                가격</th>
-                                            <th
-                                                style="width:100px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                홈페이지</th>
-                                            <th
-                                                style="width:100px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                서비스센터</th>
-                                            <th
-                                                style="width:80px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                보증기간</th>
-                                            <th style="padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">비고
-                                            </th>
+                                            <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
+                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">브랜드</th>
+                                            <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">세부항목</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">품번</th>
+                                            <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">인기</th>
+                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">치수</th>
+                                            <th style="width:90px; padding:12px; border:1px solid #d2d2d7;">가격</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">홈페이지</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
+                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
+                                            <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
                                             <th class="no-print"
-                                                style="width:50px; padding:8px 4px; border:1px solid #d2d2d7; text-align:center;">
-                                                관리</th>
+                                                style="width:50px; padding:12px; border:1px solid #d2d2d7;">관리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="asListTableBody">
@@ -4309,13 +4228,14 @@
                 return;
             }
 
-            // 메인관리자 확인 (해시 비교)
+            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
             const inputHash = await hashPassword(inputPw);
-            if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
-                currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+            if (mainAdmin) {
+                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                 document.getElementById('loginOverlay').style.display = 'none';
                 activateAdminMode();
-                showToast('메인관리자로 로그인되었습니다', 'success');
+                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
                 return;
             }
 
@@ -5511,7 +5431,8 @@
                 return;
             }
 
-            if (id === MAIN_ADMIN.id) {
+            // 메인관리자 ID 중복 체크 (복수 관리자 지원)
+            if (MAIN_ADMINS.some(admin => admin.id === id)) {
                 showToast('메인관리자 ID는 사용할 수 없습니다', 'error');
                 return;
             }
@@ -5563,12 +5484,13 @@
             const inputPw = document.getElementById('adminPassword').value;
             const inputHash = await hashPassword(inputPw);
 
-            // 메인관리자 확인 (해시 비교)
-            if (inputId === MAIN_ADMIN.id && inputHash === MAIN_ADMIN.passwordHash) {
-                currentAdmin = { id: MAIN_ADMIN.id, role: 'main' };
+            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+            if (mainAdmin) {
+                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                 closeAdminModal();
                 activateAdminMode();
-                showToast('메인관리자로 로그인되었습니다', 'success');
+                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
                 return;
             }
 
@@ -5768,9 +5690,6 @@
             syncAdminsFromCloud().then(() => {
                 console.log('✅ 관리자 계정 동기화 완료');
             });
-
-            // A/S 리스트 템플릿 로드 (백그라운드)
-            fetchASListTemplate();
         });
 
         // 토스트 알림
@@ -5855,60 +5774,6 @@
 
         let scheduleRows = [];
         let defaultScheduleSteps = [];
-        let AS_DB = [];
-        let AS_NOTICES = [];
-
-        async function fetchASListTemplate() {
-            try {
-                const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=as_list');
-                const data = await response.json();
-
-                if (data.items) {
-                    AS_DB = data.items;
-                } else if (Array.isArray(data)) {
-                    // Legacy support
-                    AS_DB = data;
-                }
-
-                if (data.notices) {
-                    AS_NOTICES = data.notices;
-                }
-
-                console.log('A/S DB 로드 완료:', AS_DB.length + '개 항목');
-
-                // 유의사항 렌더링 (만약 탭이 이미 열려있다면)
-                renderASNotices();
-
-            } catch (e) {
-                console.warn('A/S DB 로드 실패:', e);
-            }
-        }
-
-        function renderASNotices() {
-            const container = document.getElementById('asNoticeContainer');
-            // If container doesn't exist yet (e.g. tab not opened), do nothing. renderASListTable will call us when it creates it.
-            // Or we can try to find the list directly if we are using the old ID.
-            // BUT, with the new logic, we target 'asNoticeContainer' to set its innerHTML entirely.
-
-            if (!container) return;
-
-            if (AS_NOTICES.length > 0) {
-                container.innerHTML = `
-                    <h3 class="section-title" style="border:none; padding:0;">A/S(사후관리) 안내 및 유의사항</h3>
-                    <ul>
-                        ${AS_NOTICES.map(notice => {
-                    const formattedNotice = notice.replace(/\(([^)]+)\)/g, '<br><span style="color:#666; font-size:0.9em;">($1)</span>');
-                    return `<li>${formattedNotice}</li>`;
-                }).join('')}
-                    </ul>
-                 `;
-            } else {
-                container.innerHTML = `
-                    <h3 class="section-title" style="border:none; padding:0;">A/S(사후관리) 안내 및 유의사항</h3>
-                    <ul><li style="color:#aaa;">등록된 유의사항이 없습니다.</li></ul>
-                 `;
-            }
-        }
 
         async function fetchScheduleTemplate() {
             try {
@@ -5916,53 +5781,19 @@
                 const response = await fetch(CUSTOMER_SYNC_URL + '?sheet=schedule_template');
                 const data = await response.json();
 
-                // Handle legacy array response or new object response
-                let steps = [];
-                let notices = [];
-
-                if (Array.isArray(data)) {
-                    steps = data;
-                } else if (data && typeof data === 'object') {
-                    steps = data.steps || [];
-                    notices = data.notices || [];
-                }
-
-                if (steps.length > 0) {
-                    defaultScheduleSteps = steps;
-                    console.log('스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+                if (Array.isArray(data) && data.length > 0) {
+                    defaultScheduleSteps = data;
+                    console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+                    console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
                 } else {
-                    console.warn('스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
+                    console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
                     defaultScheduleSteps = [
                         { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
                     ];
                 }
-
-                // Render Notices
-                const noticeList = document.getElementById('constructionNoticeList');
-                if (noticeList) {
-                    if (notices.length > 0) {
-                        noticeList.innerHTML = notices.map(notice => {
-                            // Format text in parenthesis: (content) -> <br><span style="..."> (content) </span>
-                            const formattedNotice = notice.replace(/\(([^)]+)\)/g, '<br><span style="color:#666; font-size:0.9em;">($1)</span>');
-                            return `<li>${formattedNotice}</li>`;
-                        }).join('');
-                    } else {
-                        // Fallback default notices if none found
-                        noticeList.innerHTML = `
-                            <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
-                            <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
-                                <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할 수 있습니다)</span>
-                            </li>
-                            <li>공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.</li>
-                            <li>공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.</li>
-                            <li>공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 공사 담당자와 먼저 협의 부탁드립니다.</li>
-                            <li>공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다.</li>
-                        `;
-                    }
-                }
-
             } catch (error) {
-                console.error('스케줄 템플릿 로드 오류:', error);
+                console.error('❌ 스케줄 템플릿 로드 오류:', error);
+                defaultScheduleSteps = [];
             }
         }
 
@@ -5972,15 +5803,12 @@
             if (currentData.schedules && currentData.schedules.length > 0) {
                 scheduleRows = [...currentData.schedules];
             } else {
-                // 데이터가 없으면 빈 줄 40개 생성 (기본값)
-                scheduleRows = Array.from({ length: 40 }, () => ({
+                scheduleRows = defaultScheduleSteps.map(s => ({
                     id: Date.now() + Math.random(),
-                    category: '',
-                    name: '',
-                    checkPoint: '',
+                    name: s.name,
                     start: '',
                     end: '',
-                    inCharge: '', // Default empty to show placeholder '담당자'
+                    inCharge: s.inCharge || '',
                     memo: ''
                 }));
             }
@@ -6068,34 +5896,42 @@
 
             if (empty) empty.style.display = 'none';
 
-            // Extract unique values for datalists
+            // Extract unique values for dropdowns
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const names = [...new Set(defaultScheduleSteps.map(s => s.name).filter(Boolean))];
-            const checkPoints = [...new Set(defaultScheduleSteps.map(s => s.checkPoint).filter(Boolean))];
+            const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            tbody.innerHTML = scheduleRows.map((row, index) => `
-                <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
-            ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
-            style="cursor:move; transition: background 0.2s;" >
+            tbody.innerHTML = scheduleRows.map((row, index) => {
+                // 현재 행의 카테고리로 공정명 필터링
+                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
+                const processOptions = processes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+
+                return `
+    <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
+        ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
+        style="cursor:move; transition: background 0.2s;">
         <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
-        
+
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.category || ''}" class="customer-field" list="categoryList"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'category', this.value)" placeholder="카테고리">
+            <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;">
+                <option value="">선택</option>
+                ${categoryOptions.replace(`"${row.category}"`, `"${row.category}" selected`)}
+            </select>
         </td>
-        
+
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.name || ''}" class="customer-field" list="processNameList"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'name', this.value)" placeholder="공정명">
+            <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
+                ${row.category ? '' : 'disabled'}
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;">
+                ${row.category ? '<option value="">선택</option>' + processOptions.replace(`"${row.name}"`, `"${row.name}" selected`) : '<option value="">카테고리 먼저 선택</option>'}
+            </select>
         </td>
 
         <!-- Checkpoint -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.checkPoint || ''}" class="customer-field" list="checkPointList"
+            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
         </td>
@@ -6111,176 +5947,9 @@
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || currentData.manager || '담당자'}" class="customer-field"
+            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
-        </td>
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.memo || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
-        </td>
-        <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
-            <div class="no-print" style="display:flex; justify-content:center; gap:2px;">
-                <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, -1)"
-                    style="padding:2px 4px;">▲</button>
-                <button class="btn btn-secondary btn-sm" onclick="moveScheduleRow(${index}, 1)"
-                    style="padding:2px 4px;">▼</button>
-                <button class="btn btn-secondary btn-sm" onclick="removeScheduleRow(${index})"
-                    style="padding:2px 4px; color:#ff3b30;">✕</button>
-            </div>
-        </td>
-    </tr>
-                `).join('');
-
-        }
-
-        function getFilteredProcesses(category) {
-            if (!defaultScheduleSteps) return [];
-            // If no category, return all? Or return none? User implies strict hierarchy.
-            // Usually if blank, show all. But user wants "dependent".
-            // Let's filter by category if present.
-            if (!category) return [...new Set(defaultScheduleSteps.map(s => s.name).filter(Boolean))];
-
-            return [...new Set(
-                defaultScheduleSteps
-                    .filter(s => s.category.trim() === category.trim())
-                    .map(s => s.name)
-                    .filter(Boolean)
-            )];
-        }
-
-        function getFilteredCheckpoints(category, processName) {
-            if (!defaultScheduleSteps) return [];
-            if (!processName) return [...new Set(defaultScheduleSteps.map(s => s.checkPoint).filter(Boolean))];
-
-            return [...new Set(
-                defaultScheduleSteps
-                    .filter(s =>
-                        (category ? s.category.trim() === category.trim() : true) &&
-                        s.name.trim() === processName.trim()
-                    )
-                    .map(s => s.checkPoint)
-                    .filter(Boolean)
-            )];
-        }
-
-        function getFilteredManagers(category, processName) {
-            if (!defaultScheduleSteps) return [];
-            // Finds managers associated with this process in the master schedule
-            return [...new Set(
-                defaultScheduleSteps
-                    .filter(s =>
-                        (category ? s.category.trim() === category.trim() : true) &&
-                        (processName ? s.name.trim() === processName.trim() : true)
-                    )
-                    .map(s => s.inCharge)
-                    .filter(Boolean)
-            )];
-        }
-
-        function renderScheduleTable() {
-            const tbody = document.getElementById('scheduleTableBody');
-            const empty = document.getElementById('scheduleEmptyState');
-            if (!tbody) return;
-
-            if (scheduleRows.length === 0) {
-                tbody.innerHTML = '';
-                if (empty) empty.style.display = 'block';
-                return;
-            }
-
-            if (empty) empty.style.display = 'none';
-
-            // Global Category List (always same)
-            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-
-            // We still keep Global Category List
-            let globalLists = document.getElementById('globalDatalists');
-            if (!globalLists) {
-                const div = document.createElement('div');
-                div.id = 'globalDatalists';
-                document.body.appendChild(div);
-                globalLists = div;
-            }
-            // Update global list. Removed global manager list as we use per-row now, 
-            // BUT user might want fallback if no process selected.
-            // Let's keep a generic manager list just in case, or just not use it.
-            // We will rely on per-row list.
-            globalLists.innerHTML = `
-                <datalist id="categoryList_Global">${categories.map(c => `<option value="${c}">`).join('')}</datalist>
-             `;
-
-
-            tbody.innerHTML = scheduleRows.map((row, index) => {
-                // Prepare options for this row based on current values
-                const processOptions = getFilteredProcesses(row.category);
-                const checkPointOptions = getFilteredCheckpoints(row.category, row.name);
-                let managerOptions = getFilteredManagers(row.category, row.name);
-
-                // If no specific managers for this process (or process empty), show ALL uniqueness
-                if (managerOptions.length === 0) {
-                    managerOptions = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
-                    if (currentData.manager) managerOptions.push(currentData.manager);
-                }
-                const finalManagerOptions = [...new Set(managerOptions)];
-                const isEmpty = !row.category && !row.name && !row.checkPoint && !row.start && !row.end && (!row.inCharge || row.inCharge === '담당자') && !row.memo;
-
-                return `
-                <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
-            ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
-            class="${isEmpty ? 'empty-schedule-row' : ''}"
-            style="cursor:move; transition: background 0.2s;" >
-        <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
-        
-        <!-- Category -->
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.category || ''}" class="customer-field" list="categoryList_Global"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'category', this.value)" placeholder="카테고리">
-        </td>
-        
-        <!-- Process Name (Dependent) -->
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.name || ''}" class="customer-field" list="processList_${index}"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'name', this.value)" placeholder="공정명"
-                onfocus="refreshProcessOptions(${index})"> <!-- Refresh on focus to be sure -->
-            <datalist id="processList_${index}">
-                ${processOptions.map(n => `<option value="${n}">`).join('')}
-            </datalist>
-        </td>
-
-        <!-- Checkpoint (Dependent) -->
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.checkPoint || ''}" class="customer-field" list="checkPointList_${index}"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트" 
-                onfocus="refreshCheckpointOptions(${index})">
-             <datalist id="checkPointList_${index}">
-                ${checkPointOptions.map(p => `<option value="${p}">`).join('')}
-            </datalist>
-        </td>
-
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="date" value="${row.start || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
-                onchange="handleStartDateChange(${index}, this.value)">
-        </td>
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="date" value="${row.end || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
-                onchange="updateScheduleRow(${index}, 'end', this.value)">
-        </td>
-        <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || ''}" class="customer-field"
-                list="managerList_${index}"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="담당자"
-                onfocus="refreshManagerOptions(${index})">
-            <datalist id="managerList_${index}">
-                ${finalManagerOptions.map(m => `<option value="${m}">`).join('')}
-            </datalist>
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.memo || ''}" class="customer-field"
@@ -6297,41 +5966,13 @@
                     style="padding:2px 4px; color:#ff3b30;">✕</button>
             </div>
         </td>
-    </tr>`;
+    </tr>
+                `;
             }).join('');
         }
 
-        // Helper to update options dynamically without Full Render (for smoother UX)
-        function refreshProcessOptions(index) {
-            const row = scheduleRows[index];
-            const options = getFilteredProcesses(row.category);
-            const dataList = document.getElementById(`processList_${index}`);
-            if (dataList) {
-                dataList.innerHTML = options.map(n => `<option value="${n}">`).join('');
-            }
-        }
-
-        function refreshCheckpointOptions(index) {
-            const row = scheduleRows[index];
-            const options = getFilteredCheckpoints(row.category, row.name);
-            const dataList = document.getElementById(`checkPointList_${index}`);
-            if (dataList) {
-                dataList.innerHTML = options.map(p => `<option value="${p}">`).join('');
-            }
-        }
-
-        function refreshManagerOptions(index) {
-            const row = scheduleRows[index];
-            let options = getFilteredManagers(row.category, row.name);
-            // Fallback to all if empty matching
-            if (options.length === 0) {
-                options = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
-            }
-            const dataList = document.getElementById(`managerList_${index}`);
-            if (dataList) dataList.innerHTML = options.map(m => `<option value="${m}">`).join('');
-        }
-
         function addScheduleRow() {
+            // 빈 행 추가 (견적서 방식)
             scheduleRows.push({
                 id: Date.now() + Math.random(),
                 category: '',
@@ -6339,11 +5980,273 @@
                 checkPoint: '',
                 start: '',
                 end: '',
-                inCharge: '', // Default empty for new rows to trigger placeholder
+                inCharge: '원프로 소장 (010-4650-7013)',
                 memo: ''
             });
             renderScheduleTable();
             saveScheduleToCustomer();
+        }
+
+        // 카테고리 선택 시 공정명 필터링 (견적서 패턴 참조)
+        function onScheduleCategoryChange(rowIndex, category) {
+            if (!scheduleRows[rowIndex]) return;
+
+            // 카테고리 변경 시 공정명, 체크포인트 초기화
+            scheduleRows[rowIndex].category = category;
+            scheduleRows[rowIndex].name = '';
+            scheduleRows[rowIndex].checkPoint = '';
+
+            // 테이블 다시 렌더링 (필터링된 공정명 드롭다운 표시)
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        // 공정명 선택 시 체크포인트/담당자 자동 기입 (견적서 패턴 참조)
+        function onScheduleProcessChange(rowIndex, processName) {
+            if (!scheduleRows[rowIndex]) return;
+
+            scheduleRows[rowIndex].name = processName;
+
+            if (!processName) {
+                scheduleRows[rowIndex].checkPoint = '';
+                renderScheduleTable();
+                saveScheduleToCustomer();
+                return;
+            }
+
+            // 선택된 공정명에 해당하는 템플릿 데이터 찾기
+            const selectedProcess = defaultScheduleSteps.find(s =>
+                s.category === scheduleRows[rowIndex].category && s.name === processName
+            );
+
+            if (selectedProcess) {
+                // 체크포인트 자동 기입
+                scheduleRows[rowIndex].checkPoint = selectedProcess.checkPoint || '';
+
+                // 담당자 자동 기입 (템플릿에 있으면 사용, 없으면 기본값)
+                if (selectedProcess.inCharge) {
+                    scheduleRows[rowIndex].inCharge = selectedProcess.inCharge;
+                } else if (!scheduleRows[rowIndex].inCharge) {
+                    scheduleRows[rowIndex].inCharge = currentData.manager || '원프로 소장 (010-4650-7013)';
+                }
+            }
+
+            renderScheduleTable();
+            saveScheduleToCustomer();
+        }
+
+        // 스케줄 유의사항 불러오기 (구글 시트에서)
+        async function loadScheduleGuidelines() {
+            try {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=공사스케줄관리&action=getGuidelines`);
+                const result = await response.json();
+
+                if (result.success && result.guidelines && result.guidelines.length > 0) {
+                    const guidelinesList = document.getElementById('scheduleGuidelinesList');
+                    if (guidelinesList) {
+                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                        alert('✅ 성공: 공사 스케줄 유의사항을 성공적으로 불러왔습니다.');
+                    }
+                } else if (result.success) {
+                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
+                } else {
+                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
+                }
+            } catch (error) {
+                console.error('Error loading schedule guidelines:', error);
+                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
+            }
+        }
+
+        // A/S 유의사항 불러오기 (구글 시트에서)
+        async function loadASGuidelines() {
+            try {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=AS관리리스트&action=getGuidelines`);
+                const result = await response.json();
+
+                if (result.success && result.guidelines && result.guidelines.length > 0) {
+                    const guidelinesList = document.getElementById('asGuidelinesList');
+                    if (guidelinesList) {
+                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                        alert('✅ 성공: A/S 관리 유의사항을 성공적으로 불러왔습니다.');
+                    }
+                } else if (result.success) {
+                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
+                } else {
+                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
+                }
+            } catch (error) {
+                console.error('Error loading AS guidelines:', error);
+                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
+            }
+        }
+
+        function showScheduleTemplateModal() {
+            const modal = document.createElement('div');
+            modal.id = 'scheduleTemplateModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            `;
+
+            // 카테고리 목록 추출
+            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+            const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
+            modalContent.innerHTML = `
+                <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">📋 공정 선택</h3>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">카테고리 (클릭하여 선택)</label>
+                    <select id="categorySelect" onchange="updateProcessOptions()" size="14" style="width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
+                        <option value="__CUSTOM__">🖊️ 직접 입력 (빈 행 추가)</option>
+                        ${categoryOptions}
+                    </select>
+                </div>
+
+                <div id="processSelectContainer" style="margin-bottom: 16px; display: none;">
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 6px;">세부 공정명 (클릭하여 선택)</label>
+                    <select id="processSelect" size="10" style="width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button onclick="closeScheduleTemplateModal()" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">취소</button>
+                    <button id="addScheduleBtn" onclick="addScheduleFromTemplate()" style="padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer;" disabled>추가</button>
+                </div>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // 모달 외부 클릭 시 닫기
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeScheduleTemplateModal();
+                }
+            });
+        }
+
+        function updateProcessOptions() {
+            const categorySelect = document.getElementById('categorySelect');
+            const processSelectContainer = document.getElementById('processSelectContainer');
+            const processSelect = document.getElementById('processSelect');
+            const addBtn = document.getElementById('addScheduleBtn');
+            const selectedCategory = categorySelect.value;
+
+            if (selectedCategory === '__CUSTOM__') {
+                // 직접 입력 선택 시
+                processSelectContainer.style.display = 'none';
+                addBtn.disabled = false;
+            } else if (selectedCategory) {
+                // 카테고리 선택 시 해당 카테고리의 공정들 필터링
+                const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
+                const processOptions = processes.map((proc, idx) =>
+                    `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
+                ).join('');
+
+                processSelect.innerHTML = processOptions;
+
+                // size 속성 동적 조정 (최소 3, 최대 10)
+                const optionCount = processes.length;
+                processSelect.setAttribute('size', Math.min(Math.max(optionCount, 3), 10));
+
+                processSelectContainer.style.display = 'block';
+                addBtn.disabled = true;
+
+                // 공정 선택 시 추가 버튼 활성화
+                processSelect.onchange = function() {
+                    addBtn.disabled = !this.value;
+                };
+            } else {
+                // 선택 안함
+                processSelectContainer.style.display = 'none';
+                addBtn.disabled = true;
+            }
+        }
+
+        function closeScheduleTemplateModal() {
+            const modal = document.getElementById('scheduleTemplateModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function addScheduleFromTemplate() {
+            const categorySelect = document.getElementById('categorySelect');
+            const processSelect = document.getElementById('processSelect');
+            const selectedCategory = categorySelect.value;
+
+            let newRow;
+
+            if (selectedCategory === '__CUSTOM__') {
+                // 빈 행 추가
+                newRow = {
+                    id: Date.now() + Math.random(),
+                    category: '',
+                    name: '',
+                    checkPoint: '',
+                    start: '',
+                    end: '',
+                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
+                    memo: ''
+                };
+            } else {
+                // 선택한 카테고리의 공정 찾기
+                const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
+                const selectedIndex = parseInt(processSelect.value);
+                const template = processes[selectedIndex];
+
+                if (template) {
+                    // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
+                    let inChargeValue = '원프로 소장 (010-4650-7013)';
+                    if (template.inCharge && template.inCharge.trim()) {
+                        inChargeValue = template.inCharge;
+                    } else if (currentData.manager && currentData.manager.trim()) {
+                        inChargeValue = currentData.manager;
+                    }
+
+                    newRow = {
+                        id: Date.now() + Math.random(),
+                        category: template.category || '',
+                        name: template.name || '',
+                        checkPoint: template.checkPoint || '',
+                        start: '',
+                        end: '',
+                        inCharge: inChargeValue,
+                        memo: ''
+                    };
+
+                    console.log('📌 공정 추가:', newRow);
+                }
+            }
+
+            if (newRow) {
+                scheduleRows.push(newRow);
+                renderScheduleTable();
+                saveScheduleToCustomer();
+                closeScheduleTemplateModal();
+            }
         }
 
         function removeScheduleRow(index) {
@@ -6355,49 +6258,6 @@
 
         function updateScheduleRow(index, field, value) {
             scheduleRows[index][field] = value;
-
-            // If Category changes, clear dependent fields? User often prefers this.
-            if (field === 'category') {
-                scheduleRows[index].name = '';
-                scheduleRows[index].checkPoint = '';
-                // Update the datalists immediately
-                refreshProcessOptions(index);
-                refreshCheckpointOptions(index);
-
-                // Force input values clearing in DOM
-                renderScheduleTable();
-            }
-            else if (field === 'name') {
-                // 1. Auto-fill Checkpoint if only one exists
-                const availCheckpoints = getFilteredCheckpoints(scheduleRows[index].category, value);
-                if (availCheckpoints.length === 1) {
-                    scheduleRows[index].checkPoint = availCheckpoints[0];
-                } else {
-                    scheduleRows[index].checkPoint = ''; // Clear if multiple choice
-                }
-
-                // 2. Auto-fill Manager if only one exists
-                const availManagers = getFilteredManagers(scheduleRows[index].category, value);
-                if (availManagers.length === 1) {
-                    scheduleRows[index].inCharge = availManagers[0];
-                } else if (availManagers.length > 1) {
-                    // If multiple managers (e.g. BR, ST, TW), we don't auto-fill, 
-                    // but the dropdown is already filtered by renderScheduleTable logic
-                    // Clear to force choice
-                    scheduleRows[index].inCharge = '';
-                }
-
-                // If 0 found means no specific mapping, reset to main manager?
-                // Or keep existing if user typed it?
-                // Logic: If availManagers is empty, it means this name doesn't exist in master schedule or has no manager.
-                // In this case, we default to Main Manager if currently empty.
-                if (availManagers.length === 0 && (!scheduleRows[index].inCharge || scheduleRows[index].inCharge === '')) {
-                    scheduleRows[index].inCharge = ''; // Default to empty to show placeholder
-                }
-
-                renderScheduleTable();
-            }
-
             saveScheduleToCustomer();
         }
 
@@ -6408,11 +6268,9 @@
             // 종료일이 비어있으면 시작일과 동일하게 설정
             if (!scheduleRows[index]['end'] && value) {
                 scheduleRows[index]['end'] = value;
+                renderScheduleTable(); // 테이블 다시 렌더링하여 종료일 표시
             }
-            // re-render not needed for start date, just save? 
-            // Ah, the previous code re-rendered to show end date.
-            // Let's keep it consistent.
-            renderScheduleTable();
+
             saveScheduleToCustomer();
         }
 
@@ -6434,28 +6292,13 @@
         let asListRows = [];
 
         function loadASList() {
-            if (currentData && currentData.as_list && currentData.as_list.length > 0) {
+            if (currentData && currentData.as_list) {
                 asListRows = currentData.as_list;
             } else {
-                // 데이터가 없으면 빈 줄 50개 생성 (기본값)
-                asListRows = Array.from({ length: 50 }, () => ({
-                    category: '',
-                    brand: '',
-                    item: '',
-                    modelNum: '',
-                    rank: '',
-                    size: '',
-                    price: '',
-                    website: '',
-                    service: '',
-                    warranty: '',
-                    warrantyPeriod: '', // 내부용: 보증기간 저장 (예: "1년", "2년")
-                    note: ''
-                }));
+                asListRows = []; // Start empty for new selection
             }
             renderASListTable();
             updateASInfoHeaders();
-            renderASNotices(); // Ensure notices are rendered when tab loads
         }
 
         function updateASInfoHeaders() {
@@ -6529,94 +6372,64 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            // 1. Dynamic Datalists Container
-            let dynamicLists = document.getElementById('asDynamicLists');
-            if (!dynamicLists) {
-                const div = document.createElement('div');
-                div.id = 'asDynamicLists';
-                document.body.appendChild(div);
-                dynamicLists = div;
-            } else {
-                dynamicLists.innerHTML = ''; // Clear previous
-            }
-
-            // 2. Create Global Category List (Fixed)
-            const categories = [...new Set(AS_DB.map(i => i.category).filter(Boolean))];
-            const catDatalist = document.createElement('datalist');
-            catDatalist.id = 'asGlobalCategoryList';
-            catDatalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
-            dynamicLists.appendChild(catDatalist);
-
             asListRows.forEach((row, index) => {
-                const isEmpty = !row.category && !row.item && !row.brand && !row.modelNum && !row.warranty && !row.note;
                 const tr = document.createElement('tr');
-                tr.className = isEmpty ? 'empty-as-row' : '';
                 tr.innerHTML = `
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
-                    
                     <!-- Category -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.category || ''}" 
-                             list="asGlobalCategoryList"
                              onchange="updateASListRow(${index}, 'category', this.value)"
-                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
+                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    
                     <!-- Brand -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.brand || ''}" 
-                            list="asBrandList_${index}"
-                            onfocus="updateASBrandList(${index})"
                             onchange="updateASListRow(${index}, 'brand', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
-                         <datalist id="asBrandList_${index}"></datalist>
+                            style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    
-                    <!-- Item (Detail) -->
+                    <!-- Item -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.item || ''}" 
-                            list="asItemList_${index}"
-                            onfocus="updateASItemList(${index})"
                             onchange="updateASListRow(${index}, 'item', this.value)"
-                            style="width:100%; border:none; outline:none; background:transparent;">
-                        <datalist id="asItemList_${index}"></datalist>
+                            style="width:100%; border:none; outline:none;">
                     </td>
-                    
-                    <!-- ModelNum (Part Number) -->
+                    <!-- ModelNum -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.modelNum || ''}" 
                             onchange="updateASListRow(${index}, 'modelNum', this.value)"
-                            style="width:100%; border:none; outline:none; background:transparent;">
+                            style="width:100%; border:none; outline:none;">
                     </td>
-                    
-                     <!-- Size (Dimension) -->
+                    <!-- Rank -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" class="mh-input" value="${row.rank || ''}" 
+                            onchange="updateASListRow(${index}, 'rank', this.value)"
+                            style="width:100%; border:none; outline:none; text-align:center;">
+                    </td>
+                     <!-- Size -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.size || ''}" 
                             onchange="updateASListRow(${index}, 'size', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
+                            style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    
                      <!-- Price -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.price || ''}" 
                             onchange="updateASListRow(${index}, 'price', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:right; background:transparent;">
+                            style="width:100%; border:none; outline:none; text-align:right;">
                     </td>
-                    
                      <!-- Website -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.website || ''}" 
                             onchange="updateASListRow(${index}, 'website', this.value)"
-                            style="width:100%; border:none; outline:none; background:transparent;">
+                            style="width:100%; border:none; outline:none;">
                     </td>
-                    
-                    <!-- Service Center -->
+                    <!-- Service -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.service || ''}" 
                              onchange="updateASListRow(${index}, 'service', this.value)"
-                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
+                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                    
                     <!-- Warranty -->
                     <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
@@ -6628,17 +6441,15 @@
                             <input type="text" class="mh-input" value="${row.warranty || ''}" 
                                 id="warrantyInput_${index}"
                                 onchange="updateASListRow(${index}, 'warranty', this.value)"
-                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold; background:transparent;">
+                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
                         </div>
                     </td>
-                    
                     <!-- Note -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.note || ''}" 
                              onchange="updateASListRow(${index}, 'note', this.value)"
-                             style="width:100%; border:none; outline:none; background:transparent;">
+                             style="width:100%; border:none; outline:none;">
                     </td>
-                    
                     <!-- Manage -->
                     <td class="no-print" style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
                         <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
@@ -6646,18 +6457,6 @@
                  `;
                 tbody.appendChild(tr);
             });
-
-            // Check if notice container exists, if not add it
-            const panel = document.getElementById('panel-as_list');
-            if (panel && !document.getElementById('asNoticeContainer')) {
-                const noticeDiv = document.createElement('div');
-                noticeDiv.id = 'asNoticeContainer';
-                noticeDiv.className = 'section notice-box'; // Apply new style class
-                noticeDiv.style.marginTop = '20px';
-                // Inner HTML will be set by renderASNotices
-                panel.appendChild(noticeDiv);
-                renderASNotices();
-            }
         }
 
         function updateASCategory(index, category) {
@@ -6670,9 +6469,22 @@
             renderASListTable(); // Re-render to update item dropdown
         }
 
-        // Legacy function, replaced by updateASListRow('item') logic
         function updateASItem(index, dbIndex) {
-            // Deprecated
+            if (dbIndex === "") {
+                asListRows[index].item = '';
+                return;
+            }
+            const selectedData = AS_DB[dbIndex];
+            if (selectedData) {
+                asListRows[index].item = selectedData.item;
+                asListRows[index].brand = selectedData.brand;
+                asListRows[index].service = selectedData.service;
+                asListRows[index].note = selectedData.note; // Optional: Overwrite note? Yes, usually
+                // Warranty is usually empty in DB, so keep it empty or overwrite if DB has value
+                if (selectedData.warranty) asListRows[index].warranty = selectedData.warranty;
+            }
+            saveASList();
+            renderASListTable();
         }
 
         function getScheduleOptions() {
@@ -6690,35 +6502,10 @@
         function applyScheduleToWarranty(index, endDate) {
             if (!endDate) return;
             // endDate format: YYYY-MM-DD
-
+            // Add 1 year
             try {
                 const date = new Date(endDate);
-
-                // 보증기간 파싱 (기록된 보증기간이 있으면 사용)
-                let periodYears = 1; // 기본 1년
-                let periodMonths = 0;
-
-                const warrantyPeriod = asListRows[index].warrantyPeriod || asListRows[index].warranty || '1년';
-
-                // "20년", "2년", "1년6개월", "6개월" 등 파싱
-                if (warrantyPeriod) {
-                    // 년 추출
-                    const yearMatch = warrantyPeriod.match(/(\d+)\s*년/);
-                    if (yearMatch) periodYears = parseInt(yearMatch[1]);
-                    else periodYears = 0; // "6개월"인 경우
-
-                    // 개월 추출
-                    const monthMatch = warrantyPeriod.match(/(\d+)\s*개월/);
-                    if (monthMatch) periodMonths = parseInt(monthMatch[1]);
-
-                    if (!yearMatch && !monthMatch) {
-                        periodYears = 1; // Default fallback
-                    }
-                }
-
-                // 날짜 계산
-                date.setFullYear(date.getFullYear() + periodYears);
-                date.setMonth(date.getMonth() + periodMonths);
+                date.setFullYear(date.getFullYear() + 1);
 
                 // Format format: ~YY.MM.DD
                 const yy = String(date.getFullYear()).slice(-2);
@@ -6729,67 +6516,15 @@
                 asListRows[index].warranty = warrantyText;
 
                 // Update input view
-                const inputEl = document.getElementById(`warrantyInput_${index}`);
-                if (inputEl) inputEl.value = warrantyText;
-
+                document.getElementById(`warrantyInput_${index}`).value = warrantyText;
                 saveASList();
-                showToast(`보증기간 ${periodYears > 0 ? periodYears + '년 ' : ''}${periodMonths > 0 ? periodMonths + '개월 ' : ''}적용됨`, 'success');
-
             } catch (e) {
                 console.error("Invalid Date", e);
             }
         }
 
         function updateASListRow(index, field, value) {
-            // Previous value check
-            const prevVal = asListRows[index][field];
             asListRows[index][field] = value;
-
-            // If Category changes, clear dependent fields
-            if (field === 'category' && prevVal !== value) {
-                asListRows[index].brand = '';
-                asListRows[index].item = '';
-                renderASListTable(); // Re-render to update inputs
-                return;
-            }
-
-            // If Brand changes, clear Item
-            if (field === 'brand' && prevVal !== value) {
-                asListRows[index].item = '';
-                renderASListTable();
-                return;
-            }
-
-            // Auto complete from DB when Item changes (End of chain)
-            if (field === 'item') {
-                // Find matching entry based on current context
-                const matched = AS_DB.find(d =>
-                    d.item === value &&
-                    (asListRows[index].category ? d.category === asListRows[index].category : true) &&
-                    (asListRows[index].brand ? d.brand === asListRows[index].brand : true)
-                );
-
-                if (matched) {
-                    if (!asListRows[index].category) asListRows[index].category = matched.category || '';
-                    if (!asListRows[index].brand) asListRows[index].brand = matched.brand || '';
-
-                    asListRows[index].modelNum = matched.modelNum || '';
-                    asListRows[index].size = matched.size || '';
-                    asListRows[index].price = matched.price || '';
-                    asListRows[index].website = matched.website || '';
-
-                    if (!asListRows[index].service) asListRows[index].service = matched.service || '';
-                    if (!asListRows[index].note) asListRows[index].note = matched.note || '';
-
-                    // Store Warranty Period
-                    if (matched.warranty) {
-                        asListRows[index].warrantyPeriod = matched.warranty;
-                        asListRows[index].warranty = matched.warranty;
-                    }
-                    renderASListTable();
-                }
-            }
-
             saveASList();
         }
 
@@ -8651,10 +8386,12 @@
             if (password === null) return; // 취소됨
 
             const pwHash = await hashPassword(password);
-            if (pwHash === MAIN_ADMIN.passwordHash) {
+            // 복수 메인관리자 중 하나라도 일치하면 허용
+            const mainAdmin = MAIN_ADMINS.find(admin => admin.passwordHash === pwHash);
+            if (mainAdmin) {
                 // 임시 메인관리자 권한 부여
                 const tempAdmin = currentAdmin;
-                currentAdmin = { ...MAIN_ADMIN };
+                currentAdmin = { ...mainAdmin, role: 'main' };
 
                 saveCostData();
 
@@ -9912,7 +9649,35 @@
             }
         }
 
+        function importMasterSchedule() {
+            if (scheduleRows.length > 0) {
+                if (!confirm('현재 작성된 스케줄이 모두 삭제되고, 마스터 스케줄 템플릿으로 대체됩니다. 계속하시겠습니까?')) {
+                    return;
+                }
+            }
 
+            if (!defaultScheduleSteps || defaultScheduleSteps.length === 0) {
+                alert('마스터 스케줄 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+                fetchScheduleTemplate(); // Try fetching again
+                return;
+            }
+
+            // Copy template
+            scheduleRows = defaultScheduleSteps.map(step => ({
+                id: Date.now() + Math.random(),
+                category: step.category || '',
+                name: step.name || '',
+                checkPoint: step.checkPoint || '',
+                start: '', // Date is usually empty in template
+                end: '',
+                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
+                memo: step.memo || ''
+            }));
+
+            renderScheduleTable();
+            saveScheduleToCustomer();
+            alert('마스터 스케줄을 불러왔습니다.');
+        }
 
         async function syncScheduleToNotion() {
             if (!currentData.clientName) {
