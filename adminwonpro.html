@@ -6052,16 +6052,16 @@
                     const guidelinesList = document.getElementById('scheduleGuidelinesList');
                     if (guidelinesList) {
                         guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
-                        alert('✅ 성공: 공사 스케줄 유의사항을 성공적으로 불러왔습니다.');
+                        showPersistentAlert('공사 스케줄 유의사항을\n성공적으로 불러왔습니다.', 'success');
                     }
                 } else if (result.success) {
-                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
+                    showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
                 } else {
-                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
+                    showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
                 }
             } catch (error) {
                 console.error('Error loading schedule guidelines:', error);
-                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
+                showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
             }
         }
 
@@ -6079,16 +6079,16 @@
                     const guidelinesList = document.getElementById('asGuidelinesList');
                     if (guidelinesList) {
                         guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
-                        alert('✅ 성공: A/S 관리 유의사항을 성공적으로 불러왔습니다.');
+                        showPersistentAlert('A/S 관리 유의사항을\n성공적으로 불러왔습니다.', 'success');
                     }
                 } else if (result.success) {
-                    alert('⚠️ 경고: 불러올 유의사항이 없습니다.');
+                    showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
                 } else {
-                    alert('❌ 실패: ' + (result.error || '유의사항을 불러오는데 실패했습니다.'));
+                    showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
                 }
             } catch (error) {
                 console.error('Error loading AS guidelines:', error);
-                alert('❌ 실패: 유의사항을 불러오는데 실패했습니다.\n오류: ' + error.message);
+                showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
             }
         }
 
@@ -7331,14 +7331,18 @@
                 // 클라우드 데이터로 완전 교체
                 localStorage.setItem('dz_customers', JSON.stringify(cloudCustomers));
 
-                // UI 업데이트
+                // UI 업데이트 먼저 실행
                 customers = cloudCustomers;
-                cachedCloudCount = cloudCustomers.length; // 캐시 업데이트
+                cachedCloudCount = cloudCustomers.length;
                 updateCustomerList();
                 initYearFilter();
 
                 console.log(`✅[Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
-                showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
+
+                // UI 업데이트 완료 후 즉시 알림 표시
+                setTimeout(() => {
+                    showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
+                }, 50);
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
