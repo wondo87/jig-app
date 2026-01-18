@@ -6,13 +6,13 @@
 const MAIN_ADMINS = [
     {
         id: 'sweet00700',
-        passwordHash: '8f379199951d917b175921f50ff80c4f71f1433881adf293f8bb674494ef9d3d', // SHA-256 해시 (원본 비밀번호 노출 안됨)
+        passwordHash: '671076167de6f4ed03c9f267f0c42620b10801dd3ee47c79e59090755ba43acc', // SHA-256 해시 (원본: Dufan...)
         role: 'main',
         name: '메인관리자1'
     },
     {
         id: 'someing2407',
-        passwordHash: '0e768bc1fe9dfd156fa602ed477fc325f60fad1c265f3573c50abfa392db5474', // SHA-256 해시 (원본 비밀번호 노출 안됨)
+        passwordHash: 'd6c567f779dfc2736802e154d9cab8dfa03d56ab519b7c2da966f3af227e5a12', // SHA-256 해시 (원본: Djdj...)
         role: 'main',
         name: '메인관리자2'
     }
