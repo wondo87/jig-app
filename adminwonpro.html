@@ -5748,25 +5748,23 @@
 
 
         // 관리자 로그인
+        // 관리자 로그인
         async function loginAdmin() {
             const inputId = document.getElementById('adminId').value.trim();
             const inputPw = document.getElementById('adminPassword').value;
 
-            // [보안 컨텍스트 확인 및 테스트 모드 전환]
-            // HTTPS가 아니거나 file://, 혹은 구형 브라우저라 crypto.subtle이 없는 경우
-            // 경고창만 띄우고 차단하는 것이 아니라, 사용자가 명시적으로 동의하면 테스트 모드(비번검증생략)로 진입 허용
-            if (!window.crypto || !window.crypto.subtle) {
-                const msg = '보안 컨텍스트(HTTPS/Localhost)가 아닙니다.\n암호화 기능을 사용할 수 없어 [테스트 모드]로 로그인합니다.\n\n[주의] 비밀번호 검증 없이 아이디만으로 로그인하시겠습니까?';
+            // 내부 함수: 테스트 모드(ID만 검증) 로그인 처리
+            const tryTestModeLogin = () => {
+                const msg = '암호화 기능을 사용할 수 없는 환경(로컬/비보안)이거나 오류가 발생했습니다.\n\n[테스트 모드]로 로그인하시겠습니까?\n(비밀번호 검증 없이 아이디만으로 로그인합니다)';
 
                 if (confirm(msg)) {
-                    // ID만 체크하여 로그인 허용
                     const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId);
                     if (mainAdmin) {
                         currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
                         closeAdminModal();
                         activateAdminMode();
                         showToast(`[테스트 모드] ${mainAdmin.name}님 로그인`, 'success');
-                        return;
+                        return true;
                     }
 
                     const admins = getRegularAdmins();
@@ -5776,27 +5774,34 @@
                         closeAdminModal();
                         activateAdminMode();
                         showToast('[테스트 모드] 관리자 로그인', 'success');
-                        return;
+                        return true;
                     }
 
                     showToast('존재하지 않는 아이디입니다.', 'error');
-                    return;
-                } else {
-                    return; // 사용자가 취소함
+                    return false;
                 }
+                return false;
+            };
+
+            // 1. 보안 객체 부재 시 즉시 테스트 모드 시도
+            if (!window.crypto || !window.crypto.subtle) {
+                tryTestModeLogin();
+                return;
             }
 
-            // 정상적인 보안 환경 (HTTPS/Localhost)
+            // 2. 해싱 시도 (실패 시 테스트 모드로 fallback)
             let inputHash;
             try {
                 inputHash = await hashPassword(inputPw);
             } catch (e) {
-                console.error("Login Error:", e);
-                showToast('로그인 처리 중 오류 발생', 'error');
+                console.error("Login Hash Error:", e);
+                // 해싱 실패(예: insecure context에서 digest 호출 차단 등) 시 테스트 모드 제안
+                tryTestModeLogin();
                 return;
             }
 
-            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+            // 3. 정상 로그인 검증 (해시 비교)
+            // 메인관리자
             const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
             if (mainAdmin) {
                 currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
@@ -5806,7 +5811,7 @@
                 return;
             }
 
-            // 일반관리자 확인 (해시 비교)
+            // 일반관리자
             const admins = getRegularAdmins();
             const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
             if (found) {
