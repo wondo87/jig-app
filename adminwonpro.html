@@ -6003,9 +6003,8 @@
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
-                ${row.category ? '' : 'disabled'}
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; cursor:pointer;">
-                ${row.category ? '<option value="">선택</option>' + processOptions : '<option value="">카테고리 먼저 선택</option>'}
+                ${row.category ? '<option value="">선택</option>' + processOptions : '<option value="" disabled selected>카테고리 먼저 선택</option>'}
             </select>
         </td>
 
