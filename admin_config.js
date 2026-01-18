@@ -12,7 +12,7 @@ const MAIN_ADMINS = [
     },
     {
         id: 'someing2407',
-        passwordHash: '0e768bc1fe9dfd156fa602ed477fc325f60fad1c265f3573c50abfa392db5474', // SHA-256 해시 (원본 비밀번호 노출 안됨)
+        passwordHash: 'd6c567f779dfc2736802e154d9cab8dfa03d56ab519b7c2da966f3af227e5a12', // SHA-256 해시 (원본 비밀번호 노출 안됨)
         role: 'main',
         name: '메인관리자2'
     }
