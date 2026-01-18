@@ -7207,10 +7207,13 @@
         // ==========================================
         async function syncFromCloud() {
             if (!confirm('클라우드에서 고객 데이터를 불러옵니다.\n\n기존 로컬 데이터와 병합됩니다.\n진행하시겠습니까?')) {
+                alert('❌ 사용자가 취소했습니다.');
                 return;
             }
 
             showToast('클라우드에서 데이터 불러오는 중...', 'info');
+
+            let debugInfo = '=== 클라우드 동기화 디버그 ===\n';
 
             try {
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
@@ -7218,15 +7221,22 @@
                     sheet: '고객관리_견적서',
                     t: new Date().getTime()
                 });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
+                const url = `${CUSTOMER_SYNC_URL}?${params}`;
+                debugInfo += '\n📡 요청 URL:\n' + url + '\n';
+
+                const response = await fetch(url, {
                     method: 'GET'
                 });
 
+                debugInfo += '\n📥 응답 상태: ' + response.status + ' ' + response.statusText + '\n';
+
                 if (!response.ok) {
+                    alert(debugInfo + '\n❌ HTTP 오류 발생!');
                     throw new Error(`HTTP${response.status} `);
                 }
 
                 let cloudCustomers = await response.json();
+                debugInfo += '\n📊 받은 데이터 개수: ' + (Array.isArray(cloudCustomers) ? cloudCustomers.length : 'N/A') + '\n';
                 console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
 
                 if (!Array.isArray(cloudCustomers)) {
@@ -7292,12 +7302,19 @@
                 updateCustomerList();
                 initYearFilter();
 
+                debugInfo += '\n✅ 동기화 완료!\n';
+                debugInfo += '추가: ' + addedCount + '명\n';
+                debugInfo += '업데이트: ' + updatedCount + '명\n';
+                debugInfo += '삭제: ' + deletedCount + '명\n';
+                debugInfo += '총 고객 수: ' + cloudCustomers.length + '명';
+
+                alert(debugInfo);
                 showToast(`클라우드 동기화 완료! 추가: ${addedCount} 명, 업데이트: ${updatedCount} 명, 삭제: ${deletedCount} 명`, 'success');
-                console.log(`✅[Cloud Sync] Complete.Added: ${addedCount}, Updated: ${updatedCount}, Deleted:
-            ${deletedCount} `);
+                console.log(`✅[Cloud Sync] Complete.Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
+                alert(debugInfo + '\n\n❌ 오류 발생:\n' + error.toString() + '\n\n' + error.stack);
                 showToast('클라우드 동기화 실패: ' + error.message, 'error');
             }
         }
