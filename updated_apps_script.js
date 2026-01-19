@@ -40,13 +40,25 @@ const SENDER_NAME = '디자인지그';
 const SENDER_EMAIL = 'designjig.office@gmail.com';
 
 // [노션 연동 설정]
-// 주의: 이 키는 외부로 유출되지 않도록 관리해야 합니다.
-const NOTION_API_KEY = 'ntn_j609628766730H0TC5BgKFao3ZvGG1x58BaBSDQwffd0kA'; // '구글시트' 통합 시크릿
+// 주의: API 키는 스크립트 속성(Project Settings > Script Properties)에 저장해야 안전합니다.
+// 아래 setupNotionProperties() 함수를 한 번 실행하여 키를 저장하세요.
+const NOTION_API_KEY = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
 const NOTION_DB_IDS = {
     PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',
     SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',
     CHECKLIST: '6040d967e63e4268905739f2a8be436e'
 };
+
+/**
+ * [초기 설정용] Notion API 키 저장 함수
+ * 이 함수를 에디터에서 선택하고 한 번만 실행하세요.
+ * 실행 후에는 이 코드를 지우거나 주석 처리해도 됩니다.
+ */
+function setupNotionProperties() {
+    const key = 'ntn_j609628766730H0TC5BgKFao3ZvGG1x58BaBSDQwffd0kA'; // 여기에 키 입력
+    PropertiesService.getScriptProperties().setProperty('NOTION_API_KEY', key);
+    Logger.log('✅ Notion API Key가 스크립트 속성에 저장되었습니다.');
+}
 
 // [기본 데이터] 공사 스케줄 템플릿
 const DEFAULT_SCHEDULE_TEMPLATE = [

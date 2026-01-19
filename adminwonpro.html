@@ -11361,8 +11361,7 @@
             const evt = event || window.event;
 
             if (!currentCustomer) {
-                alert('⚠️ 고객을 먼저 선택해주세요!');
-                showToast('고객을 선택해주세요', 'error');
+                showToast('고객을 먼저 선택해주세요', 'error');
                 return;
             }
 
@@ -11438,7 +11437,6 @@
                 }
 
                 console.log('📤 노션 내보내기 요청:', requestData);
-                // alert('📤 Apps Script로 요청 전송 중...\nURL: ' + GOOGLE_SHEET_URL);
 
                 // data 객체를 JSON 문자열로 변환
                 const formData = new URLSearchParams();
@@ -11446,8 +11444,6 @@
                 formData.append('type', requestData.type);
                 formData.append('customerId', requestData.customerId);
                 formData.append('data', JSON.stringify(requestData.data));
-
-                console.log('📨 전송 데이터:', formData.toString());
 
                 const response = await fetch(GOOGLE_SHEET_URL, {
                     method: 'POST',
@@ -11457,27 +11453,19 @@
                     body: formData
                 });
 
-                console.log('📥 응답 상태:', response.status);
-
                 if (!response.ok) {
                     throw new Error('서버 응답 오류: ' + response.status + ' ' + response.statusText);
                 }
 
                 const responseText = await response.text();
-                console.log('📥 응답 내용:', responseText);
-
                 let result;
                 try {
                     result = JSON.parse(responseText);
                 } catch (e) {
-                    alert('❌ 응답 파싱 실패!\n\n응답 내용:\n' + responseText.substring(0, 500));
                     throw new Error('응답 파싱 실패: ' + e.message);
                 }
 
-                console.log('✅ 파싱된 결과:', result);
-
                 if (result.success) {
-                    alert('✅ 노션 내보내기 성공!\n\n노션 URL: ' + (result.notionUrl || '없음'));
                     showToast('노션으로 내보내기 완료!', 'success');
                     if (result.notionUrl) {
                         const openNotion = confirm('노션 페이지를 여시겠습니까?');
@@ -11486,12 +11474,10 @@
                         }
                     }
                 } else {
-                    alert('❌ 노션 내보내기 실패!\n\n에러 메시지:\n' + (result.message || '알 수 없는 오류'));
                     throw new Error(result.message || '내보내기 실패');
                 }
             } catch (error) {
                 console.error('❌ 노션 내보내기 실패:', error);
-                alert('❌ 오류 발생!\n\n에러 메시지:\n' + error.message + '\n\n콘솔을 확인하세요 (F12)');
                 showToast('노션 내보내기 실패: ' + error.message, 'error');
             } finally {
                 if (btn) {
