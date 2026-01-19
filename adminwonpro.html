@@ -43,6 +43,8 @@
             background: #f5f5f7;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            /* 고정 헤더 높이만큼 상단 여백 추가. 헤더 높이(약 60px) + 여유 */
+            padding-top: 60px;
         }
 
         /* 글씨 크기 조절 UI */
@@ -139,9 +141,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 200;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
         }
 
         .logo {
@@ -3027,7 +3032,7 @@
             </div>
             <button class="header-btn secondary" onclick="exportAllData()">📤 내보내기</button>
             <button class="header-btn secondary" onclick="importData()">📥 불러오기</button>
-            <button class="header-btn primary" onclick="saveData()">💾 저장</button>
+            <button class="header-btn secondary" onclick="exportCurrentCustomerData()">💾 고객저장(JSON)</button>
         </div>
     </header>
 
@@ -3260,9 +3265,9 @@
                         <span id="asEndDateDisplay"
                             style="display:none; padding:8px 12px; background:rgba(255,255,255,0.2); border-radius:6px; font-size:11px;">A/S
                             ~</span>
-                        <button onclick="exportCurrentCustomerData()"
-                            style="padding: 6px 12px; margin-left: 8px; border: 1px solid #d2d2d7; background: white; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1d1d1f;">💾
-                            고객저장</button>
+                        <button onclick="saveData()"
+                            style="padding: 6px 12px; margin-left: 8px; border: 1px solid #ffcfd6; background: #fff0f5; border-radius: 6px; font-size: 12px; cursor: pointer; color: #d63384; font-weight: 600;">💾
+                            저장</button>
                         <button onclick="printCurrentCustomerAll()"
                             style="padding: 6px 12px; margin-left: 8px; border: 1px solid #d2d2d7; background: white; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1d1d1f;">🖨️
                             통합인쇄</button>
@@ -11595,14 +11600,14 @@
             }
 
             const printWindow = window.open('', '_blank');
-            const styles = document.head.innerHTML; // 현재 페이지의 모든 스타일 가져오기
 
+
+            // 기본 HTML 구조 작성 (스타일 제외)
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>${currentCustomer.customerName || '고객'} - 통합 문서</title>
-                    ${styles}
                     <style>
                         @media print {
                             @page { size: A4; margin: 10mm; }
@@ -11620,7 +11625,7 @@
                             }
                         }
                         
-                        body { background: white; padding: 20px; }
+                        body { background: white; padding: 20px; font-family: 'Inter', sans-serif; }
                         
                         /* 인쇄용 텍스트 스타일 */
                         .print-text-val { 
@@ -11642,17 +11647,28 @@
                 </head>
                 <body>
                     ${printContainer.innerHTML}
-                    <script>
-                        window.onload = function() {
-                            setTimeout(function() {
-                                window.print();
-                                // window.close(); // 자동 닫기는 선택사항
-                            }, 1000); // 렌더링 대기
-                        };
-                    <\/script>
                 </body>
                 </html>
             `);
+
+            // 스타일 태그 복사 (스크립트 에러 방지용)
+            // document.head.innerHTML을 템플릿 리터럴에 넣으면 백틱 문제로 에러가 발생할 수 있음
+            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            styles.forEach(style => {
+                printWindow.document.head.appendChild(style.cloneNode(true));
+            });
+
+            // 스크립트 실행 (인쇄)
+            const script = printWindow.document.createElement('script');
+            script.textContent = `
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 1000);
+                };
+            `;
+            printWindow.document.body.appendChild(script);
+
             printWindow.document.close();
         }
 
