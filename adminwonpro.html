@@ -3321,7 +3321,7 @@
                                 <div class="subtitle">Customer Information</div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="notion-export-btn" onclick="exportToNotion('customer');"
+                                <button class="notion-export-btn" onclick="exportToNotion('customer', event);"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"
                                     title="노션으로 고객 정보 내보내기">
                                     📤 노션으로 내보내기
@@ -3959,7 +3959,7 @@
                                     <span style="margin-right: 4px;">↻</span>
                                     <span>체크리스트 동기화</span>
                                 </button>
-                                <button class="notion-export-btn" onclick="exportToNotion('checklist')"
+                                <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 체크리스트 내보내기">
                                     📤 노션
@@ -4078,7 +4078,7 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="notion-export-btn" onclick="exportToNotion('schedule')"
+                                <button class="notion-export-btn" onclick="exportToNotion('schedule', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 스케줄 내보내기">
                                     📤 노션
@@ -11354,8 +11354,11 @@
          * 노션으로 데이터 내보내기
          * @param {string} type - 'customer', 'schedule', 'checklist'
          */
-        window.exportToNotion = async function (type) {
+        window.exportToNotion = async function (type, event) {
             console.log('🚀 노션 내보내기 시작 - 타입:', type);
+
+            // 이벤트 객체 확보
+            const evt = event || window.event;
 
             if (!currentCustomer) {
                 alert('⚠️ 고객을 먼저 선택해주세요!');
@@ -11363,12 +11366,20 @@
                 return;
             }
 
-            alert('✅ 고객 선택됨: ' + currentCustomer.clientName + '\n노션 내보내기를 시작합니다...');
+            // 시작 알림 (토스트)
+            showToast('노션 내보내기를 시작합니다...', 'info');
 
-            const btn = event.target.closest('button');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '⏳ 내보내는 중...';
-            btn.disabled = true;
+            let btn = null;
+            let originalHTML = '';
+
+            if (evt && evt.target) {
+                btn = evt.target.closest('button');
+                if (btn) {
+                    originalHTML = btn.innerHTML;
+                    btn.innerHTML = '⏳ 내보내는 중...';
+                    btn.disabled = true;
+                }
+            }
 
             try {
                 let requestData = {
@@ -11483,8 +11494,10 @@
                 alert('❌ 오류 발생!\n\n에러 메시지:\n' + error.message + '\n\n콘솔을 확인하세요 (F12)');
                 showToast('노션 내보내기 실패: ' + error.message, 'error');
             } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
             }
         };
 
