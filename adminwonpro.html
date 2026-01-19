@@ -11129,7 +11129,7 @@
                         <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.내용 || ''}</td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.비고 || ''}</td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
-                            <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                            <span style="background: ${(item.진행단계 === '인테리어 시작 전') ? '#fff3e0' : '#e8f5e9'}; color: ${(item.진행단계 === '인테리어 시작 전') ? '#e65100' : '#2e7d32'}; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
                                 ${item.진행단계 || ''}
                             </span>
                         </td>
