@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>동기화 디버그</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #00ff00;
+        }
+        #log {
+            background: #000;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            min-height: 400px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 클라우드 동기화 디버그 콘솔</h1>
+
+    <button onclick="testSync()">클라우드 동기화 테스트</button>
+    <button onclick="clearLog()">로그 지우기</button>
+
+    <div id="log"></div>
+
+    <script src="admin_config.js"></script>
+    <script>
+        const logEl = document.getElementById('log');
+
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const className = type;
+            logEl.innerHTML += `<span class="${className}">[${timestamp}] ${msg}</span>\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(`[${timestamp}] ${msg}`);
+        }
+
+        function clearLog() {
+            logEl.innerHTML = '';
+        }
+
+        async function testSync() {
+            log('========================================', 'info');
+            log('🚀 동기화 테스트 시작', 'info');
+            log('========================================', 'info');
+
+            try {
+                // 1. URL 확인
+                log('📍 CUSTOMER_SYNC_URL: ' + CUSTOMER_SYNC_URL, 'info');
+
+                // 2. 파라미터 생성
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: new Date().getTime()
+                });
+                const url = `${CUSTOMER_SYNC_URL}?${params}`;
+                log('📡 요청 URL: ' + url, 'info');
+
+                // 3. Fetch 요청
+                log('⏳ 서버로 요청 전송 중...', 'info');
+                const startTime = Date.now();
+
+                const response = await fetch(url, {
+                    method: 'GET'
+                });
+
+                const duration = Date.now() - startTime;
+                log(`✅ 응답 받음 (${duration}ms)`, 'success');
+                log(`📥 HTTP 상태: ${response.status} ${response.statusText}`,
+                    response.ok ? 'success' : 'error');
+
+                // 4. 응답 파싱
+                if (!response.ok) {
+                    log('❌ HTTP 오류 발생!', 'error');
+                    return;
+                }
+
+                log('📦 JSON 파싱 중...', 'info');
+                const data = await response.json();
+
+                // 5. 데이터 확인
+                log('📊 데이터 타입: ' + (Array.isArray(data) ? 'Array' : typeof data), 'info');
+
+                if (Array.isArray(data)) {
+                    log(`✅ 데이터 개수: ${data.length}개`, 'success');
+
+                    if (data.length > 0) {
+                        log('📝 첫 번째 데이터 샘플:', 'info');
+                        log(JSON.stringify(data[0], null, 2), 'info');
+                    }
+
+                    // 6. localStorage에 저장 테스트
+                    log('💾 localStorage 저장 테스트...', 'info');
+                    localStorage.setItem('dz_customers_test', JSON.stringify(data));
+                    const saved = JSON.parse(localStorage.getItem('dz_customers_test'));
+                    log(`✅ localStorage 저장 성공 (${saved.length}개)`, 'success');
+
+                } else {
+                    log('⚠️ 배열이 아닌 데이터:', 'error');
+                    log(JSON.stringify(data, null, 2), 'error');
+                }
+
+                log('========================================', 'info');
+                log('✅ 테스트 완료!', 'success');
+                log('========================================', 'info');
+
+            } catch (error) {
+                log('========================================', 'error');
+                log('❌ 오류 발생!', 'error');
+                log('오류 메시지: ' + error.message, 'error');
+                log('오류 스택:', 'error');
+                log(error.stack, 'error');
+                log('========================================', 'error');
+            }
+        }
+
+        // 페이지 로드 시
+        window.addEventListener('DOMContentLoaded', () => {
+            log('🎬 디버그 콘솔 준비 완료', 'success');
+            log('버튼을 클릭해서 테스트를 시작하세요.', 'info');
+        });
+    </script>
+</body>
+</html>

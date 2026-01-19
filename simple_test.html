@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>간단 테스트</title>
+</head>
+<body>
+    <h1>adminwonpro.html 동기화 테스트</h1>
+    <button onclick="window.open('http://localhost:8000/adminwonpro.html')">adminwonpro.html 열기</button>
+
+    <h2>테스트 방법:</h2>
+    <ol>
+        <li>위 버튼을 클릭해서 adminwonpro.html 열기</li>
+        <li>로그인: sweet00700 / Dufan170531!@#</li>
+        <li>F12 눌러서 개발자 도구 열기</li>
+        <li>Console 탭에서 다음 명령어 실행:</li>
+    </ol>
+
+    <h3>Console에서 실행할 명령어:</h3>
+    <pre style="background:#f0f0f0; padding:20px; border:2px solid #333;">
+// 1. syncFromCloud 함수가 정의되어 있는지 확인
+typeof syncFromCloud
+
+// 2. 직접 함수 호출
+syncFromCloud()
+    </pre>
+
+    <h3>예상 결과:</h3>
+    <ul>
+        <li>typeof syncFromCloud 결과: "function" 이어야 함</li>
+        <li>만약 "undefined"라면 함수가 정의되지 않은 것</li>
+        <li>syncFromCloud() 호출 시 alert가 나타나야 함</li>
+    </ul>
+</body>
+</html>

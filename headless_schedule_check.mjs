@@ -102,6 +102,40 @@ import puppeteer from 'puppeteer';
       }
       return {rows, rendered};
     });
+      // If run with --verify, fail with non-zero exit code when layout/visibility checks fail
+      try {
+        const args = (typeof process !== 'undefined' && process.argv) ? process.argv.slice(2) : [];
+        if (args.includes('--verify')) {
+          let ok = true;
+          const tm = final.tableMetrics;
+          if (!tm) {
+            console.error('VERIFY_FAIL: tableMetrics missing');
+            ok = false;
+          } else {
+            if (tm.hiddenAncestor) {
+              console.error('VERIFY_FAIL: hiddenAncestor present', tm.hiddenAncestor);
+              ok = false;
+            }
+            if (!tm.tableOffsetWidth || tm.tableOffsetWidth === 0) {
+              console.error('VERIFY_FAIL: tableOffsetWidth is zero');
+              ok = false;
+            }
+          }
+          // Basic check: at least one rendered row's process select should include placeholder text
+          try {
+            const first = final.debug && final.debug.rendered && final.debug.rendered[0];
+            if (!first || !first.processFirstOptionText || first.processFirstOptionText.indexOf('카테고리') === -1) {
+              console.error('VERIFY_FAIL: process select placeholder missing');
+              ok = false;
+            }
+          } catch (e) {}
+
+          if (!ok) {
+            await browser.close();
+            process.exit(2);
+          }
+        }
+      } catch (e) {}
     // 추가: 테이블/컬럼 너비 정보 수집
     const tableMetrics = await page.evaluate(() => {
       const tbl = document.querySelector('#panel-schedule .data-table');
