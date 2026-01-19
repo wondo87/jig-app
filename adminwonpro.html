@@ -5485,6 +5485,7 @@
         let customers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
         let currentCustomerId = null;
         let currentData = {};
+        let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
         let currentStatusFilter = 'all';
         let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
@@ -11350,6 +11351,7 @@
         // 노션 내보내기 관련 함수들
         // ============================================
 
+
         /**
          * 노션으로 데이터 내보내기
          * @param {string} type - 'customer', 'schedule', 'checklist'
@@ -11360,7 +11362,10 @@
             // 이벤트 객체 확보
             const evt = event || window.event;
 
-            if (!currentCustomer) {
+            // currentCustomer 대신 currentData 사용 (호환성)
+            const targetData = currentData || currentCustomer;
+
+            if (!targetData || !currentCustomerId) {
                 showToast('고객을 먼저 선택해주세요', 'error');
                 return;
             }
@@ -11384,45 +11389,52 @@
                 let requestData = {
                     action: 'exportToNotion',
                     type: type,
-                    customerId: currentCustomer.id
+                    customerId: currentCustomerId // currentCustomer.id -> currentCustomerId
                 };
+
+                // 날짜 정보 추출 (DOM에서 가져오는 것이 가장 확실)
+                const startDateVal = document.getElementById('constructionStartInput')?.value || targetData.startDate || '';
+                const endDateVal = document.getElementById('constructionEndInput')?.value || targetData.endDate || '';
 
                 // 타입별 데이터 준비
                 if (type === 'customer') {
+                    // 키 매핑 확인: clientName, clientPhone, clientAddress, siteAddress, totalAmount 등
                     requestData.data = {
-                        고객명: currentCustomer.clientName || '',
-                        연락처: currentCustomer.clientPhone || '',
-                        주소: currentCustomer.clientAddress || '',
-                        현장주소: currentCustomer.siteAddress || '',
-                        계약금액: currentCustomer.totalAmount || '',
-                        계약일: currentCustomer.contractDate || '',
-                        착공일: currentCustomer.startDate || '',
-                        준공일: currentCustomer.endDate || '',
-                        공사내용: currentCustomer.scope || '',
-                        특이사항: currentCustomer.notes || ''
+                        고객명: targetData.clientName || '',
+                        연락처: targetData.clientPhone || '',
+                        주소: targetData.clientAddress || '',
+                        현장주소: targetData.siteAddress || '',
+                        계약금액: (targetData.totalAmount || '').replace(/[^0-9]/g, ''), // 숫자만 추출 
+                        계약일: targetData.contractDate || '',
+                        착공일: startDateVal,
+                        준공일: endDateVal,
+                        공사내용: targetData.projectName || targetData.customerRequest || '', // 공사명 또는 요청사항
+                        특이사항: targetData.specialNote || targetData.internalMemo || ''
                     };
                 } else if (type === 'schedule') {
-                    const scheduleData = currentCustomer.scheduleData || [];
+                    // currentData.schedules (영어 키) -> 노션 (한글 키) 매핑
+                    const scheduleData = targetData.schedules || [];
+
                     requestData.data = {
-                        고객명: currentCustomer.clientName || '',
-                        현장주소: currentCustomer.siteAddress || '',
-                        착공일: currentCustomer.startDate || '',
-                        준공일: currentCustomer.endDate || '',
+                        고객명: targetData.clientName || '',
+                        현장주소: targetData.siteAddress || '',
+                        착공일: startDateVal,
+                        준공일: endDateVal,
                         공정목록: scheduleData.map(item => ({
-                            공정: item['공정'] || '',
-                            시작일: item['시작일'] || '',
-                            종료일: item['종료일'] || '',
-                            담당자: item['담당자'] || '',
-                            상태: item['상태'] || '',
-                            비고: item['비고'] || ''
+                            공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
+                            시작일: item.start || '',
+                            종료일: item.end || '',
+                            담당자: item.inCharge || '',
+                            상태: item.checkPoint || '', // checkPoint를 상태로 매핑
+                            비고: item.memo || ''
                         }))
                     };
                 } else if (type === 'checklist') {
                     const customerChecklistData = getCurrentCustomerChecklistData();
                     const checkedItems = checklistMasterData.filter(item => customerChecklistData[item.번호]);
                     requestData.data = {
-                        고객명: currentCustomer.clientName || '',
-                        현장주소: currentCustomer.siteAddress || '',
+                        고객명: targetData.clientName || '',
+                        현장주소: targetData.siteAddress || '',
                         완료항목수: checkedItems.length,
                         전체항목수: checklistMasterData.length,
                         체크리스트: checkedItems.map(item => ({
