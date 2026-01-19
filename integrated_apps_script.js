@@ -231,7 +231,7 @@ function handleSettlementUpdate(payload) {
     try {
         var customerId = payload.customerId;
         var customerName = payload.customerName;
-        var rowsData = payload.rows || []; // [{date, type, item, amount, client, note}, ...]
+        var rowsData = payload.rows || [];
 
         if (!customerId) throw new Error('Customer ID is missing');
 
@@ -244,36 +244,61 @@ function handleSettlementUpdate(payload) {
             sheet.setFrozenRows(1);
         }
 
-        // [수정] 헤더 강제 업데이트 (잘못된 헤더가 있을 경우를 대비해 항상 올바른 헤더로 덮어쓰기)
-        // 다른 섹션(고객관리 등)과 동일하게 'Customer ID'와 '고객명'을 맨 앞에 배치
-        var headers = ['Customer ID', '고객명', '날짜', '구분', '항목', '금액', '거래처', '연동시트', '연동내용', '비고', '업데이트일시'];
+        // [수정] 헤더 강제 업데이트 (12개 항목 + ID/Name/Updated)
+        // 요청 항목: 카테고리, 공정분류, 세부항목, 비용구분, 거래처/작업자, 실행금액, 견적금액, 수익(B-A), 결제방식, 결제일, 결제상태, 비고
+        var headers = [
+            'Customer ID', '고객명',
+            '카테고리', '공정분류', '세부항목', '비용구분', '거래처/작업자',
+            '실행금액', '견적금액', '수익(B-A)',
+            '결제방식', '결제일', '결제상태', '비고',
+            '업데이트일시'
+        ];
         sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-        sheet.getRange(1, 1, 1, headers.length).setBackground('#fff2cc').setFontWeight('bold');
+        sheet.getRange(1, 1, 1, headers.length).setBackground('#fff2cc').setFontWeight('bold').setHorizontalAlignment('center');
 
         // [추가] 데이터 유효성 검사 (드롭다운) 설정
-        // 1. 구분 (D열, 4번째)
-        var ruleType = SpreadsheetApp.newDataValidation()
-            .requireValueInList(['매출', '자재', '노무', '경비', '외주', '기타'])
-            .setAllowInvalid(true)
-            .build();
-        // 헤더 다음 행부터 모든 행에 적용 (최대 행까지)
-        sheet.getRange(2, 4, sheet.getMaxRows() - 1, 1).setDataValidation(ruleType);
+        var maxRows = sheet.getMaxRows();
+        if (maxRows > 1) {
+            // 1. 카테고리 (C열, 3번째)
+            var ruleCategory = SpreadsheetApp.newDataValidation()
+                .requireValueInList([
+                    '01. 기획·준비', '02. 철거 공사', '03. 설비/방수', '04. 전기 공사',
+                    '05. 목공 공사', '06. 타일/욕실', '07. 도장/필름', '08. 도배/바닥',
+                    '09. 가구 공사', '10. 마감/준공', '11. 기타'
+                ])
+                .setAllowInvalid(true)
+                .build();
+            sheet.getRange(2, 3, maxRows - 1, 1).setDataValidation(ruleCategory);
 
-        // 2. 연동시트 (H열, 8번째)
-        var ruleLinkedSheet = SpreadsheetApp.newDataValidation()
-            .requireValueInList(['견적서', '원가관리표', '스케줄', 'AS리스트']) // 빈 값 허용 위해 목록에 없어도 경고만 표시 (setAllowInvalid(true))
-            .setAllowInvalid(true)
-            .build();
-        sheet.getRange(2, 8, sheet.getMaxRows() - 1, 1).setDataValidation(ruleLinkedSheet);
+            // 2. 비용구분 (F열, 6번째)
+            var ruleCostType = SpreadsheetApp.newDataValidation()
+                .requireValueInList(['자재', '노무', '경비', '외주', '장비', '기타'])
+                .setAllowInvalid(true)
+                .build();
+            sheet.getRange(2, 6, maxRows - 1, 1).setDataValidation(ruleCostType);
+
+            // 3. 결제방식 (K열, 11번째)
+            var rulePayMethod = SpreadsheetApp.newDataValidation()
+                .requireValueInList(['계좌이체', '카드', '현금', '기타'])
+                .setAllowInvalid(true)
+                .build();
+            sheet.getRange(2, 11, maxRows - 1, 1).setDataValidation(rulePayMethod);
+
+            // 4. 결제상태 (M열, 13번째)
+            var rulePayStatus = SpreadsheetApp.newDataValidation()
+                .requireValueInList(['미지급', '지급완료', '부분지급'])
+                .setAllowInvalid(true)
+                .build();
+            sheet.getRange(2, 13, maxRows - 1, 1).setDataValidation(rulePayStatus);
+        }
 
         // 1. 기존 해당 고객 데이터 삭제
-        // 역순으로 순회하며 삭제해야 인덱스 문제가 없음
         var lastRow = sheet.getLastRow();
         if (lastRow > 1) {
-            var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues(); // A열만 읽음 (ID 확인용)
+            var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
             for (var i = data.length - 1; i >= 0; i--) {
                 if (data[i][0] == customerId) {
-                    sheet.deleteRow(i + 2); // 2행부터 시작하므로 +2
+                    sheet.deleteRow(i + 2);
                 }
             }
         }
@@ -284,20 +309,24 @@ function handleSettlementUpdate(payload) {
                 return [
                     customerId,
                     customerName,
-                    row.date || '',
-                    row.type || '',
+                    row.category || '',
+                    row.process || '',
                     row.item || '',
-                    row.amount || 0,
+                    row.costType || '',
                     row.client || '',
-                    row.linkedSheet || '',
-                    row.linkedContent || '',
+                    row.execAmount || 0,
+                    row.estAmount || 0,
+                    row.profit || 0, // 수익
+                    row.payMethod || '',
+                    row.payDate || '',
+                    row.payStatus || '',
                     row.note || '',
                     new Date().toLocaleString('ko-KR')
                 ];
             });
 
             // 한 번에 쓰기
-            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 11).setValues(newRows);
+            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 15).setValues(newRows);
         }
 
         return ContentService.createTextOutput(JSON.stringify({
@@ -328,26 +357,28 @@ function handleSettlementGet(e) {
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
                 result: 'success',
-                rows: [] // 시트가 없으면 데이터 없는 것으로 처리
+                rows: []
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
         var data = sheet.getDataRange().getValues();
         var resultRows = [];
 
-        // 1행은 헤더
         for (var i = 1; i < data.length; i++) {
-            // A열(Index 0)이 Customer ID
             if (data[i][0] == customerId) {
                 resultRows.push({
-                    date: data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], Session.getScriptTimeZone(), 'yyyy-MM-dd') : data[i][2],
-                    type: data[i][3],
+                    category: data[i][2],
+                    process: data[i][3],
                     item: data[i][4],
-                    amount: data[i][5],
+                    costType: data[i][5],
                     client: data[i][6],
-                    linkedSheet: data[i][7] || '',
-                    linkedContent: data[i][8] || '',
-                    note: data[i][9]
+                    execAmount: data[i][7],
+                    estAmount: data[i][8],
+                    profit: data[i][9],
+                    payMethod: data[i][10],
+                    payDate: data[i][11] instanceof Date ? Utilities.formatDate(data[i][11], Session.getScriptTimeZone(), 'yyyy-MM-dd') : data[i][11],
+                    payStatus: data[i][12],
+                    note: data[i][13]
                 });
             }
         }

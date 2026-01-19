@@ -4185,14 +4185,18 @@
                             <thead>
                                 <tr style="background:#f5f5f7;">
                                     <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                    <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">날짜</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">구분</th>
-                                    <th style="padding:12px; border:1px solid #d2d2d7;">내역</th>
-                                    <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">금액</th>
-                                    <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">거래처</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">연동시트</th>
-                                    <th style="padding:12px; border:1px solid #d2d2d7;">연동내용</th>
-                                    <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                    <th style="padding:12px; border:1px solid #d2d2d7;">공정분류</th>
+                                    <th style="padding:12px; border:1px solid #d2d2d7;">세부항목</th>
+                                    <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">비용구분</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">거래처/작업자</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">실행금액(A)</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">견적금액(B)</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">수익(B-A)</th>
+                                    <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">결제방식</th>
+                                    <th style="width:110px; padding:12px; border:1px solid #d2d2d7;">결제일</th>
+                                    <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">결제상태</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">비고</th>
                                 </tr>
                             </thead>
                             <tbody id="settlementTableBody">
@@ -6937,26 +6941,36 @@
             }
         }
 
+        // 카테고리 목록
+        const SETTLEMENT_CATEGORIES = [
+            '01. 기획·준비', '02. 철거 공사', '03. 설비/방수', '04. 전기 공사',
+            '05. 목공 공사', '06. 타일/욕실', '07. 도장/필름', '08. 도배/바닥',
+            '09. 가구 공사', '10. 마감/준공', '11. 기타'
+        ];
+
         function renderSettlementTable() {
             const tbody = document.getElementById('settlementTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            let totalIncome = 0;
-            let totalExpense = 0;
+            let totalExec = 0; // 총 실행금액 (Cost)
+            let totalEst = 0;  // 총 견적금액 (Revenue)
 
             settlementRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
 
-                // 금액 계산 (콤마 제거 후 정수 변환)
-                const amount = parseInt(String(row.amount || '0').replace(/,/g, ''), 10) || 0;
+                const execAmount = parseInt(String(row.execAmount || '0').replace(/,/g, ''), 10) || 0;
+                const estAmount = parseInt(String(row.estAmount || '0').replace(/,/g, ''), 10) || 0;
+                const profit = estAmount - execAmount;
 
-                // 구분(type)에 따라 합계 집계
-                if (row.type === '매출' || row.type === '입금') {
-                    totalIncome += amount;
-                } else if (row.type && row.type !== '선택') {
-                    totalExpense += amount;
-                }
+                totalExec += execAmount;
+                totalEst += estAmount;
+
+                // 카테고리 옵션 생성
+                let categoryOptions = '<option value="">선택</option>';
+                SETTLEMENT_CATEGORIES.forEach(cat => {
+                    categoryOptions += `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`;
+                });
 
                 tr.innerHTML = `
                     <td style="padding:5px; text-align:center; border:1px solid #d2d2d7;">
@@ -6964,85 +6978,88 @@
                         ${index + 1}
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="date" value="${row.date || ''}" 
-                            onchange="updateSettlementRow(${index}, 'date', this.value)"
-                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:center;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <select onchange="updateSettlementRow(${index}, 'type', this.value)"
-                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:center;">
-                            <option value="">선택</option>
-                            <option value="매출" ${row.type === '매출' ? 'selected' : ''}>매출(입금)</option>
-                            <option value="자재" ${row.type === '자재' ? 'selected' : ''}>자재비</option>
-                            <option value="노무" ${row.type === '노무' ? 'selected' : ''}>노무비</option>
-                            <option value="경비" ${row.type === '경비' ? 'selected' : ''}>경비/식대</option>
-                            <option value="외주" ${row.type === '외주' ? 'selected' : ''}>외주용역</option>
-                            <option value="기타" ${row.type === '기타' ? 'selected' : ''}>기타지출</option>
+                        <select onchange="updateSettlementRow(${index}, 'category', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
+                            ${categoryOptions}
                         </select>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.item || ''}" 
-                            list="settlementItemOptions"
-                            onchange="updateSettlementRow(${index}, 'item', this.value)"
-                            placeholder="내역 선택/입력"
-                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                        <input type="text" value="${row.process || ''}" onchange="updateSettlementRow(${index}, 'process', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${Number(amount).toLocaleString()}" 
-                            onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'amount', this.value.replace(/,/g,''))"
-                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:right;">
+                        <input type="text" value="${row.item || ''}" onchange="updateSettlementRow(${index}, 'item', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.client || ''}" 
-                            onchange="updateSettlementRow(${index}, 'client', this.value)"
-                            placeholder="거래처"
-                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:center;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <select onchange="updateSettlementRow(${index}, 'linkedSheet', this.value)"
-                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                        <select onchange="updateSettlementRow(${index}, 'costType', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
                             <option value="">선택</option>
-                            <option value="견적서" ${row.linkedSheet === '견적서' ? 'selected' : ''}>견적서</option>
-                            <option value="원가관리표" ${row.linkedSheet === '원가관리표' ? 'selected' : ''}>원가관리표</option>
-                            <option value="AS관리" ${row.linkedSheet === 'AS관리' ? 'selected' : ''}>A/S관리</option>
-                            <option value="기타" ${row.linkedSheet === '기타' ? 'selected' : ''}>기타</option>
+                            <option value="자재" ${row.costType === '자재' ? 'selected' : ''}>자재</option>
+                            <option value="노무" ${row.costType === '노무' ? 'selected' : ''}>노무</option>
+                            <option value="경비" ${row.costType === '경비' ? 'selected' : ''}>경비</option>
+                            <option value="외주" ${row.costType === '외주' ? 'selected' : ''}>외주</option>
+                            <option value="장비" ${row.costType === '장비' ? 'selected' : ''}>장비</option>
+                            <option value="기타" ${row.costType === '기타' ? 'selected' : ''}>기타</option>
                         </select>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.linkedContent || ''}" 
-                            onchange="updateSettlementRow(${index}, 'linkedContent', this.value)"
-                            placeholder="내용"
-                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                        <input type="text" value="${row.client || ''}" onchange="updateSettlementRow(${index}, 'client', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.note || ''}" 
-                            onchange="updateSettlementRow(${index}, 'note', this.value)"
-                            placeholder="비고"
-                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                        <input type="text" value="${Number(execAmount).toLocaleString()}" onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'execAmount', this.value.replace(/,/g,''))" style="width:100%; border:none; background:transparent; font-size:11px; text-align:right;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${Number(estAmount).toLocaleString()}" onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'estAmount', this.value.replace(/,/g,''))" style="width:100%; border:none; background:transparent; font-size:11px; text-align:right;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:right; font-size:11px;">
+                        ${Number(profit).toLocaleString()}
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <select onchange="updateSettlementRow(${index}, 'payMethod', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
+                            <option value="">선택</option>
+                             <option value="계좌이체" ${row.payMethod === '계좌이체' ? 'selected' : ''}>계좌</option>
+                            <option value="카드" ${row.payMethod === '카드' ? 'selected' : ''}>카드</option>
+                            <option value="현금" ${row.payMethod === '현금' ? 'selected' : ''}>현금</option>
+                            <option value="기타" ${row.payMethod === '기타' ? 'selected' : ''}>기타</option>
+                        </select>
+                    </td>
+                     <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="date" value="${row.payDate || ''}" onchange="updateSettlementRow(${index}, 'payDate', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <select onchange="updateSettlementRow(${index}, 'payStatus', this.value)" style="width:100%; border:none; background:transparent; font-size:11px; color:${row.payStatus === '지급완료' ? '#0071e3' : (row.payStatus === '미지급' ? '#ff3b30' : '#333')}">
+                            <option value="">선택</option>
+                            <option value="미지급" ${row.payStatus === '미지급' ? 'selected' : ''}>미지급</option>
+                            <option value="지급완료" ${row.payStatus === '지급완료' ? 'selected' : ''}>지급완료</option>
+                            <option value="부분지급" ${row.payStatus === '부분지급' ? 'selected' : ''}>부분지급</option>
+                        </select>
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.note || ''}" onchange="updateSettlementRow(${index}, 'note', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            // 합계 표시
-            const profit = totalIncome - totalExpense;
-            const profitRate = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : 0;
+            // 합계 표시 업데이트
+            const totalProfit = totalEst - totalExec;
+            const profitRate = totalEst > 0 ? ((totalProfit / totalEst) * 100).toFixed(1) : 0;
 
-            document.getElementById('settlementTotalIncome').innerText = totalIncome.toLocaleString();
-            document.getElementById('settlementTotalExpense').innerText = totalExpense.toLocaleString();
-            document.getElementById('settlementProfit').innerText = profit.toLocaleString();
-            document.getElementById('settlementProfitRate').innerText = profitRate + '%';
+            document.getElementById('settlementTotalIncome').innerText = totalEst.toLocaleString(); // 총 견적 (매출)
+            document.getElementById('settlementTotalExpense').innerText = totalExec.toLocaleString(); // 총 실행 (지출)
+            document.getElementById('settlementProfit').innerText = totalProfit.toLocaleString(); // 수익
+            document.getElementById('settlementProfitRate').innerText = profitRate + '%'; // 수익률
         }
 
         function addSettlementRow() {
             settlementRows.push({
-                date: new Date().toISOString().slice(0, 10),
-                type: '',
+                category: '',
+                process: '',
                 item: '',
-                amount: '',
+                costType: '',
                 client: '',
-                linkedSheet: '',
-                linkedContent: '',
+                execAmount: 0,
+                estAmount: 0,
+                payMethod: '',
+                payDate: '',
+                payStatus: '미지급',
                 note: ''
             });
             renderSettlementTable();
