@@ -250,6 +250,22 @@ function handleSettlementUpdate(payload) {
         sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
         sheet.getRange(1, 1, 1, headers.length).setBackground('#fff2cc').setFontWeight('bold');
 
+        // [추가] 데이터 유효성 검사 (드롭다운) 설정
+        // 1. 구분 (D열, 4번째)
+        var ruleType = SpreadsheetApp.newDataValidation()
+            .requireValueInList(['매출', '자재', '노무', '경비', '외주', '기타'])
+            .setAllowInvalid(true)
+            .build();
+        // 헤더 다음 행부터 모든 행에 적용 (최대 행까지)
+        sheet.getRange(2, 4, sheet.getMaxRows() - 1, 1).setDataValidation(ruleType);
+
+        // 2. 연동시트 (H열, 8번째)
+        var ruleLinkedSheet = SpreadsheetApp.newDataValidation()
+            .requireValueInList(['견적서', '원가관리표', '스케줄', 'AS리스트']) // 빈 값 허용 위해 목록에 없어도 경고만 표시 (setAllowInvalid(true))
+            .setAllowInvalid(true)
+            .build();
+        sheet.getRange(2, 8, sheet.getMaxRows() - 1, 1).setDataValidation(ruleLinkedSheet);
+
         // 1. 기존 해당 고객 데이터 삭제
         // 역순으로 순회하며 삭제해야 인덱스 문제가 없음
         var lastRow = sheet.getLastRow();
