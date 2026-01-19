@@ -3261,6 +3261,28 @@
                             style="display:none; padding:8px 12px; background:rgba(255,255,255,0.2); border-radius:6px; font-size:11px;">A/S
                             ~</span>
                         <button class="delete-btn" onclick="deleteCurrentCustomer()">🗑️</button>
+                        <button class="action-btn" onclick="exportCurrentCustomerData()" title="현재 고객 데이터만 JSON으로 저장">💾
+                            고객저장</button>
+                        <button class="action-btn" onclick="printCurrentCustomerAll()" title="주요 문서 통합 인쇄">🖨️
+                            통합인쇄</button>
+                        <style>
+                            .action-btn {
+                                padding: 6px 12px;
+                                margin-left: 8px;
+                                border: 1px solid #d2d2d7;
+                                background: white;
+                                border-radius: 6px;
+                                font-size: 12px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                                color: #1d1d1f;
+                            }
+
+                            .action-btn:hover {
+                                background: #f5f5f7;
+                                border-color: #86868b;
+                            }
+                        </style>
                     </div>
                 </div>
 
@@ -3814,20 +3836,97 @@
 
                 <!-- 통계분석 패널 -->
                 <div class="tab-panel" id="panel-stats">
-                    <h3 style="font-size:16px; font-weight:700; color:#1d1d1f; margin-bottom:16px;">📈 고객 통계</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card highlight"><label>계약금액</label>
-                            <div class="value synced-display" data-sync="totalAmount">-</div>
-                        </div>
-                        <div class="stat-card"><label>총 원가</label>
-                            <div class="value" id="statsCost">₩ 0</div>
-                        </div>
-                        <div class="stat-card"><label>예상 이익</label>
-                            <div class="value" id="statsProfit" style="color:#34c759;">₩ 0</div>
-                        </div>
-                        <div class="stat-card"><label>이익률</label>
-                            <div class="value" id="statsRate">0%</div>
-                        </div>
+                    <div class="stats-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+
+                        <!-- 1. 정산 현황 섹션 -->
+                        <section class="settlement-stats-section" style="margin-bottom: 40px;">
+                            <h2
+                                style="font-size: 20px; font-weight: 700; color: #1d1d1f; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                                <span>💰</span> 정산 현황
+                            </h2>
+
+                            <!-- 미수금 현황 카드 -->
+                            <div class="settlement-overview"
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 30px;">
+                                <div class="stat-card"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">총 계약금액</div>
+                                    <div class="value" id="stats-total-contract"
+                                        style="font-size: 28px; font-weight: 700;">₩0</div>
+                                </div>
+                                <div class="stat-card"
+                                    style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">정산 완료</div>
+                                    <div class="value" id="stats-settled" style="font-size: 28px; font-weight: 700;">₩0
+                                    </div>
+                                </div>
+                                <div class="stat-card"
+                                    style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">미수금</div>
+                                    <div class="value" id="stats-outstanding"
+                                        style="font-size: 28px; font-weight: 700;">₩0</div>
+                                </div>
+                                <div class="stat-card"
+                                    style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">정산 진행률</div>
+                                    <div class="value" id="stats-settlement-rate"
+                                        style="font-size: 28px; font-weight: 700;">0%</div>
+                                </div>
+                            </div>
+
+                            <!-- 공정별 이윤 차트 -->
+                            <div
+                                style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                                <h3 style="font-size: 16px; font-weight: 600; color: #1d1d1f; margin-bottom: 20px;">📊
+                                    공정별 원가 vs 이윤 분석</h3>
+                                <canvas id="processChart" style="max-height: 400px;"></canvas>
+                            </div>
+
+                            <!-- 전체 수익성 요약 -->
+                            <div
+                                style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                                <h3 style="font-size: 16px; font-weight: 600; color: #1d1d1f; margin-bottom: 16px;">💼
+                                    전체 수익성 분석</h3>
+                                <div
+                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                                    <div>
+                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">총 견적금액</div>
+                                        <div id="stats-total-estimate"
+                                            style="font-size: 20px; font-weight: 600; color: #1d1d1f;">₩0</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">총 원가</div>
+                                        <div id="stats-total-cost"
+                                            style="font-size: 20px; font-weight: 600; color: #1d1d1f;">₩0</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">총 이익금</div>
+                                        <div id="stats-total-profit"
+                                            style="font-size: 20px; font-weight: 600; color: #34c759;">₩0</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">이익률</div>
+                                        <div id="stats-profit-rate"
+                                            style="font-size: 20px; font-weight: 600; color: #007aff;">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 2. 편집 정보 섹션 -->
+                        <section class="edit-history-section">
+                            <h2
+                                style="font-size: 20px; font-weight: 700; color: #1d1d1f; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                                <span>📝</span> 편집 정보
+                            </h2>
+                            <div id="edit-history-timeline"
+                                style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                                <div style="text-align: center; color: #8e8e93; padding: 40px;">
+                                    편집 이력이 없습니다.
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
                 </div>
 
@@ -11216,7 +11315,400 @@
                     renderChecklistItems();
                 }
             }
+
+            // 통계 탭 활성화 시 데이터 업데이트
+            if (tabId === 'stats') {
+                updateSettlementStats();
+                updateProfitStats();
+                updateEditHistory();
+            }
         };
+
+        // ============================================
+        // 통계 탭 관련 함수들
+        // ============================================
+
+        let processChartInstance = null; // Chart.js 인스턴스 저장
+
+        // 정산 현황 통계 업데이트
+        function updateSettlementStats() {
+            if (!currentCustomer) return;
+
+            const settlementData = currentCustomer.settlementData || [];
+            const totalContract = parseFloat(currentCustomer.totalAmount) || 0;
+
+            // 정산 완료 금액 계산 (입금완료 항목들의 합)
+            let settled = 0;
+            settlementData.forEach(item => {
+                if (item['입금여부'] === '완료' || item['입금여부'] === '입금완료') {
+                    settled += parseFloat(item['금액']) || 0;
+                }
+            });
+
+            const outstanding = totalContract - settled;
+            const rate = totalContract > 0 ? ((settled / totalContract) * 100).toFixed(1) : 0;
+
+            // UI 업데이트
+            document.getElementById('stats-total-contract').textContent = formatCurrency(totalContract);
+            document.getElementById('stats-settled').textContent = formatCurrency(settled);
+            document.getElementById('stats-outstanding').textContent = formatCurrency(outstanding);
+            document.getElementById('stats-settlement-rate').textContent = rate + '%';
+        }
+
+        // 수익성 통계 업데이트 및 차트 생성
+        function updateProfitStats() {
+            if (!currentCustomer) return;
+
+            const costData = currentCustomer.costData || [];
+            let totalEstimate = 0;
+            let totalCost = 0;
+            const processData = {};
+
+            // 공정별 데이터 집계
+            costData.forEach(item => {
+                const process = item['공정'] || '기타';
+                const estimate = parseFloat(item['견적금액']) || 0;
+                const cost = parseFloat(item['원가']) || 0;
+
+                totalEstimate += estimate;
+                totalCost += cost;
+
+                if (!processData[process]) {
+                    processData[process] = { estimate: 0, cost: 0 };
+                }
+                processData[process].estimate += estimate;
+                processData[process].cost += cost;
+            });
+
+            const totalProfit = totalEstimate - totalCost;
+            const profitRate = totalEstimate > 0 ? ((totalProfit / totalEstimate) * 100).toFixed(1) : 0;
+
+            // 수익성 요약 업데이트
+            document.getElementById('stats-total-estimate').textContent = formatCurrency(totalEstimate);
+            document.getElementById('stats-total-cost').textContent = formatCurrency(totalCost);
+            document.getElementById('stats-total-profit').textContent = formatCurrency(totalProfit);
+            document.getElementById('stats-profit-rate').textContent = profitRate + '%';
+
+            // 차트 그리기
+            drawProcessChart(processData);
+        }
+
+        // 공정별 차트 그리기 (Chart.js)
+        function drawProcessChart(processData) {
+            const canvas = document.getElementById('processChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            // 기존 차트 삭제
+            if (processChartInstance) {
+                processChartInstance.destroy();
+            }
+
+            const processes = Object.keys(processData);
+            const estimates = processes.map(p => processData[p].estimate);
+            const costs = processes.map(p => processData[p].cost);
+            const profits = processes.map((p, i) => estimates[i] - costs[i]);
+
+            processChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: processes,
+                    datasets: [
+                        {
+                            label: '견적금액',
+                            data: estimates,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '원가',
+                            data: costs,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '이익',
+                            data: profits,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return '₩' + (value / 10000).toFixed(0) + '만';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 편집 이력 업데이트
+        function updateEditHistory() {
+            const timeline = document.getElementById('edit-history-timeline');
+            if (!timeline) return;
+
+            // localStorage에서 편집 이력 가져오기
+            const history = JSON.parse(localStorage.getItem('editHistory') || '[]');
+
+            if (history.length === 0) {
+                timeline.innerHTML = '<div style="text-align: center; color: #8e8e93; padding: 40px;">편집 이력이 없습니다.</div>';
+                return;
+            }
+
+            // 최신순으로 정렬
+            history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            // 타임라인 HTML 생성
+            let html = '';
+            history.slice(0, 50).forEach(item => {
+                const date = new Date(item.timestamp);
+                const dateStr = date.toLocaleString('ko-KR');
+
+                html += `
+                    <div style="border-left: 3px solid #007aff; padding-left: 16px; margin-bottom: 20px; position: relative;">
+                        <div style="position: absolute; left: -7px; top: 5px; width: 10px; height: 10px; background: #007aff; border-radius: 50%;"></div>
+                        <div style="font-size: 12px; color: #8e8e93; margin-bottom: 4px;">${dateStr}</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #1d1d1f; margin-bottom: 4px;">
+                            👤 ${item.userName || item.userId} (${item.userId})
+                        </div>
+                        <div style="font-size: 13px; color: #1d1d1f; margin-bottom: 4px;">
+                            📄 ${item.menu} ${item.item ? '> ' + item.item : ''}
+                        </div>
+                        <div style="font-size: 13px; color: #636366;">
+                            수정: ${item.field}
+                            <span style="color: #ff3b30;">[${item.oldValue || '-'}]</span> →
+                            <span style="color: #34c759;">[${item.newValue || '-'}]</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            timeline.innerHTML = html;
+        }
+
+        // 편집 이력 저장 함수 (다른 곳에서 호출)
+        function saveEditHistory(menu, item, field, oldValue, newValue) {
+            const history = JSON.parse(localStorage.getItem('editHistory') || '[]');
+
+            const entry = {
+                timestamp: new Date().toISOString(),
+                userId: currentUser?.id || 'unknown',
+                userName: currentUser?.name || '알 수 없음',
+                menu: menu,
+                item: item,
+                field: field,
+                oldValue: oldValue,
+                newValue: newValue
+            };
+
+            history.unshift(entry);
+
+            // 최대 100개까지만 보관
+            if (history.length > 100) {
+                history.splice(100);
+            }
+
+            localStorage.setItem('editHistory', JSON.stringify(history));
+        }
+        // ==========================================
+        // 새 기능: 현재 고객 데이터 내보내기 및 통합 인쇄
+        // ==========================================
+
+        function exportCurrentCustomerData() {
+            if (!currentCustomer) {
+                showToast('선택된 고객이 없습니다.', 'error');
+                return;
+            }
+
+            // 현재 고객 객체만 추출
+            const dataToExport = {
+                customer: currentCustomer,
+                exportDate: new Date().toISOString(),
+                type: 'single_customer_export'
+            };
+
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `디자인지그_${currentCustomer.customerName || '고객'}_데이터.json`;
+            a.click();
+            showToast('현재 고객 데이터가 저장되었습니다.', 'success');
+        }
+
+        function printCurrentCustomerAll() {
+            if (!currentCustomer) {
+                showToast('선택된 고객이 없습니다.', 'error');
+                return;
+            }
+
+            // 인쇄할 섹션 정의 (사용자 요청 항목)
+            const sections = [
+                { id: 'customerInfoDoc', title: '고객 정보' },
+                { id: 'contractDoc', title: '도급계약서' },
+                { id: 'coverDoc', title: '표지계약서' },
+                { id: 'estimateDoc', title: '계약견적서' },
+                { id: 'costDoc', title: '원가관리표' },
+                { id: 'scheduleDoc', title: '공사 스케줄' },
+                { id: 'asListDoc', title: 'A/S 관리 리스트' }
+            ];
+
+            const printContainer = document.createElement('div');
+            let hasContent = false;
+
+            sections.forEach((section, index) => {
+                const originalEl = document.getElementById(section.id);
+                if (!originalEl) return;
+
+                hasContent = true;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'print-section';
+                // 마지막 페이지가 아니면 페이지 넘김
+                if (index < sections.length - 1) {
+                    wrapper.style.pageBreakAfter = 'always';
+                }
+                wrapper.style.marginBottom = '40px'; // 섹션 간 간격 (화면상에서 잘 보이게)
+
+                const clonedEl = originalEl.cloneNode(true);
+
+                // 입력 필드값을 텍스트로 변환 (원본 엘리먼트 참조하여 값 가져오기)
+                convertInputsToTextForPrint(originalEl, clonedEl);
+
+                // 불필요한 요소 제거 (버튼, no-print 클래스)
+                clonedEl.querySelectorAll('button, .no-print').forEach(el => el.remove());
+
+                wrapper.appendChild(clonedEl);
+                printContainer.appendChild(wrapper);
+            });
+
+            if (!hasContent) {
+                showToast('인쇄할 데이터가 없습니다.', 'error');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            const styles = document.head.innerHTML; // 현재 페이지의 모든 스타일 가져오기
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${currentCustomer.customerName || '고객'} - 통합 문서</title>
+                    ${styles}
+                    <style>
+                        @media print {
+                            @page { size: A4; margin: 10mm; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+                            .print-section { page-break-after: always; display: block !important; }
+                            .print-section:last-child { page-break-after: auto; }
+                            
+                            /* 숨겨진 탭 패널 강제 표시 */
+                            .tab-panel, .document-wrapper { 
+                                display: block !important; 
+                                opacity: 1 !important; 
+                                visibility: visible !important;
+                                height: auto !important;
+                                overflow: visible !important;
+                            }
+                        }
+                        
+                        body { background: white; padding: 20px; }
+                        
+                        /* 인쇄용 텍스트 스타일 */
+                        .print-text-val { 
+                            font-weight: 500; 
+                            color: #000; 
+                            display: inline-block;
+                        }
+                        
+                        /* 문서 컨테이너 스타일 리셋 (여백 등) */
+                        .document-wrapper {
+                            box-shadow: none !important;
+                            border: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                            max-width: 100% !important;
+                            width: 100% !important;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContainer.innerHTML}
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                                // window.close(); // 자동 닫기는 선택사항
+                            }, 1000); // 렌더링 대기
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // 입력 필드를 텍스트로 변환하는 헬퍼 함수
+        function convertInputsToTextForPrint(originParent, clonedParent) {
+            const originInputs = originParent.querySelectorAll('input, textarea, select');
+            const clonedInputs = clonedParent.querySelectorAll('input, textarea, select');
+
+            for (let i = 0; i < originInputs.length; i++) {
+                const origin = originInputs[i];
+                const clone = clonedInputs[i];
+                if (!clone) continue;
+
+                let val = '';
+                if (origin.tagName === 'SELECT') {
+                    if (origin.selectedIndex >= 0) val = origin.options[origin.selectedIndex].text;
+                    // '선택' 같은 건 빈칸 처리
+                    if (val.includes('선택')) val = '';
+                } else if (origin.type === 'checkbox' || origin.type === 'radio') {
+                    val = origin.checked ? '☑' : '☐';
+                } else {
+                    val = origin.value;
+                }
+
+                const span = document.createElement('span');
+                span.className = 'print-text-val';
+                span.textContent = val;
+
+                if (origin.type !== 'checkbox' && origin.type !== 'radio') {
+                    span.style.whiteSpace = 'pre-wrap';
+                } else {
+                    span.style.fontSize = '14px';
+                    span.style.marginRight = '4px';
+                }
+
+                if (clone.parentNode) {
+                    clone.parentNode.replaceChild(span, clone);
+                }
+            }
+        }
     </script>
 </body>
 
