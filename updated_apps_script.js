@@ -40,25 +40,13 @@ const SENDER_NAME = '디자인지그';
 const SENDER_EMAIL = 'designjig.office@gmail.com';
 
 // [노션 연동 설정]
-// 주의: API 키는 스크립트 속성(Project Settings > Script Properties)에 저장해야 안전합니다.
-// 아래 setupNotionProperties() 함수를 한 번 실행하여 키를 저장하세요.
-const NOTION_API_KEY = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+// 주의: 이 키는 외부로 유출되지 않도록 관리해야 합니다.
+const NOTION_API_KEY = 'ntn_j609628766730H0TC5BgKFao3ZvGG1x58BaBSDQwffd0kA'; // '구글시트' 통합 시크릿
 const NOTION_DB_IDS = {
     PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',
     SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',
     CHECKLIST: '6040d967e63e4268905739f2a8be436e'
 };
-
-/**
- * [초기 설정용] Notion API 키 저장 함수
- * 이 함수를 에디터에서 선택하고 한 번만 실행하세요.
- * 실행 후에는 이 코드를 지우거나 주석 처리해도 됩니다.
- */
-function setupNotionProperties() {
-    const key = 'ntn_j609628766730H0TC5BgKFao3ZvGG1x58BaBSDQwffd0kA'; // 여기에 키 입력
-    PropertiesService.getScriptProperties().setProperty('NOTION_API_KEY', key);
-    Logger.log('✅ Notion API Key가 스크립트 속성에 저장되었습니다.');
-}
 
 // [기본 데이터] 공사 스케줄 템플릿
 const DEFAULT_SCHEDULE_TEMPLATE = [
@@ -213,6 +201,12 @@ function doGet(e) {
             }
             return handleScheduleTemplateGet(e);
         }
+
+        // [추가] 공정별 체크리스트 요청
+        if (sheetParam === '공정별체크리스트' || sheetParam === '공정별_체크리스트' || sheetParam === '공정별 체크리스트') {
+            return handleChecklistGet(e);
+        }
+
 
         // 2.5. 샘플 견적서 조회
         if (actionParam === 'getSampleEstimates') {
@@ -2409,6 +2403,62 @@ function handleRestoreCostDatabase(payload) {
         return ContentService.createTextOutput(JSON.stringify({
             success: false,
             message: "서버 오류: " + err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// -------------------------------------------------------------
+// [추가] 공정별 체크리스트 데이터 불러오기
+// -------------------------------------------------------------
+function handleChecklistGet(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('공정별 체크리스트');
+
+        // 띄어쓰기 유연성 제공
+        if (!sheet) sheet = spreadsheet.getSheetByName('공정별체크리스트');
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                message: '공정별 체크리스트 시트를 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+        if (data.length < 2) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: true,
+                data: [],
+                count: 0
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var headers = data[0];
+        var rows = data.slice(1);
+
+        var checklistItems = rows.map(function (row) {
+            var item = {};
+            headers.forEach(function (header, index) {
+                // 시트 헤더 이름을 그대로 키값으로 사용 ('번호', '항목', '내용', '진행단계', '분류', '비고')
+                item[header] = row[index] || '';
+            });
+            return item;
+        }).filter(function (item) {
+            // 번호가 있는 행만 유효한 것으로 간주
+            return item['번호'];
+        });
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            data: checklistItems,
+            count: checklistItems.length
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            message: '체크리스트 데이터 로드 실패: ' + error.toString()
         })).setMimeType(ContentService.MimeType.JSON);
     }
 }
