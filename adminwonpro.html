@@ -3321,12 +3321,14 @@
                                 <div class="subtitle">Customer Information</div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="notion-export-btn" onclick="alert('버튼 클릭됨!'); exportToNotion('customer');"
+                                <button class="notion-export-btn"
+                                    onclick="alert('버튼 클릭됨!'); exportToNotion('customer');"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"
                                     title="노션으로 고객 정보 내보내기">
                                     📤 노션으로 내보내기
                                 </button>
-                                <button class="pdf-btn" onclick="downloadPDF('customerInfoDoc', '고객정보')">🖨️ 인쇄/PDF</button>
+                                <button class="pdf-btn" onclick="downloadPDF('customerInfoDoc', '고객정보')">🖨️
+                                    인쇄/PDF</button>
                             </div>
                         </div>
                         <div class="doc-content">
@@ -11353,7 +11355,7 @@
          * 노션으로 데이터 내보내기
          * @param {string} type - 'customer', 'schedule', 'checklist'
          */
-        window.exportToNotion = async function(type) {
+        window.exportToNotion = async function (type) {
             console.log('🚀 노션 내보내기 시작 - 타입:', type);
 
             if (!currentCustomer) {
@@ -11426,7 +11428,7 @@
                 }
 
                 console.log('📤 노션 내보내기 요청:', requestData);
-                alert('📤 Apps Script로 요청 전송 중...\nURL: ' + GOOGLE_SHEET_URL);
+                // alert('📤 Apps Script로 요청 전송 중...\nURL: ' + GOOGLE_SHEET_URL);
 
                 // data 객체를 JSON 문자열로 변환
                 const formData = new URLSearchParams();

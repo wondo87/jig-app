@@ -39,6 +39,15 @@ const ENTRY_IDS = {
 const SENDER_NAME = '디자인지그';
 const SENDER_EMAIL = 'designjig.office@gmail.com';
 
+// [노션 연동 설정]
+// 주의: 이 키는 외부로 유출되지 않도록 관리해야 합니다.
+const NOTION_API_KEY = 'ntn_j609628766730H0TC5BgKFao3ZvGG1x58BaBSDQwffd0kA'; // '구글시트' 통합 시크릿
+const NOTION_DB_IDS = {
+    PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',
+    SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',
+    CHECKLIST: '6040d967e63e4268905739f2a8be436e'
+};
+
 // [기본 데이터] 공사 스케줄 템플릿
 const DEFAULT_SCHEDULE_TEMPLATE = [
     ['01. 기획·준비', '현장 실측 및 디자인 상담', '디자인 컨셉 확정 여부', '', '', '디자인팀', ''],
@@ -136,7 +145,12 @@ function doPost(e) {
             return handleCustomerSync(payload);
         }
 
-        // 3. 그 외에는 상담 문의 접수로 간주
+        // 3. 노션 내보내기 요청
+        if (payload.action === 'exportToNotion') {
+            return handleNotionExport(payload);
+        }
+
+        // 4. 그 외에는 상담 문의 접수로 간주
         // -> 상담 접수 로직 실행
         return handleConsultingInquiry(payload);
 
@@ -370,6 +384,247 @@ function handleScheduleTemplateGet(e) {
         steps: steps,
         notices: notices
     })).setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ==========================================
+// 2.5 Notion Integration Logic
+// ==========================================
+
+function handleNotionExport(payload) {
+    try {
+        const type = payload.type;
+        const customerId = payload.customerId;
+        const data = typeof payload.data === 'string' ? JSON.parse(payload.data) : payload.data;
+
+        let result;
+
+        if (type === 'customer') {
+            result = exportCustomerToNotion(customerId, data);
+        } else if (type === 'schedule') {
+            result = exportScheduleToNotion(customerId, data);
+        } else if (type === 'checklist') {
+            result = exportChecklistToNotion(customerId, data);
+        } else {
+            throw new Error('지원하지 않는 내보내기 유형입니다: ' + type);
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            notionUrl: result.url,
+            message: '성공적으로 내보냈습니다.'
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (e) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            message: e.toString(),
+            stack: e.stack
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// Notion API 호출 헬퍼
+function callNotionAPI(endpoint, method, payload) {
+    const url = 'https://api.notion.com/v1' + endpoint;
+    const options = {
+        method: method,
+        headers: {
+            'Authorization': 'Bearer ' + NOTION_API_KEY,
+            'Content-Type': 'application/json',
+            'Notion-Version': '2022-06-28'
+        },
+        payload: payload ? JSON.stringify(payload) : null,
+        muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    const responseBody = response.getContentText();
+
+    if (responseCode >= 400) {
+        throw new Error('Notion API Error (' + responseCode + '): ' + responseBody);
+    }
+
+    return JSON.parse(responseBody);
+}
+
+// 1. 고객 정보 내보내기
+function exportCustomerToNotion(customerId, data) {
+    // 1. 기존 페이지 검색 (Customer ID 기준)
+    const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.PROJECTS + '/query', 'POST', {
+        filter: {
+            property: '고객ID', // 노션 DB에 '고객ID' 속성이 있어야 함. 없으면 '이름'으로 대체 가능
+            rich_text: {
+                equals: customerId
+            }
+        }
+    });
+
+    let pageId;
+    let notionUrl;
+
+    const properties = {
+        '이름': { title: [{ text: { content: data['고객명'] || '제목 없음' } }] },
+        '현장주소': { rich_text: [{ text: { content: data['현장주소'] || '' } }] },
+        '연락처': { phone_number: data['연락처'] || null },
+        '이메일': { email: data['이메일'] || null },
+        '평형': { number: parseFloat(data['평형']) || null },
+        '공사기간': { rich_text: [{ text: { content: data['공사기간'] || '' } }] },
+        '고객ID': { rich_text: [{ text: { content: customerId } }] } // 식별자
+    };
+
+    if (searchResponse.results.length > 0) {
+        // 업데이트
+        pageId = searchResponse.results[0].id;
+        notionUrl = searchResponse.results[0].url;
+        callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
+    } else {
+        // 생성
+        const createResponse = callNotionAPI('/pages', 'POST', {
+            parent: { database_id: NOTION_DB_IDS.PROJECTS },
+            properties: properties
+        });
+        pageId = createResponse.id;
+        notionUrl = createResponse.url;
+    }
+
+    return { url: notionUrl };
+}
+
+// 2. 스케줄 내보내기
+function exportScheduleToNotion(customerId, data) {
+    // 고객 페이지 찾기 (없으면 생성)
+    const customerResult = exportCustomerToNotion(customerId, { '고객명': data.고객명 });
+    // 여기서 반환된 url은 페이지 URL임. page ID를 다시 추출하거나 exportCustomerToNotion을 수정해서 ID도 반환하게 하면 좋음.
+    // 편의상 새 페이지를 생성해서 스케줄 목록을 넣음.
+
+    // 단순하게: 새로운 페이지를 생성하거나 내용을 추가함.
+    // 여기서는 '공사스케줄' 데이터베이스에 아이템을 추가하는 방식으로 구현
+
+    // 1. 기존 스케줄 검색 (고객ID 기준)
+    const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.SCHEDULE + '/query', 'POST', {
+        filter: {
+            property: '고객ID',
+            rich_text: { equals: customerId }
+        }
+    });
+
+    // 기존 스케줄이 있으면 삭제하고 다시 만드는게 깔끔할 수 있음 (또는 업데이트)
+    // 여기서는 간단히 '고객명 - 공사 스케줄' 제목으로 페이지 하나 생성/업데이트
+
+    let pageId;
+    let notionUrl;
+
+    const title = (data.고객명 || '고객') + ' - 공사 스케줄';
+
+    const properties = {
+        '이름': { title: [{ text: { content: title } }] },
+        '고객ID': { rich_text: [{ text: { content: customerId } }] },
+        '현장': { rich_text: [{ text: { content: data.현장주소 || '' } }] }
+    };
+
+    // 스케줄 내용 (블록) 구성
+    const children = [
+        {
+            object: 'block',
+            type: 'heading_2',
+            heading_2: { rich_text: [{ text: { content: '공사 일정표' } }] }
+        }
+    ];
+
+    if (data.공정목록 && Array.isArray(data.공정목록)) {
+        data.공정목록.forEach(item => {
+            children.push({
+                object: 'block',
+                type: 'to_do',
+                to_do: {
+                    rich_text: [{
+                        text: { content: `[${item.공정}] ${item.시작일} ~ ${item.종료일} (${item.담당자})` }
+                    }],
+                    checked: item.상태 === '완료'
+                }
+            });
+        });
+    }
+
+    if (searchResponse.results.length > 0) {
+        // 업데이트: 기존 블록을 다 지우는건 복잡하므로, 속성만 업데이트하고 내용은 추가
+        pageId = searchResponse.results[0].id;
+        notionUrl = searchResponse.results[0].url;
+        callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
+        callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: children });
+    } else {
+        // 생성
+        const createResponse = callNotionAPI('/pages', 'POST', {
+            parent: { database_id: NOTION_DB_IDS.SCHEDULE },
+            properties: properties,
+            children: children
+        });
+        notionUrl = createResponse.url;
+    }
+
+    return { url: notionUrl };
+}
+
+// 3. 체크리스트 내보내기
+function exportChecklistToNotion(customerId, data) {
+    const title = (data.고객명 || '고객') + ' - 공정별 체크리스트';
+
+    const properties = {
+        '이름': { title: [{ text: { content: title } }] },
+        '고객ID': { rich_text: [{ text: { content: customerId } }] },
+        '현장': { rich_text: [{ text: { content: data.현장주소 || '' } }] },
+        '진행율': { number: data.완료항목수 / data.전체항목수 || 0 }
+    };
+
+    const children = [
+        {
+            object: 'block',
+            type: 'heading_2',
+            heading_2: { rich_text: [{ text: { content: '현장 체크리스트' } }] }
+        },
+        {
+            object: 'block',
+            type: 'paragraph',
+            paragraph: { rich_text: [{ text: { content: `총 ${data.전체항목수}개 중 ${data.완료항목수}개 완료` } }] }
+        }
+    ];
+
+    if (data.체크리스트 && Array.isArray(data.체크리스트)) {
+        data.체크리스트.forEach(item => {
+            children.push({
+                object: 'block',
+                type: 'to_do',
+                to_do: {
+                    rich_text: [{ text: { content: `[${item.분류}] ${item.항목}: ${item.내용}` } }],
+                    checked: true // 이미 완료된 항목만 넘어옴 (프론트 로직상)
+                }
+            });
+        });
+    }
+
+    // DB 검색 및 생성/업데이트
+    const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.CHECKLIST + '/query', 'POST', {
+        filter: { property: '고객ID', rich_text: { equals: customerId } }
+    });
+
+    let notionUrl;
+    if (searchResponse.results.length > 0) {
+        const pageId = searchResponse.results[0].id;
+        notionUrl = searchResponse.results[0].url;
+        callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
+        callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: children });
+    } else {
+        const createResponse = callNotionAPI('/pages', 'POST', {
+            parent: { database_id: NOTION_DB_IDS.CHECKLIST },
+            properties: properties,
+            children: children
+        });
+        notionUrl = createResponse.url;
+    }
+
+    return { url: notionUrl };
 }
 
 // [트리거] onEdit (단순 트리거)
