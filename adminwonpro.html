@@ -43,8 +43,8 @@
             background: #f5f5f7;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
-            /* 고정 헤더 높이만큼 상단 여백 추가. 헤더 높이(약 60px) + 여유 */
-            padding-top: 60px;
+            /* 고정 헤더 높이만큼 상단 여백 추가. 헤더 높이(약 56px) + 여유 */
+            padding-top: 56px;
         }
 
         /* 글씨 크기 조절 UI */
@@ -495,6 +495,9 @@
             border-right: 1px solid #e8e8ed;
             display: flex;
             flex-direction: column;
+            position: sticky;
+            top: 56px;
+            height: calc(100vh - 56px);
         }
 
         .sidebar-header {
@@ -692,18 +695,28 @@
         /* 메인 컨텐츠 */
         .main-content {
             flex: 1;
-            overflow-y: auto;
+            overflow: visible !important;
+            /* Sticky 동작을 위해 필수 */
             background: #f5f5f7;
+        }
+
+        #mainContent {
+            overflow: visible !important;
         }
 
         /* 고객 상세 헤더 */
         .customer-header-bar {
             background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%);
             color: #fff;
-            padding: 20px 28px;
+            padding: 10px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            /* 헤더 고정 (Sticky) */
+            position: sticky;
+            top: 56px;
+            /* 메인 헤더 높이만큼 띄움. 조금 겹쳐 보이거나 간격 조정 필요시 숫자 변경 */
+            z-index: 99;
         }
 
         .customer-header-left h2 {
@@ -6799,20 +6812,24 @@
         let AS_DB = [];
 
         function fetchASListDB() {
-            if (AS_DB.length > 0) return; // Already loaded
+            if (AS_DB && AS_DB.length > 0) return; // Already loaded
 
             fetch(CUSTOMER_SYNC_URL + '?sheet=as_list')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.result === 'success') {
+                    if (data.result === 'success' && Array.isArray(data.items)) {
                         AS_DB = data.items;
                         console.log('✅ A/S DB Loaded:', AS_DB.length + ' items');
                         renderASListTable(); // Re-render if table is open
                     } else {
-                        console.error('❌ Failed to load A/S DB:', data.message);
+                        console.error('❌ Failed to load A/S DB or invalid format:', data);
+                        AS_DB = []; // Ensure it remains an array
                     }
                 })
-                .catch(err => console.error('❌ Error fetching A/S DB:', err));
+                .catch(err => {
+                    console.error('❌ Error fetching A/S DB:', err);
+                    AS_DB = []; // Ensure it remains an array on error
+                });
         }
 
         function renderASListTable() {
@@ -7746,7 +7763,7 @@
             loadEstimateData();
             settlementRows = currentData.settlementRows || [];
             renderSettlementTable();
-            updateCustomerList();
+            updateCustomerList(false); // Do not reset page
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
 
@@ -11529,14 +11546,14 @@
         // ==========================================
 
         function exportCurrentCustomerData() {
-            if (!currentCustomer) {
+            if (!currentData || !currentData.customerId) {
                 showToast('선택된 고객이 없습니다.', 'error');
                 return;
             }
 
             // 현재 고객 객체만 추출
             const dataToExport = {
-                customer: currentCustomer,
+                customer: currentData,
                 exportDate: new Date().toISOString(),
                 type: 'single_customer_export'
             };
@@ -11544,13 +11561,13 @@
             const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `디자인지그_${currentCustomer.customerName || '고객'}_데이터.json`;
+            a.download = `디자인지그_${currentData.customerName || '고객'}_데이터.json`;
             a.click();
             showToast('현재 고객 데이터가 저장되었습니다.', 'success');
         }
 
         function printCurrentCustomerAll() {
-            if (!currentCustomer) {
+            if (!currentData || !currentData.customerId) {
                 showToast('선택된 고객이 없습니다.', 'error');
                 return;
             }
@@ -11607,7 +11624,7 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>${currentCustomer.customerName || '고객'} - 통합 문서</title>
+                    <title>${currentData.customerName || '고객'} - 통합 문서</title>
                     <style>
                         @media print {
                             @page { size: A4; margin: 10mm; }
