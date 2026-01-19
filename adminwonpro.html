@@ -66,6 +66,7 @@
             width: 80px;
             height: 4px;
             -webkit-appearance: none;
+            appearance: none;
             background: rgba(255, 255, 255, 0.3);
             border-radius: 2px;
             cursor: pointer;
@@ -1392,12 +1393,6 @@
             font-size: var(--font-size-sm);
         }
 
-        .data-table .col-div {}
-
-        .data-table .col-name {}
-
-        .data-table .col-spec {}
-
         .data-table .col-unit {
             text-align: center;
         }
@@ -1486,7 +1481,7 @@
             padding-right: 6px;
         }
 
-        .data-table .col-note {}
+
 
         .data-table .col-price {
             width: 85px;
@@ -2583,6 +2578,7 @@
                 font-size: 11px !important;
                 zoom: 0.75;
                 -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .main-layout {
@@ -2619,6 +2615,7 @@
                 background-color: #0071e3 !important;
                 /* 배경색 강제 적용 */
                 -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
                 color: white !important;
             }
 
@@ -3861,20 +3858,26 @@
                         </div>
                         <div class="doc-content" style="padding:30px;">
                             <!-- 진행 상황 요약 -->
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
-                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 10px; color: white;">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+                                <div
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 10px; color: white;">
                                     <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">전체 항목</div>
                                     <div style="font-size: 24px; font-weight: 700;" id="checklistTotalCount">0</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #34c759 0%, #28a745 100%); padding: 16px; border-radius: 10px; color: white;">
+                                <div
+                                    style="background: linear-gradient(135deg, #34c759 0%, #28a745 100%); padding: 16px; border-radius: 10px; color: white;">
                                     <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">완료</div>
                                     <div style="font-size: 24px; font-weight: 700;" id="checklistCompletedCount">0</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%); padding: 16px; border-radius: 10px; color: white;">
+                                <div
+                                    style="background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%); padding: 16px; border-radius: 10px; color: white;">
                                     <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">진행 중</div>
-                                    <div style="font-size: 24px; font-weight: 700;" id="checklistInProgressCount">0</div>
+                                    <div style="font-size: 24px; font-weight: 700;" id="checklistInProgressCount">0
+                                    </div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); padding: 16px; border-radius: 10px; color: white;">
+                                <div
+                                    style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); padding: 16px; border-radius: 10px; color: white;">
                                     <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">진행률</div>
                                     <div style="font-size: 24px; font-weight: 700;" id="checklistProgressRate">0%</div>
                                 </div>
@@ -3883,21 +3886,26 @@
                             <!-- 체크리스트 필터 -->
                             <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 200px;">
-                                    <label style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계 필터</label>
+                                    <label
+                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계
+                                        필터</label>
                                     <select id="checklistStageFilter" onchange="renderChecklistItems()"
                                         style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
                                         <option value="all">전체 보기</option>
                                     </select>
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
-                                    <label style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">분류 필터</label>
+                                    <label
+                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">분류
+                                        필터</label>
                                     <select id="checklistCategoryFilter" onchange="renderChecklistItems()"
                                         style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
                                         <option value="all">전체 보기</option>
                                     </select>
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
-                                    <label style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">검색</label>
+                                    <label
+                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">검색</label>
                                     <input type="text" id="checklistSearchInput" oninput="renderChecklistItems()"
                                         placeholder="항목, 내용, 비고로 검색..."
                                         style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
@@ -3909,13 +3917,26 @@
                                 <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                                     <thead>
                                         <tr style="background: #f5f5f7;">
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">체크</th>
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">번호</th>
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">항목</th>
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">내용</th>
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">비고</th>
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">진행단계</th>
-                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">분류</th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">
+                                                체크</th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">
+                                                번호</th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">
+                                                항목</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">내용
+                                            </th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">
+                                                비고</th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">
+                                                진행단계</th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">
+                                                분류</th>
                                         </tr>
                                     </thead>
                                     <tbody id="checklistTableBody">
@@ -11184,7 +11205,7 @@
 
         // 체크리스트 탭 열릴 때 자동으로 렌더링
         const originalShowCustomerTab = showCustomerTab;
-        showCustomerTab = function(tabId) {
+        showCustomerTab = function (tabId) {
             originalShowCustomerTab(tabId);
 
             if (tabId === 'checklist') {
