@@ -3283,6 +3283,8 @@
                         A/S 관리 리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('settlement')" data-tab="settlement">💰
                         정산 관리 대장</button>
+                    <button class="customer-tab" onclick="showCustomerTab('checklist')" data-tab="checklist">✅
+                        공정별 체크리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats"
                         data-main-only="true">📈 통계</button>
                 </div>
@@ -3829,6 +3831,102 @@
                         </div>
                         <div class="stat-card"><label>이익률</label>
                             <div class="value" id="statsRate">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 공정별 체크리스트 패널 -->
+                <div class="tab-panel" id="panel-checklist">
+                    <div class="document-wrapper"
+                        style="width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                        <div class="doc-header">
+                            <div>
+                                <div
+                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
+                                    DESIGN JIG</div>
+                                <h1>✅ 공정별 체크리스트</h1>
+                                <div class="subtitle">Process Checklist</div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="sync-btn no-print" onclick="syncChecklistFromCloud()"
+                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="구글 시트에서 체크리스트 불러오기">
+                                    <span style="margin-right: 4px;">↻</span>
+                                    <span>체크리스트 동기화</span>
+                                </button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="printChecklist()"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
+                                    인쇄/PDF</button>
+                            </div>
+                        </div>
+                        <div class="doc-content" style="padding:30px;">
+                            <!-- 진행 상황 요약 -->
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 10px; color: white;">
+                                    <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">전체 항목</div>
+                                    <div style="font-size: 24px; font-weight: 700;" id="checklistTotalCount">0</div>
+                                </div>
+                                <div style="background: linear-gradient(135deg, #34c759 0%, #28a745 100%); padding: 16px; border-radius: 10px; color: white;">
+                                    <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">완료</div>
+                                    <div style="font-size: 24px; font-weight: 700;" id="checklistCompletedCount">0</div>
+                                </div>
+                                <div style="background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%); padding: 16px; border-radius: 10px; color: white;">
+                                    <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">진행 중</div>
+                                    <div style="font-size: 24px; font-weight: 700;" id="checklistInProgressCount">0</div>
+                                </div>
+                                <div style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); padding: 16px; border-radius: 10px; color: white;">
+                                    <div style="font-size: 11px; opacity: 0.9; margin-bottom: 4px;">진행률</div>
+                                    <div style="font-size: 24px; font-weight: 700;" id="checklistProgressRate">0%</div>
+                                </div>
+                            </div>
+
+                            <!-- 체크리스트 필터 -->
+                            <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <label style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계 필터</label>
+                                    <select id="checklistStageFilter" onchange="renderChecklistItems()"
+                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
+                                        <option value="all">전체 보기</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1; min-width: 200px;">
+                                    <label style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">분류 필터</label>
+                                    <select id="checklistCategoryFilter" onchange="renderChecklistItems()"
+                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
+                                        <option value="all">전체 보기</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1; min-width: 200px;">
+                                    <label style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">검색</label>
+                                    <input type="text" id="checklistSearchInput" oninput="renderChecklistItems()"
+                                        placeholder="항목, 내용, 비고로 검색..."
+                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
+                                </div>
+                            </div>
+
+                            <!-- 체크리스트 테이블 -->
+                            <div id="checklistTableContainer" style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                    <thead>
+                                        <tr style="background: #f5f5f7;">
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">체크</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">번호</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">항목</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">내용</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">비고</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">진행단계</th>
+                                            <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">분류</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="checklistTableBody">
+                                        <tr>
+                                            <td colspan="7" style="text-align: center; padding: 40px; color: #86868b;">
+                                                동기화 버튼을 클릭하여 체크리스트를 불러오세요.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -10896,6 +10994,210 @@
         </div>
     </div>
 
+    <script>
+        // ============================
+        // 공정별 체크리스트 기능
+        // ============================
+        // 체크리스트는 CUSTOMER_SYNC_URL 사용
+        let checklistMasterData = []; // 구글 시트에서 불러온 마스터 데이터
+
+        // 구글 시트에서 체크리스트 불러오기
+        async function syncChecklistFromCloud() {
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span>⏳ 불러오는 중...</span>';
+            btn.disabled = true;
+
+            try {
+                const params = new URLSearchParams({ sheet: '공정별체크리스트' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+                const result = await response.json();
+
+                console.log('🔍 API 응답:', result);
+
+                // 응답 형식 처리: 배열 또는 객체
+                if (Array.isArray(result)) {
+                    // 배열 형식 응답
+                    checklistMasterData = result;
+                } else if (result.success && result.data) {
+                    // 객체 형식 응답 { success: true, data: [...] }
+                    checklistMasterData = result.data;
+                } else if (result.result === 'success' && result.items) {
+                    // 다른 형식 { result: "success", items: [...] }
+                    checklistMasterData = result.items;
+                } else {
+                    throw new Error(result.message || '데이터를 불러올 수 없습니다');
+                }
+
+                console.log('✅ 체크리스트 데이터 로드 완료:', checklistMasterData.length + '개 항목');
+
+                // 필터 옵션 업데이트
+                updateChecklistFilters();
+
+                // 테이블 렌더링
+                renderChecklistItems();
+
+                showToast('체크리스트를 불러왔습니다!', 'success');
+            } catch (error) {
+                console.error('❌ 체크리스트 로드 실패:', error);
+                showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        // 필터 옵션 업데이트
+        function updateChecklistFilters() {
+            if (!checklistMasterData || checklistMasterData.length === 0) return;
+
+            // 진행단계 옵션
+            const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))];
+            const stageFilter = document.getElementById('checklistStageFilter');
+            stageFilter.innerHTML = '<option value="all">전체 보기</option>' +
+                stages.map(stage => `<option value="${stage}">${stage}</option>`).join('');
+
+            // 분류 옵션
+            const categories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))];
+            const categoryFilter = document.getElementById('checklistCategoryFilter');
+            categoryFilter.innerHTML = '<option value="all">전체 보기</option>' +
+                categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        // 체크리스트 아이템 렌더링
+        function renderChecklistItems() {
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                document.getElementById('checklistTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #86868b;">
+                            동기화 버튼을 클릭하여 체크리스트를 불러오세요.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            // 현재 고객의 체크 상태 가져오기
+            const customerChecklistData = getCurrentCustomerChecklistData();
+
+            // 필터 적용
+            const stageFilter = document.getElementById('checklistStageFilter').value;
+            const categoryFilter = document.getElementById('checklistCategoryFilter').value;
+            const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
+
+            let filteredData = checklistMasterData.filter(item => {
+                if (stageFilter !== 'all' && item.진행단계 !== stageFilter) return false;
+                if (categoryFilter !== 'all' && item.분류 !== categoryFilter) return false;
+                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
+                return true;
+            });
+
+            // 테이블 렌더링
+            const tbody = document.getElementById('checklistTableBody');
+            tbody.innerHTML = filteredData.map((item, index) => {
+                const isChecked = customerChecklistData[item.번호] || false;
+                return `
+                    <tr style="background: ${isChecked ? '#f0f9ff' : 'white'};">
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
+                            <input type="checkbox"
+                                   ${isChecked ? 'checked' : ''}
+                                   onchange="toggleChecklistItem(${item.번호})"
+                                   style="width: 18px; height: 18px; cursor: pointer;">
+                        </td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">${item.번호}</td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.항목 || ''}</td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.내용 || ''}</td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.비고 || ''}</td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
+                            <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                ${item.진행단계 || ''}
+                            </span>
+                        </td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
+                            <span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                ${item.분류 || ''}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // 통계 업데이트
+            updateChecklistStats();
+        }
+
+        // 현재 고객의 체크리스트 데이터 가져오기
+        function getCurrentCustomerChecklistData() {
+            if (!currentCustomerId) return {};
+
+            const customer = customers.find(c => c.customerId === currentCustomerId);
+            if (!customer) return {};
+
+            return customer.checklistData || {};
+        }
+
+        // 체크리스트 아이템 토글
+        function toggleChecklistItem(itemNumber) {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
+
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex === -1) return;
+
+            // checklistData 초기화
+            if (!customers[customerIndex].checklistData) {
+                customers[customerIndex].checklistData = {};
+            }
+
+            // 체크 상태 토글
+            const currentState = customers[customerIndex].checklistData[itemNumber] || false;
+            customers[customerIndex].checklistData[itemNumber] = !currentState;
+
+            // 저장
+            saveCustomers();
+
+            // 다시 렌더링
+            renderChecklistItems();
+
+            showToast(currentState ? '체크 해제되었습니다' : '체크되었습니다', 'success');
+        }
+
+        // 체크리스트 통계 업데이트
+        function updateChecklistStats() {
+            const total = checklistMasterData.length;
+            const customerChecklistData = getCurrentCustomerChecklistData();
+            const completed = Object.values(customerChecklistData).filter(v => v === true).length;
+            const inProgress = total - completed;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('checklistTotalCount').textContent = total;
+            document.getElementById('checklistCompletedCount').textContent = completed;
+            document.getElementById('checklistInProgressCount').textContent = inProgress;
+            document.getElementById('checklistProgressRate').textContent = rate + '%';
+        }
+
+        // 체크리스트 인쇄
+        function printChecklist() {
+            window.print();
+        }
+
+        // 체크리스트 탭 열릴 때 자동으로 렌더링
+        const originalShowCustomerTab = showCustomerTab;
+        showCustomerTab = function(tabId) {
+            originalShowCustomerTab(tabId);
+
+            if (tabId === 'checklist') {
+                // 마스터 데이터가 없으면 불러오기
+                if (checklistMasterData.length === 0) {
+                    // 자동으로 불러오지 않고 사용자가 버튼을 클릭하도록 유도
+                    updateChecklistStats();
+                } else {
+                    renderChecklistItems();
+                }
+            }
+        };
+    </script>
 </body>
 
 </html>
