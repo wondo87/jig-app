@@ -115,6 +115,11 @@ function doPost(e) {
             return handleCostUpdate(payload);
         }
 
+        // 1.2. 정산 관리 대장 업데이트 요청 [신규]
+        if (payload.action === 'updateSettlement') {
+            return handleSettlementUpdate(payload);
+        }
+
         // 1.5. 샘플 견적서 처리
         if (payload.action === 'saveSampleEstimate') {
             return handleSaveSampleEstimate(payload);
@@ -165,6 +170,11 @@ function doGet(e) {
             return handleCostGet(e);
         }
 
+        // 1.5 정산 관리 대장 데이터 요청 [추가]
+        if (sheetParam === 'settlement' || sheetParam === '정산관리대장' || sheetParam === '정산 관리 대장') {
+            return handleSettlementGet(e);
+        }
+
         // 2. 고객관리/관리자 데이터 요청인 경우 (파라미터가 명시적인 경우)
         if (sheetParam === '관리자' || sheetParam === '고객관리' || sheetParam === '고객관리_견적서' || sheetParam === '계약완료고객' || sheetParam === '계약완료') {
             return handleCustomerGet(e);
@@ -202,6 +212,140 @@ function doGet(e) {
     } catch (err) {
         return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
             .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// ... (existing code) ...
+
+// ==========================================
+// 12. 정산 관리 대장 (Settlement Management) [신규]
+// ==========================================
+
+const SETTLEMENT_SHEET_NAME = '정산 관리 대장';
+
+/**
+ * 정산 관리 대장 업데이트 (POST)
+ * 특정 고객의 정산 내역을 갱신합니다. (기존 내역 삭제 후 재작성)
+ */
+function handleSettlementUpdate(payload) {
+    try {
+        var customerId = payload.customerId;
+        var customerName = payload.customerName;
+        var rowsData = payload.rows || []; // [{date, type, item, amount, client, note}, ...]
+
+        if (!customerId) throw new Error('Customer ID is missing');
+
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SETTLEMENT_SHEET_NAME);
+
+        // 시트가 없으면 생성
+        if (!sheet) {
+            sheet = spreadsheet.insertSheet(SETTLEMENT_SHEET_NAME);
+            sheet.setFrozenRows(1);
+        }
+
+        // [수정] 헤더 강제 업데이트 (잘못된 헤더가 있을 경우를 대비해 항상 올바른 헤더로 덮어쓰기)
+        // 다른 섹션(고객관리 등)과 동일하게 'Customer ID'와 '고객명'을 맨 앞에 배치
+        var headers = ['Customer ID', '고객명', '날짜', '구분', '항목', '금액', '거래처', '연동시트', '연동내용', '비고', '업데이트일시'];
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        sheet.getRange(1, 1, 1, headers.length).setBackground('#fff2cc').setFontWeight('bold');
+
+        // 1. 기존 해당 고객 데이터 삭제
+        // 역순으로 순회하며 삭제해야 인덱스 문제가 없음
+        var lastRow = sheet.getLastRow();
+        if (lastRow > 1) {
+            var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues(); // A열만 읽음 (ID 확인용)
+            for (var i = data.length - 1; i >= 0; i--) {
+                if (data[i][0] == customerId) {
+                    sheet.deleteRow(i + 2); // 2행부터 시작하므로 +2
+                }
+            }
+        }
+
+        // 2. 새 데이터 추가
+        if (rowsData.length > 0) {
+            var newRows = rowsData.map(function (row) {
+                return [
+                    customerId,
+                    customerName,
+                    row.date || '',
+                    row.type || '',
+                    row.item || '',
+                    row.amount || 0,
+                    row.client || '',
+                    row.linkedSheet || '',
+                    row.linkedContent || '',
+                    row.note || '',
+                    new Date().toLocaleString('ko-KR')
+                ];
+            });
+
+            // 한 번에 쓰기
+            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 11).setValues(newRows);
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            count: rowsData.length
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'error',
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 정산 관리 대장 조회 (GET)
+ * 특정 고객의 정산 내역을 가져옵니다.
+ */
+function handleSettlementGet(e) {
+    try {
+        var customerId = e.parameter.customerId;
+        if (!customerId) throw new Error('Customer ID is required');
+
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SETTLEMENT_SHEET_NAME);
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                result: 'success',
+                rows: [] // 시트가 없으면 데이터 없는 것으로 처리
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var resultRows = [];
+
+        // 1행은 헤더
+        for (var i = 1; i < data.length; i++) {
+            // A열(Index 0)이 Customer ID
+            if (data[i][0] == customerId) {
+                resultRows.push({
+                    date: data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], Session.getScriptTimeZone(), 'yyyy-MM-dd') : data[i][2],
+                    type: data[i][3],
+                    item: data[i][4],
+                    amount: data[i][5],
+                    client: data[i][6],
+                    linkedSheet: data[i][7] || '',
+                    linkedContent: data[i][8] || '',
+                    note: data[i][9]
+                });
+            }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            rows: resultRows
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'error',
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 }
 

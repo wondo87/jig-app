@@ -3277,12 +3277,14 @@
                     <button class="customer-tab" onclick="showCustomerTab('estimate')" data-tab="estimate">📝
                         계약견적서</button>
                     <button class="customer-tab" onclick="showCustomerTab('cost')" data-tab="cost">💰 원가관리표</button>
-                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats"
-                        data-main-only="true">📈 통계</button>
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
                         스케줄</button>
                     <button class="customer-tab" onclick="showCustomerTab('as_list')" data-tab="as_list">🛠️
                         A/S 관리 리스트</button>
+                    <button class="customer-tab" onclick="showCustomerTab('settlement')" data-tab="settlement">💰
+                        정산 관리 대장</button>
+                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats"
+                        data-main-only="true">📈 통계</button>
                 </div>
 
                 <!-- 고객정보 패널 -->
@@ -4129,8 +4131,97 @@
                     </div>
                 </div>
             </div>
+            <!-- [신규] 정산 관리 대장 -->
+            <div class="tab-panel" id="panel-settlement" style="height: 100%; overflow-y: auto;">
+                <div class="document-wrapper"
+                    style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                    <div class="doc-header">
+                        <div>
+                            <div
+                                style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
+                                DESIGN
+                                JIG</div>
+                            <h1>💰 정산 관리 대장</h1>
+                            <div class="subtitle">Settlement Management Ledger</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="sync-btn no-print" id="btnLoadSettlement" onclick="syncSettlementFromCloud()"
+                                style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
+                            <button class="sync-btn no-print" id="btnSaveSettlement" onclick="syncSettlementToCloud()"
+                                style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                title="Google Sheets에 저장하기">☁️↑ 저장하기</button>
+                        </div>
+                    </div>
+
+                    <!-- 합계 요약 영역 -->
+                    <div
+                        style="background:#f9f9f9; padding:16px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-around; align-items:center;">
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; color:#666; margin-bottom:4px;">총 입금액(매출)</div>
+                            <div style="font-size:16px; font-weight:700; color:#0071e3;" id="settlementTotalIncome">0
+                            </div>
+                        </div>
+                        <div style="width:1px; height:30px; background:#ddd;"></div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; color:#666; margin-bottom:4px;">총 지출액</div>
+                            <div style="font-size:16px; font-weight:700; color:#ff3b30;" id="settlementTotalExpense">0
+                            </div>
+                        </div>
+                        <div style="width:1px; height:30px; background:#ddd;"></div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; color:#666; margin-bottom:4px;">수익금</div>
+                            <div style="font-size:16px; font-weight:700; color:#34c759;" id="settlementProfit">0</div>
+                        </div>
+                        <div style="width:1px; height:30px; background:#ddd;"></div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; color:#666; margin-bottom:4px;">수익률</div>
+                            <div style="font-size:16px; font-weight:700; color:#333;" id="settlementProfitRate">0%</div>
+                        </div>
+                    </div>
+
+                    <div style="padding:20px;">
+                        <table class="data-table" style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#f5f5f7;">
+                                    <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">No</th>
+                                    <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">날짜</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">구분</th>
+                                    <th style="padding:12px; border:1px solid #d2d2d7;">내역</th>
+                                    <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">금액</th>
+                                    <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">거래처</th>
+                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">연동시트</th>
+                                    <th style="padding:12px; border:1px solid #d2d2d7;">연동내용</th>
+                                    <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settlementTableBody">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                        <button onclick="addSettlementRow()" class="no-print"
+                            style="width:100%; padding:15px; margin-top:10px; border:1px dashed #d2d2d7; background:#fafafa; color:#86868b; font-size:13px; cursor:pointer; border-radius:6px; transition: all 0.2s;">
+                            + 항목 추가
+                        </button>
+                        <datalist id="settlementItemOptions">
+                            <option value="계약금"></option>
+                            <option value="착수금"></option>
+                            <option value="중도금"></option>
+                            <option value="잔금"></option>
+                            <option value="자재비"></option>
+                            <option value="인건비"></option>
+                            <option value="철거비"></option>
+                            <option value="폐기물처리비"></option>
+                            <option value="식대"></option>
+                            <option value="경비"></option>
+                            <option value="기타"></option>
+                        </datalist>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
 
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
@@ -6834,7 +6925,239 @@
             }
         }
 
-        // syncScheduleToNotion 함수 제거됨 (Notion 통합 제거)
+        // ============================
+        // [신규] 정산 관리 대장 (Settlement Management)
+        // ============================
+        let settlementRows = [];
+
+        function formatNumberInput(input) {
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                input.value = Number(value).toLocaleString();
+            }
+        }
+
+        function renderSettlementTable() {
+            const tbody = document.getElementById('settlementTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            settlementRows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+
+                // 금액 계산 (콤마 제거 후 정수 변환)
+                const amount = parseInt(String(row.amount || '0').replace(/,/g, ''), 10) || 0;
+
+                // 구분(type)에 따라 합계 집계
+                if (row.type === '매출' || row.type === '입금') {
+                    totalIncome += amount;
+                } else if (row.type && row.type !== '선택') {
+                    totalExpense += amount;
+                }
+
+                tr.innerHTML = `
+                    <td style="padding:5px; text-align:center; border:1px solid #d2d2d7;">
+                        <button onclick="removeSettlementRow(${index})" style="background:none; border:none; color:#ff3b30; cursor:pointer; font-size:16px;">➖</button>
+                        ${index + 1}
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="date" value="${row.date || ''}" 
+                            onchange="updateSettlementRow(${index}, 'date', this.value)"
+                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:center;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <select onchange="updateSettlementRow(${index}, 'type', this.value)"
+                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:center;">
+                            <option value="">선택</option>
+                            <option value="매출" ${row.type === '매출' ? 'selected' : ''}>매출(입금)</option>
+                            <option value="자재" ${row.type === '자재' ? 'selected' : ''}>자재비</option>
+                            <option value="노무" ${row.type === '노무' ? 'selected' : ''}>노무비</option>
+                            <option value="경비" ${row.type === '경비' ? 'selected' : ''}>경비/식대</option>
+                            <option value="외주" ${row.type === '외주' ? 'selected' : ''}>외주용역</option>
+                            <option value="기타" ${row.type === '기타' ? 'selected' : ''}>기타지출</option>
+                        </select>
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.item || ''}" 
+                            list="settlementItemOptions"
+                            onchange="updateSettlementRow(${index}, 'item', this.value)"
+                            placeholder="내역 선택/입력"
+                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${Number(amount).toLocaleString()}" 
+                            onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'amount', this.value.replace(/,/g,''))"
+                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:right;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.client || ''}" 
+                            onchange="updateSettlementRow(${index}, 'client', this.value)"
+                            placeholder="거래처"
+                            style="width:100%; border:none; background:transparent; font-size:12px; text-align:center;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <select onchange="updateSettlementRow(${index}, 'linkedSheet', this.value)"
+                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                            <option value="">선택</option>
+                            <option value="견적서" ${row.linkedSheet === '견적서' ? 'selected' : ''}>견적서</option>
+                            <option value="원가관리표" ${row.linkedSheet === '원가관리표' ? 'selected' : ''}>원가관리표</option>
+                            <option value="AS관리" ${row.linkedSheet === 'AS관리' ? 'selected' : ''}>A/S관리</option>
+                            <option value="기타" ${row.linkedSheet === '기타' ? 'selected' : ''}>기타</option>
+                        </select>
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.linkedContent || ''}" 
+                            onchange="updateSettlementRow(${index}, 'linkedContent', this.value)"
+                            placeholder="내용"
+                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.note || ''}" 
+                            onchange="updateSettlementRow(${index}, 'note', this.value)"
+                            placeholder="비고"
+                            style="width:100%; border:none; background:transparent; font-size:12px;">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 합계 표시
+            const profit = totalIncome - totalExpense;
+            const profitRate = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : 0;
+
+            document.getElementById('settlementTotalIncome').innerText = totalIncome.toLocaleString();
+            document.getElementById('settlementTotalExpense').innerText = totalExpense.toLocaleString();
+            document.getElementById('settlementProfit').innerText = profit.toLocaleString();
+            document.getElementById('settlementProfitRate').innerText = profitRate + '%';
+        }
+
+        function addSettlementRow() {
+            settlementRows.push({
+                date: new Date().toISOString().slice(0, 10),
+                type: '',
+                item: '',
+                amount: '',
+                client: '',
+                linkedSheet: '',
+                linkedContent: '',
+                note: ''
+            });
+            renderSettlementTable();
+            saveSettlementToLocal();
+        }
+
+        function removeSettlementRow(index) {
+            settlementRows.splice(index, 1);
+            renderSettlementTable();
+            saveSettlementToLocal();
+        }
+
+        function updateSettlementRow(index, field, value) {
+            settlementRows[index][field] = value;
+            renderSettlementTable(); // 합계 재계산을 위해 렌더링
+            saveSettlementToLocal();
+        }
+
+        function saveSettlementToLocal() {
+            if (currentData) {
+                currentData.settlementRows = settlementRows;
+                saveCustomers(); // 로컬 스토리지 저장
+            }
+        }
+
+        // 구글 시트에서 불러오기
+        async function syncSettlementFromCloud() {
+            if (!currentData || !currentData.id) {
+                alert('고객을 먼저 선택해주세요.');
+                return;
+            }
+
+            const btn = document.getElementById('btnLoadSettlement');
+            const originalText = btn ? btn.innerText : '';
+            if (btn) {
+                btn.innerText = '⏳ 로딩중...';
+                btn.disabled = true;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    sheet: 'settlement',
+                    customerId: currentData.id
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    settlementRows = result.rows || [];
+                    renderSettlementTable();
+                    saveSettlementToLocal();
+                    showToast('정산 내역을 불러왔습니다.', 'success');
+                } else {
+                    throw new Error(result.error || '불러오기 실패');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('불러오기 실패: ' + err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        // 구글 시트로 저장하기
+        async function syncSettlementToCloud() {
+            if (!currentData || !currentData.id) {
+                alert('고객을 먼저 선택해주세요.');
+                return;
+            }
+
+            if (!confirm('현재 정산 내역을 구글 시트에 저장(덮어쓰기)하시겠습니까?')) return;
+
+            const btn = document.getElementById('btnSaveSettlement');
+            const originalText = btn ? btn.innerText : '';
+            if (btn) {
+                btn.innerText = '⏳ 저장중...';
+                btn.disabled = true;
+            }
+
+            try {
+                // 저장 데이터 구성
+                const payload = {
+                    action: 'updateSettlement',
+                    customerId: currentData.id,
+                    customerName: currentData.clientName,
+                    rows: settlementRows
+                };
+
+                // sendDataToAppsScript 함수 재사용 (또는 직접 fetch)
+                // 여기서는 직접 fetch 구현 (post)
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload) // sendBeacon 대신 일반 fetch 사용 (결과 확인 필요)
+                });
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    showToast('정산 내역이 구글 시트에 저장되었습니다.', 'success');
+                } else {
+                    throw new Error(result.error || '저장 실패');
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast('저장 실패: ' + err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            }
+        }
 
         // Drag & Drop
         let draggedIndex = null;
@@ -7014,6 +7337,8 @@
             document.getElementById('headerCustomerId').textContent = currentCustomerId;
             loadCostData();
             loadEstimateData();
+            settlementRows = currentData.settlementRows || [];
+            renderSettlementTable();
             updateCustomerList();
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
