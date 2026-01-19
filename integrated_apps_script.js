@@ -1,11 +1,11 @@
 /**
  * [통합형] 디자인지그 웹사이트 & 관리자 동기화 스크립트
- * 
+ *
  * 1. 웹사이트 상담 문의 접수 및 이메일 발송
  * 2. 관리자 페이지(adminwonpro.html) 고객 데이터 동기화
  * 3. 트리거 기반 자동화 (상담 상태 변경 시 이동, A/S 만료 알림)
- * 
- * 마지막 업데이트: 2026-01-13
+ *
+ * 마지막 업데이트: 2026-01-19 (공사 스케줄 관리 시트 연동 수정)
  */
 
 // ==========================================
@@ -38,6 +38,50 @@ const ENTRY_IDS = {
 
 const SENDER_NAME = '디자인지그';
 const SENDER_EMAIL = 'designjig.office@gmail.com';
+
+// [기본 데이터] 공사 스케줄 템플릿
+const DEFAULT_SCHEDULE_TEMPLATE = [
+    ['01. 기획·준비', '현장 실측 및 디자인 상담', '디자인 컨셉 확정 여부', '', '', '디자인팀', ''],
+    ['01. 기획·준비', '도면 설계 및 견적 확정', '최종 도면/견적 승인', '', '', '디자인팀', ''],
+    ['01. 기획·준비', '공사 안내문 부착 및 동의서', '관리사무소 신고 완료 여부', '', '', '현장관리자', ''],
+    ['01. 기획·준비', '자재 선정 및 발주', '타일/도기/조명 등 주요 자재', '', '', '디자인팀', ''],
+    ['02. 철거 공사', '전체 철거 및 폐기물 반출', '철거 범위 재확인', '', '', '철거팀', ''],
+    ['02. 철거 공사', '설비 라인 마킹 및 확인', '급배수 위치 확인', '', '', '설비팀', ''],
+    ['03. 설비/방수', '수도/배관 이설 및 신설', '누수 여부 확인 필수', '', '', '설비팀', ''],
+    ['03. 설비/방수', '1차 방수 공사 (액체 방수)', '방수층 양생 상태 확인', '', '', '설비팀', ''],
+    ['03. 설비/방수', '2차 방수 공사 (도막 방수)', '코너 부위 보강 확인', '', '', '설비팀', ''],
+    ['04. 전기 공사', '배선 작업 및 스위치/콘센트 위치 타공', '도면과 위치 일치 여부', '', '', '전기팀', ''],
+    ['05. 목공 공사', '천장/가벽 구조틀 작업', '수평/수직 레벨 확인', '', '', '목공팀', ''],
+    ['05. 목공 공사', '도어/문틀 설치 및 몰딩 작업', '문 개폐 간섭 확인', '', '', '목공팀', ''],
+    ['06. 타일/욕실', '벽/바닥 타일 시공', '줄눈 간격 및 평활도', '', '', '타일팀', ''],
+    ['06. 타일/욕실', '위생도기 및 액세서리 세팅', '설치 견고성 확인', '', '', '도기팀', ''],
+    ['07. 도장/필름', '퍼티 작업 및 샌딩', '표면 평활도 체크', '', '', '도장팀', ''],
+    ['07. 도장/필름', '인테리어 필름 시공', '기포 및 들뜸 확인', '', '', '필름팀', ''],
+    ['08. 도배/바닥', '도배 기초 및 정배', '이음매 상태 확인', '', '', '도배팀', ''],
+    ['08. 도배/바닥', '바닥재(마루/장판) 시공', '걸레받이 마감 확인', '', '', '바닥팀', ''],
+    ['09. 가구 공사', '주방/붙박이장 설치', '도어 라인 및 수평 확인', '', '', '가구팀', ''],
+    ['10. 마감/준공', '조명/스위치/콘센트 설치', '점등 및 작동 테스트', '', '', '전기팀', ''],
+    ['10. 마감/준공', '입주 청소 및 베이크아웃', '공사 분진 제거 상태', '', '', '청소팀', ''],
+    ['10. 마감/준공', '최종 점검 및 인수인계', '고객 최종 승인', '', '', '현장관리자', '']
+];
+
+// [기본 데이터] 공사 스케줄 유의사항
+const DEFAULT_SCHEDULE_GUIDELINES = [
+    '공사 일정은 현장 상황 및 자재 수급 상황에 따라 변동될 수 있습니다.',
+    '주말 및 공휴일은 소음 발생 공사가 불가능하므로 일정 협의가 필요합니다.',
+    '우천 시 외부 창호 코킹 작업 등 일부 공정이 지연될 수 있습니다.',
+    '추가 공사 요청 시 전체 일정이 연기될 수 있으니 사전에 협의 부탁드립니다.',
+    '입주 예정일 최소 3일 전까지는 모든 공사를 완료하는 것을 목표로 합니다.'
+];
+
+// [기본 데이터] A/S 유의사항
+const DEFAULT_AS_GUIDELINES = [
+    '무상 A/S 기간은 공사 완료일로부터 1년입니다.',
+    '사용자의 부주의나 과실로 인한 파손은 유상으로 처리됩니다.',
+    '소모품(전구 등) 교체는 A/S 대상에서 제외됩니다.',
+    '긴급한 누수나 전기 문제는 24시간 내 방문 점검을 원칙으로 합니다.',
+    'A/S 접수 시 하자 부위의 사진을 함께 보내주시면 빠른 처리가 가능합니다.'
+];
 
 // ==========================================
 // 2. Main Entry Points (doPost, doGet)
@@ -114,6 +158,7 @@ function doPost(e) {
 function doGet(e) {
     try {
         var sheetParam = e.parameter.sheet; // '관리자', '고객관리', '원가관리표' 등
+        var actionParam = e.parameter.action; // 'getGuidelines' 등
 
         // 1. 원가관리표 데이터 요청
         if (sheetParam === '원가관리표') {
@@ -127,24 +172,28 @@ function doGet(e) {
 
         // 2.1. A/S 관리 리스트 데이터 요청
         if (sheetParam === 'AS관리리스트' || sheetParam === 'as_list') {
+            // [추가] 유의사항만 요청하는 경우
+            if (actionParam === 'getGuidelines') {
+                return handleGetASGuidelines(e);
+            }
             return handleASListGet(e);
         }
 
-        // 2.2. 공사 스케줄 템플릿 요청
-        if (sheetParam === 'schedule_template' || sheetParam === '공사스케줄관리') {
+        // 2.2. 공사 스케줄 템플릿 요청 [수정: 띄어쓰기 있는 버전 추가]
+        if (sheetParam === 'schedule_template' || sheetParam === '공사스케줄관리' || sheetParam === '공사 스케줄 관리' || sheetParam === '공사_스케줄') {
+            // [추가] 유의사항만 요청하는 경우
+            if (actionParam === 'getGuidelines') {
+                return handleGetScheduleGuidelines(e);
+            }
             return handleScheduleTemplateGet(e);
         }
 
         // 2.5. 샘플 견적서 조회
-        var actionParam = e.parameter.action;
         if (actionParam === 'getSampleEstimates') {
             return handleGetSampleEstimates();
         }
         if (actionParam === 'getSampleEstimate') {
             return handleGetSampleEstimate(e.parameter.id);
-        }
-        if (actionParam === 'logStats') {
-            return handleStatsLog(e);
         }
 
         // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
@@ -153,6 +202,113 @@ function doGet(e) {
     } catch (err) {
         return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
             .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * [추가] 스케줄 유의사항만 반환
+ */
+function handleGetScheduleGuidelines(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('공사 스케줄 관리');
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '공사 스케줄 관리 시트를 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // [수정] 데이터가 없으면 기본값으로 초기화
+        var lastRow = sheet.getLastRow();
+        if (lastRow < 2) {
+            // AS 유의사항 초기화 (헤더 및 데이터)
+            // 간단하게 유의사항 리스트만 반환
+            return ContentService.createTextOutput(JSON.stringify({
+                success: true,
+                guidelines: DEFAULT_SCHEDULE_GUIDELINES
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+        var guidelines = [];
+
+        data.forEach(function (row) {
+            // '공사 진행 안내 및 유의사항' 또는 '공사 진행 안내사항' 행 찾기
+            if (row[0] && (row[0].toString().indexOf('공사 진행') !== -1 || row[0].toString().indexOf('유의사항') !== -1)) {
+                var text = row[1]; // B열에 내용이 있다고 가정
+                if (text) guidelines.push(text);
+            }
+        });
+
+        // 추출된 유의사항이 없으면 기본값 사용
+        if (guidelines.length === 0) guidelines = DEFAULT_SCHEDULE_GUIDELINES;
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            guidelines: guidelines
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * [추가] A/S 유의사항만 반환
+ */
+function handleGetASGuidelines(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('AS 관리 리스트');
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('AS관리리스트');
+        }
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('as_list');
+        }
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: 'AS 관리 리스트 시트를 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var lastRow = sheet.getLastRow();
+        if (lastRow < 2) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: true,
+                guidelines: []
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var guidelines = [];
+
+        for (var i = 1; i < data.length; i++) {
+            var row = data[i];
+            // 'A/S' 또는 '유의사항' 또는 '안내' 키워드가 있는 행 찾기
+            if (row[0] && (row[0].toString().indexOf('A/S') !== -1 || row[0].toString().indexOf('유의사항') !== -1 || row[0].toString().indexOf('안내') !== -1)) {
+                var text = row[1]; // B열에 내용이 있다고 가정
+                if (text) guidelines.push(text);
+            }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            guidelines: guidelines
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 }
 
@@ -173,12 +329,19 @@ function handleScheduleTemplateGet(e) {
     }
 
     var lastRow = sheet.getLastRow();
+
+    // [New] 데이터 없으면 기본 템플릿으로 초기화
     if (lastRow < 2) {
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'success',
-            steps: [],
-            notices: []
-        })).setMimeType(ContentService.MimeType.JSON);
+        if (DEFAULT_SCHEDULE_TEMPLATE.length > 0) {
+            sheet.getRange(2, 1, DEFAULT_SCHEDULE_TEMPLATE.length, DEFAULT_SCHEDULE_TEMPLATE[0].length)
+                .setValues(DEFAULT_SCHEDULE_TEMPLATE);
+        }
+        // 초기화 후 다시 데이터 로드
+        lastRow = sheet.getLastRow();
+    }
+
+    if (lastRow < 2) {
+        return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
     }
 
     var data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
@@ -186,8 +349,8 @@ function handleScheduleTemplateGet(e) {
     var notices = [];
 
     data.forEach(function (row) {
-        // 유의사항 행 체크 (문구 유연성 확보)
-        if (row[0] && (row[0].toString().indexOf('안내') !== -1 || row[0].toString().indexOf('유의사항') !== -1)) {
+        if (row[0] === '공사 진행 안내사항' || row[0] === '공사 진행 안내 및 유의사항') {
+            // This is a notice row. The content is likely in Column B or spanned.
             var text = row[1];
             if (text) notices.push(text);
         } else {
@@ -205,7 +368,6 @@ function handleScheduleTemplateGet(e) {
     });
 
     return ContentService.createTextOutput(JSON.stringify({
-        result: 'success',
         steps: steps,
         notices: notices
     })).setMimeType(ContentService.MimeType.JSON);
@@ -215,25 +377,6 @@ function handleScheduleTemplateGet(e) {
 // 주의: "설치형 트리거"로 processStatusChange를 별도 설정했으므로,
 // 아래 단순 트리거가 활성화되면 코드가 중복 실행될 위험이 있습니다.
 // 따라서 아래 코드는 주석 처리하거나 삭제하는 것이 안전합니다.
-/*
- * 통계 로그 기록
- */
-function handleStatsLog(e) {
-    try {
-        var user = e.parameter.user || 'Unknown';
-        var act = e.parameter.act || 'Unknown';
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName('통계로그');
-        if (!sheet) {
-            sheet = spreadsheet.insertSheet('통계로그');
-            sheet.appendRow(['Timestamp', 'User', 'Action']);
-        }
-        sheet.appendRow([new Date(), user, act]);
-        return ContentService.createTextOutput(JSON.stringify({ result: 'success' })).setMimeType(ContentService.MimeType.JSON);
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({ result: 'error', error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
 /*
 function onEdit(e) {
     processStatusChange(e);
@@ -387,7 +530,7 @@ function sendSurveyEmail(data) {
         <p>감사합니다.</p>
         <br>
         <p>디자인지그 드림</p>
-        
+
         <div class="footer">
             <strong style="color: #1a1a1a; font-size: 13px;">DESIGN JIG</strong><br>
             기본이 탄탄해야 아름다움도 오래갑니다.<br>
@@ -1492,44 +1635,63 @@ function handleASListGet(e) {
 
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
-                result: 'success', // Or 'error' but returning empty list is safer
-                items: [],
-                notices: []
+                result: 'error',
+                message: "'AS 관리 리스트' 시트를 찾을 수 없습니다."
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
         var rows = sheet.getDataRange().getValues();
-        var data = [];
-
-        // 1행은 헤더일 가능성이 높으므로 2행부터 읽음
-        // 1행은 헤더일 가능성이 높으므로 2행부터 읽음
-        // 헤더: 카테고리 | 세부항목 | 브랜드 | 서비스센터 | 보증기간 | 비고
         var items = [];
         var notices = [];
 
+        // 1행(헤더)에서 컬럼 인덱스 찾기
+        var headers = rows[0].map(function (h) { return String(h).trim(); });
+
+        var idx = {
+            category: headers.findIndex(function (h) { return h.indexOf('카테고리') !== -1; }),
+            brand: headers.findIndex(function (h) { return h.indexOf('브랜드') !== -1; }),
+            item: headers.findIndex(function (h) { return h.indexOf('세부항목') !== -1 || h.indexOf('품목') !== -1 || h.indexOf('아이템') !== -1; }),
+            model: headers.findIndex(function (h) { return h.indexOf('모델') !== -1 || h.indexOf('품번') !== -1; }),
+            size: headers.findIndex(function (h) { return h.indexOf('규격') !== -1 || h.indexOf('치수') !== -1 || h.indexOf('사이즈') !== -1; }),
+            price: headers.findIndex(function (h) { return h.indexOf('가격') !== -1 || h.indexOf('단가') !== -1 || h.indexOf('금액') !== -1; }),
+            service: headers.findIndex(function (h) { return h.indexOf('서비스') !== -1 || h.indexOf('A/S') !== -1 || h.indexOf('연락처') !== -1; }),
+            warranty: headers.findIndex(function (h) { return h.indexOf('보증') !== -1; }),
+            note: headers.findIndex(function (h) { return h.indexOf('비고') !== -1 || h.indexOf('메모') !== -1 || h.indexOf('특이사항') !== -1; })
+        };
+
+        // 헤더 인덱스를 못 찾았을 경우의 Fallback (기존 구조 호환)
+        if (idx.category === -1) idx.category = 0;
+        if (idx.brand === -1) idx.brand = 1;
+        if (idx.item === -1) idx.item = 2;
+        // 다른 필드들은 없으면 빈 값 처리
+
         for (var i = 1; i < rows.length; i++) {
             var row = rows[i];
-            // 빈 행 건너뛰기
-            if (!row[0] && !row[1] && !row[2]) continue;
+            // 빈 행 건너뛰기: 카테고리, 브랜드, 품목 셋 다 없으면 스킵
+            var catVal = (idx.category !== -1) ? row[idx.category] : '';
+            var brandVal = (idx.brand !== -1) ? row[idx.brand] : '';
+            var itemVal = (idx.item !== -1) ? row[idx.item] : '';
 
-            // 유의사항 행 체크 (스케줄표와 동일한 방식 "AS 관리 유의사항" 혹은 "안내사항")
-            // [수정] '안내사항' 뿐만 아니라 '안내'만 있어도 포함되도록 완화
-            if (row[0] && (row[0].toString().indexOf('유의사항') !== -1 || row[0].toString().indexOf('안내') !== -1)) {
-                var noticeText = row[1];
+            if (!catVal && !brandVal && !itemVal) continue;
+
+            // 유의사항 행 체크 (1열에 '유의사항' 등이 포함된 경우)
+            // 보통 유의사항은 병합되어 있거나 특정 텍스트로 시작
+            var firstCol = row[0] ? row[0].toString() : '';
+            if (firstCol && (firstCol.indexOf('유의사항') !== -1 || firstCol.indexOf('안내사항') !== -1 || firstCol.indexOf('A/S 안내') !== -1)) {
+                // 유의사항은 2열(인덱스 1)에 내용이 있다고 가정, 혹은 전체 텍스트
+                var noticeText = row[1] || firstCol;
                 if (noticeText) notices.push(noticeText);
             } else {
                 items.push({
-                    category: row[0] || '',
-                    brand: row[1] || '',
-                    item: row[2] || '',
-                    modelNum: row[3] || '',
-                    rank: row[4] || '',
-                    size: row[5] || '',
-                    price: row[6] || '',
-                    website: row[7] || '',
-                    service: row[8] || '',
-                    warranty: row[9] || '',
-                    note: row[10] || ''
+                    category: catVal,
+                    brand: brandVal,
+                    item: itemVal,
+                    modelNum: (idx.model !== -1) ? row[idx.model] : '',
+                    size: (idx.size !== -1) ? row[idx.size] : '',
+                    price: (idx.price !== -1) ? row[idx.price] : '',
+                    service: (idx.service !== -1) ? row[idx.service] : '',
+                    warranty: (idx.warranty !== -1) ? row[idx.warranty] : '',
+                    note: (idx.note !== -1) ? row[idx.note] : ''
                 });
             }
         }

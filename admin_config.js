@@ -25,11 +25,8 @@ const MAIN_ADMIN = MAIN_ADMINS[0];
 const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e852604566cbb848';
 
 // [통합] 고객관리/상담관리/원가관리 등 모든 데이터 동기화를 위한 Apps Script Web App URL (배포 후 생성된 URL)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyR8dEEte1vzfyWPMyK69_d7Z89YaI_3sPNsfTIgtY8x_6riI2wmRwR3OGtdBGPxoxz8g/exec'; // 구글 시트 연동용
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyR8dEEte1vzfyWPMyK69_d7Z89YaI_3sPNsfTIgtY8x_6riI2wmRwR3OGtdBGPxoxz8g/exec'; // 데이터 동기화용
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbytXaACE8hDPIdktujGkGRQlB5C52EQuPzdnYY2WBymOPkmtmNzO_D-zS7qm2cd1cKcJg/exec'; // 구글 시트 연동용
+const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbytXaACE8hDPIdktujGkGRQlB5C52EQuPzdnYY2WBymOPkmtmNzO_D-zS7qm2cd1cKcJg/exec'; // 데이터 동기화용
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
-
-// 통계 대시보드 접근용 PIN (선택값 — 클라이언트에서 사용됨)
-const STATS_ACCESS_PIN = '6454';

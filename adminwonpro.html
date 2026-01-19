@@ -95,8 +95,8 @@
             right: 20px;
             background: #1d1d1f;
             color: #fff;
-            padding: 14px 24px;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 500;
             z-index: 9999;
@@ -1357,7 +1357,6 @@
             text-align: center;
             border-bottom: 2px solid #e8e8ed;
             white-space: nowrap;
-            box-sizing: border-box;
         }
 
         .data-table td {
@@ -1367,7 +1366,6 @@
             vertical-align: middle;
             overflow: hidden;
             text-overflow: ellipsis;
-            box-sizing: border-box;
         }
 
         .data-table tbody tr:hover {
@@ -3846,7 +3844,11 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="pdf-btn" onclick="downloadPDF('scheduleDoc', '공사스케줄관리')">🖨️ 인쇄/PDF</button>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="btn btn-secondary btn-sm no-print" onclick="printSchedule(true)"
+                                        style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
+                                        인쇄/PDF</button>
+                                </div>
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
@@ -3862,47 +3864,51 @@
                                 <tbody style="text-align: center;">
                                     <tr>
                                         <!-- Row 1 -->
-                                        <th style="border:1px solid #000; padding:8px;">공사 담당자</th>
-                                        <td style="border:1px solid #000; padding:8px;">
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">공사 담당자</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
                                             <input type="text" class="sch-input" id="schManagerInput"
                                                 data-field="manager"
-                                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;"
+                                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold; background:transparent;"
                                                 value="원프로 소장 (010-4650-7013)">
                                         </td>
-                                        <th style="border:1px solid #000; padding:8px;">공사기간(시작~종료)</th>
-                                        <td style="border:1px solid #000; padding:8px;" id="schPeriod"></td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">공사기간(시작~종료)
+                                        </th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;"
+                                            id="schPeriod"></td>
                                     </tr>
                                     <tr>
                                         <!-- Row 2 -->
-                                        <th style="border:1px solid #000; padding:8px;">관리사무소</th>
-                                        <td style="border:1px solid #000; padding:8px;">
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">관리사무소</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
                                             <input type="text" placeholder="입력"
-                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                                style="width:100%; border:none; outline:none; text-align:center; background:transparent;"
                                                 class="sch-input" data-field="office">
                                         </td>
-                                        <th style="border:1px solid #000; padding:8px;">평수</th>
-                                        <td style="border:1px solid #000; padding:8px;" id="schArea"></td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">평수</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;"
+                                            id="schArea"></td>
                                     </tr>
                                     <tr>
                                         <!-- Row 3 -->
-                                        <th style="border:1px solid #000; padding:8px;" rowspan="2">공사 의뢰인</th>
-                                        <td style="border:1px solid #000; padding:8px;" id="schClient1"></td>
-                                        <th style="border:1px solid #000; padding:8px;">이사예정일</th>
-                                        <td style="border:1px solid #000; padding:8px;" id="schMoveDate"></td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px;" rowspan="2">공사 의뢰인</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;"
+                                            id="schClient1"></td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">이사예정일</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;"
+                                            id="schMoveDate"></td>
                                     </tr>
                                     <tr>
                                         <!-- Row 4 -->
-                                        <td style="border:1px solid #000; padding:8px;">
-                                            <input type="text" placeholder="이름 (연락처)"
-                                                style="width:100%; border:none; outline:none; text-align:center;"
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
+                                            <input type="text" placeholder=""
+                                                style="width:100%; border:none; outline:none; text-align:center; background:transparent;"
                                                 class="sch-input" data-field="client2">
                                         </td>
-                                        <th style="border:1px solid #000; padding:8px;">행위허가 필증</th>
-                                        <td style="border:1px solid #000; padding:8px;">
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">행위허가 필증</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
                                             <input type="text" placeholder="비고(예: 확장)" class="sch-input"
                                                 data-field="permit_memo"
-                                                style="width:80px; text-align:center; border:none; border-bottom:1px solid #eee;">
-                                            &nbsp;
+                                                style="width:60px; text-align:center; border:none; border-bottom:1px solid #eee; background:transparent;">
                                             <label><input type="radio" name="permit_status" value="완료" class="sch-radio"
                                                     data-field="permit_status"> 완료</label>
                                             <label><input type="radio" name="permit_status" value="미완료"
@@ -3911,14 +3917,14 @@
                                     </tr>
                                     <tr>
                                         <!-- Row 5 -->
-                                        <th style="border:1px solid #000; padding:8px;">인수인계</th>
-                                        <td style="border:1px solid #000; padding:8px;">
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">인수인계</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
                                             <input type="date"
                                                 style="width:100%; border:none; outline:none; text-align:center; font-family:inherit; background:transparent;"
                                                 class="sch-input" data-field="handover">
                                         </td>
-                                        <th style="border:1px solid #000; padding:8px;">공사 동의서</th>
-                                        <td style="border:1px solid #000; padding:8px;">
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">공사 동의서</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
                                             <label><input type="radio" name="consent_status" value="완료"
                                                     class="sch-radio" data-field="consent_status"> 완료</label>
                                             <label><input type="radio" name="consent_status" value="미완료"
@@ -3927,20 +3933,21 @@
                                     </tr>
                                     <tr>
                                         <!-- Row 6 -->
-                                        <th style="border:1px solid #000; padding:8px;">현장주소</th>
-                                        <td style="border:1px solid #000; padding:8px;" colspan="3" id="schSiteAddr">
-                                        </td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">현장주소</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;" colspan="3"
+                                            id="schSiteAddr"></td>
                                     </tr>
                                     <tr>
                                         <!-- Row 7 -->
-                                        <th style="border:1px solid #000; padding:8px;">비밀번호</th>
-                                        <td style="border:1px solid #000; padding:8px;" colspan="3">
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">비밀번호</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; text-align:left;"
+                                            colspan="3">
                                             공동현관 : <input type="text"
-                                                style="width:100px; border:none; border-bottom:1px solid #eee; outline:none; text-align:center;"
+                                                style="width:100px; border:none; border-bottom:1px solid #eee; outline:none; text-align:center; background:transparent;"
                                                 class="sch-input" data-field="gatePw">
                                             &nbsp;&nbsp;
                                             세대현관 : <input type="text"
-                                                style="width:100px; border:none; border-bottom:1px solid #eee; outline:none; text-align:center;"
+                                                style="width:100px; border:none; border-bottom:1px solid #eee; outline:none; text-align:center; background:transparent;"
                                                 class="sch-input" data-field="doorPw">
                                         </td>
                                     </tr>
@@ -3948,14 +3955,16 @@
                             </table>
                             <div
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                     <strong>💡 공사 진행 안내 및 유의사항</strong>
                                     <button class="btn btn-sm no-print" onclick="loadScheduleGuidelines()"
                                         style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
                                         📥 유의사항 불러오기
                                     </button>
                                 </div>
-                                <ul id="scheduleGuidelinesList" style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                <ul id="scheduleGuidelinesList"
+                                    style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                     <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
                                     <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
                                         <span style="color:#666; font-size:0.9em;">(사전 협의 없이 진행 시 공정 간섭 또는 책임 범위 문제가 발생할
@@ -3968,17 +3977,6 @@
                                 </ul>
                             </div>
                             <table class="data-table" style="width:100%; border-collapse:collapse;">
-                                <colgroup>
-                                    <col style="width:40px">
-                                    <col style="width:100px">
-                                    <col>
-                                    <col>
-                                    <col style="width:130px">
-                                    <col style="width:130px">
-                                    <col style="width:120px">
-                                    <col>
-                                    <col style="width:140px">
-                                </colgroup>
                                 <thead>
                                     <tr style="background:#f5f5f7;">
                                         <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
@@ -3988,15 +3986,17 @@
                                         <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">시작일</th>
                                         <th style="width:130px; padding:12px; border:1px solid #d2d2d7;">종료일</th>
                                         <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">담당자</th>
-                                        <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
-                                        <th class="no-print"
-                                            style="width:140px; padding:12px; border:1px solid #d2d2d7;">관리</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7; text-align:center;">비고</th>
                                     </tr>
                                 </thead>
                                 <tbody id="scheduleTableBody">
                                     <!-- Dynamic Rows-->
                                 </tbody>
                             </table>
+                            <button onclick="addScheduleRow()" class="no-print"
+                                style="width:100%; padding:15px; margin-top:10px; border:1px dashed #d2d2d7; background:#fafafa; color:#86868b; font-size:13px; cursor:pointer; border-radius:6px; transition: all 0.2s;">
+                                + 공정 추가
+                            </button>
                             <div id="scheduleEmptyState"
                                 style="text-align:center; padding:40px; color:#86868b; display:none;">
                                 등록된 스케줄이 없습니다. 공정을 추가해주세요.
@@ -4005,7 +4005,6 @@
                     </div>
                 </div>
 
-                <!-- A/S 관리 리스트 패널 -->
                 <div class="tab-panel" id="panel-as_list">
                     <div class="document-wrapper" id="asListDoc"
                         style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
@@ -4021,104 +4020,111 @@
                                 <button class="sync-btn no-print" onclick="syncASListFromCloud()"
                                     style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
-                                <button class="pdf-btn" onclick="downloadPDF('asListDoc', 'AS관리리스트')">🖨️
+                                <button class="btn btn-secondary btn-sm no-print" onclick="printASList(true)"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
                                     인쇄/PDF</button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="addASListItem()"
-                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">➕ 항목
-                                    추가</button>
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
-                            <div class="doc-content" style="padding:30px;">
-                                <!-- [New] Customer & Warranty Info Table -->
-                                <div style="margin-bottom:30px;">
-                                    <table
-                                        style="width:100%; border-collapse:collapse; font-size:13px; border:2px solid #333;">
-                                        <tr>
-                                            <!-- 성명 -->
-                                            <th
-                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; width:100px; text-align:center;">
-                                                성명</th>
-                                            <td style="padding:12px; border:1px solid #ddd;"><span
-                                                    class="synced-display" data-sync="clientName">-</span></td>
-                                            <!-- 연락처 -->
-                                            <th
-                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; width:100px; text-align:center;">
-                                                연락처</th>
-                                            <td style="padding:12px; border:1px solid #ddd;"><span
-                                                    class="synced-display" data-sync="clientPhone">-</span></td>
-                                            <!-- 주소 -->
-                                            <th
-                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; width:100px; text-align:center;">
-                                                주소</th>
-                                            <td style="padding:12px; border:1px solid #ddd;"><span
-                                                    class="synced-display" data-sync="siteAddress">-</span></td>
-                                        </tr>
-                                        <tr>
-                                            <!-- A/S 기간 -->
-                                            <th
-                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
-                                                A/S 기간</th>
-                                            <td style="padding:12px; border:1px solid #ddd;"><span
-                                                    class="synced-display" data-sync="warrantyPeriod">-</span></td>
-                                            <!-- 화장실 누수 A/S -->
-                                            <th
-                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
-                                                화장실 누수<br>A/S 기간</th>
-                                            <td style="padding:12px; border:1px solid #ddd;" id="bathroomLeakWarranty">-
-                                            </td>
-                                            <th
-                                                style="background:#f9f9fb; padding:12px; border:1px solid #ddd; text-align:center;">
-                                                공사 담당자</th>
-                                            <td style="padding:12px; border:1px solid #ddd;" class="synced-display"
-                                                data-sync="manager">-</td>
-                                        </tr>
-                                    </table>
-                                </div>
+                            <!-- A/S 상단 정보 (Schedule Style) -->
+                            <table class="schedule-info-table"
+                                style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px; border:1px solid #000;">
+                                <colgroup>
+                                    <col style="width: 15%; background: #fff;">
+                                    <col style="width: 35%;">
+                                    <col style="width: 15%; background: #fff;">
+                                    <col style="width: 35%;">
+                                </colgroup>
+                                <tbody style="text-align: center;">
+                                    <tr>
+                                        <!-- Row 1 -->
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">A/S 담당자</th>
+                                        <td
+                                            style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; font-weight:bold;">
+                                            <span class="synced-display" data-sync="manager">-</span>
+                                        </td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">A/S 기간</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
+                                            <span class="synced-display" data-sync="warrantyPeriod">-</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 2 -->
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;" rowspan="2">
+                                            공사 의뢰인</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
+                                            <span class="synced-display" data-sync="clientName">-</span>
+                                        </td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">연락처</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
+                                            <span class="synced-display" data-sync="clientPhone">-</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 3 -->
+                                        <td
+                                            style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; background:#f9f9fb;">
+                                            <!-- Empty slot filler -->
+                                        </td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">화장실 누수 보증
+                                        </th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;"
+                                            id="bathroomLeakWarranty">
+                                            -
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 4 -->
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">현장주소</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;" colspan="3">
+                                            <span class="synced-display" data-sync="siteAddress">-</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
+                            <div
+                                style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
                                 <div
-                                    style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                        <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
-                                        <button class="btn btn-sm no-print" onclick="loadASGuidelines()"
-                                            style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
-                                            📥 유의사항 불러오기
-                                        </button>
-                                    </div>
-                                    <ul id="asGuidelinesList"
-                                        style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
-                                        <li>기본 A/S 기간은 공사 완료일로부터 12개월입니다.</li>
-                                        <li>자재 A/S는 자재 입고일 기준 1년이며, 제조사 기준이 우선 적용됩니다.</li>
-                                        <li>화장실 누수 A/S는 공사 완료일로부터 최대 30개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
-                                        <li>사용 부주의, 자연 노후, 고객 직접 발주 자재로 인한 하자는 A/S 대상에서 제외됩니다.</li>
-                                        <li>A/S 접수는 관련 이미지 및 동영상을 반드시 첨부해 주셔야 원활하게 진행됩니다.</li>
-                                        <li>A/S 기간 만료 후에는 사전에 안내드린 고객센터를 통해 접수해 주셔야 합니다.</li>
-                                    </ul>
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <strong>💡 A/S(사후관리) 안내 및 유의사항</strong>
+                                    <button class="btn btn-sm no-print" onclick="loadASGuidelines()"
+                                        style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
+                                        📥 유의사항 불러오기
+                                    </button>
                                 </div>
-                                <table class="data-table" style="width:100%; border-collapse:collapse;">
-                                    <thead>
-                                        <tr style="background:#f5f5f7;">
-                                            <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">브랜드</th>
-                                            <th style="width:120px; padding:12px; border:1px solid #d2d2d7;">세부항목</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">품번</th>
-                                            <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">인기</th>
-                                            <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">치수</th>
-                                            <th style="width:90px; padding:12px; border:1px solid #d2d2d7;">가격</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">홈페이지</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
-                                            <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
-                                            <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
-                                            <th class="no-print"
-                                                style="width:50px; padding:12px; border:1px solid #d2d2d7;">관리</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="asListTableBody">
-                                        <!-- Dynamic Rows -->
-                                    </tbody>
-                                </table>
+                                <ul id="asGuidelinesList"
+                                    style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
+                                    <li>기본 A/S 기간은 공사 완료일로부터 12개월입니다.</li>
+                                    <li>자재 A/S는 자재 입고일 기준 1년이며, 제조사 기준이 우선 적용됩니다.</li>
+                                    <li>화장실 누수 A/S는 공사 완료일로부터 최대 30개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
+                                    <li>사용 부주의, 자연 노후, 고객 직접 발주 자재로 인한 하자는 A/S 대상에서 제외됩니다.</li>
+                                    <li>A/S 접수는 관련 이미지 및 동영상을 반드시 첨부해 주셔야 원활하게 진행됩니다.</li>
+                                    <li>A/S 기간 만료 후에는 사전에 안내드린 고객센터를 통해 접수해 주셔야 합니다.</li>
+                                </ul>
                             </div>
+                            <table class="data-table" style="width:100%; border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:#f5f5f7;">
+                                        <th style="width:40px; padding:12px; border:1px solid #d2d2d7;">No</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">브랜드</th>
+                                        <th style="width:150px; padding:12px; border:1px solid #d2d2d7;">세부항목</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7;">품번</th>
+                                        <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">치수</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">서비스센터</th>
+                                        <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">보증기간</th>
+                                        <th style="padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="asListTableBody">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                            <button onclick="addASListItem()" class="no-print"
+                                style="width:100%; padding:15px; margin-top:10px; border:1px dashed #d2d2d7; background:#fafafa; color:#86868b; font-size:13px; cursor:pointer; border-radius:6px; transition: all 0.2s;">
+                                + 항목 추가
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -5698,6 +5704,9 @@
             syncAdminsFromCloud().then(() => {
                 console.log('✅ 관리자 계정 동기화 완료');
             });
+
+            // 스케줄 템플릿 로드
+            fetchScheduleTemplate();
         });
 
         // 토스트 알림
@@ -5710,7 +5719,7 @@
             icon.textContent = type === 'success' ? '✓' : '✕';
             msg.textContent = message;
 
-            setTimeout(() => { toast.classList.remove('show'); }, 2500);
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
         }
 
         // 상태 필터
@@ -5786,64 +5795,35 @@
         async function fetchScheduleTemplate() {
             try {
                 // 스케줄 템플릿 가져오기 (Google Sheet: '공사 스케줄 관리')
-                const params = new URLSearchParams({
-                    sheet: '공사 스케줄 관리',
-                    t: Date.now()
-                });
+                const params = new URLSearchParams({ sheet: 'schedule_template' });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const data = await response.json();
 
-                if (Array.isArray(data) && data.length > 0 && data[0].category) {
-                    // 올바른 스케줄 템플릿 데이터인지 확인 (category 필드가 있어야 함)
-                    defaultScheduleSteps = data;
+                let steps = [];
+                if (Array.isArray(data)) {
+                    steps = data;
+                } else if (data && data.steps && Array.isArray(data.steps)) {
+                    steps = data.steps;
+                }
+
+                if (steps.length > 0) {
+                    defaultScheduleSteps = steps;
                     console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
                     console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
+
+                    // 만약 이미 스케줄 탭이 열려있고 데이터가 있다면 갱신
+                    if (document.getElementById('panel-schedule').classList.contains('active')) {
+                        renderScheduleTable();
+                    }
                 } else {
                     console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
                     defaultScheduleSteps = [
-                        { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' },
-                        { category: '기획·현장 사전 준비', name: '현장 실측', checkPoint: '실측 완료 여부', inCharge: '원프로 소장 (010-4650-7013)' },
-                        { category: '기획·현장 사전 준비', name: '철거 및 폐기물 처리', checkPoint: '철거 완료 및 폐기물 반출', inCharge: '원프로 소장 (010-4650-7013)' },
-                        { category: '목공·천장·벽체', name: '목공 작업', checkPoint: '구조물 설치 완료', inCharge: '목공팀' },
-                        { category: '목공·천장·벽체', name: '천장 마감', checkPoint: '천장 마감재 시공', inCharge: '목공팀' },
-                        { category: '목공·천장·벽체', name: '벽체 마감', checkPoint: '벽체 마감재 시공', inCharge: '목공팀' },
-                        { category: '전기·조명', name: '전기 배선', checkPoint: '배선 완료 및 점검', inCharge: '전기팀' },
-                        { category: '전기·조명', name: '조명 설치', checkPoint: '조명 설치 및 점등 확인', inCharge: '전기팀' },
-                        { category: '도배·장판', name: '도배 작업', checkPoint: '도배 완료', inCharge: '도배팀' },
-                        { category: '도배·장판', name: '장판 시공', checkPoint: '장판 시공 완료', inCharge: '장판팀' },
-                        { category: '주방·욕실', name: '주방 가구 설치', checkPoint: '주방 가구 설치 완료', inCharge: '주방팀' },
-                        { category: '주방·욕실', name: '욕실 타일', checkPoint: '타일 시공 완료', inCharge: '타일팀' },
-                        { category: '주방·욕실', name: '욕실 기구 설치', checkPoint: '위생기구 설치 완료', inCharge: '설비팀' },
-                        { category: '창호·유리', name: '창호 설치', checkPoint: '창호 설치 및 밀폐 확인', inCharge: '창호팀' },
-                        { category: '창호·유리', name: '유리 시공', checkPoint: '유리 시공 완료', inCharge: '창호팀' },
-                        { category: '마감·정리', name: '최종 청소', checkPoint: '청소 완료', inCharge: '원프로 소장 (010-4650-7013)' },
-                        { category: '마감·정리', name: '하자 점검', checkPoint: '하자 확인 및 보수', inCharge: '원프로 소장 (010-4650-7013)' },
-                        { category: '마감·정리', name: '준공 및 인계', checkPoint: '고객 인수 확인', inCharge: '원프로 소장 (010-4650-7013)' }
+                        { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
                     ];
                 }
             } catch (error) {
                 console.error('❌ 스케줄 템플릿 로드 오류:', error);
-                // 네트워크/파싱 오류 시에도 기본 템플릿 사용하도록 함
-                defaultScheduleSteps = [
-                    { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' },
-                    { category: '기획·현장 사전 준비', name: '현장 실측', checkPoint: '실측 완료 여부', inCharge: '원프로 소장 (010-4650-7013)' },
-                    { category: '기획·현장 사전 준비', name: '철거 및 폐기물 처리', checkPoint: '철거 완료 및 폐기물 반출', inCharge: '원프로 소장 (010-4650-7013)' },
-                    { category: '목공·천장·벽체', name: '목공 작업', checkPoint: '구조물 설치 완료', inCharge: '목공팀' },
-                    { category: '목공·천장·벽체', name: '천장 마감', checkPoint: '천장 마감재 시공', inCharge: '목공팀' },
-                    { category: '목공·천장·벽체', name: '벽체 마감', checkPoint: '벽체 마감재 시공', inCharge: '목공팀' },
-                    { category: '전기·조명', name: '전기 배선', checkPoint: '배선 완료 및 점검', inCharge: '전기팀' },
-                    { category: '전기·조명', name: '조명 설치', checkPoint: '조명 설치 및 점등 확인', inCharge: '전기팀' },
-                    { category: '도배·장판', name: '도배 작업', checkPoint: '도배 완료', inCharge: '도배팀' },
-                    { category: '도배·장판', name: '장판 시공', checkPoint: '장판 시공 완료', inCharge: '장판팀' },
-                    { category: '주방·욕실', name: '주방 가구 설치', checkPoint: '주방 가구 설치 완료', inCharge: '주방팀' },
-                    { category: '주방·욕실', name: '욕실 타일', checkPoint: '타일 시공 완료', inCharge: '타일팀' },
-                    { category: '주방·욕실', name: '욕실 기구 설치', checkPoint: '위생기구 설치 완료', inCharge: '설비팀' },
-                    { category: '창호·유리', name: '창호 설치', checkPoint: '창호 설치 및 밀폐 확인', inCharge: '창호팀' },
-                    { category: '창호·유리', name: '유리 시공', checkPoint: '유리 시공 완료', inCharge: '창호팀' },
-                    { category: '마감·정리', name: '최종 청소', checkPoint: '청소 완료', inCharge: '원프로 소장 (010-4650-7013)' },
-                    { category: '마감·정리', name: '하자 점검', checkPoint: '하자 확인 및 보수', inCharge: '원프로 소장 (010-4650-7013)' },
-                    { category: '마감·정리', name: '준공 및 인계', checkPoint: '고객 인수 확인', inCharge: '원프로 소장 (010-4650-7013)' }
-                ];
+                defaultScheduleSteps = [];
             }
         }
 
@@ -5852,34 +5832,9 @@
 
             if (currentData.schedules && currentData.schedules.length > 0) {
                 scheduleRows = [...currentData.schedules];
-                // 기존 데이터가 20개 미만이면 20개까지 빈 행 추가
-                while (scheduleRows.length < 20) {
-                    scheduleRows.push({
-                        id: Date.now() + Math.random(),
-                        category: '',
-                        name: '',
-                        checkPoint: '',
-                        start: '',
-                        end: '',
-                        inCharge: '',
-                        memo: ''
-                    });
-                }
             } else {
-                // 신규 고객: 20개 빈 행으로 시작
+                // [수정] 신규 고객은 빈 스케줄로 시작 (템플릿 자동 로드 X)
                 scheduleRows = [];
-                for (let i = 0; i < 20; i++) {
-                    scheduleRows.push({
-                        id: Date.now() + Math.random() + i,
-                        category: '',
-                        name: '',
-                        checkPoint: '',
-                        start: '',
-                        end: '',
-                        inCharge: '',
-                        memo: ''
-                    });
-                }
             }
 
             // [추가] 스케줄 상단 정보 자동 채우기
@@ -5889,7 +5844,7 @@
                 document.getElementById('schArea').textContent = currentData.area ? currentData.area + ' PY' : '';
                 document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
 
-                const clientInfo = currentData.clientName ? (currentData.clientName + (currentData.clientPhone ? ' (' + currentData.clientPhone + ')' : '')) : '';
+                const clientInfo = currentData.clientName ? (currentData.clientName + ' 고객님' + (currentData.clientPhone ? ' (' + currentData.clientPhone + ')' : '')) : '';
                 document.getElementById('schClient1').textContent = clientInfo;
                 document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
 
@@ -5965,59 +5920,89 @@
 
             if (empty) empty.style.display = 'none';
 
-            // Extract unique values for dropdowns, include any categories already present in scheduleRows
-            const categories = [...new Set([
-                ...defaultScheduleSteps.map(s => s.category),
-                ...scheduleRows.map(r => r.category)
-            ].filter(Boolean))];
+            // Extract unique values for dropdowns
+            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+            const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
+            // [수정] 담당자 목록 추출 (유니크)
+            const managers = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
+
+            // 현재 사용 중인 담당자가 목록에 없으면 추가 (데이터 보존용)
+            scheduleRows.forEach(row => {
+                if (row.inCharge && !managers.includes(row.inCharge)) {
+                    managers.push(row.inCharge);
+                }
+            });
             tbody.innerHTML = scheduleRows.map((row, index) => {
-                // 현재 행의 카테고리 옵션 생성 (selected 속성 포함)
-                const categoryOptions = categories.map(c =>
-                    `<option value="${c}"${c === row.category ? ' selected' : ''}>${c}</option>`
-                ).join('');
-
                 // 현재 행의 카테고리로 공정명 필터링
-                // Determine processes for this category. If the current row has a process
-                // name that's not in the template, preserve it so the select shows the value.
-                let processes = defaultScheduleSteps.filter(s => s.category === row.category);
-                // If exact category match yields no processes, try fuzzy matching by substring
-                if ((!processes || processes.length === 0) && row.category) {
-                    const fallback = defaultScheduleSteps.filter(s =>
-                        (s.category && s.category.includes(row.category)) || (row.category && row.category.includes(s.category))
-                    );
-                    if (fallback && fallback.length > 0) processes = fallback;
-                }
-                let processOptions = processes.map(p =>
-                    `<option value="${p.name}"${p.name === row.name ? ' selected' : ''}>${p.name}</option>`
+                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
+
+                // [수정] 공정명 중복 제거 (순수 이름만 표시)
+                const uniqueProcessNames = [...new Set(processes.map(p => p.name))];
+                const processOptions = uniqueProcessNames.map(name =>
+                    `<option value="${name}" ${row.name === name ? 'selected' : ''}>${name}</option>`
                 ).join('');
-                if (row.name && !processes.some(p => p.name === row.name)) {
-                    // Prepend the custom/legacy process name so it's selectable and visible
-                    processOptions = `<option value="${row.name}" selected>${row.name}</option>` + processOptions;
+
+                // [수정] 담당자 목록 동적 필터링 (카테고리+공정명 종속)
+                let availableManagers = [];
+                if (row.category && row.name) {
+                    // 카테고리와 공정명이 선택된 경우 -> 해당 조합의 담당자들만 추출
+                    availableManagers = defaultScheduleSteps
+                        .filter(s => s.category === row.category && s.name === row.name)
+                        .map(s => s.inCharge)
+                        .filter(Boolean);
                 }
 
-                // 빈 행 체크 (카테고리, 공정명, 체크포인트, 시작일, 종료일, 담당자, 비고가 모두 비어있으면 인쇄 제외)
-                const isEmpty = !row.category && !row.name && !row.checkPoint && !row.start && !row.end && !row.inCharge && !row.memo;
-                const printClass = isEmpty ? 'no-print' : '';
+                // 만약 필터링된 담당자가 없다면(또는 공정명 미선택), 전체 담당자 풀을 보여줄지 결정해야 함
+                // 사용자 요구사항: "3개만 보여야지" -> 공정명이 선택되었다면 좁혀서 보여주는 게 핵심
+                // 공정명이 아직 안 정해졌다면, 전체 목록 노출 (유연성)
+                if (availableManagers.length === 0 && !row.name) {
+                    availableManagers = defaultScheduleSteps.map(s => s.inCharge).filter(Boolean);
+                }
+
+                // 중복 제거
+                availableManagers = [...new Set(availableManagers)];
+
+                // 현재 입력된 담당자가 목록에 없으면 추가 (기존 데이터 보존)
+                if (row.inCharge && !availableManagers.includes(row.inCharge)) {
+                    availableManagers.push(row.inCharge);
+                }
+
+                const currentManagerOptions = availableManagers.map(m =>
+                    `<option value="${m}" ${row.inCharge === m ? 'selected' : ''}>${m}</option>`
+                ).join('');
 
                 return `
-    <tr class="${printClass}">
-        <td style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px;">${index + 1}</td>
+    <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
+        ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
+        style="cursor:move; transition: background 0.2s;">
+        <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
+             <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                <button onclick="removeScheduleRow(${index})" class="no-print" 
+                    style="width:22px; height:22px; background:#ff3b30; color:white; border:none; border-radius:50%; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; line-height:1;"
+                    title="삭제">−</button>
+                <span style="font-size:12px; color:#333;">${index + 1}</span>
+             </div>
+        </td>
+        <!-- Print Index (displayed only when printing) -->
+        <td class="print-only-cell" style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px; display:none;">${index + 1}</td>
 
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
-                style="width:100%; border:1px solid #d2d2d7; background:white; font-size:12px; padding:5px; cursor:pointer; border-radius:4px; -webkit-appearance:auto; appearance:auto;">
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
                 <option value="">선택</option>
-                ${categoryOptions}
+                ${categoryOptions.split('><').join('>\n<').replace(`value="${row.category}"`, `value="${row.category}" selected`)}
             </select>
         </td>
 
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
-                style="width:100%; border:1px solid #d2d2d7; background:white; font-size:12px; padding:5px; cursor:pointer; border-radius:4px; -webkit-appearance:auto; appearance:auto;">
-                ${row.category ? '<option value="">선택</option>' + processOptions : '<option value="" disabled selected>카테고리 먼저 선택</option>'}
+                ${row.category ? '' : 'disabled'}
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
+                <option value="">${row.category ? '선택' : '카테고리 먼저 선택'}</option>
+                ${processOptions}
             </select>
         </td>
 
@@ -6038,67 +6023,26 @@
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
+        <!-- [수정] Manager Dropdown (Dynamic) -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)'}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'inCharge', this.value)" placeholder="공사 담당자">
+            <select class="manager-select" onchange="updateScheduleRow(${index}, 'inCharge', this.value)"
+                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
+                <option value="">담당자 선택</option>
+                ${currentManagerOptions}
+            </select>
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.memo || ''}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
         </td>
-        <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
-            <div style="display:flex; justify-content:center; gap:3px;">
-                <button onclick="moveScheduleRow(${index}, -1)"
-                    style="padding:4px 6px; font-size:12px; border:1px solid #d2d2d7; background:white; cursor:pointer; border-radius:4px;"
-                    title="위로 이동">▲</button>
-                <button onclick="moveScheduleRow(${index}, 1)"
-                    style="padding:4px 6px; font-size:12px; border:1px solid #d2d2d7; background:white; cursor:pointer; border-radius:4px;"
-                    title="아래로 이동">▼</button>
-                <button onclick="removeScheduleRow(${index})"
-                    style="padding:4px 6px; font-size:12px; border:1px solid #ff3b30; background:white; color:#ff3b30; cursor:pointer; border-radius:4px;"
-                    title="삭제">✕</button>
-                <button onclick="addScheduleRow()"
-                    style="padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #34c759; background:#34c759; color:white; cursor:pointer; border-radius:4px;"
-                    title="공정 추가">+</button>
-            </div>
-        </td>
     </tr>
                 `;
             }).join('');
-
-            // 컬럼 헤더 너비를 colgroup에 반영하여 thead와 tbody의 정렬을 안정화
-            try {
-                // 약간의 지연을 주어 렌더링이 완료된 후 측정
-                setTimeout(() => {
-                    try {
-                        const table = tbody.closest('.data-table');
-                        if (!table) return;
-                        const ths = Array.from(table.querySelectorAll('thead th'));
-                        const cols = Array.from(table.querySelectorAll('col'));
-                        ths.forEach((th, idx) => {
-                            if (cols[idx]) {
-                                const w = th.offsetWidth;
-                                if (w && w > 0) cols[idx].style.width = w + 'px';
-                            }
-                        });
-                        // 강제 리플로우: display 토글로 레이아웃 재계산 유도
-                        const prev = table.style.display;
-                        table.style.display = 'none';
-                        // 강제 리플로우에 접근
-                        // eslint-disable-next-line no-unused-expressions
-                        table.offsetWidth;
-                        table.style.display = prev || '';
-                    } catch (e) {
-                        // 안전하게 무시
-                    }
-                }, 30);
-            } catch (e) {}
         }
 
         function addScheduleRow() {
-            // 빈 행 추가
+            // 빈 행 추가 (견적서 방식)
             scheduleRows.push({
                 id: Date.now() + Math.random(),
                 category: '',
@@ -6106,7 +6050,7 @@
                 checkPoint: '',
                 start: '',
                 end: '',
-                inCharge: '',
+                inCharge: '', // [수정] 기본값 없음
                 memo: ''
             });
             renderScheduleTable();
@@ -6121,17 +6065,22 @@
             scheduleRows[rowIndex].category = category;
             scheduleRows[rowIndex].name = '';
             scheduleRows[rowIndex].checkPoint = '';
+            // [추가] 담당자도 같이 초기화하는 것이 자연스러움
+            scheduleRows[rowIndex].inCharge = '';
 
             // 테이블 다시 렌더링 (필터링된 공정명 드롭다운 표시)
             renderScheduleTable();
             saveScheduleToCustomer();
         }
 
-        // 공정명 선택 시 체크포인트/담당자 자동 기입 (견적서 패턴 참조)
+        // 공정명 선택 시 체크포인트/담당자 연동
         function onScheduleProcessChange(rowIndex, processName) {
             if (!scheduleRows[rowIndex]) return;
 
             scheduleRows[rowIndex].name = processName;
+
+            // 공정명을 바꿨으므로 담당자도 초기화 (다시 선택 유도)
+            scheduleRows[rowIndex].inCharge = '';
 
             if (!processName) {
                 scheduleRows[rowIndex].checkPoint = '';
@@ -6140,20 +6089,20 @@
                 return;
             }
 
-            // 선택된 공정명에 해당하는 템플릿 데이터 찾기
-            const selectedProcess = defaultScheduleSteps.find(s =>
+            // 선택된 공정명에 해당하는 후보군 찾기
+            const candidates = defaultScheduleSteps.filter(s =>
                 s.category === scheduleRows[rowIndex].category && s.name === processName
             );
 
-            if (selectedProcess) {
-                // 체크포인트 자동 기입
-                scheduleRows[rowIndex].checkPoint = selectedProcess.checkPoint || '';
+            if (candidates.length > 0) {
+                // 체크포인트는 첫 번째 후보의 것을 따름 (보통 동일하므로)
+                scheduleRows[rowIndex].checkPoint = candidates[0].checkPoint || '';
 
-                // 담당자 자동 기입 (템플릿에 있으면 사용, 없으면 기본값)
-                if (selectedProcess.inCharge) {
-                    scheduleRows[rowIndex].inCharge = selectedProcess.inCharge;
-                } else if (!scheduleRows[rowIndex].inCharge) {
-                    scheduleRows[rowIndex].inCharge = currentData.manager || '원프로 소장 (010-4650-7013)';
+                // [수정] 만약 가능한 담당자가 딱 1명이라면 자동 선택
+                // 2명 이상이면 빈 값으로 두어 사용자가 드롭다운에서 선택하게 함 (B.R, S.T, T.W 중 택1)
+                const distinctManagers = [...new Set(candidates.map(c => c.inCharge).filter(Boolean))];
+                if (distinctManagers.length === 1) {
+                    scheduleRows[rowIndex].inCharge = distinctManagers[0];
                 }
             }
 
@@ -6165,10 +6114,17 @@
         async function loadScheduleGuidelines() {
             try {
                 const params = new URLSearchParams({
-                    sheet: '공사스케줄관리',
+                    sheet: '공사스케줄관리', // 앱스스크립트에서 띄어쓰기 유연하게 처리함
                     action: 'getGuidelines'
                 });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+
+                // 3초 타임아웃 설정 (로컬 테스트 시 너무 오래 걸리지 않게)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 const result = await response.json();
 
                 if (result.success && result.guidelines && result.guidelines.length > 0) {
@@ -6177,14 +6133,26 @@
                         guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
                         showPersistentAlert('공사 스케줄 유의사항을\n성공적으로 불러왔습니다.', 'success');
                     }
-                } else if (result.success) {
-                    showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
                 } else {
-                    showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
+                    throw new Error(result.error || 'No guidelines found');
                 }
             } catch (error) {
-                console.error('Error loading schedule guidelines:', error);
-                showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
+                console.warn('❌ 서버 유의사항 로드 실패, 로컬 백업 데이터 사용:', error);
+
+                // [로컬 테스트용 백업 데이터]
+                // 배포 문제로 서버 통신이 안 될 경우 이 데이터를 보여줍니다.
+                const localBackupGuidelines = [
+                    "공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.",
+                    "공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.",
+                    "공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 담당자와 먼저 협의 부탁드립니다.",
+                    "공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다."
+                ];
+
+                const guidelinesList = document.getElementById('scheduleGuidelinesList');
+                if (guidelinesList) {
+                    guidelinesList.innerHTML = localBackupGuidelines.map(item => `<li>${item}</li>`).join('');
+                    showPersistentAlert('서버 연결이 원활하지 않아\n기본 유의사항을 표시합니다.\n(로컬 모드)', 'warning');
+                }
             }
         }
 
@@ -6309,7 +6277,7 @@
                 addBtn.disabled = true;
 
                 // 공정 선택 시 추가 버튼 활성화
-                processSelect.onchange = function() {
+                processSelect.onchange = function () {
                     addBtn.disabled = !this.value;
                 };
             } else {
@@ -6384,7 +6352,6 @@
         }
 
         function removeScheduleRow(index) {
-            if (!confirm('기록을 삭제하시겠습니까?')) return;
             scheduleRows.splice(index, 1);
             renderScheduleTable();
             saveScheduleToCustomer();
@@ -6489,10 +6456,8 @@
                 brand: '',
                 item: '',
                 modelNum: '',
-                rank: '',
                 size: '',
                 price: '',
-                website: '',
                 service: '',
                 warranty: '',
                 note: ''
@@ -6501,32 +6466,105 @@
             saveASList();
         }
 
+        // [New] A/S DB Mock Data (Initialize global)
+        // Global A/S DB
+        let AS_DB = [];
+
+        function fetchASListDB() {
+            if (AS_DB.length > 0) return; // Already loaded
+
+            fetch(CUSTOMER_SYNC_URL + '?sheet=as_list')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === 'success') {
+                        AS_DB = data.items;
+                        console.log('✅ A/S DB Loaded:', AS_DB.length + ' items');
+                        renderASListTable(); // Re-render if table is open
+                    } else {
+                        console.error('❌ Failed to load A/S DB:', data.message);
+                    }
+                })
+                .catch(err => console.error('❌ Error fetching A/S DB:', err));
+        }
+
         function renderASListTable() {
             const tbody = document.getElementById('asListTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            // Extract unique categories from AS_DB
+            const categories = [...new Set(AS_DB.map(item => item.category).filter(Boolean))];
+
             asListRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
+                tr.setAttribute('draggable', 'true');
+                tr.ondragstart = (e) => handleASDragStart(e, index);
+                tr.ondragover = (e) => handleASDragOver(e);
+                tr.ondrop = (e) => handleASDrop(e, index);
+                tr.ondragend = (e) => handleASDragEnd(e);
+                tr.style.cursor = 'move';
+                tr.style.transition = 'background 0.2s';
+
+                // Category Options
+                const categoryOptions = categories.map(c =>
+                    `<option value="${c}" ${row.category === c ? 'selected' : ''}>${c}</option>`
+                ).join('');
+
+                // Brand Options (Filtered by Category)
+                let brandOptions = '<option value="">선택</option>';
+                if (row.category) {
+                    const brands = [...new Set(AS_DB.filter(d => d.category === row.category).map(d => d.brand).filter(Boolean))];
+                    brandOptions += brands.map(b =>
+                        `<option value="${b}" ${row.brand === b ? 'selected' : ''}>${b}</option>`
+                    ).join('');
+                } else {
+                    brandOptions = '<option value="">카테고리 먼저 선택</option>';
+                }
+
+                // Item Options (Filtered by Category AND Brand)
+                let itemOptions = '<option value="">선택</option>';
+                if (row.category && row.brand) {
+                    const items = [...new Set(AS_DB.filter(d => d.category === row.category && d.brand === row.brand).map(d => d.item).filter(Boolean))];
+                    itemOptions += items.map(i =>
+                        `<option value="${i}" ${row.item === i ? 'selected' : ''}>${i}</option>`
+                    ).join('');
+                } else {
+                    itemOptions = '<option value="">브랜드 먼저 선택</option>';
+                }
+
                 tr.innerHTML = `
-                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">${index + 1}</td>
-                    <!-- Category -->
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                         <input type="text" class="mh-input" value="${row.category || ''}" 
-                             onchange="updateASListRow(${index}, 'category', this.value)"
-                             style="width:100%; border:none; outline:none; text-align:center;">
+                    <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <button onclick="removeASListRow(${index})" class="no-print" 
+                                style="width:22px; height:22px; background:#ff3b30; color:white; border:none; border-radius:50%; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; line-height:1;"
+                                title="삭제">−</button>
+                            <span style="font-size:12px; color:#333;">${index + 1}</span>
+                        </div>
                     </td>
-                    <!-- Brand -->
+                    <!-- Print Index (displayed only when printing) -->
+                    <td class="print-only-cell" style="text-align:center; padding:10px; border:1px solid #d2d2d7; font-size:12px; display:none;">${index + 1}</td>
+
+                    <!-- Category (Dropdown) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.brand || ''}" 
-                            onchange="updateASListRow(${index}, 'brand', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center;">
+                         <select class="mh-input" onchange="updateASCategory(${index}, this.value)"
+                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
+                             <option value="">선택</option>
+                             ${categoryOptions}
+                         </select>
                     </td>
-                    <!-- Item -->
+                    <!-- Brand (Dropdown) -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.item || ''}" 
-                            onchange="updateASListRow(${index}, 'item', this.value)"
-                            style="width:100%; border:none; outline:none;">
+                        <select class="mh-input" onchange="updateASBrand(${index}, this.value)"
+                             style="width:100%; border:none; outline:none; text-align:center; background:transparent;">
+                             ${brandOptions}
+                         </select>
+                    </td>
+                    <!-- Item (Dropdown) -->
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <select class="mh-input" onchange="updateASItem(${index}, this.value)"
+                            style="width:100%; border:none; outline:none; background:transparent;">
+                            ${itemOptions}
+                        </select>
                     </td>
                     <!-- ModelNum -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
@@ -6534,31 +6572,13 @@
                             onchange="updateASListRow(${index}, 'modelNum', this.value)"
                             style="width:100%; border:none; outline:none;">
                     </td>
-                    <!-- Rank -->
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.rank || ''}" 
-                            onchange="updateASListRow(${index}, 'rank', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:center;">
-                    </td>
                      <!-- Size -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="text" class="mh-input" value="${row.size || ''}" 
                             onchange="updateASListRow(${index}, 'size', this.value)"
                             style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
-                     <!-- Price -->
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.price || ''}" 
-                            onchange="updateASListRow(${index}, 'price', this.value)"
-                            style="width:100%; border:none; outline:none; text-align:right;">
-                    </td>
-                     <!-- Website -->
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" class="mh-input" value="${row.website || ''}" 
-                            onchange="updateASListRow(${index}, 'website', this.value)"
-                            style="width:100%; border:none; outline:none;">
-                    </td>
-                    <!-- Service -->
+                     <!-- Service -->
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                          <input type="text" class="mh-input" value="${row.service || ''}" 
                              onchange="updateASListRow(${index}, 'service', this.value)"
@@ -6584,38 +6604,93 @@
                              onchange="updateASListRow(${index}, 'note', this.value)"
                              style="width:100%; border:none; outline:none;">
                     </td>
-                    <!-- Manage -->
-                    <td class="no-print" style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
-                        <button onclick="removeASListRow(${index})" style="color:#ff3b30; background:none; border:none; cursor:pointer;">🗑️</button>
-                    </td>
                  `;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateASCategory(index, category) {
-            asListRows[index].category = category;
-            asListRows[index].item = ''; // Reset item when category changes
-            asListRows[index].brand = '';
-            asListRows[index].service = '';
-            asListRows[index].note = '';
+        let draggedASIndex = null;
+        function handleASDragStart(e, index) {
+            draggedASIndex = index;
+            e.target.style.opacity = '0.4';
+        }
+        function handleASDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedASIndex = null;
+        }
+        function handleASDragOver(e) {
+            e.preventDefault();
+        }
+        function handleASDrop(e, index) {
+            e.preventDefault();
+            if (draggedASIndex === null || draggedASIndex === index) return;
+            // Move item in array
+            const item = asListRows.splice(draggedASIndex, 1)[0];
+            asListRows.splice(index, 0, item);
+            renderASListTable();
             saveASList();
-            renderASListTable(); // Re-render to update item dropdown
         }
 
-        function updateASItem(index, dbIndex) {
-            if (dbIndex === "") {
+        function updateASCategory(index, category) {
+            asListRows[index].category = category;
+            asListRows[index].brand = ''; // Reset brand
+            asListRows[index].item = ''; // Reset item
+            asListRows[index].modelNum = '';
+            asListRows[index].size = '';
+            asListRows[index].price = '';
+            asListRows[index].service = '';
+            asListRows[index].warranty = '';
+            // Note: Don't clear note if user typed one? Or reset? Usually reset if everything changes.
+            asListRows[index].note = '';
+
+            saveASList();
+            renderASListTable();
+        }
+
+        function updateASBrand(index, brand) {
+            asListRows[index].brand = brand;
+            asListRows[index].item = ''; // Reset item
+            asListRows[index].modelNum = '';
+            asListRows[index].size = '';
+            asListRows[index].price = '';
+            asListRows[index].service = '';
+            asListRows[index].warranty = '';
+            asListRows[index].note = '';
+
+            saveASList();
+            renderASListTable();
+        }
+
+        function updateASItem(index, itemName) {
+            if (!itemName) {
                 asListRows[index].item = '';
+                // Don't reset Brand/Category
+                asListRows[index].modelNum = '';
+                asListRows[index].size = '';
+                asListRows[index].price = '';
+                asListRows[index].service = '';
+                asListRows[index].warranty = '';
+                asListRows[index].note = '';
+                saveASList();
+                renderASListTable();
                 return;
             }
-            const selectedData = AS_DB[dbIndex];
+
+            // Find selected item in DB (matching category and brand)
+            const selectedData = AS_DB.find(d =>
+                d.category === asListRows[index].category &&
+                d.brand === asListRows[index].brand &&
+                d.item === itemName
+            );
+
             if (selectedData) {
                 asListRows[index].item = selectedData.item;
-                asListRows[index].brand = selectedData.brand;
+                asListRows[index].modelNum = selectedData.modelNum;
+                asListRows[index].size = selectedData.size;
+                asListRows[index].price = selectedData.price;
                 asListRows[index].service = selectedData.service;
-                asListRows[index].note = selectedData.note; // Optional: Overwrite note? Yes, usually
-                // Warranty is usually empty in DB, so keep it empty or overwrite if DB has value
-                if (selectedData.warranty) asListRows[index].warranty = selectedData.warranty;
+                asListRows[index].warranty = selectedData.warranty;
+                asListRows[index].note = selectedData.note;
             }
             saveASList();
             renderASListTable();
@@ -6635,25 +6710,58 @@
 
         function applyScheduleToWarranty(index, endDate) {
             if (!endDate) return;
-            // endDate format: YYYY-MM-DD
-            // Add 1 year
-            try {
-                const date = new Date(endDate);
-                date.setFullYear(date.getFullYear() + 1);
 
-                // Format format: ~YY.MM.DD
+            // 1. Find the original warranty duration from AS_DB
+            const row = asListRows[index];
+            const dbItem = AS_DB.find(d =>
+                d.category === row.category &&
+                d.brand === row.brand &&
+                d.item === row.item
+            );
+
+            // Default to '1년' if not found or empty
+            const durationStr = (dbItem && dbItem.warranty) ? dbItem.warranty : '1년';
+
+            try {
+                // endDate format: YYYY-MM-DD
+                const date = new Date(endDate);
+
+                // 2. Parse duration string (e.g., "1년", "2년", "6개월")
+                let addYears = 0;
+                let addMonths = 0;
+
+                const yearMatch = durationStr.match(/(\d+)\s*년/);
+                const monthMatch = durationStr.match(/(\d+)\s*개월/);
+
+                addYears = yearMatch ? parseInt(yearMatch[1]) : 0;
+                addMonths = monthMatch ? parseInt(monthMatch[1]) : 0;
+
+                // Fallback: If no recognized format, default to 1 year
+                if (addYears === 0 && addMonths === 0) {
+                    addYears = 1;
+                }
+
+                // 3. Calculate new date
+                date.setFullYear(date.getFullYear() + addYears);
+                date.setMonth(date.getMonth() + addMonths);
+
+                // 4. Format: ~YY.MM.DD
                 const yy = String(date.getFullYear()).slice(-2);
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const dd = String(date.getDate()).padStart(2, '0');
                 const warrantyText = `~${yy}.${mm}.${dd}`;
 
+                // 5. Update state and UI
                 asListRows[index].warranty = warrantyText;
+                const inputEl = document.getElementById(`warrantyInput_${index}`);
+                if (inputEl) inputEl.value = warrantyText;
 
-                // Update input view
-                document.getElementById(`warrantyInput_${index}`).value = warrantyText;
                 saveASList();
+                showToast(`보증기간(${durationStr})이 적용되었습니다.`, 'success');
+
             } catch (e) {
-                console.error("Invalid Date", e);
+                console.error("Invalid Date Calculation", e);
+                showToast('날짜 계산 중 오류가 발생했습니다.', 'error');
             }
         }
 
@@ -6663,7 +6771,7 @@
         }
 
         function removeASListRow(index) {
-            if (!confirm('삭제하시겠습니까?')) return;
+
             asListRows.splice(index, 1);
             renderASListTable();
             saveASList();
@@ -6676,7 +6784,7 @@
         }
 
         async function syncASListFromCloud() {
-            if (!confirm('Google Sheets에서 데이터를 불러오시겠습니까? 기존 데이터는 덮어씌워집니다.')) return;
+            if (!confirm('경고: 현재 목록이 초기화되고 Google Sheet의 전체 A/S 리스트로 교체됩니다.\n계속하시겠습니까?')) return;
 
             const btn = document.querySelector('button[onclick="syncASListFromCloud()"]');
             const originalText = btn ? btn.innerHTML : '';
@@ -6686,34 +6794,38 @@
             }
 
             try {
-                const params = new URLSearchParams({ sheet: 'AS관리리스트' });
+                // Use 'as_list' to hit handleASListGet
+                const params = new URLSearchParams({ sheet: 'as_list' });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
-                if (result.success && result.data) {
-                    asListRows = result.data.map(item => ({
+                if (result.result === 'success' && result.items) {
+                    // Populate asListRows with ALL items from the DB
+                    asListRows = result.items.map(item => ({
                         category: item.category || '',
                         brand: item.brand || '',
                         item: item.item || '',
                         modelNum: item.modelNum || '',
-                        rank: item.rank || '',
                         size: item.size || '',
                         price: item.price || '',
-                        website: item.website || '',
                         service: item.service || '',
                         warranty: item.warranty || '',
                         note: item.note || ''
                     }));
+
+                    // Also update the global AS_DB for dropdowns
+                    AS_DB = result.items;
+
                     renderASListTable();
                     saveASList();
-                    alert('데이터를 성공적으로 불러왔습니다.');
+                    showToast(`전체 ${asListRows.length}개의 항목을 불러왔습니다.`, 'success');
                 } else {
-                    throw new Error(result.error || '데이터를 불러오는데 실패했습니다.');
+                    throw new Error(result.message || '데이터 구조가 올바르지 않습니다.');
                 }
 
             } catch (error) {
                 console.error('Error syncing AS list:', error);
-                alert('오류 발생: ' + error.message);
+                showToast('불러오기 실패: ' + error.message, 'error');
             } finally {
                 if (btn) {
                     btn.innerHTML = originalText;
@@ -6834,6 +6946,7 @@
         }
 
         function selectCustomer(customerId) {
+            fetchASListDB(); // Load A/S DB if not already loaded
             const customer = customers.find(c => c.customerId === customerId);
             if (!customer) return;
             currentCustomerId = customerId;
@@ -7326,80 +7439,10 @@
         }
 
         // ==========================================
-        // [커스텀 알림 함수] - 우측 상단 토스트 알림 (자동 사라짐)
+        // [커스텀 알림 함수] - 사라지지 않는 알림창
         // ==========================================
         function showPersistentAlert(message, type = 'success') {
-            const toast = document.createElement('div');
-            const toastId = 'toast_' + Date.now();
-            toast.id = toastId;
-
-            const icon = type === 'success' ? '✅' : '❌';
-            const bgColor = type === 'success' ? '#34c759' : '#ff3b30';
-
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${bgColor};
-                color: white;
-                padding: 16px 24px;
-                border-radius: 10px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10000;
-                font-size: 14px;
-                font-weight: 600;
-                max-width: 350px;
-                animation: slideIn 0.3s ease-out;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            `;
-
-            toast.innerHTML = `
-                <span style="font-size: 20px;">${icon}</span>
-                <span style="white-space: pre-wrap;">${message}</span>
-            `;
-
-            document.body.appendChild(toast);
-
-            // 3초 후 자동으로 사라짐
-            setTimeout(() => {
-                toast.style.animation = 'slideOut 0.3s ease-out';
-                setTimeout(() => {
-                    if (document.getElementById(toastId)) {
-                        document.getElementById(toastId).remove();
-                    }
-                }, 300);
-            }, 3000);
-        }
-
-        // 토스트 애니메이션 CSS 추가
-        if (!document.getElementById('toastAnimationStyle')) {
-            const style = document.createElement('style');
-            style.id = 'toastAnimationStyle';
-            style.textContent = `
-                @keyframes slideIn {
-                    from {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-                @keyframes slideOut {
-                    from {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
+            showToast(message, type);
         }
 
         // ==========================================
@@ -9420,6 +9463,336 @@
 
             printWindow.document.close();
             showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
+        }
+
+        function printSchedule(isPdf) {
+            const element = document.getElementById('scheduleDoc');
+            if (!element) {
+                showToast('스케줄 영역을 찾을 수 없습니다.', 'error');
+                return;
+            }
+
+            // Clone the element to perform modifications specifically for printing
+            const clonedElement = element.cloneNode(true);
+
+            // Remove elements marked as no-print
+            clonedElement.querySelectorAll('.no-print').forEach(el => el.remove());
+
+            // Convert input, select, textarea values to text for static printing
+            const originalInputs = element.querySelectorAll('input, textarea, select');
+            const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+
+            for (let i = 0; i < originalInputs.length; i++) {
+                const origin = originalInputs[i];
+                const clone = clonedInputs[i];
+                if (!clone) continue;
+
+                let text = '';
+                if (origin.tagName === 'SELECT') {
+                    if (origin.options.length > 0 && origin.selectedIndex >= 0) {
+                        text = origin.options[origin.selectedIndex].text;
+                        // '선택' 같은 기본값은 빈칸으로 처리
+                        if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
+                    }
+                } else {
+                    text = origin.value;
+                }
+
+                // Create a text span to replace the input element
+                const span = document.createElement('span');
+
+                // Handle Radios and Checkboxes specifically - keep them visual or convert to text
+                if (origin.type === 'radio' || origin.type === 'checkbox') {
+                    // For print, we might want to just show the checked status text or a symbol
+                    // However, the original code had labels around them.
+                    // Simplest approach: If checked, show "☑ ", if not "☐ "
+                    // But the user's HTML has label wrapping text.
+                    // Let's just keep the checked one's text and hide the unchecked ones?
+                    // Or better: Replace the entire parent label with just the text if checked.
+
+                    // Current fallback: Just let them render but minimize checkmark size
+                    // Actually, the previous issue might be the label spacing.
+                    const symbol = origin.checked ? '☑' : '☐';
+                    span.textContent = symbol;
+                    span.style.cssText = 'font-size: 10px; margin-right: 2px; line-height: 24px; vertical-align: middle;';
+                    if (clone.parentNode) clone.parentNode.replaceChild(span, clone);
+                    continue;
+                }
+
+                span.textContent = text || ''; // Ensure explicit empty string if null
+
+                // Apply strict minimal styles to avoid inheritance bloat
+                span.style.cssText = 'border:none; background:transparent; padding:0; margin:0; display:inline-block; width:100%; height:100%; line-height:24px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px;';
+
+                if (clone.parentNode) {
+                    clone.parentNode.replaceChild(span, clone);
+                }
+            }
+
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>공사 스케줄 - ${isPdf ? 'PDF 저장' : '인쇄'}</title>
+                    <style>
+                        body {
+                            font-family: 'Inter', -apple-system, sans-serif;
+                            padding: 20px;
+                            background: white;
+                        }
+
+                        /* Header Styles */
+                        .doc-header {
+                            background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
+                            color: #ffffff !important;
+                            padding: 20px 24px !important;
+                            display: flex !important;
+                            justify-content: space-between !important;
+                            align-items: center !important;
+                            margin-bottom: 10px !important; /* Adjusted to match table spacing */
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .doc-header h1 { font-size: 20px; margin: 0; color: #fff !important; line-height: 1.2; }
+                        .doc-header .subtitle { font-size: 10px; opacity: 0.9; color: #fff !important; margin-top: 4px; }
+
+                        /* Reset Grid/Flex for print if needed */
+                        .info-grid { display: block; }
+
+                        /* Table Styles */
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 10px;
+                            margin-bottom: 10px;
+                            table-layout: fixed;
+                        }
+
+                        /* Height Enforcement */
+                        tr { height: 24px !important; max-height: 24px !important; }
+                        th, td {
+                            border: 1px solid #d2d2d7;
+                            padding: 0 4px !important;
+                            height: 24px !important;
+                            max-height: 24px !important;
+                            line-height: 24px !important;
+                            vertical-align: middle !important;
+                            box-sizing: border-box !important;
+                            overflow: hidden !important;
+                            white-space: nowrap !important;
+                        }
+
+                        /* Customer Info Table Specifics */
+                        .schedule-info-table th { background: #f9f9fb; font-weight: 600; color: #333; width: 15%; }
+                        .schedule-info-table td { text-align: left; width: 35%; }
+
+                        /* Rowspan handling */
+                        th[rowspan], td[rowspan] {
+                            height: auto !important;
+                            max-height: none !important;
+                        }
+
+                        /* Data Table Specifics */
+                        .data-table th { background: #f5f5f7; font-weight: 600; color: #333; }
+
+                        /* Remove any other interfering elements */
+                        .no-print, button { display: none !important; }
+
+                        /* Reset all internal elements */
+                        td *, th * {
+                            vertical-align: middle !important;
+                            line-height: 24px !important; /* Force content align */
+                        }
+
+                        @media print {
+                            @page { size: A4 landscape; margin: 10mm; }
+                            body { -webkit-print-color-adjust: exact; }
+                            th, td { border-color: #d2d2d7 !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${clonedElement.innerHTML}
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                                // window.onafterprint = function() { window.close(); };
+                            }, 500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            if (isPdf) {
+                showToast('인쇄 미리보기에서 "PDF로 저장"을 선택하세요.', 'success');
+            }
+        }
+
+        function printASList(isPdf) {
+            const element = document.getElementById('asListDoc');
+            if (!element) {
+                showToast('A/S 리스트 영역을 찾을 수 없습니다.', 'error');
+                return;
+            }
+
+            // Clone the element to perform modifications specifically for printing
+            const clonedElement = element.cloneNode(true);
+
+            // Remove elements marked as no-print
+            clonedElement.querySelectorAll('.no-print').forEach(el => el.remove());
+
+            // Convert input, select, textarea values to text for static printing
+            const originalInputs = element.querySelectorAll('input, textarea, select');
+            const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+
+            for (let i = 0; i < originalInputs.length; i++) {
+                const origin = originalInputs[i];
+                const clone = clonedInputs[i];
+                if (!clone) continue;
+
+                let text = '';
+                if (origin.tagName === 'SELECT') {
+                    if (origin.options.length > 0 && origin.selectedIndex >= 0) {
+                        text = origin.options[origin.selectedIndex].text;
+                        // '선택' 같은 기본값은 빈칸으로 처리
+                        if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
+                    }
+                } else {
+                    text = origin.value;
+                }
+
+                // Create a text span to replace the input element
+                const span = document.createElement('span');
+
+                // Handle Radios and Checkboxes specifically
+                if (origin.type === 'radio' || origin.type === 'checkbox') {
+                    const symbol = origin.checked ? '☑' : '☐';
+                    span.textContent = symbol;
+                    span.style.cssText = 'font-size: 10px; margin-right: 2px; line-height: 24px; vertical-align: middle;';
+                    if (clone.parentNode) clone.parentNode.replaceChild(span, clone);
+                    continue;
+                }
+
+                span.textContent = text || ''; // Ensure explicit empty string if null
+
+                // Apply strict minimal styles to avoid inheritance bloat
+                span.style.cssText = 'border:none; background:transparent; padding:0; margin:0; display:inline-block; width:100%; height:100%; line-height:24px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px;';
+
+                if (clone.parentNode) {
+                    clone.parentNode.replaceChild(span, clone);
+                }
+            }
+
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>A/S 관리 리스트 - ${isPdf ? 'PDF 저장' : '인쇄'}</title>
+                    <style>
+                        body {
+                            font-family: 'Inter', -apple-system, sans-serif;
+                            padding: 20px;
+                            background: white;
+                        }
+
+                        /* Header Styles */
+                        .doc-header {
+                            background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
+                            color: #ffffff !important;
+                            padding: 20px 24px !important;
+                            display: flex !important;
+                            justify-content: space-between !important;
+                            align-items: center !important;
+                            margin-bottom: 10px !important; /* Adjusted to match table spacing */
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .doc-header h1 { font-size: 20px; margin: 0; color: #fff !important; line-height: 1.2; }
+                        .doc-header .subtitle { font-size: 10px; opacity: 0.9; color: #fff !important; margin-top: 4px; }
+
+                        /* Reset Grid/Flex for print if needed */
+                        .info-grid { display: block; }
+
+                        /* Table Styles */
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 10px;
+                            margin-bottom: 10px;
+                            table-layout: fixed;
+                        }
+
+                        /* Height Enforcement */
+                        tr { height: 24px !important; max-height: 24px !important; }
+                        th, td {
+                            border: 1px solid #d2d2d7;
+                            padding: 0 4px !important;
+                            height: 24px !important;
+                            max-height: 24px !important;
+                            line-height: 24px !important;
+                            vertical-align: middle !important;
+                            box-sizing: border-box !important;
+                            overflow: hidden !important;
+                            white-space: nowrap !important;
+                        }
+
+                        /* Customer Info Table Specifics */
+                        .schedule-info-table th { background: #f9f9fb; font-weight: 600; color: #333; width: 15%; }
+                        .schedule-info-table td { text-align: left; width: 35%; }
+
+                        /* Rowspan handling */
+                        th[rowspan], td[rowspan] {
+                            height: auto !important;
+                            max-height: none !important;
+                        }
+
+                        /* Data Table Specifics */
+                        .data-table th { background: #f5f5f7; font-weight: 600; color: #333; }
+
+                        /* Remove any other interfering elements */
+                        .no-print, button { display: none !important; }
+                        
+                        /* Print Only Cells - NEW: Override display:none */
+                        .print-only-cell { display: table-cell !important; }
+
+                        /* Reset all internal elements */
+                        td *, th * {
+                            vertical-align: middle !important;
+                            line-height: 24px !important; /* Force content align */
+                        }
+
+                        @media print {
+                            @page { size: A4 landscape; margin: 10mm; }
+                            body { -webkit-print-color-adjust: exact; }
+                            th, td { border-color: #d2d2d7 !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${clonedElement.innerHTML}
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                                // window.onafterprint = function() { window.close(); };
+                            }, 500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            if (isPdf) {
+                showToast('인쇄 미리보기에서 "PDF로 저장"을 선택하세요.', 'success');
+            }
         }
 
         function exportAllData() {
