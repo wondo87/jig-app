@@ -37,16 +37,31 @@ const ENTRY_IDS = {
 };
 
 const SENDER_NAME = '디자인지그';
-const SENDER_EMAIL = 'designjig.office@gmail.com';
-
 // [노션 연동 설정]
-// 주의: 이 키는 외부로 유출되지 않도록 관리해야 합니다.
-const NOTION_API_KEY = 'ntn_j609628766730H0TC5BgKFao3ZvGG1x58BaBSDQwffd0kA'; // '구글시트' 통합 시크릿
+// 주의: API 키는 스크립트 속성(Project Settings > Script Properties)에 저장해야 안전합니다.
+// 아래 setupNotionProperties() 함수를 한 번 실행하여 키를 저장하세요.
+// 깃허브에 코드를 올려도 키는 노출되지 않습니다.
+const NOTION_API_KEY = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
 const NOTION_DB_IDS = {
     PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',
     SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',
     CHECKLIST: '6040d967e63e4268905739f2a8be436e'
 };
+
+/**
+ * [보안 설정] Notion API 키 안전 저장소
+ * 1. 노션 개발자 센터에서 '시크릿 재발급'을 받으세요.
+ * 2. 아래 변수 newKey에 '새로운 시크릿 키'를 붙여넣으세요.
+ * 3. 이 함수를 선택하고 [실행] 버튼을 한 번만 누르세요.
+ * 4. 실행 후에는 newKey 값을 지우고 저장소에 올리셔도 안전합니다.
+ */
+function setupNotionProperties() {
+    const newKey = '여기에_새_키를_붙여넣으세요'; // 예: ntn_...
+
+    PropertiesService.getScriptProperties().setProperty('NOTION_API_KEY', newKey);
+    Logger.log('✅ 새로운 Notion API Key가 안전하게 저장되었습니다!');
+    Logger.log('이제 코드를 깃허브에 올려도 키는 유출되지 않습니다.');
+}
 
 // [기본 데이터] 공사 스케줄 템플릿
 const DEFAULT_SCHEDULE_TEMPLATE = [
