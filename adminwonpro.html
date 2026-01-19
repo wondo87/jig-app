@@ -4134,7 +4134,7 @@
             <!-- [신규] 정산 관리 대장 -->
             <div class="tab-panel" id="panel-settlement" style="height: 100%; overflow-y: auto;">
                 <div class="document-wrapper"
-                    style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                    style="width:100%; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
                     <div class="doc-header">
                         <div>
                             <div
@@ -4184,19 +4184,30 @@
                         <table class="data-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f5f5f7;">
-                                    <th style="width:50px; padding:12px; border:1px solid #d2d2d7;">No</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">카테고리</th>
-                                    <th style="padding:12px; border:1px solid #d2d2d7;">공정분류</th>
-                                    <th style="padding:12px; border:1px solid #d2d2d7;">세부항목</th>
-                                    <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">비용구분</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">거래처/작업자</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">실행금액(A)</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">견적금액(B)</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">수익(B-A)</th>
-                                    <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">결제방식</th>
-                                    <th style="width:110px; padding:12px; border:1px solid #d2d2d7;">결제일</th>
-                                    <th style="width:80px; padding:12px; border:1px solid #d2d2d7;">결제상태</th>
-                                    <th style="width:100px; padding:12px; border:1px solid #d2d2d7;">비고</th>
+                                    <th style="width:40px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">No
+                                    </th>
+                                    <th style="width:100px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">카테고리
+                                    </th>
+                                    <th style="width:100px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">공정분류
+                                    </th>
+                                    <th style="width:100px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">
+                                        거래처/작업자</th>
+                                    <th style="width:70px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">비용구분
+                                    </th>
+                                    <th style="width:80px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">대금방식
+                                    </th>
+                                    <th style="width:100px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">
+                                        사업자/주민번호</th>
+                                    <th style="width:180px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">
+                                        은행명/예금주/계좌번호</th>
+                                    <th style="width:90px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">결제금액
+                                    </th>
+                                    <th style="width:100px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">결제일
+                                    </th>
+                                    <th style="width:80px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">결제상태
+                                    </th>
+                                    <th style="width:80px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">비고
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="settlementTableBody">
@@ -5901,14 +5912,30 @@
                     steps = data.steps;
                 }
 
+                // [Fix] Merged cells handling: Fill down empty categories
+                let lastCategory = '';
+                steps.forEach(step => {
+                    if (step.category && String(step.category).trim() !== '') {
+                        lastCategory = step.category;
+                    } else if (lastCategory) {
+                        step.category = lastCategory;
+                    }
+                });
+
                 if (steps.length > 0) {
                     defaultScheduleSteps = steps;
                     console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
                     console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
 
-                    // 만약 이미 스케줄 탭이 열려있고 데이터가 있다면 갱신
+                    // [신규] 정산 관리 대장 옵션 마스터 로드
+                    await fetchSettlementMaster();
+
+                    // 만약 이미 스케줄 탭이나 정산 탭이 열려있고 데이터가 있다면 갱신
                     if (document.getElementById('panel-schedule').classList.contains('active')) {
                         renderScheduleTable();
+                    }
+                    if (document.getElementById('panel-settlement').classList.contains('active')) {
+                        renderSettlementTable();
                     }
                 } else {
                     console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
@@ -6933,6 +6960,28 @@
         // [신규] 정산 관리 대장 (Settlement Management)
         // ============================
         let settlementRows = [];
+        let settlementOptionsData = []; // [신규] 정산 관리 대장 옵션 마스터 데이터
+
+        // [신규] 정산 관리 대장 옵션 마스터 데이터 가져오기
+        async function fetchSettlementMaster() {
+            try {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=settlement&action=getSettlementOptions`);
+                const result = await response.json();
+                if (result.result === 'success' && result.options) {
+                    settlementOptionsData = result.options;
+                    console.log('✅ 정산 옵션 마스터 로드 완료:', settlementOptionsData.length + '개');
+
+                    // 정산 탭이 열려있다면 갱신
+                    if (document.getElementById('panel-settlement').classList.contains('active')) {
+                        renderSettlementTable();
+                    }
+                } else {
+                    console.warn('⚠️ 정산 옵션 마스터 로드 실패 또는 비어있음.');
+                }
+            } catch (error) {
+                console.error('정산 옵션 마스터 로드 중 오류:', error);
+            }
+        }
 
         function formatNumberInput(input) {
             let value = input.value.replace(/,/g, '');
@@ -6943,34 +6992,171 @@
 
         // 카테고리 목록
         const SETTLEMENT_CATEGORIES = [
-            '01. 기획·준비', '02. 철거 공사', '03. 설비/방수', '04. 전기 공사',
-            '05. 목공 공사', '06. 타일/욕실', '07. 도장/필름', '08. 도배/바닥',
-            '09. 가구 공사', '10. 마감/준공', '11. 기타'
+            '가설공사', '철거공사', '설비/방수공사', '전기/조명공사', '에어컨공사',
+            '창호공사', '목공/도어공사', '타일공사', '욕실공사', '필름공사',
+            '도장공사', '바닥재공사', '도배공사', '가구공사', '중문공사',
+            '마감공사', '기타공사'
         ];
+
+        // 거래처 정보 자동 완성을 위한 도우미 함수
+        function autoFillPartnerInfo(index, clientName) {
+            if (!clientName) return;
+            // 현재 활성화된 정산 행들이나 과거 기록에서 해당 거래처의 정보가 있는지 찾음
+            const match = settlementRows.find((r, idx) => idx !== index && r.client === clientName && (r.bizId || r.bankInfo));
+            if (match) {
+                if (!settlementRows[index].bizId) settlementRows[index].bizId = match.bizId;
+                if (!settlementRows[index].bankInfo) settlementRows[index].bankInfo = match.bankInfo;
+                if (!settlementRows[index].payType) settlementRows[index].payType = match.payType;
+                if (!settlementRows[index].costType) settlementRows[index].costType = match.costType;
+            }
+        }
+
+        function onSettlementCategoryChange(index, value) {
+            if (value === '__DIRECT_INPUT__') {
+                const custom = prompt('카테고리를 직접 입력하세요:');
+                if (custom) {
+                    settlementRows[index].category = custom;
+                    settlementRows[index].process = '';
+                    settlementRows[index].client = '';
+                } else {
+                    renderSettlementTable();
+                    return;
+                }
+            } else {
+                settlementRows[index].category = value;
+                settlementRows[index].process = '';
+                settlementRows[index].client = '';
+            }
+            renderSettlementTable();
+            saveSettlementToLocal();
+        }
+
+        function onSettlementProcessChange(index, value) {
+            if (value === '__DIRECT_INPUT__') {
+                const custom = prompt('공정명을 직접 입력하세요:');
+                if (custom) {
+                    settlementRows[index].process = custom;
+                } else {
+                    renderSettlementTable();
+                    return;
+                }
+            } else {
+                settlementRows[index].process = value;
+            }
+
+            // 공정 선택 시 기본 담당자 자동 세팅
+            const row = settlementRows[index];
+            if (row.process) {
+                // 1. 매칭 소스 결정 (정산 DB 우선, 없으면 스케줄 DB)
+                // 만약 정산 옵션 데이터가 있으면 사용, 없으면 스케줄 템플릿 사용 (Fallback)
+                const sourceData = (settlementOptionsData && settlementOptionsData.length > 0) ? settlementOptionsData : defaultScheduleSteps;
+                const isSettlementMaster = (sourceData === settlementOptionsData);
+
+                // 2. DB에서 매칭 확인
+                const matches = sourceData.filter(s => {
+                    const cat1 = (row.category || '').replace(/\s/g, '').replace('공사', '');
+                    const cat2 = (s.category || '').replace(/\s/g, '').replace('공사', '');
+                    return (cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1)) &&
+                        (isSettlementMaster ? s.process : s.name) === row.process;
+                });
+
+                if (matches.length > 0 && !row.client) {
+                    const matchedItem = matches[0];
+                    const clientName = isSettlementMaster ? matchedItem.client : matchedItem.inCharge;
+
+                    if (clientName) {
+                        settlementRows[index].client = clientName;
+
+                        // 추가 정보 자동 기입 (정산 DB인 경우만 가능)
+                        if (isSettlementMaster) {
+                            if (matchedItem.costType) settlementRows[index].costType = matchedItem.costType;
+                            if (matchedItem.payType) settlementRows[index].payType = matchedItem.payType;
+                            if (matchedItem.bizId) settlementRows[index].bizId = matchedItem.bizId;
+                            if (matchedItem.bankInfo) settlementRows[index].bankInfo = matchedItem.bankInfo;
+                        }
+
+                        // 과거 기록 참조 (Fallback)
+                        autoFillPartnerInfo(index, clientName);
+                    }
+                }
+            }
+            renderSettlementTable();
+            saveSettlementToLocal();
+        }
 
         function renderSettlementTable() {
             const tbody = document.getElementById('settlementTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            let totalExec = 0; // 총 실행금액 (Cost)
-            let totalEst = 0;  // 총 견적금액 (Revenue)
+            let totalPayAmount = 0; // 총 결제금액
 
             settlementRows.forEach((row, index) => {
                 const tr = document.createElement('tr');
+                const payAmount = parseInt(String(row.payAmount || '0').replace(/,/g, ''), 10) || 0;
+                totalPayAmount += payAmount;
 
-                const execAmount = parseInt(String(row.execAmount || '0').replace(/,/g, ''), 10) || 0;
-                const estAmount = parseInt(String(row.estAmount || '0').replace(/,/g, ''), 10) || 0;
-                const profit = estAmount - execAmount;
+                // 1. 카테고리 옵션 생성 (마스터 데이터 DB 기준)
+                // 만약 정산 옵션 데이터가 있으면 사용, 없으면 스케줄 템플릿 사용 (Fallback)
+                const sourceData = (settlementOptionsData && settlementOptionsData.length > 0) ? settlementOptionsData : defaultScheduleSteps;
+                const isSettlementMaster = (sourceData === settlementOptionsData);
 
-                totalExec += execAmount;
-                totalEst += estAmount;
+                const combinedCategories = [...new Set([
+                    ...SETTLEMENT_CATEGORIES,
+                    ...(sourceData.map(s => s.category).filter(Boolean))
+                ])];
 
-                // 카테고리 옵션 생성
                 let categoryOptions = '<option value="">선택</option>';
-                SETTLEMENT_CATEGORIES.forEach(cat => {
+                categoryOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
+                combinedCategories.forEach(cat => {
                     categoryOptions += `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`;
                 });
+                if (row.category && !combinedCategories.includes(row.category)) {
+                    categoryOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.category}" selected>${row.category}</option>` +
+                        combinedCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+                }
+
+                // 2. 공정분류 옵션 생성 (DB 데이터 사용)
+                // [수정] 정산 관리 대장 DB(또는 스케줄)를 기준으로 매칭
+                const filteredSteps = sourceData.filter(s => {
+                    if (!row.category) return true;
+                    // Comparison relaxed
+                    const cat1 = (row.category || '').replace(/\s/g, '').replace('공사', '');
+                    const cat2 = (s.category || '').replace(/\s/g, '').replace('공사', '');
+                    return cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1);
+                });
+
+                // 데이터 소스에 따라 키가 다름 (settlementOptionsData: process, defaultScheduleSteps: name)
+                const uniqueProcesses = [...new Set(filteredSteps.map(s => isSettlementMaster ? s.process : s.name).filter(Boolean))];
+                let processOptions = '<option value="">선택</option>';
+                processOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
+                uniqueProcesses.forEach(p => {
+                    processOptions += `<option value="${p}" ${row.process === p ? 'selected' : ''}>${p}</option>`;
+                });
+                if (row.process && !uniqueProcesses.includes(row.process)) {
+                    processOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.process}" selected>${row.process}</option>` +
+                        uniqueProcesses.map(p => `<option value="${p}">${p}</option>`).join('');
+                }
+
+                // 3. 거래처/작업자 옵션 생성 (공정명 기반 필터링 + 과거 기록)
+                let availableClients = [];
+                if (row.process) {
+                    availableClients = sourceData
+                        .filter(s => (isSettlementMaster ? s.process : s.name) === row.process)
+                        .map(s => isSettlementMaster ? s.client : s.inCharge)
+                        .filter(Boolean);
+                }
+                const pastClients = settlementRows.map(r => r.client).filter(Boolean);
+                const combinedClients = [...new Set([...availableClients, ...pastClients])];
+                let clientOptions = '<option value="">선택</option>';
+                clientOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
+                combinedClients.forEach(c => {
+                    clientOptions += `<option value="${c}" ${row.client === c ? 'selected' : ''}>${c}</option>`;
+                });
+                if (row.client && !combinedClients.includes(row.client)) {
+                    clientOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.client}" selected>${row.client}</option>` +
+                        combinedClients.map(c => `<option value="${c}">${c}</option>`).join('');
+                }
 
                 tr.innerHTML = `
                     <td style="padding:5px; text-align:center; border:1px solid #d2d2d7;">
@@ -6978,47 +7164,34 @@
                         ${index + 1}
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <select onchange="updateSettlementRow(${index}, 'category', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
+                        <select onchange="onSettlementCategoryChange(${index}, this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
                             ${categoryOptions}
                         </select>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.process || ''}" onchange="updateSettlementRow(${index}, 'process', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.item || ''}" onchange="updateSettlementRow(${index}, 'item', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <select onchange="updateSettlementRow(${index}, 'costType', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
-                            <option value="">선택</option>
-                            <option value="자재" ${row.costType === '자재' ? 'selected' : ''}>자재</option>
-                            <option value="노무" ${row.costType === '노무' ? 'selected' : ''}>노무</option>
-                            <option value="경비" ${row.costType === '경비' ? 'selected' : ''}>경비</option>
-                            <option value="외주" ${row.costType === '외주' ? 'selected' : ''}>외주</option>
-                            <option value="장비" ${row.costType === '장비' ? 'selected' : ''}>장비</option>
-                            <option value="기타" ${row.costType === '기타' ? 'selected' : ''}>기타</option>
+                        <select onchange="onSettlementProcessChange(${index}, this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" ${row.category ? '' : 'disabled'}>
+                            ${processOptions}
                         </select>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.client || ''}" onchange="updateSettlementRow(${index}, 'client', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${Number(execAmount).toLocaleString()}" onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'execAmount', this.value.replace(/,/g,''))" style="width:100%; border:none; background:transparent; font-size:11px; text-align:right;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${Number(estAmount).toLocaleString()}" onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'estAmount', this.value.replace(/,/g,''))" style="width:100%; border:none; background:transparent; font-size:11px; text-align:right;">
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:right; font-size:11px;">
-                        ${Number(profit).toLocaleString()}
-                    </td>
-                    <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <select onchange="updateSettlementRow(${index}, 'payMethod', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
-                            <option value="">선택</option>
-                             <option value="계좌이체" ${row.payMethod === '계좌이체' ? 'selected' : ''}>계좌</option>
-                            <option value="카드" ${row.payMethod === '카드' ? 'selected' : ''}>카드</option>
-                            <option value="현금" ${row.payMethod === '현금' ? 'selected' : ''}>현금</option>
-                            <option value="기타" ${row.payMethod === '기타' ? 'selected' : ''}>기타</option>
+                        <select onchange="updateSettlementRow(${index}, 'client', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" ${row.process ? '' : 'disabled'}>
+                            ${clientOptions}
                         </select>
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.costType || ''}" onchange="updateSettlementRow(${index}, 'costType', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" placeholder="비용구분">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                         <input type="text" value="${row.payType || ''}" onchange="updateSettlementRow(${index}, 'payType', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" placeholder="대금방식">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.bizId || ''}" onchange="updateSettlementRow(${index}, 'bizId', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" placeholder="사업자번호">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${row.bankInfo || ''}" onchange="updateSettlementRow(${index}, 'bankInfo', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" placeholder="은행/계좌">
+                    </td>
+                    <td style="padding:5px; border:1px solid #d2d2d7;">
+                        <input type="text" value="${Number(payAmount).toLocaleString()}" onkeyup="formatNumberInput(this); updateSettlementRow(${index}, 'payAmount', this.value.replace(/,/g,''))" style="width:100%; border:none; background:transparent; font-size:11px; text-align:right;">
                     </td>
                      <td style="padding:5px; border:1px solid #d2d2d7;">
                         <input type="date" value="${row.payDate || ''}" onchange="updateSettlementRow(${index}, 'payDate', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
@@ -7032,32 +7205,29 @@
                         </select>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
-                        <input type="text" value="${row.note || ''}" onchange="updateSettlementRow(${index}, 'note', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
+                        <input type="text" value="${row.note || ''}" onchange="updateSettlementRow(${index}, 'note', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" placeholder="비고">
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
             // 합계 표시 업데이트
-            const totalProfit = totalEst - totalExec;
-            const profitRate = totalEst > 0 ? ((totalProfit / totalEst) * 100).toFixed(1) : 0;
-
-            document.getElementById('settlementTotalIncome').innerText = totalEst.toLocaleString(); // 총 견적 (매출)
-            document.getElementById('settlementTotalExpense').innerText = totalExec.toLocaleString(); // 총 실행 (지출)
-            document.getElementById('settlementProfit').innerText = totalProfit.toLocaleString(); // 수익
-            document.getElementById('settlementProfitRate').innerText = profitRate + '%'; // 수익률
+            document.getElementById('settlementTotalIncome').innerText = '0';
+            document.getElementById('settlementTotalExpense').innerText = totalPayAmount.toLocaleString();
+            document.getElementById('settlementProfit').innerText = (-totalPayAmount).toLocaleString();
+            document.getElementById('settlementProfitRate').innerText = '0%';
         }
 
         function addSettlementRow() {
             settlementRows.push({
                 category: '',
                 process: '',
-                item: '',
-                costType: '',
                 client: '',
-                execAmount: 0,
-                estAmount: 0,
-                payMethod: '',
+                costType: '',
+                payType: '',
+                bizId: '',
+                bankInfo: '',
+                payAmount: 0,
                 payDate: '',
                 payStatus: '미지급',
                 note: ''
@@ -7073,8 +7243,22 @@
         }
 
         function updateSettlementRow(index, field, value) {
-            settlementRows[index][field] = value;
-            renderSettlementTable(); // 합계 재계산을 위해 렌더링
+            if (field === 'client' && value === '__DIRECT_INPUT__') {
+                const custom = prompt('거래처명을 직접 입력하세요:');
+                if (custom) {
+                    settlementRows[index].client = custom;
+                    autoFillPartnerInfo(index, custom);
+                } else {
+                    renderSettlementTable();
+                    return;
+                }
+            } else {
+                settlementRows[index][field] = value;
+                if (field === 'client') {
+                    autoFillPartnerInfo(index, value);
+                }
+            }
+            renderSettlementTable();
             saveSettlementToLocal();
         }
 

@@ -172,6 +172,9 @@ function doGet(e) {
 
         // 1.5 정산 관리 대장 데이터 요청 [추가]
         if (sheetParam === 'settlement' || sheetParam === '정산관리대장' || sheetParam === '정산 관리 대장') {
+            if (actionParam === 'getSettlementOptions') {
+                return handleSettlementOptionsGet(e);
+            }
             return handleSettlementGet(e);
         }
 
@@ -244,13 +247,13 @@ function handleSettlementUpdate(payload) {
             sheet.setFrozenRows(1);
         }
 
-        // [수정] 헤더 강제 업데이트 (12개 항목 + ID/Name/Updated)
-        // 요청 항목: 카테고리, 공정분류, 세부항목, 비용구분, 거래처/작업자, 실행금액, 견적금액, 수익(B-A), 결제방식, 결제일, 결제상태, 비고
+        // [수정] 헤더 강제 업데이트 (11개 항목 + ID/Name/Updated = 총 14열)
+        // 요청 항목: 카테고리, 공정분류, 거래처/작업자, 비용구분, 대금방식, 사업자/주민번호, 은행명/예금주/계좌번호, 결제금액, 결제일, 결제상태, 비고
         var headers = [
             'Customer ID', '고객명',
-            '카테고리', '공정분류', '세부항목', '비용구분', '거래처/작업자',
-            '실행금액', '견적금액', '수익(B-A)',
-            '결제방식', '결제일', '결제상태', '비고',
+            '카테고리', '공정분류', '거래처/작업자', '비용구분', '대금방식', '사업자/주민번호', '은행명/예금주/계좌번호',
+            '결제금액',
+            '결제일', '결제상태', '비고',
             '업데이트일시'
         ];
         sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -262,9 +265,10 @@ function handleSettlementUpdate(payload) {
             // 1. 카테고리 (C열, 3번째)
             var ruleCategory = SpreadsheetApp.newDataValidation()
                 .requireValueInList([
-                    '01. 기획·준비', '02. 철거 공사', '03. 설비/방수', '04. 전기 공사',
-                    '05. 목공 공사', '06. 타일/욕실', '07. 도장/필름', '08. 도배/바닥',
-                    '09. 가구 공사', '10. 마감/준공', '11. 기타'
+                    '가설공사', '철거공사', '설비/방수공사', '전기/조명공사', '에어컨공사',
+                    '창호공사', '목공/도어공사', '타일공사', '욕실공사', '필름공사',
+                    '도장공사', '바닥재공사', '도배공사', '가구공사', '중문공사',
+                    '마감공사', '기타공사'
                 ])
                 .setAllowInvalid(true)
                 .build();
@@ -277,19 +281,21 @@ function handleSettlementUpdate(payload) {
                 .build();
             sheet.getRange(2, 6, maxRows - 1, 1).setDataValidation(ruleCostType);
 
-            // 3. 결제방식 (K열, 11번째)
-            var rulePayMethod = SpreadsheetApp.newDataValidation()
-                .requireValueInList(['계좌이체', '카드', '현금', '기타'])
+            // 3. 대금방식 (G열, 7번째, 증빙)
+            var rulePayType = SpreadsheetApp.newDataValidation()
+                .requireValueInList(['세금계산서', '카드/현금영수증', '원천징수3.3%', '간이영수증', '기타'])
                 .setAllowInvalid(true)
                 .build();
-            sheet.getRange(2, 11, maxRows - 1, 1).setDataValidation(rulePayMethod);
+            sheet.getRange(2, 7, maxRows - 1, 1).setDataValidation(rulePayType);
 
-            // 4. 결제상태 (M열, 13번째)
+            // 4. 결제방식 (제거됨)
+
+            // 5. 결제상태 (L열, 12번째)
             var rulePayStatus = SpreadsheetApp.newDataValidation()
                 .requireValueInList(['미지급', '지급완료', '부분지급'])
                 .setAllowInvalid(true)
                 .build();
-            sheet.getRange(2, 13, maxRows - 1, 1).setDataValidation(rulePayStatus);
+            sheet.getRange(2, 12, maxRows - 1, 1).setDataValidation(rulePayStatus);
         }
 
         // 1. 기존 해당 고객 데이터 삭제
@@ -311,13 +317,12 @@ function handleSettlementUpdate(payload) {
                     customerName,
                     row.category || '',
                     row.process || '',
-                    row.item || '',
-                    row.costType || '',
                     row.client || '',
-                    row.execAmount || 0,
-                    row.estAmount || 0,
-                    row.profit || 0, // 수익
-                    row.payMethod || '',
+                    row.costType || '',
+                    row.payType || '',
+                    row.bizId || '',
+                    row.bankInfo || '',
+                    row.payAmount || 0, // 결제금액
                     row.payDate || '',
                     row.payStatus || '',
                     row.note || '',
@@ -326,7 +331,7 @@ function handleSettlementUpdate(payload) {
             });
 
             // 한 번에 쓰기
-            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 15).setValues(newRows);
+            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 14).setValues(newRows);
         }
 
         return ContentService.createTextOutput(JSON.stringify({
@@ -369,16 +374,15 @@ function handleSettlementGet(e) {
                 resultRows.push({
                     category: data[i][2],
                     process: data[i][3],
-                    item: data[i][4],
+                    client: data[i][4],
                     costType: data[i][5],
-                    client: data[i][6],
-                    execAmount: data[i][7],
-                    estAmount: data[i][8],
-                    profit: data[i][9],
-                    payMethod: data[i][10],
-                    payDate: data[i][11] instanceof Date ? Utilities.formatDate(data[i][11], Session.getScriptTimeZone(), 'yyyy-MM-dd') : data[i][11],
-                    payStatus: data[i][12],
-                    note: data[i][13]
+                    payType: data[i][6],
+                    bizId: data[i][7],
+                    bankInfo: data[i][8],
+                    payAmount: data[i][9], // 결제금액
+                    payDate: data[i][10] instanceof Date ? Utilities.formatDate(data[i][10], Session.getScriptTimeZone(), 'yyyy-MM-dd') : data[i][10],
+                    payStatus: data[i][11],
+                    note: data[i][12]
                 });
             }
         }
@@ -386,6 +390,83 @@ function handleSettlementGet(e) {
         return ContentService.createTextOutput(JSON.stringify({
             result: 'success',
             rows: resultRows
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'error',
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * [신규] 정산 관리 대장의 데이터를 옵션/템플릿으로 불러오기
+ * 정산 관리 대장 시트의 내용을 읽어와서 프론트엔드 드롭다운의 소스로 사용
+ */
+function handleSettlementOptionsGet(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName(SETTLEMENT_SHEET_NAME);
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                result: 'success',
+                options: []
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var lastRow = sheet.getLastRow();
+        if (lastRow < 2) {
+            return ContentService.createTextOutput(JSON.stringify({
+                result: 'success',
+                options: []
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 전체 데이터 읽기 (헤더 제외)
+        // A(0):CustomerID, B(1):No, C(2):category, D(3):process, E(4):client, F(5):costType, G(6):payType, H(7):bizId, I(8):bankInfo
+        // 충분히 넓게 가져오기 (9열 이상)
+        var data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+        var options = [];
+
+        var lastCategory = '';
+
+        data.forEach(function (row) {
+            // Fill-down (Merged cells logic) for Category (Column C -> index 2)
+            if (row[2] && String(row[2]).trim() !== '') {
+                lastCategory = row[2];
+            }
+
+            // 카테고리가 있는 경우에만 수집 (공백 행 제외)
+            if (lastCategory) {
+                options.push({
+                    category: lastCategory,
+                    process: row[3] || '', // 공정분류 (D열)
+                    client: row[4] || '', // 거래처 (E열)
+                    costType: row[5] || '', // 비용구분 (F열)
+                    payType: row[6] || '', // 대금방식 (G열)
+                    bizId: row[7] || '', // 사업자번호 (H열)
+                    bankInfo: row[8] || '' // 계좌번호 (I열)
+                });
+            }
+        });
+
+        // 중복 제거 (옵션 리스트이므로)
+        // 카테고리+공정+거래처 조합이 고유하도록
+        var uniqueOptions = [];
+        var seen = {};
+        options.forEach(function (opt) {
+            var key = opt.category + '|' + opt.process + '|' + opt.client;
+            if (!seen[key]) {
+                seen[key] = true;
+                uniqueOptions.push(opt);
+            }
+        });
+
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            options: uniqueOptions
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (err) {
