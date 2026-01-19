@@ -3320,7 +3320,14 @@
                                 <h1>고객 정보</h1>
                                 <div class="subtitle">Customer Information</div>
                             </div>
-                            <button class="pdf-btn" onclick="downloadPDF('customerInfoDoc', '고객정보')">🖨️ 인쇄/PDF</button>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="notion-export-btn" onclick="alert('버튼 클릭됨!'); exportToNotion('customer');"
+                                    style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"
+                                    title="노션으로 고객 정보 내보내기">
+                                    📤 노션으로 내보내기
+                                </button>
+                                <button class="pdf-btn" onclick="downloadPDF('customerInfoDoc', '고객정보')">🖨️ 인쇄/PDF</button>
+                            </div>
                         </div>
                         <div class="doc-content">
                             <div class="section">
@@ -3951,6 +3958,11 @@
                                     <span style="margin-right: 4px;">↻</span>
                                     <span>체크리스트 동기화</span>
                                 </button>
+                                <button class="notion-export-btn" onclick="exportToNotion('checklist')"
+                                    style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="노션으로 체크리스트 내보내기">
+                                    📤 노션
+                                </button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printChecklist()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
                                     인쇄/PDF</button>
@@ -4065,11 +4077,14 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <div style="display: flex; gap: 8px; align-items: center;">
-                                    <button class="btn btn-secondary btn-sm no-print" onclick="printSchedule(true)"
-                                        style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
-                                        인쇄/PDF</button>
-                                </div>
+                                <button class="notion-export-btn" onclick="exportToNotion('schedule')"
+                                    style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="노션으로 스케줄 내보내기">
+                                    📤 노션
+                                </button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="printSchedule(true)"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
+                                    인쇄/PDF</button>
                             </div>
                         </div>
                         <div class="doc-content" style="padding:30px;">
@@ -11329,6 +11344,148 @@
                 updateEditHistory();
             }
         };
+
+        // ============================================
+        // 노션 내보내기 관련 함수들
+        // ============================================
+
+        /**
+         * 노션으로 데이터 내보내기
+         * @param {string} type - 'customer', 'schedule', 'checklist'
+         */
+        async function exportToNotion(type) {
+            console.log('🚀 노션 내보내기 시작 - 타입:', type);
+
+            if (!currentCustomer) {
+                alert('⚠️ 고객을 먼저 선택해주세요!');
+                showToast('고객을 선택해주세요', 'error');
+                return;
+            }
+
+            alert('✅ 고객 선택됨: ' + currentCustomer.clientName + '\n노션 내보내기를 시작합니다...');
+
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '⏳ 내보내는 중...';
+            btn.disabled = true;
+
+            try {
+                let requestData = {
+                    action: 'exportToNotion',
+                    type: type,
+                    customerId: currentCustomer.id
+                };
+
+                // 타입별 데이터 준비
+                if (type === 'customer') {
+                    requestData.data = {
+                        고객명: currentCustomer.clientName || '',
+                        연락처: currentCustomer.clientPhone || '',
+                        주소: currentCustomer.clientAddress || '',
+                        현장주소: currentCustomer.siteAddress || '',
+                        계약금액: currentCustomer.totalAmount || '',
+                        계약일: currentCustomer.contractDate || '',
+                        착공일: currentCustomer.startDate || '',
+                        준공일: currentCustomer.endDate || '',
+                        공사내용: currentCustomer.scope || '',
+                        특이사항: currentCustomer.notes || ''
+                    };
+                } else if (type === 'schedule') {
+                    const scheduleData = currentCustomer.scheduleData || [];
+                    requestData.data = {
+                        고객명: currentCustomer.clientName || '',
+                        현장주소: currentCustomer.siteAddress || '',
+                        착공일: currentCustomer.startDate || '',
+                        준공일: currentCustomer.endDate || '',
+                        공정목록: scheduleData.map(item => ({
+                            공정: item['공정'] || '',
+                            시작일: item['시작일'] || '',
+                            종료일: item['종료일'] || '',
+                            담당자: item['담당자'] || '',
+                            상태: item['상태'] || '',
+                            비고: item['비고'] || ''
+                        }))
+                    };
+                } else if (type === 'checklist') {
+                    const customerChecklistData = getCurrentCustomerChecklistData();
+                    const checkedItems = checklistMasterData.filter(item => customerChecklistData[item.번호]);
+                    requestData.data = {
+                        고객명: currentCustomer.clientName || '',
+                        현장주소: currentCustomer.siteAddress || '',
+                        완료항목수: checkedItems.length,
+                        전체항목수: checklistMasterData.length,
+                        체크리스트: checkedItems.map(item => ({
+                            번호: item.번호,
+                            항목: item.항목 || '',
+                            내용: item.내용 || '',
+                            진행단계: item.진행단계 || '',
+                            분류: item.분류 || '',
+                            비고: item.비고 || ''
+                        }))
+                    };
+                }
+
+                console.log('📤 노션 내보내기 요청:', requestData);
+                alert('📤 Apps Script로 요청 전송 중...\nURL: ' + GOOGLE_SHEET_URL);
+
+                // data 객체를 JSON 문자열로 변환
+                const formData = new URLSearchParams();
+                formData.append('action', requestData.action);
+                formData.append('type', requestData.type);
+                formData.append('customerId', requestData.customerId);
+                formData.append('data', JSON.stringify(requestData.data));
+
+                console.log('📨 전송 데이터:', formData.toString());
+
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                console.log('📥 응답 상태:', response.status);
+
+                if (!response.ok) {
+                    throw new Error('서버 응답 오류: ' + response.status + ' ' + response.statusText);
+                }
+
+                const responseText = await response.text();
+                console.log('📥 응답 내용:', responseText);
+
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    alert('❌ 응답 파싱 실패!\n\n응답 내용:\n' + responseText.substring(0, 500));
+                    throw new Error('응답 파싱 실패: ' + e.message);
+                }
+
+                console.log('✅ 파싱된 결과:', result);
+
+                if (result.success) {
+                    alert('✅ 노션 내보내기 성공!\n\n노션 URL: ' + (result.notionUrl || '없음'));
+                    showToast('노션으로 내보내기 완료!', 'success');
+                    if (result.notionUrl) {
+                        const openNotion = confirm('노션 페이지를 여시겠습니까?');
+                        if (openNotion) {
+                            window.open(result.notionUrl, '_blank');
+                        }
+                    }
+                } else {
+                    alert('❌ 노션 내보내기 실패!\n\n에러 메시지:\n' + (result.message || '알 수 없는 오류'));
+                    throw new Error(result.message || '내보내기 실패');
+                }
+            } catch (error) {
+                console.error('❌ 노션 내보내기 실패:', error);
+                alert('❌ 오류 발생!\n\n에러 메시지:\n' + error.message + '\n\n콘솔을 확인하세요 (F12)');
+                showToast('노션 내보내기 실패: ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
 
         // ============================================
         // 통계 탭 관련 함수들

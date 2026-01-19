@@ -28,5 +28,12 @@ const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e8
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyUMp2tonGChY-BvrCrGGdg7cvnRvc1v1L4Y0Is7amjam_ZFeXksSsPqZ9F3VyuZs-iNg/exec'; // 구글 시트 연동용
 const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyUMp2tonGChY-BvrCrGGdg7cvnRvc1v1L4Y0Is7amjam_ZFeXksSsPqZ9F3VyuZs-iNg/exec'; // 데이터 동기화용
 
+// [노션 연동] 데이터베이스 ID (Apps Script에서 사용, 토큰은 Apps Script에만 저장)
+const NOTION_DATABASE_IDS = {
+    PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',      // 프로젝트 관리 (고객정보)
+    SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',      // 공사 스케줄
+    CHECKLIST: '6040d967e63e4268905739f2a8be436e'     // 현장 체크리스트
+};
+
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
