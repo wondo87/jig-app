@@ -6151,6 +6151,7 @@
 
             // 스케줄 템플릿 로드
             fetchScheduleTemplate();
+            fetchSettlementMaster(); // [추가] 정산 옵션 마스터 자동 로드
 
             // [추가] 체크리스트 초기 렌더링 (데이터가 있으면)
             if (typeof renderChecklistItems === 'function') {
@@ -7519,9 +7520,11 @@
                 // [수정] 정산 관리 대장 DB(또는 스케줄)를 기준으로 매칭
                 const filteredSteps = sourceData.filter(s => {
                     if (!row.category) return true;
-                    // Comparison relaxed
-                    const cat1 = (row.category || '').replace(/\s/g, '').replace('공사', '');
-                    const cat2 = (s.category || '').replace(/\s/g, '').replace('공사', '');
+                    // Comparison relaxed: 1. Remove "공사", 2. Remove spaces, 3. Remove leading numbers (e.g., "01.")
+                    const normalize = (str) => (str || '').replace(/^\d+\.?\s*/, '').replace(/\s/g, '').replace('공사', '');
+                    const cat1 = normalize(row.category);
+                    const cat2 = normalize(s.category);
+
                     return cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1);
                 });
 
