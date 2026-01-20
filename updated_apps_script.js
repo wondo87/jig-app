@@ -150,7 +150,13 @@ function doPost(e) {
             return handleRestoreCostDatabase(payload);
         }
 
-        // 2. 관리자 데이터 동기화 요청인지 확인
+        // 2. 노션 내보내기 요청 (반드시 CustomerSync보다 먼저 체크!)
+        // exportToNotion 요청도 customerId를 포함하므로, 먼저 체크해야 함
+        if (payload.action === 'exportToNotion') {
+            return handleNotionExport(payload);
+        }
+
+        // 3. 관리자 데이터 동기화 요청인지 확인
         // 조건: action 필드가 있거나, 데이터 내에 customerId가 있음 (관리자 기능)
         var isAdminAction = (payload.action === 'admin' || payload.action === 'deleteAdmin');
         var isCustomerSync = (payload.data && payload.data.customerId) || (payload.customerId);
@@ -158,11 +164,6 @@ function doPost(e) {
         if (isAdminAction || isCustomerSync) {
             // -> 고객관리 로직 실행
             return handleCustomerSync(payload);
-        }
-
-        // 3. 노션 내보내기 요청
-        if (payload.action === 'exportToNotion') {
-            return handleNotionExport(payload);
         }
 
         // 4. 그 외에는 상담 문의 접수로 간주
