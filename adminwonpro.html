@@ -3348,6 +3348,10 @@
                         <button onclick="saveData()"
                             style="padding: 6px 12px; margin-left: 8px; border: 1px solid #ffcfd6; background: #fff0f5; border-radius: 6px; font-size: 12px; cursor: pointer; color: #d63384; font-weight: 600;">💾
                             저장</button>
+                        <button onclick="exportToNotion('all', event);"
+                            style="padding: 6px 12px; margin-left: 8px; border: none; background: #37352f; border-radius: 6px; font-size: 12px; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;"
+                            title="노션으로 전체 데이터 내보내기">
+                            📤 노션 내보내기</button>
                         <button onclick="printCurrentCustomerAll()"
                             style="padding: 6px 12px; margin-left: 8px; border: 1px solid #d2d2d7; background: white; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1d1d1f;">🖨️
                             통합인쇄</button>
@@ -3388,11 +3392,7 @@
                                 <div class="subtitle">Customer Information</div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="notion-export-btn" onclick="exportToNotion('all', event);"
-                                    style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"
-                                    title="노션으로 고객 정보 내보내기">
-                                    📤 노션 내보내기
-                                </button>
+
                                 <button class="pdf-btn" onclick="downloadPDF('customerInfoDoc', '고객정보')">🖨️
                                     인쇄/PDF</button>
                             </div>
