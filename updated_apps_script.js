@@ -41,7 +41,12 @@ const SENDER_NAME = '디자인지그';
 // 주의: API 키는 스크립트 속성(Project Settings > Script Properties)에 저장해야 안전합니다.
 // 아래 setupNotionProperties() 함수를 한 번 실행하여 키를 저장하세요.
 // 깃허브에 코드를 올려도 키는 노출되지 않습니다.
-const NOTION_API_KEY = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+
+// [수정] 함수로 변경하여 매번 새로 읽도록 함 (캐싱 문제 해결)
+function getNotionApiKey() {
+    return PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+}
+
 const NOTION_DB_IDS = {
     PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',
     SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',
@@ -452,7 +457,7 @@ function callNotionAPI(endpoint, method, payload) {
     const options = {
         method: method,
         headers: {
-            'Authorization': 'Bearer ' + NOTION_API_KEY,
+            'Authorization': 'Bearer ' + getNotionApiKey(),
             'Content-Type': 'application/json',
             'Notion-Version': '2022-06-28'
         },
@@ -478,7 +483,8 @@ function exportCustomerToNotion(customerId, data) {
     console.log('📤 Notion Export - Data:', JSON.stringify(data));
 
     // API 키 확인
-    if (!NOTION_API_KEY) {
+    const notionApiKey = getNotionApiKey();
+    if (!notionApiKey) {
         throw new Error('Notion API 키가 설정되지 않았습니다. setupNotionProperties() 함수를 실행해주세요.');
     }
 
