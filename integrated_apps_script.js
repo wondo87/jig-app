@@ -2953,14 +2953,19 @@ function handleChecklistGet(e) {
 function handleGetSettlementOptions(e) {
     try {
         var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        // "정산옵션마스터" 시트에서 카테고리별 공정/품목 옵션 조회
-        var sheet = spreadsheet.getSheetByName('정산옵션마스터');
+        // [수정] 실제 시트 이름: "정산 관리 대장"
+        var sheet = spreadsheet.getSheetByName('정산 관리 대장');
+
+        // Fallback: 다른 가능한 이름들 시도
+        if (!sheet) sheet = spreadsheet.getSheetByName('정산관리대장');
+        if (!sheet) sheet = spreadsheet.getSheetByName('정산옵션마스터');
 
         if (!sheet) {
             // 시트가 없으면 빈 배열 반환
             return ContentService.createTextOutput(JSON.stringify({
                 result: 'success',
-                options: []
+                options: [],
+                message: '정산 관리 대장 시트를 찾을 수 없습니다.'
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
