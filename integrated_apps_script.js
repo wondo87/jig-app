@@ -2972,16 +2972,34 @@ function handleGetSettlementOptions(e) {
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
-        // 헤더: 카테고리, 공정명, 거래처, 비고 (가정)
+        // 헤더 기반 인덱스 찾기
+        var headers = data[0];
+        var idx = {
+            category: headers.indexOf('분류'),
+            process: headers.indexOf('공정'),
+            client: headers.indexOf('거래처'),
+            note: headers.indexOf('비고'),
+            // 대체 이름 지원
+            category2: headers.indexOf('공종'),
+            category3: headers.indexOf('대분류'), // 대분류 지원
+            process2: headers.indexOf('공정명')
+        };
+
+        // 인덱스 결정 (못 찾으면 기본값)
+        var iCat = (idx.category > -1) ? idx.category : (idx.category2 > -1 ? idx.category2 : (idx.category3 > -1 ? idx.category3 : 0));
+        var iProc = (idx.process > -1) ? idx.process : (idx.process2 > -1 ? idx.process2 : 1);
+        var iClient = (idx.client > -1) ? idx.client : 2;
+        var iNote = (idx.note > -1) ? idx.note : 3;
+
         var options = [];
         for (var i = 1; i < data.length; i++) {
             var row = data[i];
-            if (row[0]) { // 카테고리가 있는 경우만
+            if (row[iCat]) { // 카테고리가 있는 경우만
                 options.push({
-                    category: row[0] || '',
-                    process: row[1] || '',
-                    client: row[2] || '',
-                    note: row[3] || ''
+                    category: row[iCat] || '',
+                    process: row[iProc] || '',
+                    client: row[iClient] || '',
+                    note: row[iNote] || ''
                 });
             }
         }
@@ -3025,24 +3043,53 @@ function handleSettlementGet(e) {
         }
 
         var rows = [];
-        // 헤더: customerId, customerName, category, process, client, costType, payType, bizId, bankInfo, payAmount, payDate, payStatus, note, updatedAt
-        // 인덱스: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+        // 헤더 기반 인덱스 찾기
+        var headers = data[0];
+        // 예상 헤더: 고객ID, 고객명, 분류, 공정, 거래처, 비용구분, 지출증빙(or 대금방식), 사업자번호, 계좌정보, 결제금액, 결제일, 결제상태, 비고
+        var idx = {
+            id: headers.indexOf('고객ID'),
+            category: headers.indexOf('분류'),
+            process: headers.indexOf('공정'),
+            client: headers.indexOf('거래처'),
+            costType: headers.indexOf('비용구분'),
+            payType: headers.indexOf('지출증빙'), // 구글시트 헤더명 '지출증빙'
+            payType2: headers.indexOf('대금방식'), // 호환성
+            bizId: headers.indexOf('사업자번호'),
+            bankInfo: headers.indexOf('계좌정보'),
+            payAmount: headers.indexOf('결제금액'),
+            payDate: headers.indexOf('결제일'),
+            payStatus: headers.indexOf('결제상태'),
+            note: headers.indexOf('비고')
+        };
+
+        var iId = idx.id > -1 ? idx.id : 0;
+        var iCat = idx.category > -1 ? idx.category : 2;
+        var iProc = idx.process > -1 ? idx.process : 3;
+        var iClient = idx.client > -1 ? idx.client : 4;
+        var iCost = idx.costType > -1 ? idx.costType : 5;
+        var iPayType = idx.payType > -1 ? idx.payType : (idx.payType2 > -1 ? idx.payType2 : 6);
+        var iBiz = idx.bizId > -1 ? idx.bizId : 7;
+        var iBank = idx.bankInfo > -1 ? idx.bankInfo : 8;
+        var iAmount = idx.payAmount > -1 ? idx.payAmount : 9;
+        var iDate = idx.payDate > -1 ? idx.payDate : 10;
+        var iStatus = idx.payStatus > -1 ? idx.payStatus : 11;
+        var iNote = idx.note > -1 ? idx.note : 12;
 
         for (var i = 1; i < data.length; i++) {
             var row = data[i];
-            if (row[0].toString() === customerId.toString()) {
+            if (row[iId].toString() === customerId.toString()) {
                 rows.push({
-                    category: row[2],
-                    process: row[3],
-                    client: row[4],
-                    costType: row[5],
-                    payType: row[6],
-                    bizId: row[7],
-                    bankInfo: row[8],
-                    payAmount: row[9],
-                    payDate: row[10] ? formatDate(row[10]) : '',
-                    payStatus: row[11],
-                    note: row[12]
+                    category: row[iCat],
+                    process: row[iProc],
+                    client: row[iClient],
+                    costType: row[iCost],
+                    payType: row[iPayType],
+                    bizId: row[iBiz],
+                    bankInfo: row[iBank],
+                    payAmount: row[iAmount],
+                    payDate: row[iDate] ? formatDate(row[iDate]) : '',
+                    payStatus: row[iStatus],
+                    note: row[iNote]
                 });
             }
         }

@@ -7598,9 +7598,9 @@
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <select onchange="updateSettlementRow(${index}, 'payStatus', this.value)" style="width:100%; border:none; background:transparent; font-size:11px; color:${row.payStatus === '지급완료' ? '#0071e3' : (row.payStatus === '미지급' ? '#ff3b30' : '#333')}">
                             <option value="">선택</option>
-                            <option value="미지급" ${row.payStatus === '미지급' ? 'selected' : ''}>미지급</option>
-                            <option value="지급완료" ${row.payStatus === '지급완료' ? 'selected' : ''}>지급완료</option>
-                            <option value="부분지급" ${row.payStatus === '부분지급' ? 'selected' : ''}>부분지급</option>
+                            <option value="미지급" ${(row.payStatus || '').trim() === '미지급' ? 'selected' : ''}>미지급</option>
+                            <option value="지급완료" ${(row.payStatus || '').trim() === '지급완료' ? 'selected' : ''}>지급완료</option>
+                            <option value="부분지급" ${(row.payStatus || '').trim() === '부분지급' ? 'selected' : ''}>부분지급</option>
                         </select>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
@@ -7676,13 +7676,13 @@
                 process: '',
                 client: '',
                 costType: '',
-                payMethod: '',
+                payType: '', // [수정] payMethod -> payType
                 bizId: '',
                 bankInfo: '',
-                amount: '',
-                date: '',
-                status: '',
-                memo: ''
+                payAmount: 0, // [수정] amount -> payAmount
+                payDate: '', // [수정] date -> payDate
+                payStatus: '미지급', // [수정] status -> payStatus
+                note: '' // [수정] memo -> note
             }));
             renderSettlementTable();
             saveSettlementToLocal();
