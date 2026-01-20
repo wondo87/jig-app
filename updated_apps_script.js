@@ -472,46 +472,61 @@ function callNotionAPI(endpoint, method, payload) {
 
 // 1. 고객 정보 내보내기
 function exportCustomerToNotion(customerId, data) {
-    // 1. 기존 페이지 검색 (Customer ID 기준)
-    const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.PROJECTS + '/query', 'POST', {
-        filter: {
-            property: '고객ID', // 노션 DB에 '고객ID' 속성이 있어야 함. 없으면 '이름' 등 다른것 사용
-            rich_text: {
-                equals: customerId
+    // 디버깅 로그
+    console.log('📤 Notion Export - Customer ID:', customerId);
+    console.log('📤 Notion Export - Data:', JSON.stringify(data));
+
+    // API 키 확인
+    if (!NOTION_API_KEY) {
+        throw new Error('Notion API 키가 설정되지 않았습니다. setupNotionProperties() 함수를 실행해주세요.');
+    }
+
+    const customerName = data['성명'] || '제목 없음';
+
+    // 1. 기존 페이지 검색 (성명 기준 - Title 속성)
+    // 노션 데이터베이스에 '고객ID' 속성이 없으므로 '성명'(Title)으로 검색
+    let searchResponse;
+    try {
+        searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.PROJECTS + '/query', 'POST', {
+            filter: {
+                property: '성명', // Title 속성
+                title: {
+                    equals: customerName
+                }
             }
-        }
-    });
+        });
+    } catch (e) {
+        console.error('노션 검색 실패:', e.toString());
+        throw new Error('노션 데이터베이스 검색 실패: ' + e.toString());
+    }
 
     let pageId;
     let notionUrl;
 
     // 데이터 전처리 (숫자형 변환 등)
-    const totalAmount = parseFloat((data['총계약금액'] || '').toString().replace(/[^0-9.]/g, '')) || 0;
-    const area = parseFloat((data['평수'] || '').toString().replace(/[^0-9.]/g, '')) || 0;
+    const totalAmountStr = (data['총계약금액'] || '').toString().replace(/[^0-9.]/g, '');
+    const totalAmount = parseFloat(totalAmountStr) || 0;
+
+    const areaStr = (data['평수'] || '').toString().replace(/[^0-9.]/g, '');
+    const area = parseFloat(areaStr) || 0;
+
+    console.log('📊 Parsed values - Amount:', totalAmount, ' / Area:', area);
 
     // Notion Properties 구성 (스크린샷 기반)
-    // 값이 없는 Date 타입은 아예 키를 빼야 에러가 안남 -> undefined 할당 시 JSON.stringify에서 제외됨
+    // 값이 없는 Date 타입은 아예 키를 빼야 에러가 안남
     const properties = {
-        '성명': { title: [{ text: { content: data['성명'] || '제목 없음' } }] }, // Title Property
+        '성명': { title: [{ text: { content: customerName } }] }, // Title Property
 
         '연락처': { phone_number: data['연락처'] || null },
-        '이메일': { email: data['이메일'] || null }, // 이메일 형식 체크 필요하지만 Notion이 처리
+        '이메일': { email: data['이메일'] || null },
 
         '주소': { rich_text: [{ text: { content: data['주소'] || '' } }] },
         '현장주소': { rich_text: [{ text: { content: data['현장주소'] || '' } }] },
 
-        // 배우자 정보 (데이터가 있을 때만 보냄)
+        // 배우자 정보
         '배우자 성명': { rich_text: [{ text: { content: data['배우자 성명'] || '' } }] },
-        '배우자 연락처': data['배우자 연락처'] ? { phone_number: data['배우자 연락처'] } : undefined,
 
         '공사기간 (시작 ~ 종료)': { rich_text: [{ text: { content: data['공사기간'] || '' } }] },
-
-        // 날짜 필드들 (값이 있을 때만 전송)
-        '이사날짜': data['이사날짜'] ? { date: { start: data['이사날짜'] } } : undefined,
-        '계약일': data['계약일'] ? { date: { start: data['계약일'] } } : undefined,
-        '착공일': data['착공일'] ? { date: { start: data['착공일'] } } : undefined,
-        '준공일': data['준공일'] ? { date: { start: data['준공일'] } } : undefined,
-        '잔금일': data['잔금일'] ? { date: { start: data['잔금일'] } } : undefined,
 
         '공사 담당자': { rich_text: [{ text: { content: data['공사 담당자'] || '' } }] },
         '건물유형': { rich_text: [{ text: { content: data['건물유형'] || '' } }] },
@@ -522,29 +537,56 @@ function exportCustomerToNotion(customerId, data) {
         '특약사항': { rich_text: [{ text: { content: data['특약사항'] || '' } }] },
 
         '총 계약금액 (VAT 포함)': { number: totalAmount },
-        '평수': { number: area },
-
-        '고객ID': { rich_text: [{ text: { content: customerId } }] } // 검색 및 식별용
+        '평수': { number: area }
     };
 
-    // undefined 속성 제거 (JSON 변환 시 자동 제거되지만 명시적 처리)
-    Object.keys(properties).forEach(key => properties[key] === undefined && delete properties[key]);
-
-    if (searchResponse.results.length > 0) {
-        // 업데이트
-        pageId = searchResponse.results[0].id;
-        notionUrl = searchResponse.results[0].url;
-        callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
-    } else {
-        // 생성
-        const createResponse = callNotionAPI('/pages', 'POST', {
-            parent: { database_id: NOTION_DB_IDS.PROJECTS },
-            properties: properties
-        });
-        pageId = createResponse.id;
-        notionUrl = createResponse.url;
+    // 배우자 연락처 - Phone 속성은 빈 문자열이면 에러남
+    if (data['배우자 연락처']) {
+        properties['배우자 연락처'] = { phone_number: data['배우자 연락처'] };
     }
 
+    // 날짜 필드들 - 값이 있을 때만 전송 (YYYY-MM-DD 형식 필요)
+    if (data['이사날짜'] && data['이사날짜'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['이사날짜'] = { date: { start: data['이사날짜'] } };
+    }
+    if (data['계약일'] && data['계약일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['계약일'] = { date: { start: data['계약일'] } };
+    }
+    if (data['착공일'] && data['착공일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['착공일'] = { date: { start: data['착공일'] } };
+    }
+    if (data['준공일'] && data['준공일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['준공일'] = { date: { start: data['준공일'] } };
+    }
+    if (data['잔금일'] && data['잔금일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['잔금일'] = { date: { start: data['잔금일'] } };
+    }
+
+    console.log('📝 Properties to send:', JSON.stringify(properties));
+
+    try {
+        if (searchResponse.results && searchResponse.results.length > 0) {
+            // 업데이트
+            pageId = searchResponse.results[0].id;
+            notionUrl = searchResponse.results[0].url;
+            console.log('🔄 Updating existing page:', pageId);
+            callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
+        } else {
+            // 생성
+            console.log('➕ Creating new page in database:', NOTION_DB_IDS.PROJECTS);
+            const createResponse = callNotionAPI('/pages', 'POST', {
+                parent: { database_id: NOTION_DB_IDS.PROJECTS },
+                properties: properties
+            });
+            pageId = createResponse.id;
+            notionUrl = createResponse.url;
+        }
+    } catch (e) {
+        console.error('노션 페이지 생성/수정 실패:', e.toString());
+        throw new Error('노션 페이지 저장 실패: ' + e.toString());
+    }
+
+    console.log('✅ Notion export successful:', notionUrl);
     return { url: notionUrl };
 }
 
