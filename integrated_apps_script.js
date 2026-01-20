@@ -167,6 +167,11 @@ function doPost(e) {
             return handleSettlementUpdate(payload);
         }
 
+        // 1.7 운영비 관리 대장 저장
+        if (payload.action === 'updateExpenses') {
+            return handleExpensesUpdate(payload);
+        }
+
         // 2. 노션 내보내기 요청 (반드시 CustomerSync보다 먼저 체크!)
         // exportToNotion 요청도 customerId를 포함하므로, 먼저 체크해야 함
         if (payload.action === 'exportToNotion') {
@@ -250,6 +255,11 @@ function doGet(e) {
         // [추가] 정산 관리 대장 조회
         if (sheetParam === 'settlement' || sheetParam === '정산관리대장') {
             return handleSettlementGet(e);
+        }
+
+        // [추가] 운영비 관리 대장 조회
+        if (sheetParam === 'expenses' || sheetParam === '운영비관리') {
+            return handleExpensesGet(e);
         }
 
         // 2.5. 샘플 견적서 조회
@@ -3211,5 +3221,176 @@ function formatDate(date) {
         return year + '-' + month + '-' + day;
     } catch (e) {
         return date;
+    }
+}
+
+// ==========================================
+// 12. 운영비 관리 대장 (Expenses Management)
+// ==========================================
+
+/**
+ * 운영비 관리 대장 조회 (GET)
+ * - 시트 이름: "운영비 관리 대장" 또는 "운영비관리"
+ * - 고정지출 설정도 함께 반환
+ */
+function handleExpensesGet(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('운영비 관리 대장');
+        if (!sheet) sheet = spreadsheet.getSheetByName('운영비관리');
+        if (!sheet) sheet = spreadsheet.getSheetByName('운영비 관리');
+
+        if (!sheet) {
+            // 시트가 없으면 생성
+            sheet = spreadsheet.insertSheet('운영비 관리 대장');
+            var headers = ['No', '날짜', '대분류', '상세내역', '금액', '결제수단', '증빙자료', '비고'];
+            sheet.appendRow(headers);
+            var headerRange = sheet.getRange(1, 1, 1, headers.length);
+            headerRange.setBackground('#4CAF50');
+            headerRange.setFontColor('#ffffff');
+            headerRange.setFontWeight('bold');
+            sheet.setFrozenRows(1);
+        }
+
+        var lastRow = sheet.getLastRow();
+        var expenses = [];
+
+        if (lastRow >= 2) {
+            var data = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
+            for (var i = 0; i < data.length; i++) {
+                var row = data[i];
+                if (row[1] || row[2] || row[3]) { // 날짜, 대분류, 상세내역 중 하나라도 있으면
+                    expenses.push({
+                        no: row[0] || (i + 1),
+                        date: formatDate(row[1]),
+                        category: row[2] || '',
+                        detail: row[3] || '',
+                        amount: row[4] || 0,
+                        payMethod: row[5] || '',
+                        receipt: row[6] || '',
+                        memo: row[7] || ''
+                    });
+                }
+            }
+        }
+
+        // 고정지출 설정 조회 (별도 시트 또는 설정 영역)
+        var fixedExpenses = [];
+        var fixedSheet = spreadsheet.getSheetByName('고정지출 설정');
+        if (fixedSheet && fixedSheet.getLastRow() >= 2) {
+            var fixedData = fixedSheet.getRange(2, 1, fixedSheet.getLastRow() - 1, 4).getValues();
+            for (var j = 0; j < fixedData.length; j++) {
+                var fRow = fixedData[j];
+                if (fRow[0]) {
+                    fixedExpenses.push({
+                        category: fRow[0] || '',
+                        detail: fRow[1] || '',
+                        amount: fRow[2] || 0,
+                        payMethod: fRow[3] || ''
+                    });
+                }
+            }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            expenses: expenses,
+            fixedExpenses: fixedExpenses
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'error',
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 운영비 관리 대장 저장 (POST)
+ * - payload.expenses: 운영비 데이터 배열
+ * - payload.fixedExpenses: 고정지출 설정 배열 (선택사항)
+ */
+function handleExpensesUpdate(payload) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+
+        // 1. 운영비 저장
+        var sheet = spreadsheet.getSheetByName('운영비 관리 대장');
+        if (!sheet) sheet = spreadsheet.getSheetByName('운영비관리');
+        if (!sheet) {
+            sheet = spreadsheet.insertSheet('운영비 관리 대장');
+            var headers = ['No', '날짜', '대분류', '상세내역', '금액', '결제수단', '증빙자료', '비고'];
+            sheet.appendRow(headers);
+            var headerRange = sheet.getRange(1, 1, 1, headers.length);
+            headerRange.setBackground('#4CAF50');
+            headerRange.setFontColor('#ffffff');
+            headerRange.setFontWeight('bold');
+            sheet.setFrozenRows(1);
+        }
+
+        var expenses = payload.expenses || [];
+
+        // 기존 데이터 삭제 (헤더 제외)
+        var lastRow = sheet.getLastRow();
+        if (lastRow > 1) {
+            sheet.getRange(2, 1, lastRow - 1, 8).clearContent();
+        }
+
+        // 새 데이터 입력
+        if (expenses.length > 0) {
+            var newData = expenses.map(function (exp, idx) {
+                return [
+                    idx + 1,
+                    exp.date || '',
+                    exp.category || '',
+                    exp.detail || '',
+                    exp.amount || 0,
+                    exp.payMethod || '',
+                    exp.receipt || '',
+                    exp.memo || ''
+                ];
+            });
+            sheet.getRange(2, 1, newData.length, 8).setValues(newData);
+        }
+
+        // 2. 고정지출 설정 저장 (있는 경우)
+        if (payload.fixedExpenses && payload.fixedExpenses.length > 0) {
+            var fixedSheet = spreadsheet.getSheetByName('고정지출 설정');
+            if (!fixedSheet) {
+                fixedSheet = spreadsheet.insertSheet('고정지출 설정');
+                var fixedHeaders = ['대분류', '상세내역', '금액', '결제수단'];
+                fixedSheet.appendRow(fixedHeaders);
+                var fHeaderRange = fixedSheet.getRange(1, 1, 1, fixedHeaders.length);
+                fHeaderRange.setBackground('#FF9800');
+                fHeaderRange.setFontColor('#ffffff');
+                fHeaderRange.setFontWeight('bold');
+                fixedSheet.setFrozenRows(1);
+            }
+
+            // 기존 고정지출 삭제
+            var fLastRow = fixedSheet.getLastRow();
+            if (fLastRow > 1) {
+                fixedSheet.getRange(2, 1, fLastRow - 1, 4).clearContent();
+            }
+
+            // 새 고정지출 입력
+            var fixedData = payload.fixedExpenses.map(function (f) {
+                return [f.category || '', f.detail || '', f.amount || 0, f.payMethod || ''];
+            });
+            fixedSheet.getRange(2, 1, fixedData.length, 4).setValues(fixedData);
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'success',
+            message: '운영비가 저장되었습니다.',
+            count: expenses.length
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            result: 'error',
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 }
