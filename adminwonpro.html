@@ -3224,6 +3224,9 @@
             <div class="sidebar-header">
                 <h3>고객 목록</h3>
                 <div style="display:flex;gap:6px;">
+                    <!-- 휴지통 (메인 관리자용) - 상단 이동 -->
+                    <button class="btn btn-sm" id="trashBtnHeader" onclick="showTrashModal()" title="휴지통"
+                        style="background:#ff3b30; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">🗑️</button>
                     <button class="btn btn-sm" onclick="syncFromCloud();" title="클라우드에서 불러오기"
                         style="background:#34c759; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">☁️↓</button>
                     <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
@@ -3286,17 +3289,96 @@
                 <span>전체 통계 대시보드</span>
                 <span class="stats-arrow">→</span>
             </div>
-            <!-- 휴지통 버튼 (메인관리자 전용) -->
-            <div class="sidebar-stats-btn" id="trashBtn" onclick="showTrashModal()"
-                style="display:none; margin-top:10px; background:#fff0f0; border-color:#ffcccc;">
-                <span>🗑️</span>
-                <span style="color:#ff3b30;">휴지통</span>
-                <span class="stats-arrow" style="color:#ff3b30;">→</span>
+            <!-- 운영비 관리 버튼 -->
+            <div class="sidebar-stats-btn" onclick="showMainView('expenses')"
+                style="margin-top:10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                <span style="font-size:18px;">💸</span>
+                <span style="font-weight:600;">운영비 관리</span>
+                <span class="stats-arrow">→</span>
             </div>
         </div>
 
         <!-- 메인 컨텐츠 -->
         <div class="main-content" id="mainContent">
+            <!-- [신규] 운영비 관리 뷰 (전역) -->
+            <div id="view-expenses"
+                style="display:none; padding:40px; height:100%; overflow-y:auto; background:linear-gradient(180deg, #f0fdf4 0%, #f5f5f7 100%);">
+                <div class="document-wrapper"
+                    style="min-height: 500px; max-width:1200px; margin:0 auto; background:white; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
+                    <div class="doc-header"
+                        style="padding:24px 30px; border-bottom:1px solid #e5e7eb; background:linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius:16px 16px 0 0;">
+                        <div>
+                            <div
+                                style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#059669;">
+                                DESIGN JIG ADMIN</div>
+                            <h2 style="margin:0; font-size:26px; color:#064e3b; font-weight:700;">💰 운영비 관리 대장</h2>
+                            <p style="margin:4px 0 0 0; font-size:12px; color:#6b7280;">Operating Expenses Management
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button onclick="addExpenseRow()"
+                                style="padding:10px 16px; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.3); transition:all 0.2s;">
+                                ➕ 행 추가
+                            </button>
+                            <button onclick="saveExpensesToCloud()"
+                                style="padding:10px 16px; background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(59,130,246,0.3); transition:all 0.2s;">
+                                ☁️ 저장하기
+                            </button>
+                            <button onclick="syncExpensesFromCloud()"
+                                style="padding:10px 16px; background:white; color:#059669; border:2px solid #10b981; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;">
+                                🔄 불러오기
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="padding:30px;">
+                        <table class="data-table" style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:linear-gradient(135deg, #f0fdf4, #ecfdf5);">
+                                    <th
+                                        style="width:50px; padding:12px 8px; border:1px solid #d1fae5; text-align:center; font-size:12px; color:#059669;">
+                                        No</th>
+                                    <th
+                                        style="width:120px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        날짜</th>
+                                    <th
+                                        style="width:120px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        대분류</th>
+                                    <th
+                                        style="width:200px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        상세내역</th>
+                                    <th
+                                        style="width:120px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        금액</th>
+                                    <th
+                                        style="width:100px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        결제수단</th>
+                                    <th
+                                        style="width:100px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        증빙자료</th>
+                                    <th
+                                        style="width:200px; padding:12px 8px; border:1px solid #d1fae5; font-size:12px; color:#059669;">
+                                        비고</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody">
+                                <!-- JS로 렌더링 -->
+                            </tbody>
+                            <tfoot>
+                                <tr style="background:linear-gradient(135deg, #fef3c7, #fde68a);">
+                                    <td colspan="4"
+                                        style="padding:14px 10px; text-align:center; font-weight:700; color:#92400e; font-size:14px;">
+                                        💵 총 운영비 합계</td>
+                                    <td style="padding:14px 10px; text-align:right; color:#dc2626; font-weight:700; font-size:16px;"
+                                        id="totalExpenseFooter">₩0</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- 빈 상태 -->
             <div class="empty-state" id="emptyState">
                 <div class="empty-state-icon">👤</div>
@@ -3376,8 +3458,8 @@
                         A/S 관리 리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('settlement')" data-tab="settlement">💰
                         정산 관리 대장</button>
-                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats"
-                        data-main-only="true">📈 통계</button>
+                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats">📋 현황 및
+                        작업기록</button>
                 </div>
 
                 <!-- 고객정보 패널 -->
@@ -4485,7 +4567,10 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <button class="sync-btn no-print" id="btnLoadSettlement" onclick="syncSettlementFromCloud()"
                                 style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                title="데이터 및 옵션 동기화">🔄 연동하기</button>
+                                title="데이터 및 옵션 동기화">🔄 불러오기</button>
+                            <button class="no-print" onclick="printSettlement()"
+                                style="background: white; color: #1d1d1f; border: 1px solid #d2d2d7; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                title="정산 관리 대장 인쇄">🖨️ 인쇄</button>
                         </div>
                     </div>
 
@@ -4519,7 +4604,7 @@
                         <table class="data-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:#f5f5f7;">
-                                    <th style="width:40px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">No
+                                    <th style="width:80px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">No
                                     </th>
                                     <th style="width:100px; padding:8px; border:1px solid #d2d2d7; font-size:11px;">카테고리
                                     </th>
@@ -4573,7 +4658,96 @@
     </div>
 
 
+
+    <!-- [신규] 현황 및 작업기록 패널 -->
+    <div class="tab-panel" id="panel-stats">
+        <div class="document-wrapper" style="min-height: 500px;">
+            <div class="doc-header" style="border-bottom: 2px solid #e5e7eb;">
+                <div>
+                    <div
+                        style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#667eea;">
+                        DESIGN JIG</div>
+                    <h1 style="margin:0 0 8px 0;">📋 현황 및 작업기록</h1>
+                    <div
+                        style="background:#f0f4ff; border-left:4px solid #667eea; padding:12px 16px; border-radius:0 8px 8px 0; margin-top:12px;">
+                        <div style="font-size:13px; font-weight:600; color:#1d1d1f; margin-bottom:6px;">📝 해당 고객 정보 수정에
+                            관한 편집 기록</div>
+                        <div style="font-size:12px; color:#6b7280; line-height:1.6;">
+                            이 섹션에서는 <strong>현재 선택된 고객</strong>에 대한 모든 편집 기록을 확인할 수 있습니다.<br>
+                            • <strong>작업일시</strong>: 수정이 이루어진 날짜와 시간<br>
+                            • <strong>관리자 ID</strong>: 수정을 수행한 관리자 계정<br>
+                            • <strong>작업내용</strong>: UI 버튼 클릭 또는 필드 수정 내용<br>
+                            <span style="color:#667eea; font-weight:500;">※ 최근 50건까지 표시됩니다.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:20px;">
+                <!-- 고객 현황 요약 -->
+                <div id="customerStatusSummary"
+                    style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                    <div
+                        style="font-size:11px; opacity:0.8; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">
+                        📊 고객 현황 요약</div>
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; opacity:0.85;">고객명</div>
+                            <div id="logCustomerName" style="font-size:18px; font-weight:700;">-</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; opacity:0.85;">상태</div>
+                            <div id="logCustomerStatus" style="font-size:16px; font-weight:600;">-</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; opacity:0.85;">등록일</div>
+                            <div id="logCustomerCreated" style="font-size:14px;">-</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; opacity:0.85;">총 계약금액</div>
+                            <div id="logCustomerAmount" style="font-size:16px; font-weight:600;">₩0</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:12px; opacity:0.85;">편집 기록 수</div>
+                            <div id="logEditCount" style="font-size:16px; font-weight:600;">0건</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 작업 기록 테이블 섹션 -->
+                <div style="margin-bottom:12px;">
+                    <h3
+                        style="margin:0 0 8px 0; font-size:15px; color:#1d1d1f; display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:18px;">📝</span> 편집 정보 (최근 50건)
+                    </h3>
+                    <p style="margin:0; font-size:12px; color:#6b7280;">해당 고객의 정보가 수정될 때마다 자동으로 기록됩니다.</p>
+                </div>
+                <table class="data-table"
+                    style="width:100%; border-collapse:collapse; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                    <thead>
+                        <tr
+                            style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-bottom:2px solid #667eea;">
+                            <th
+                                style="width:160px; padding:12px 10px; border:1px solid #e2e8f0; font-size:12px; font-weight:600; color:#334155;">
+                                📅 작업일시 (날짜/시간)</th>
+                            <th
+                                style="width:100px; padding:12px 10px; border:1px solid #e2e8f0; font-size:12px; font-weight:600; color:#334155;">
+                                👤 관리자 ID</th>
+                            <th
+                                style="padding:12px 10px; border:1px solid #e2e8f0; font-size:12px; font-weight:600; color:#334155;">
+                                🔧 작업내용 (UI 버튼 적용 내용)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditLogTableBody">
+                        <!-- JS 렌더링 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+
+
 
     <!-- 통계 모달 -->
     <div class="stats-modal-overlay" id="statsModal" onclick="closeStatsModal(event)">
@@ -4613,52 +4787,136 @@
                             <div class="stats-summary-label">평균 계약금액</div>
                         </div>
                     </div>
+                    <div class="stats-summary-card red" style="border-left: 4px solid #ff3b30;">
+                        <div class="stats-summary-icon">💸</div>
+                        <div class="stats-summary-info">
+                            <div class="stats-summary-value" id="statsTotalExpenseSummary">₩0</div>
+                            <div class="stats-summary-label">총 운영비</div>
+                        </div>
+                    </div>
+                    <div class="stats-summary-card green" style="border-left: 4px solid #34c759;">
+                        <div class="stats-summary-icon">💎</div>
+                        <div class="stats-summary-info">
+                            <div class="stats-summary-value" id="statsNetProfitSummary">₩0</div>
+                            <div class="stats-summary-label">순수익 (매출-지출)</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 차트 그리드 -->
-                <div class="stats-chart-grid">
-                    <!-- 월별 고객 등록 & 계약금액 -->
-                    <div class="stats-chart-card wide">
-                        <h3>📅 월별 고객 등록 & 계약금액 추이</h3>
-                        <canvas id="monthlyChart"></canvas>
-                    </div>
+                <!-- 차트 그리드 -->
+                <!-- 탭 메뉴 -->
+                <div class="stats-tabs-container"
+                    style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    <button id="tab-monthly" class="stats-tab-btn active" onclick="switchStatsTab('monthly')"
+                        style="padding:8px 16px; border:none; background:#f5f5f7; border-radius:6px; cursor:pointer; font-weight:600; color:#333; transition:all 0.2s;">📅
+                        월별 추이</button>
+                    <button id="tab-yearly" class="stats-tab-btn" onclick="switchStatsTab('yearly')"
+                        style="padding:8px 16px; border:none; background:white; border-radius:6px; cursor:pointer; font-weight:600; color:#888; transition:all 0.2s;">📈
+                        연도별 요약</button>
+                    <button id="tab-expenses" class="stats-tab-btn" onclick="switchStatsTab('expenses')"
+                        style="padding:8px 16px; border:none; background:white; border-radius:6px; cursor:pointer; font-weight:600; color:#888; transition:all 0.2s;">💸
+                        운영비 분석</button>
+                    <button id="tab-others" class="stats-tab-btn" onclick="switchStatsTab('others')"
+                        style="padding:8px 16px; border:none; background:white; border-radius:6px; cursor:pointer; font-weight:600; color:#888; transition:all 0.2s;">🎯
+                        기타 통계</button>
+                </div>
 
-                    <!-- 상태별 분포 -->
-                    <div class="stats-chart-card">
-                        <h3>🎯 상태별 고객 분포</h3>
-                        <canvas id="statusChart"></canvas>
-                    </div>
+                <!-- 탭 컨텐츠 영역 -->
+                <div class="stats-content-area" style="min-height:450px;">
 
-                    <!-- 유입경로 분석 -->
-                    <div class="stats-chart-card">
-                        <h3>🔍 유입경로 분석</h3>
-                        <canvas id="sourceChart"></canvas>
-                    </div>
-
-                    <!-- 건물유형별 -->
-                    <div class="stats-chart-card">
-                        <h3>🏠 건물유형별 분포</h3>
-                        <canvas id="buildingChart"></canvas>
-                    </div>
-
-                    <!-- 계약 전환율 -->
-                    <div class="stats-chart-card">
-                        <h3>✅ 계약 전환율</h3>
-                        <div class="conversion-rate-display">
-                            <div class="conversion-circle" id="conversionCircle">
-                                <span id="conversionRate">0%</span>
+                    <!-- 1. 월별 탭 -->
+                    <div id="view-stats-monthly" class="stats-view-content"
+                        style="display:block; animation: fadeIn 0.3s;">
+                        <div class="stats-chart-card wide"
+                            style="height:450px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h3 style="margin:0; font-size:18px; color:#1d1d1f;">📅 월별 고객 등록 & 계약금액 추이</h3>
+                                <select id="statsYearFilter" onchange="renderAllStats()"
+                                    style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
+                                    <option value="all">전체 기간</option>
+                                    <option value="2026">2026년</option>
+                                    <option value="2025">2025년</option>
+                                    <option value="2024">2024년</option>
+                                </select>
                             </div>
-                            <div class="conversion-details">
-                                <div class="conversion-item"><span class="dot green"></span> 계약 완료: <strong
-                                        id="contractedCount">0</strong></div>
-                                <div class="conversion-item"><span class="dot red"></span> 미계약: <strong
-                                        id="notContractedCount">0</strong></div>
-                                <div class="conversion-item"><span class="dot gray"></span> 상담중: <strong
-                                        id="consultingCount">0</strong></div>
+                            <div style="height:360px;">
+                                <canvas id="monthlyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 연도별 탭 -->
+                    <div id="view-stats-yearly" class="stats-view-content"
+                        style="display:none; animation: fadeIn 0.3s;">
+                        <div class="stats-chart-card wide"
+                            style="height:450px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                            <h3 style="margin:0 0 20px 0; font-size:18px; color:#1d1d1f;">📈 연도별 실적 요약 (계약건수 & 수익금)</h3>
+                            <div style="height:360px;">
+                                <canvas id="yearlyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. 운영비 탭 -->
+                    <div id="view-stats-expenses" class="stats-view-content"
+                        style="display:none; animation: fadeIn 0.3s;">
+                        <div class="stats-chart-card wide"
+                            style="height:450px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                            <h3 style="margin:0 0 20px 0; font-size:18px; color:#1d1d1f;">💸 운영비 지출 상세 (대분류)</h3>
+                            <div style="height:360px; display:flex; justify-content:center;">
+                                <canvas id="expenseBreakdownChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 기타 탭 -->
+                    <div id="view-stats-others" class="stats-view-content"
+                        style="display:none; animation: fadeIn 0.3s;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                            <!-- 상태별 -->
+                            <div class="stats-chart-card"
+                                style="padding:20px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                                <h3>🎯 상태별 고객 분포</h3>
+                                <div style="height:220px;"><canvas id="statusChart"></canvas></div>
+                            </div>
+                            <!-- 유입경로 -->
+                            <div class="stats-chart-card"
+                                style="padding:20px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                                <h3>🔍 유입경로 분석</h3>
+                                <div style="height:220px;"><canvas id="sourceChart"></canvas></div>
+                            </div>
+                            <!-- 건물유형 -->
+                            <div class="stats-chart-card"
+                                style="padding:20px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                                <h3>🏠 건물유형별 분포</h3>
+                                <div style="height:220px;"><canvas id="buildingChart"></canvas></div>
+                            </div>
+                            <!-- 전환율 -->
+                            <div class="stats-chart-card"
+                                style="padding:20px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                                <h3>✅ 계약 전환율</h3>
+                                <!-- 기존 HTML 구조 재활용 -->
+                                <div class="conversion-rate-display">
+                                    <div class="conversion-circle" id="conversionCircle">
+                                        <span id="conversionRate">0%</span>
+                                    </div>
+                                    <div class="conversion-details">
+                                        <div class="conversion-item"><span class="dot green"></span> 계약 완료: <strong
+                                                id="contractedCount">0</strong></div>
+                                        <div class="conversion-item"><span class="dot red"></span> 미계약: <strong
+                                                id="notContractedCount">0</strong></div>
+                                        <div class="conversion-item"><span class="dot gray"></span> 상담중: <strong
+                                                id="consultingCount">0</strong></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+
             </div>
         </div>
     </div>
@@ -6221,6 +6479,15 @@
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
             if (tabId === 'as_list') loadASList();
+            if (tabId === 'settlement') {
+                if (typeof renderSettlementTable === 'function') renderSettlementTable();
+            }
+            if (tabId === 'expenses') {
+                if (typeof renderExpensesTable === 'function') renderExpensesTable();
+            }
+            if (tabId === 'stats') {
+                if (typeof renderAuditLog === 'function') renderAuditLog();
+            }
         }
 
         function closeCostPasswordModal() {
@@ -7622,10 +7889,21 @@
             });
 
             // 합계 표시 업데이트
-            document.getElementById('settlementTotalIncome').innerText = '0';
-            document.getElementById('settlementTotalExpense').innerText = totalPayAmount.toLocaleString();
-            document.getElementById('settlementProfit').innerText = (-totalPayAmount).toLocaleString();
-            document.getElementById('settlementProfitRate').innerText = '0%';
+            // 합계 계산
+            const totalIncome = currentData && currentData.totalAmount ? parseInt(String(currentData.totalAmount).replace(/,/g, '')) || 0 : 0;
+            const totalExpense = totalPayAmount;
+            const profit = totalIncome - totalExpense;
+            const profitRate = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : 0;
+
+            // 합계 표시 업데이트
+            document.getElementById('settlementTotalIncome').innerText = totalIncome.toLocaleString();
+            document.getElementById('settlementTotalExpense').innerText = totalExpense.toLocaleString();
+            document.getElementById('settlementProfit').innerText = profit.toLocaleString();
+            document.getElementById('settlementProfitRate').innerText = profitRate + '%';
+
+            // 색상 처리
+            document.getElementById('settlementProfit').style.color = profit >= 0 ? '#34c759' : '#ff3b30';
+            document.getElementById('settlementProfitRate').style.color = profit >= 0 ? '#333' : '#ff3b30';
         }
 
         function addSettlementRow() {
@@ -7801,6 +8079,58 @@
                     btn.disabled = false;
                 }
             }
+        }
+
+        // 정산 관리 대장 인쇄
+        function printSettlement() {
+            const panel = document.getElementById('panel-settlement');
+            if (!panel) {
+                showToast('인쇄할 내용이 없습니다.', 'error');
+                return;
+            }
+
+            const customerName = currentData?.clientName || currentData?.projectName || '고객명없음';
+            const printContent = panel.innerHTML;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>정산 관리 대장 - ${customerName}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; padding: 20px; }
+                        .doc-header { padding: 20px; border-bottom: 2px solid #333; margin-bottom: 20px; }
+                        .doc-header h1 { font-size: 24px; }
+                        .subtitle { font-size: 12px; color: #666; }
+                        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+                        th { background: #f5f5f5; font-weight: 600; }
+                        select, input { border: none; background: transparent; font-size: 11px; }
+                        button, .no-print { display: none !important; }
+                        @media print {
+                            body { padding: 0; }
+                            @page { margin: 15mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <h2>정산 관리 대장</h2>
+                        <p style="color:#666; font-size:14px;">${customerName}</p>
+                        <p style="color:#999; font-size:11px;">인쇄일: ${new Date().toLocaleDateString('ko-KR')}</p>
+                    </div>
+                    ${printContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
         }
 
         // Settlement Drag & Drop Handlers
@@ -8095,6 +8425,7 @@
         }
 
         function selectCustomer(customerId) {
+            if (typeof showMainView === 'function') showMainView('customer');
             fetchASListDB(); // Load A/S DB if not already loaded
             const customer = customers.find(c => c.customerId === customerId);
             if (!customer) return;
@@ -8246,23 +8577,71 @@
         }
 
         function updateCustomerField(el) {
-            currentData[el.dataset.field] = el.value;
+            const fieldName = el.dataset.field;
+            const oldValue = currentData[fieldName] || '';
+            const newValue = el.value;
+
+            // 변경이 없으면 로그 안남김
+            if (oldValue === newValue) {
+                return;
+            }
+
+            currentData[fieldName] = newValue;
 
             // customers 배열에도 변경사항 즉시 반영
             const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
             if (customerIndex !== -1) {
-                customers[customerIndex][el.dataset.field] = el.value;
+                customers[customerIndex][fieldName] = newValue;
             }
 
-            if (el.dataset.field === 'clientName' || el.dataset.field === 'projectName') {
+            if (fieldName === 'clientName' || fieldName === 'projectName') {
                 const displayName = currentData.projectName || currentData.clientName || '고객명 없음';
                 document.getElementById('headerCustomerName').textContent = displayName;
             }
+
+            // [추가] 작업 기록 로그
+            const fieldLabels = {
+                clientName: '고객명',
+                projectName: '현장명',
+                phone: '연락처',
+                email: '이메일',
+                address: '주소',
+                area: '평수',
+                buildingType: '건물유형',
+                clientSource: '유입경로',
+                movingDate: '입주예정일',
+                contractDate: '계약일',
+                constructionPeriod: '공사기간',
+                totalAmount: '총 계약금액',
+                finalPaymentDate: '잔금일',
+                manager: '공사담당자',
+                memo: '메모',
+                profitRate: '이익률'
+            };
+            const label = fieldLabels[fieldName] || fieldName;
+            logUserAction(`${label} 수정`, `"${newValue}"`);
+
             syncAllFields();
         }
         function updateStatus() {
             const status = document.getElementById('customerStatus').value;
+            const oldStatus = currentData.status;
             currentData.status = status;
+
+            // [추가] 상태 변경 로그
+            const statusLabelsKo = {
+                consulting: '상담중',
+                hold: '보류',
+                budget_over: '예산초과',
+                other_company: '타사계약',
+                contracted: '계약완료',
+                in_progress: '공사중',
+                completed: '공사완료',
+                as_done: 'A/S완료',
+                trash: '휴지통'
+            };
+            logUserAction('상태 변경', `${statusLabelsKo[oldStatus] || oldStatus} → ${statusLabelsKo[status] || status}`);
+
             // Auto-fill Contract Date if status is 'contracted'
             if (status === 'contracted' && !currentData.contractDate) {
                 const today = new Date().toISOString().split('T')[0];
@@ -8287,7 +8666,7 @@
             // Auto-sync to Google Sheets on status change
             saveCustomers(); // Save locally first
             syncToGoogleSheets({ ...currentData }); // Sync to cloud
-            showToast(`상태가 '${status}'(으)로 변경되고 동기화되었습니다`, 'success');
+            showToast(`상태가 '${statusLabelsKo[status] || status}'(으)로 변경되었습니다`, 'success');
         }
         function updateAsDate() {
             // A/S 날짜는 잔금일 기준 자동 계산으로 변경됨
@@ -8325,9 +8704,13 @@
             // 4. Perform Soft Delete (Trash)
             const index = customers.findIndex(c => c.customerId === currentCustomerId);
             if (index !== -1) {
+                const deletedName = customers[index].clientName || customers[index].projectName || currentCustomerId;
                 customers[index].status = 'trash';
                 customers[index].deletedAt = new Date().toISOString();
                 customers[index].deletedBy = currentAdmin.id;
+
+                // [추가] 삭제 로그
+                logUserAction('휴지통으로 이동', deletedName);
 
                 saveCustomers();
                 showToast('휴지통으로 이동되었습니다', 'success');
@@ -11028,30 +11411,55 @@
 
             // 차트 렌더링
             renderMonthlyChart(data);
+            renderYearlyChart(data); // [추가] 연도별 차트
             renderStatusChart(data);
             renderSourceChart(data);
             renderBuildingChart(data);
             renderConversionRate(data);
+
+            // [추가] 작업 로그 렌더링
+            renderAuditLog();
         }
 
         function renderMonthlyChart(data) {
             const ctx = document.getElementById('monthlyChart').getContext('2d');
+            const yearFilter = document.getElementById('statsYearFilter');
+            const selectedYear = yearFilter ? yearFilter.value : 'all';
 
-            // 월별 데이터 집계
+            // 월별 매출/운영비 집계
             const monthlyData = {};
+
+            // 1. 매출 집계
             data.forEach(c => {
                 const date = c.createdAt || c.contractDate;
                 if (date) {
+                    const year = date.substring(0, 4);
+                    if (selectedYear !== 'all' && year !== selectedYear) return;
+
                     const month = date.substring(0, 7); // YYYY-MM
-                    if (!monthlyData[month]) {
-                        monthlyData[month] = { count: 0, revenue: 0 };
-                    }
+                    if (!monthlyData[month]) monthlyData[month] = { count: 0, revenue: 0, expense: 0 };
+
                     monthlyData[month].count++;
                     if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
-                        monthlyData[month].revenue += parseNumber(c.totalAmount);
+                        const amount = parseNumber(c.totalAmount);
+                        monthlyData[month].revenue += Math.round(amount / 1.1); // VAT 별도
                     }
                 }
             });
+
+            // 2. 운영비 집계 (전역 expensesRows 사용)
+            if (typeof expensesRows !== 'undefined') {
+                expensesRows.forEach(e => {
+                    if (!e.date) return;
+                    const year = e.date.substring(0, 4);
+                    if (selectedYear !== 'all' && year !== selectedYear) return;
+
+                    const month = e.date.substring(0, 7);
+                    if (!monthlyData[month]) monthlyData[month] = { count: 0, revenue: 0, expense: 0 };
+
+                    monthlyData[month].expense += parseNumber(e.amount);
+                });
+            }
 
             const sortedMonths = Object.keys(monthlyData).sort();
             const labels = sortedMonths.map(m => {
@@ -11065,35 +11473,152 @@
                 type: 'bar',
                 data: {
                     labels: labels.length ? labels : ['데이터 없음'],
-                    datasets: [{
-                        label: '고객 등록',
-                        data: sortedMonths.map(m => monthlyData[m].count),
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderRadius: 6,
-                        yAxisID: 'y'
-                    }, {
-                        label: '계약금액 (만원)',
-                        data: sortedMonths.map(m => Math.round(monthlyData[m].revenue / 10000)),
-                        type: 'line',
-                        borderColor: '#34c759',
-                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }]
+                    datasets: [
+                        {
+                            label: '운영비 (지출)',
+                            data: sortedMonths.map(m => monthlyData[m].expense),
+                            type: 'bar',
+                            backgroundColor: '#ff3b30', // Red
+                            borderRadius: 4,
+                            yAxisID: 'y1',
+                            stack: 'money'
+                        },
+                        {
+                            label: '공급가액 (매출, VAT별도)',
+                            data: sortedMonths.map(m => monthlyData[m].revenue),
+                            type: 'bar', // 매출도 막대로 비교 (Stack or Group)
+                            backgroundColor: '#34c759', // Green
+                            borderRadius: 4,
+                            yAxisID: 'y1',
+                            stack: 'money2' // 겹치지 않게 별도 스택 혹은 같게
+                        },
+                        {
+                            label: '고객 등록 수',
+                            data: sortedMonths.map(m => monthlyData[m].count),
+                            type: 'line',
+                            borderColor: '#0071e3', // Blue
+                            borderWidth: 2,
+                            pointBackgroundColor: '#0071e3',
+                            yAxisID: 'y'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+                    interaction: { mode: 'index', intersect: false },
                     scales: {
-                        y: { position: 'left', beginAtZero: true, title: { display: true, text: '고객 수', font: { size: 10 } } },
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: { display: true, text: '건수' },
+                            grid: { display: false }
+                        },
                         y1: {
-                            position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: {
-                                display: true, text: '금액 (만원)',
-                                font: { size: 10 }
+                            beginAtZero: true,
+                            position: 'right',
+                            title: { display: true, text: '금액' },
+                            ticks: { callback: v => '₩' + (v / 1000000).toFixed(0) + 'M' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // [신규] 연도별 차트 (VAT 별도)
+        function renderYearlyChart(data) {
+            const ctx = document.getElementById('yearlyChart').getContext('2d');
+
+            const yearlyData = {};
+            // 1. 매출
+            data.forEach(c => {
+                const date = c.createdAt || c.contractDate;
+                if (date) {
+                    const year = date.substring(0, 4);
+                    if (!yearlyData[year]) yearlyData[year] = { count: 0, revenue: 0, expense: 0 };
+
+                    yearlyData[year].count++;
+                    if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
+                        const amount = parseNumber(c.totalAmount);
+                        yearlyData[year].revenue += Math.round(amount / 1.1);
+                    }
+                }
+            });
+
+            // 2. 운영비
+            if (typeof expensesRows !== 'undefined') {
+                expensesRows.forEach(e => {
+                    if (!e.date) return;
+                    const year = e.date.substring(0, 4);
+                    if (!yearlyData[year]) yearlyData[year] = { count: 0, revenue: 0, expense: 0 };
+
+                    yearlyData[year].expense += parseNumber(e.amount);
+                });
+            }
+
+            const sortedYears = Object.keys(yearlyData).sort();
+
+            if (chartInstances.yearly) chartInstances.yearly.destroy();
+
+            chartInstances.yearly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedYears.length ? sortedYears : ['데이터 없음'],
+                    datasets: [
+                        {
+                            label: '총 운영비 (지출)',
+                            data: sortedYears.map(y => yearlyData[y].expense),
+                            backgroundColor: '#ff3b30',
+                            borderRadius: 6,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '총 공급가액 (매출)',
+                            data: sortedYears.map(y => yearlyData[y].revenue),
+                            backgroundColor: '#34c759',
+                            borderRadius: 6,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '총 계약 건수',
+                            data: sortedYears.map(y => yearlyData[y].count),
+                            type: 'line',
+                            borderColor: '#0071e3',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#0071e3',
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.dataset.yAxisID === 'y1') {
+                                        label += '₩' + context.raw.toLocaleString();
+                                        label += context.raw + '건';
+                                    }
+                                    return label;
+                                }
                             }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: { display: true, text: '건수' },
+                            grid: { display: false }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: { display: true, text: '금액' },
+                            ticks: { callback: v => '₩' + (v / 1000000).toFixed(0) + 'M' }
                         }
                     }
                 }
@@ -12881,6 +13406,273 @@
                 });
             }
         });
+
+        // ============================
+        // [신규] 현황 및 작업기록 (Customer Edit Audit Log)
+        // ============================
+        const MAX_AUDIT_LOGS = 500; // 전체 저장 최대치
+        let auditLogs = []; // { time, adminId, action, customerId, customerName }
+
+        // 초기 로드
+        try {
+            const savedLogs = localStorage.getItem('designzig_audit_logs');
+            if (savedLogs) {
+                auditLogs = JSON.parse(savedLogs);
+            }
+        } catch (e) {
+            console.error('Audit log load error', e);
+            auditLogs = [];
+        }
+
+        // 로그 기록 함수 (고객 ID 포함)
+        function logUserAction(actionName, detailText) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            const logItem = {
+                time: `${dateStr} ${timeStr}`,
+                timestamp: now.getTime(),
+                adminId: (currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown',
+                action: actionName,
+                detail: detailText || '-',
+                customerId: currentCustomerId || null,
+                customerName: (currentData && currentData.clientName) ? currentData.clientName : '-'
+            };
+
+            auditLogs.unshift(logItem); // 최신순 추가
+
+            // 최대 개수 제한
+            if (auditLogs.length > MAX_AUDIT_LOGS) {
+                auditLogs = auditLogs.slice(0, MAX_AUDIT_LOGS);
+            }
+
+            // 로컬 저장
+            localStorage.setItem('designzig_audit_logs', JSON.stringify(auditLogs));
+
+            // 화면 갱신 (현황 탭이 열려있다면)
+            if (document.getElementById('panel-stats') && document.getElementById('panel-stats').classList.contains('active')) {
+                renderAuditLog();
+            }
+        }
+
+        // 로그 렌더링 함수 (현재 고객 기준 필터링)
+        function renderAuditLog() {
+            const tbody = document.getElementById('auditLogTableBody');
+            if (!tbody) return;
+
+            // 현황 요약 업데이트
+            updateCustomerStatusSummary();
+
+            // 현재 고객 ID로 필터링 (최대 50건)
+            const filteredLogs = auditLogs
+                .filter(log => log.customerId === currentCustomerId)
+                .slice(0, 50);
+
+            if (filteredLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; color:#999;">이 고객에 대한 편집 기록이 없습니다.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            filteredLogs.forEach(log => {
+                html += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px 10px; color:#666; font-size:12px; white-space:nowrap;">${log.time}</td>
+                        <td style="padding: 8px 10px; font-weight:600; font-size:12px; color:#0071e3;">${log.adminId}</td>
+                        <td style="padding: 8px 10px; color:#333; font-size:12px;">${log.action}${log.detail && log.detail !== '-' ? ' (' + log.detail + ')' : ''}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // 고객 현황 요약 업데이트
+        function updateCustomerStatusSummary() {
+            if (!currentData) return;
+
+            const statusLabelsKo = {
+                consulting: '상담중',
+                hold: '보류',
+                budget_over: '예산초과',
+                other_company: '타사계약',
+                contracted: '계약완료',
+                in_progress: '공사중',
+                completed: '공사완료',
+                as_done: 'A/S완료'
+            };
+
+            document.getElementById('logCustomerName').textContent = currentData.clientName || currentData.projectName || '-';
+            document.getElementById('logCustomerStatus').textContent = statusLabelsKo[currentData.status] || currentData.status || '-';
+            document.getElementById('logCustomerCreated').textContent = currentData.createdAt || '-';
+
+            const totalAmount = currentData.totalAmount ? parseInt(String(currentData.totalAmount).replace(/,/g, '')) : 0;
+            document.getElementById('logCustomerAmount').textContent = '₩' + totalAmount.toLocaleString();
+
+            const editCount = auditLogs.filter(log => log.customerId === currentCustomerId).length;
+            document.getElementById('logEditCount').textContent = editCount + '건';
+        }
+
+        // 통계 모달 열릴 때 렌더링 연결
+        // (기존 openStatsModal 함수에 renderAuditLog() 추가 필요 - 여기서는 오버라이딩 대신 후킹 방식 사용)
+        /*
+           주의: 기존 openStatsModal 함수 내부를 수정하거나, 
+           아래처럼 클릭 이벤트 등에 바인딩해야 함. 
+           하지만 이미 HTML onclick="openStatsModal()"이 있으므로,
+           openStatsModal 함수를 찾아서 수정하는 편이 좋음.
+        */
+
+
+        // ============================
+        // [신규] 운영비 관리 (Operating Expenses) & 뷰 스위칭
+        // ============================
+        let expensesRows = [];
+        const EXPENSE_CATEGORIES = ['인건비', '차량운영비', '임대료', '운영비', '마케팅/영업', '세금/금융', '기타'];
+
+        // 초기 로드 (로컬 스토리지)
+        try {
+            const savedExpenses = localStorage.getItem('designzig_expenses');
+            if (savedExpenses) expensesRows = JSON.parse(savedExpenses);
+        } catch (e) { expensesRows = []; }
+
+        function showMainView(viewName) {
+            const mainContent = document.getElementById('mainContent');
+            const emptyState = document.getElementById('emptyState');
+            const customerView = document.getElementById('customerView'); // [FIX] customerDetails -> customerView
+            const expensesView = document.getElementById('view-expenses');
+
+            // 초기화 - 모든 뷰 숨기기
+            if (emptyState) emptyState.style.display = 'none';
+            if (customerView) customerView.style.display = 'none';
+            if (expensesView) expensesView.style.display = 'none';
+
+            if (viewName === 'expenses') {
+                if (expensesView) expensesView.style.display = 'block';
+                // 사이드바 선택 해제
+                document.querySelectorAll('.customer-item').forEach(el => el.classList.remove('active'));
+                renderExpensesTable();
+            } else if (viewName === 'customer') {
+                if (customerView) customerView.style.display = 'block';
+            } else {
+                if (emptyState) emptyState.style.display = 'flex';
+            }
+        }
+
+        function renderExpensesTable() {
+            const tbody = document.getElementById('expensesTableBody');
+            if (!tbody) return;
+
+            let total = 0;
+            tbody.innerHTML = expensesRows.map((row, index) => {
+                const amt = parseNumber(row.amount);
+                total += amt;
+                return `
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="text-align:center; padding:10px;">
+                            <button onclick="removeExpenseRow(${index})" style="color:#ff3b30;border:none;background:none;cursor:pointer;">🗑️</button>
+                            ${index + 1}
+                        </td>
+                        <td style="padding:4px;"><input type="date" value="${row.date}" onchange="updateExpenseRow(${index}, 'date', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;">
+                            <select onchange="updateExpenseRow(${index}, 'category', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;">
+                                <option value="">선택</option>
+                                ${EXPENSE_CATEGORIES.map(c => `<option value="${c}" ${c === row.category ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td style="padding:4px;"><input type="text" value="${row.detail}" onchange="updateExpenseRow(${index}, 'detail', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${formatNumber(row.amount)}" onchange="updateExpenseRow(${index}, 'amount', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; text-align:right;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.method}" onchange="updateExpenseRow(${index}, 'method', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.proof}" onchange="updateExpenseRow(${index}, 'proof', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.note}" onchange="updateExpenseRow(${index}, 'note', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const footer = document.getElementById('totalExpenseFooter');
+            if (footer) footer.textContent = '₩' + formatNumber(total);
+
+            // 차트 갱신 (데이터 변경 시점)
+            if (chartInstances.monthly) {
+                // 데이터를 다시 불러오거나 refresh 해야 함. 
+                // 현재 구조상 renderMonthlyChart는 customers 데이터를 인자로 받음.
+                // 따라서 여기서 직접 호출하기보다는, 나중에 통계 탭 열릴 때 반영됨.
+            }
+        }
+
+        function addExpenseRow() {
+            expensesRows.push({
+                date: new Date().toISOString().split('T')[0],
+                category: '',
+                detail: '',
+                amount: 0,
+                method: '',
+                proof: '',
+                note: ''
+            });
+            renderExpensesTable();
+            saveExpensesLocal();
+        }
+
+        function removeExpenseRow(index) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            expensesRows.splice(index, 1);
+            renderExpensesTable();
+            saveExpensesLocal();
+        }
+
+        function updateExpenseRow(index, field, value) {
+            if (field === 'amount') {
+                // 콤마 제거 후 숫자 저장
+                value = parseNumber(value);
+            }
+            expensesRows[index][field] = value;
+            if (field === 'amount') renderExpensesTable();
+            saveExpensesLocal();
+        }
+
+        function saveExpensesLocal() {
+            localStorage.setItem('designzig_expenses', JSON.stringify(expensesRows));
+        }
+
+        async function saveExpensesToCloud() {
+            showToast('클라우드 저장 기능은 Apps Script 업데이트가 필요합니다. 현재는 로컬에만 저장됩니다.', 'warning');
+            saveExpensesLocal();
+        }
+
+        async function syncExpensesFromCloud() {
+            showToast('클라우드 불러오기 기능은 Apps Script 업데이트가 필요합니다.', 'warning');
+        }
+
+
+        function switchStatsTab(tabName) {
+            // 버튼 활성화
+            document.querySelectorAll('.stats-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = 'white';
+                btn.style.color = '#888';
+            });
+            const activeBtn = document.getElementById('tab-' + tabName);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.background = '#f5f5f7';
+                activeBtn.style.color = '#333';
+            }
+
+            // 뷰 전환
+            document.querySelectorAll('.stats-view-content').forEach(view => view.style.display = 'none');
+            const targetView = document.getElementById('view-stats-' + tabName);
+            if (targetView) {
+                targetView.style.display = 'block';
+            }
+
+            // 차트 크기 강제 재조정
+            if (typeof Chart !== 'undefined') {
+                Object.values(chartInstances).forEach(chart => {
+                    if (chart && typeof chart.resize === 'function') chart.resize();
+                });
+            }
+        }
+
     </script>
 </body>
 

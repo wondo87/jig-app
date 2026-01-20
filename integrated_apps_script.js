@@ -2974,22 +2974,31 @@ function handleGetSettlementOptions(e) {
 
         // 헤더 기반 인덱스 찾기
         var headers = data[0];
+        // [수정] 실제 구글 시트 헤더 반영: 카테고리, 공정분류, 거래처/작업자, 비용구분, 대금방식, 사업자/주민번호, 은행명/예금주/계좌번호, 비고
         var idx = {
-            category: headers.indexOf('분류'),
-            process: headers.indexOf('공정'),
-            client: headers.indexOf('거래처'),
-            note: headers.indexOf('비고'),
-            // 대체 이름 지원
-            category2: headers.indexOf('공종'),
-            category3: headers.indexOf('대분류'), // 대분류 지원
-            process2: headers.indexOf('공정명')
+            category: Math.max(headers.indexOf('카테고리'), headers.indexOf('분류')),
+            process: Math.max(headers.indexOf('공정분류'), headers.indexOf('공정'), headers.indexOf('공정명')),
+            client: Math.max(headers.indexOf('거래처/작업자'), headers.indexOf('거래처')),
+            costType: headers.indexOf('비용구분'),
+            payType: headers.indexOf('대금방식'),
+            bizId: Math.max(headers.indexOf('사업자/주민번호'), headers.indexOf('사업자번호')),
+            bankInfo: Math.max(headers.indexOf('은행명/예금주/계좌번호'), headers.indexOf('계좌정보')),
+            note: headers.indexOf('비고')
         };
 
         // 인덱스 결정 (못 찾으면 기본값)
-        var iCat = (idx.category > -1) ? idx.category : (idx.category2 > -1 ? idx.category2 : (idx.category3 > -1 ? idx.category3 : 0));
-        var iProc = (idx.process > -1) ? idx.process : (idx.process2 > -1 ? idx.process2 : 1);
-        var iClient = (idx.client > -1) ? idx.client : 2;
-        var iNote = (idx.note > -1) ? idx.note : 3;
+        // 인덱스 결정
+        var iCat = idx.category;
+        var iProc = idx.process;
+        var iClient = idx.client;
+        var iCost = idx.costType;
+        var iPay = idx.payType;
+        var iBiz = idx.bizId;
+        var iBank = idx.bankInfo;
+        var iNote = idx.note;
+
+        // 필수 값 fallback
+        if (iCat === -1) iCat = 0;
 
         var options = [];
         for (var i = 1; i < data.length; i++) {
@@ -2999,7 +3008,11 @@ function handleGetSettlementOptions(e) {
                     category: row[iCat] || '',
                     process: row[iProc] || '',
                     client: row[iClient] || '',
-                    note: row[iNote] || ''
+                    costType: (iCost > -1 ? row[iCost] : '') || '',
+                    payType: (iPay > -1 ? row[iPay] : '') || '',
+                    bizId: (iBiz > -1 ? row[iBiz] : '') || '',
+                    bankInfo: (iBank > -1 ? row[iBank] : '') || '',
+                    note: (iNote > -1 ? row[iNote] : '') || ''
                 });
             }
         }
