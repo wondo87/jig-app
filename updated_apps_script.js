@@ -475,7 +475,7 @@ function exportCustomerToNotion(customerId, data) {
     // 1. 기존 페이지 검색 (Customer ID 기준)
     const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.PROJECTS + '/query', 'POST', {
         filter: {
-            property: '고객ID', // 노션 DB에 '고객ID' 속성이 있어야 함. 없으면 '이름'으로 대체 가능
+            property: '고객ID', // 노션 DB에 '고객ID' 속성이 있어야 함. 없으면 '이름' 등 다른것 사용
             rich_text: {
                 equals: customerId
             }
@@ -485,15 +485,50 @@ function exportCustomerToNotion(customerId, data) {
     let pageId;
     let notionUrl;
 
+    // 데이터 전처리 (숫자형 변환 등)
+    const totalAmount = parseFloat((data['총계약금액'] || '').toString().replace(/[^0-9.]/g, '')) || 0;
+    const area = parseFloat((data['평수'] || '').toString().replace(/[^0-9.]/g, '')) || 0;
+
+    // Notion Properties 구성 (스크린샷 기반)
+    // 값이 없는 Date 타입은 아예 키를 빼야 에러가 안남 -> undefined 할당 시 JSON.stringify에서 제외됨
     const properties = {
-        '이름': { title: [{ text: { content: data['고객명'] || '제목 없음' } }] },
-        '현장주소': { rich_text: [{ text: { content: data['현장주소'] || '' } }] },
+        '성명': { title: [{ text: { content: data['성명'] || '제목 없음' } }] }, // Title Property
+
         '연락처': { phone_number: data['연락처'] || null },
-        '이메일': { email: data['이메일'] || null },
-        '평형': { number: parseFloat(data['평형']) || null },
-        '공사기간': { rich_text: [{ text: { content: data['공사기간'] || '' } }] },
-        '고객ID': { rich_text: [{ text: { content: customerId } }] } // 식별자
+        '이메일': { email: data['이메일'] || null }, // 이메일 형식 체크 필요하지만 Notion이 처리
+
+        '주소': { rich_text: [{ text: { content: data['주소'] || '' } }] },
+        '현장주소': { rich_text: [{ text: { content: data['현장주소'] || '' } }] },
+
+        // 배우자 정보 (데이터가 있을 때만 보냄)
+        '배우자 성명': { rich_text: [{ text: { content: data['배우자 성명'] || '' } }] },
+        '배우자 연락처': data['배우자 연락처'] ? { phone_number: data['배우자 연락처'] } : undefined,
+
+        '공사기간 (시작 ~ 종료)': { rich_text: [{ text: { content: data['공사기간'] || '' } }] },
+
+        // 날짜 필드들 (값이 있을 때만 전송)
+        '이사날짜': data['이사날짜'] ? { date: { start: data['이사날짜'] } } : undefined,
+        '계약일': data['계약일'] ? { date: { start: data['계약일'] } } : undefined,
+        '착공일': data['착공일'] ? { date: { start: data['착공일'] } } : undefined,
+        '준공일': data['준공일'] ? { date: { start: data['준공일'] } } : undefined,
+        '잔금일': data['잔금일'] ? { date: { start: data['잔금일'] } } : undefined,
+
+        '공사 담당자': { rich_text: [{ text: { content: data['공사 담당자'] || '' } }] },
+        '건물유형': { rich_text: [{ text: { content: data['건물유형'] || '' } }] },
+        '유입경로': { rich_text: [{ text: { content: data['유입경로'] || '' } }] },
+
+        '고객 요청사항': { rich_text: [{ text: { content: data['고객 요청사항'] || '' } }] },
+        '내부 메모': { rich_text: [{ text: { content: data['내부 메모'] || '' } }] },
+        '특약사항': { rich_text: [{ text: { content: data['특약사항'] || '' } }] },
+
+        '총 계약금액 (VAT 포함)': { number: totalAmount },
+        '평수': { number: area },
+
+        '고객ID': { rich_text: [{ text: { content: customerId } }] } // 검색 및 식별용
     };
+
+    // undefined 속성 제거 (JSON 변환 시 자동 제거되지만 명시적 처리)
+    Object.keys(properties).forEach(key => properties[key] === undefined && delete properties[key]);
 
     if (searchResponse.results.length > 0) {
         // 업데이트
@@ -515,8 +550,8 @@ function exportCustomerToNotion(customerId, data) {
 
 // 2. 스케줄 내보내기
 function exportScheduleToNotion(customerId, data) {
-    // 고객 페이지 찾기 (없으면 생성)
-    const customerResult = exportCustomerToNotion(customerId, { '고객명': data.고객명 });
+    // 고객 페이지 찾기 (없으면 생성) - 키를 '성명'으로 통일
+    const customerResult = exportCustomerToNotion(customerId, { '성명': data['성명'] || data['고객명'] });
     // 여기서 반환된 url은 페이지 URL임. page ID를 다시 추출하거나 exportCustomerToNotion을 수정해서 ID도 반환하게 하면 좋음.
     // 편의상 새 페이지를 생성해서 스케줄 목록을 넣음.
 
@@ -537,7 +572,8 @@ function exportScheduleToNotion(customerId, data) {
     let pageId;
     let notionUrl;
 
-    const title = (data.고객명 || '고객') + ' - 공사 스케줄';
+    const name = data['성명'] || data['고객명'] || '고객';
+    const title = name + ' - 공사 스케줄';
 
     const properties = {
         '이름': { title: [{ text: { content: title } }] },
@@ -590,7 +626,8 @@ function exportScheduleToNotion(customerId, data) {
 
 // 3. 체크리스트 내보내기
 function exportChecklistToNotion(customerId, data) {
-    const title = (data.고객명 || '고객') + ' - 공정별 체크리스트';
+    const name = data['성명'] || data['고객명'] || '고객';
+    const title = name + ' - 공정별 체크리스트';
 
     const properties = {
         '이름': { title: [{ text: { content: title } }] },

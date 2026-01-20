@@ -11392,40 +11392,56 @@
                     customerId: currentCustomerId // currentCustomer.id -> currentCustomerId
                 };
 
-                // 날짜 정보 추출 (DOM에서 가져오는 것이 가장 확실)
+                // 날짜 및 기간 정보 추출
                 const startDateVal = document.getElementById('constructionStartInput')?.value || targetData.startDate || '';
                 const endDateVal = document.getElementById('constructionEndInput')?.value || targetData.endDate || '';
+                const periodVal = document.getElementById('hiddenConstructionPeriod')?.value || targetData.constructionPeriod || '';
 
-                // 타입별 데이터 준비
+                // 타입별 데이터 준비 (Backend update_apps_script.js와 키 일치시킴)
                 if (type === 'customer') {
-                    // 키 매핑 확인: clientName, clientPhone, clientAddress, siteAddress, totalAmount 등
                     requestData.data = {
-                        고객명: targetData.clientName || '',
-                        연락처: targetData.clientPhone || '',
-                        주소: targetData.clientAddress || '',
-                        현장주소: targetData.siteAddress || '',
-                        계약금액: (targetData.totalAmount || '').replace(/[^0-9]/g, ''), // 숫자만 추출 
-                        계약일: targetData.contractDate || '',
-                        착공일: startDateVal,
-                        준공일: endDateVal,
-                        공사내용: targetData.projectName || targetData.customerRequest || '', // 공사명 또는 요청사항
-                        특이사항: targetData.specialNote || targetData.internalMemo || ''
+                        '성명': targetData.clientName || '',
+                        '연락처': targetData.clientPhone || '',
+                        '이메일': targetData.clientEmail || '',
+                        '주소': targetData.clientAddress || '',
+                        '현장주소': targetData.siteAddress || '',
+
+                        '배우자 성명': targetData.spouseName || '',
+                        '배우자 연락처': targetData.spousePhone || '',
+
+                        '평수': targetData.area || '',
+                        '건물유형': targetData.buildingType || '',
+                        '유입경로': targetData.clientSource || '',
+
+                        '공사기간': periodVal,
+                        '착공일': startDateVal,
+                        '준공일': endDateVal,
+                        '이사날짜': targetData.movingDate || '',
+                        '잔금일': targetData.finalPaymentDate || '',
+                        '계약일': targetData.contractDate || '',
+
+                        '공사 담당자': targetData.manager || '',
+                        '총계약금액': targetData.totalAmount || '',
+
+                        '고객 요청사항': targetData.customerRequest || '',
+                        '내부 메모': targetData.internalMemo || '',
+                        '특약사항': targetData.specialNote || ''
                     };
+
                 } else if (type === 'schedule') {
-                    // currentData.schedules (영어 키) -> 노션 (한글 키) 매핑
                     const scheduleData = targetData.schedules || [];
 
                     requestData.data = {
-                        고객명: targetData.clientName || '',
-                        현장주소: targetData.siteAddress || '',
-                        착공일: startDateVal,
-                        준공일: endDateVal,
-                        공정목록: scheduleData.map(item => ({
+                        '성명': targetData.clientName || '',
+                        '현장주소': targetData.siteAddress || '',
+                        '착공일': startDateVal,
+                        '준공일': endDateVal,
+                        '공정목록': scheduleData.map(item => ({
                             공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
                             시작일: item.start || '',
                             종료일: item.end || '',
                             담당자: item.inCharge || '',
-                            상태: item.checkPoint || '', // checkPoint를 상태로 매핑
+                            상태: item.checkPoint || '',
                             비고: item.memo || ''
                         }))
                     };
@@ -11433,11 +11449,11 @@
                     const customerChecklistData = getCurrentCustomerChecklistData();
                     const checkedItems = checklistMasterData.filter(item => customerChecklistData[item.번호]);
                     requestData.data = {
-                        고객명: targetData.clientName || '',
-                        현장주소: targetData.siteAddress || '',
-                        완료항목수: checkedItems.length,
-                        전체항목수: checklistMasterData.length,
-                        체크리스트: checkedItems.map(item => ({
+                        '성명': targetData.clientName || '',
+                        '현장주소': targetData.siteAddress || '',
+                        '완료항목수': checkedItems.length,
+                        '전체항목수': checklistMasterData.length,
+                        '체크리스트': checkedItems.map(item => ({
                             번호: item.번호,
                             항목: item.항목 || '',
                             내용: item.내용 || '',
