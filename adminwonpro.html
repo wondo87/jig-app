@@ -7560,10 +7560,18 @@
                         combinedClients.map(c => `<option value="${c}">${c}</option>`).join('');
                 }
 
+                tr.setAttribute('draggable', 'true');
+                tr.ondragstart = (e) => handleSettlementDragStart(e, index);
+                tr.ondragover = handleSettlementDragOver;
+                tr.ondrop = (e) => handleSettlementDrop(e, index);
+                tr.ondragend = handleSettlementDragEnd;
+                tr.style.cursor = 'move';
+
                 tr.innerHTML = `
-                    <td style="padding:5px; text-align:center; border:1px solid #d2d2d7;">
-                        <button onclick="removeSettlementRow(${index})" style="background:none; border:none; color:#ff3b30; cursor:pointer; font-size:16px;">➖</button>
-                        ${index + 1}
+                    <td style="padding:5px; text-align:center; border:1px solid #d2d2d7; white-space:nowrap;">
+                        <span style="cursor:grab; margin-right:4px; color:#999;">☰</span>
+                        <button onclick="removeSettlementRow(${index})" style="background:none; border:none; color:#ff3b30; cursor:pointer; font-size:14px; margin-right:4px;" title="삭제">🗑️</button>
+                        <span style="font-size:11px; color:#666;">${index + 1}</span>
                     </td>
                     <td style="padding:5px; border:1px solid #d2d2d7;">
                         <select onchange="onSettlementCategoryChange(${index}, this.value)" style="width:100%; border:none; background:transparent; font-size:11px;">
@@ -7795,7 +7803,43 @@
             }
         }
 
-        // Drag & Drop
+        // Settlement Drag & Drop Handlers
+        let draggedSettlementIndex = null;
+
+        function handleSettlementDragStart(e, index) {
+            draggedSettlementIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', index);
+            setTimeout(() => e.target.style.opacity = '0.5', 0);
+        }
+
+        function handleSettlementDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleSettlementDrop(e, index) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (draggedSettlementIndex !== null && draggedSettlementIndex !== index) {
+                // 배열 순서 변경
+                const item = settlementRows.splice(draggedSettlementIndex, 1)[0];
+                settlementRows.splice(index, 0, item);
+
+                renderSettlementTable();
+                saveSettlementToLocal();
+            }
+            return false;
+        }
+
+        function handleSettlementDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedSettlementIndex = null;
+        }
+
+        // Existing Schedule Drag & Drop (Reference)
         let draggedIndex = null;
         function handleDragStart(e, index) {
             draggedIndex = index;
