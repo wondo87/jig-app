@@ -2375,6 +2375,48 @@
             font-weight: 500;
         }
 
+        /* 모바일 반응형: KPI 그리드 */
+        @media (max-width: 768px) {
+            .stats-kpi-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+            }
+
+            .stats-kpi-grid .kpi-card.highlight {
+                grid-column: span 2;
+            }
+
+            .stats-secondary-kpi {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .stats-filter-bar {
+                flex-direction: column;
+                gap: 10px !important;
+            }
+
+            .stats-main-chart {
+                padding: 16px !important;
+            }
+
+            .stats-main-chart h3 {
+                font-size: 15px !important;
+            }
+
+            .stats-main-chart>div:first-child {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .stats-content-area .stats-chart-card {
+                grid-column: span 2;
+            }
+
+            #view-stats-others>div {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
         /* 차트 그리드 */
         .stats-chart-grid {
             display: grid;
@@ -4757,65 +4799,168 @@
                 <button class="stats-close-btn" onclick="closeStatsModal()">✕</button>
             </div>
             <div class="stats-modal-content">
-                <!-- 요약 카드 -->
-                <div class="stats-summary-grid">
-                    <div class="stats-summary-card">
-                        <div class="stats-summary-icon">👥</div>
-                        <div class="stats-summary-info">
-                            <div class="stats-summary-value" id="totalCustomers">0</div>
-                            <div class="stats-summary-label">총 고객 수</div>
+
+                <!-- 기간 필터 영역 -->
+                <div class="stats-filter-bar"
+                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; padding:15px; background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius:12px; border:1px solid #e2e8f0;">
+                    <!-- 집계 단위 토글 -->
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:13px; font-weight:600; color:#64748b;">집계 단위:</span>
+                        <div
+                            style="display:flex; background:#fff; border-radius:8px; border:1px solid #e2e8f0; overflow:hidden;">
+                            <button id="filterMonthly" onclick="setAggregationType('monthly')"
+                                style="padding:8px 16px; border:none; background:#0071e3; color:white; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s;">월별</button>
+                            <button id="filterYearly" onclick="setAggregationType('yearly')"
+                                style="padding:8px 16px; border:none; background:white; color:#64748b; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s;">연도별</button>
                         </div>
                     </div>
-                    <div class="stats-summary-card blue">
-                        <div class="stats-summary-icon">📝</div>
-                        <div class="stats-summary-info">
-                            <div class="stats-summary-value" id="totalContracts">0</div>
-                            <div class="stats-summary-label">계약 건수</div>
+                    <!-- 기간 범위 -->
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:13px; font-weight:600; color:#64748b;">기간:</span>
+                        <select id="statsPeriodFilter" onchange="renderAllStats()"
+                            style="padding:8px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-weight:500; background:white; cursor:pointer;">
+                            <option value="12months">최근 12개월</option>
+                            <option value="thisyear">올해</option>
+                            <option value="lastyear">작년</option>
+                            <option value="all">전체 기간</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 핵심 KPI 카드 (3개 우선 + 3개 보조) -->
+                <div class="stats-kpi-grid"
+                    style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:24px;">
+                    <!-- 핵심 KPI 1: 총 매출 -->
+                    <div class="kpi-card primary"
+                        style="background:linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color:white; padding:20px; border-radius:16px; box-shadow:0 4px 15px rgba(14,165,233,0.3);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <div
+                                    style="font-size:12px; opacity:0.9; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
+                                    💰 총 매출</div>
+                                <div id="kpiTotalRevenue" style="font-size:28px; font-weight:800; line-height:1.2;">₩0
+                                </div>
+                            </div>
+                            <div style="font-size:32px; opacity:0.3;">📈</div>
+                        </div>
+                        <div style="margin-top:12px; font-size:11px; opacity:0.8;">
+                            계약건수: <span id="kpiContractCount">0</span>건
                         </div>
                     </div>
-                    <div class="stats-summary-card green">
-                        <div class="stats-summary-icon">💰</div>
-                        <div class="stats-summary-info">
-                            <div class="stats-summary-value" id="totalRevenue">₩0</div>
-                            <div class="stats-summary-label">총 계약금액</div>
+
+                    <!-- 핵심 KPI 2: 총 지출 -->
+                    <div class="kpi-card"
+                        style="background:linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color:white; padding:20px; border-radius:16px; box-shadow:0 4px 15px rgba(244,63,94,0.3);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <div
+                                    style="font-size:12px; opacity:0.9; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
+                                    💸 총 지출</div>
+                                <div id="kpiTotalExpense" style="font-size:28px; font-weight:800; line-height:1.2;">₩0
+                                </div>
+                            </div>
+                            <div style="font-size:32px; opacity:0.3;">📉</div>
+                        </div>
+                        <div style="margin-top:12px; font-size:11px; opacity:0.8;">
+                            운영비 항목: <span id="kpiExpenseItems">0</span>건
                         </div>
                     </div>
-                    <div class="stats-summary-card purple">
-                        <div class="stats-summary-icon">📈</div>
-                        <div class="stats-summary-info">
-                            <div class="stats-summary-value" id="avgContract">₩0</div>
-                            <div class="stats-summary-label">평균 계약금액</div>
+
+                    <!-- 핵심 KPI 3: 순이익 (가장 눈에 띄게) -->
+                    <div class="kpi-card highlight"
+                        style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:white; padding:20px; border-radius:16px; box-shadow:0 4px 20px rgba(16,185,129,0.4); border:3px solid rgba(255,255,255,0.3); position:relative; overflow:hidden;">
+                        <div style="position:absolute; top:-20px; right:-20px; font-size:80px; opacity:0.1;">💎</div>
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:flex-start; position:relative;">
+                            <div>
+                                <div
+                                    style="font-size:12px; opacity:0.9; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                                    💎 순이익 <span
+                                        style="background:rgba(255,255,255,0.3); padding:2px 8px; border-radius:10px; font-size:10px;">HIGHLIGHT</span>
+                                </div>
+                                <div id="kpiNetProfit"
+                                    style="font-size:32px; font-weight:900; line-height:1.2; text-shadow:0 2px 10px rgba(0,0,0,0.2);">
+                                    ₩0</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="stats-summary-card red" style="border-left: 4px solid #ff3b30;">
-                        <div class="stats-summary-icon">💸</div>
-                        <div class="stats-summary-info">
-                            <div class="stats-summary-value" id="statsTotalExpenseSummary">₩0</div>
-                            <div class="stats-summary-label">총 운영비</div>
-                        </div>
-                    </div>
-                    <div class="stats-summary-card green" style="border-left: 4px solid #34c759;">
-                        <div class="stats-summary-icon">💎</div>
-                        <div class="stats-summary-info">
-                            <div class="stats-summary-value" id="statsNetProfitSummary">₩0</div>
-                            <div class="stats-summary-label">순수익 (매출-지출)</div>
+                        <div style="margin-top:12px; font-size:12px; display:flex; align-items:center; gap:8px;">
+                            <span
+                                style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-weight:600;">
+                                이익률: <span id="kpiProfitRate">0</span>%
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 차트 그리드 -->
-                <!-- 차트 그리드 -->
-                <!-- 탭 메뉴 -->
+                <!-- 보조 KPI 카드 (2열 그리드) -->
+                <div class="stats-secondary-kpi"
+                    style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:24px;">
+                    <div
+                        style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:12px;">
+                        <div
+                            style="width:44px; height:44px; background:#f0f9ff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                            👥</div>
+                        <div>
+                            <div id="kpiTotalCustomers" style="font-size:20px; font-weight:700; color:#1e293b;">0</div>
+                            <div style="font-size:11px; color:#64748b;">총 고객 수</div>
+                        </div>
+                    </div>
+                    <div
+                        style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:12px;">
+                        <div
+                            style="width:44px; height:44px; background:#fef3c7; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                            📝</div>
+                        <div>
+                            <div id="kpiContractsTotal" style="font-size:20px; font-weight:700; color:#1e293b;">0</div>
+                            <div style="font-size:11px; color:#64748b;">계약 건수</div>
+                        </div>
+                    </div>
+                    <div
+                        style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:12px;">
+                        <div
+                            style="width:44px; height:44px; background:#f0fdf4; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                            📊</div>
+                        <div>
+                            <div id="kpiAvgContract" style="font-size:20px; font-weight:700; color:#1e293b;">₩0</div>
+                            <div style="font-size:11px; color:#64748b;">평균 계약금액</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 통합 수익성 차트 (매출 막대, 지출 막대, 순이익 선) -->
+                <div class="stats-main-chart"
+                    style="background:white; padding:24px; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05); margin-bottom:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <div>
+                            <h3 style="margin:0; font-size:18px; font-weight:700; color:#1e293b;">📊 수익성 분석 차트</h3>
+                            <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;">매출 vs 지출 vs 순이익 추이</p>
+                        </div>
+                        <!-- 범례 -->
+                        <div style="display:flex; gap:16px; font-size:11px;">
+                            <div style="display:flex; align-items:center; gap:4px;"><span
+                                    style="width:12px; height:12px; background:#0ea5e9; border-radius:2px;"></span> 매출
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;"><span
+                                    style="width:12px; height:12px; background:#f43f5e; border-radius:2px;"></span> 지출
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;"><span
+                                    style="width:12px; height:3px; background:#10b981; border-radius:2px;"></span> 순이익
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;"><span
+                                    style="width:12px; height:3px; background:#8b5cf6; border-radius:2px; border:1px dashed #8b5cf6;"></span>
+                                이익률(%)</div>
+                        </div>
+                    </div>
+                    <div style="height:380px;">
+                        <canvas id="profitabilityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 탭 메뉴 (기타 상세 통계) -->
                 <div class="stats-tabs-container"
                     style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
-                    <button id="tab-monthly" class="stats-tab-btn active" onclick="switchStatsTab('monthly')"
-                        style="padding:8px 16px; border:none; background:#f5f5f7; border-radius:6px; cursor:pointer; font-weight:600; color:#333; transition:all 0.2s;">📅
-                        월별 추이</button>
-                    <button id="tab-yearly" class="stats-tab-btn" onclick="switchStatsTab('yearly')"
-                        style="padding:8px 16px; border:none; background:white; border-radius:6px; cursor:pointer; font-weight:600; color:#888; transition:all 0.2s;">📈
-                        연도별 요약</button>
-                    <button id="tab-expenses" class="stats-tab-btn" onclick="switchStatsTab('expenses')"
-                        style="padding:8px 16px; border:none; background:white; border-radius:6px; cursor:pointer; font-weight:600; color:#888; transition:all 0.2s;">💸
+                    <button id="tab-expenses" class="stats-tab-btn active" onclick="switchStatsTab('expenses')"
+                        style="padding:8px 16px; border:none; background:#f5f5f7; border-radius:6px; cursor:pointer; font-weight:600; color:#333; transition:all 0.2s;">💸
                         운영비 분석</button>
                     <button id="tab-others" class="stats-tab-btn" onclick="switchStatsTab('others')"
                         style="padding:8px 16px; border:none; background:white; border-radius:6px; cursor:pointer; font-weight:600; color:#888; transition:all 0.2s;">🎯
@@ -4823,55 +4968,20 @@
                 </div>
 
                 <!-- 탭 컨텐츠 영역 -->
-                <div class="stats-content-area" style="min-height:450px;">
-
-                    <!-- 1. 월별 탭 -->
-                    <div id="view-stats-monthly" class="stats-view-content"
+                <div class="stats-content-area" style="min-height:300px;">
+                    <!-- 운영비 탭 -->
+                    <div id="view-stats-expenses" class="stats-view-content"
                         style="display:block; animation: fadeIn 0.3s;">
                         <div class="stats-chart-card wide"
-                            style="height:450px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
-                            <div
-                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                <h3 style="margin:0; font-size:18px; color:#1d1d1f;">📅 월별 고객 등록 & 계약금액 추이</h3>
-                                <select id="statsYearFilter" onchange="renderAllStats()"
-                                    style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
-                                    <option value="all">전체 기간</option>
-                                    <option value="2026">2026년</option>
-                                    <option value="2025">2025년</option>
-                                    <option value="2024">2024년</option>
-                                </select>
-                            </div>
-                            <div style="height:360px;">
-                                <canvas id="monthlyChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. 연도별 탭 -->
-                    <div id="view-stats-yearly" class="stats-view-content"
-                        style="display:none; animation: fadeIn 0.3s;">
-                        <div class="stats-chart-card wide"
-                            style="height:450px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
-                            <h3 style="margin:0 0 20px 0; font-size:18px; color:#1d1d1f;">📈 연도별 실적 요약 (계약건수 & 수익금)</h3>
-                            <div style="height:360px;">
-                                <canvas id="yearlyChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. 운영비 탭 -->
-                    <div id="view-stats-expenses" class="stats-view-content"
-                        style="display:none; animation: fadeIn 0.3s;">
-                        <div class="stats-chart-card wide"
-                            style="height:450px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
+                            style="height:350px; padding:25px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
                             <h3 style="margin:0 0 20px 0; font-size:18px; color:#1d1d1f;">💸 운영비 지출 상세 (대분류)</h3>
-                            <div style="height:360px; display:flex; justify-content:center;">
+                            <div style="height:260px; display:flex; justify-content:center;">
                                 <canvas id="expenseBreakdownChart"></canvas>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 4. 기타 탭 -->
+                    <!-- 기타 탭 -->
                     <div id="view-stats-others" class="stats-view-content"
                         style="display:none; animation: fadeIn 0.3s;">
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
@@ -4897,7 +5007,6 @@
                             <div class="stats-chart-card"
                                 style="padding:20px; background:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border:1px solid #eee;">
                                 <h3>✅ 계약 전환율</h3>
-                                <!-- 기존 HTML 구조 재활용 -->
                                 <div class="conversion-rate-display">
                                     <div class="conversion-circle" id="conversionCircle">
                                         <span id="conversionRate">0%</span>
@@ -4915,7 +5024,6 @@
                         </div>
                     </div>
                 </div>
-
 
             </div>
         </div>
@@ -11394,31 +11502,318 @@
             chartInstances = {};
         }
 
+        // 집계 단위 변수 (기본: 월별)
+        let statsAggregationType = 'monthly';
+
+        function setAggregationType(type) {
+            statsAggregationType = type;
+            // 버튼 스타일 업데이트
+            const monthlyBtn = document.getElementById('filterMonthly');
+            const yearlyBtn = document.getElementById('filterYearly');
+            if (type === 'monthly') {
+                monthlyBtn.style.background = '#0071e3';
+                monthlyBtn.style.color = 'white';
+                yearlyBtn.style.background = 'white';
+                yearlyBtn.style.color = '#64748b';
+            } else {
+                yearlyBtn.style.background = '#0071e3';
+                yearlyBtn.style.color = 'white';
+                monthlyBtn.style.background = 'white';
+                monthlyBtn.style.color = '#64748b';
+            }
+            renderAllStats();
+        }
+
         function renderAllStats() {
             const data = customers;
+            const periodFilter = document.getElementById('statsPeriodFilter')?.value || 'all';
+            const now = new Date();
+            const thisYear = now.getFullYear().toString();
+            const lastYear = (now.getFullYear() - 1).toString();
+
+            // 기간 필터링 함수
+            function filterByPeriod(dateStr) {
+                if (!dateStr) return false;
+                const date = new Date(dateStr);
+                if (periodFilter === '12months') {
+                    const twelveMonthsAgo = new Date();
+                    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+                    return date >= twelveMonthsAgo;
+                } else if (periodFilter === 'thisyear') {
+                    return dateStr.startsWith(thisYear);
+                } else if (periodFilter === 'lastyear') {
+                    return dateStr.startsWith(lastYear);
+                }
+                return true; // all
+            }
 
             // 요약 통계
-            const totalCustomers = data.length;
-            const contractedCustomers = data.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status));
+            const filteredData = data.filter(c => filterByPeriod(c.createdAt || c.contractDate));
+            const totalCustomers = filteredData.length;
+            const contractedCustomers = filteredData.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status));
             const totalContracts = contractedCustomers.length;
             const totalRevenue = contractedCustomers.reduce((sum, c) => sum + parseNumber(c.totalAmount), 0);
             const avgContract = totalContracts > 0 ? Math.round(totalRevenue / totalContracts) : 0;
 
-            document.getElementById('totalCustomers').textContent = totalCustomers;
-            document.getElementById('totalContracts').textContent = totalContracts;
-            document.getElementById('totalRevenue').textContent = '₩' + formatNumber(totalRevenue);
-            document.getElementById('avgContract').textContent = '₩' + formatNumber(avgContract);
+            // 지출 합계 (운영비)
+            let totalExpense = 0;
+            let expenseCount = 0;
+            if (typeof expensesRows !== 'undefined') {
+                expensesRows.forEach(e => {
+                    if (filterByPeriod(e.date)) {
+                        totalExpense += parseNumber(e.amount);
+                        expenseCount++;
+                    }
+                });
+            }
+
+            // 순이익 및 이익률
+            const netProfit = totalRevenue - totalExpense;
+            const profitRate = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
+
+            // 핵심 KPI 업데이트
+            const kpiRevenueEl = document.getElementById('kpiTotalRevenue');
+            const kpiExpenseEl = document.getElementById('kpiTotalExpense');
+            const kpiNetProfitEl = document.getElementById('kpiNetProfit');
+            const kpiProfitRateEl = document.getElementById('kpiProfitRate');
+            const kpiContractCountEl = document.getElementById('kpiContractCount');
+            const kpiExpenseItemsEl = document.getElementById('kpiExpenseItems');
+
+            if (kpiRevenueEl) kpiRevenueEl.textContent = '₩' + formatNumber(totalRevenue);
+            if (kpiExpenseEl) kpiExpenseEl.textContent = '₩' + formatNumber(totalExpense);
+            if (kpiNetProfitEl) kpiNetProfitEl.textContent = '₩' + formatNumber(netProfit);
+            if (kpiProfitRateEl) kpiProfitRateEl.textContent = profitRate;
+            if (kpiContractCountEl) kpiContractCountEl.textContent = totalContracts;
+            if (kpiExpenseItemsEl) kpiExpenseItemsEl.textContent = expenseCount;
+
+            // 보조 KPI 업데이트
+            const kpiCustomersEl = document.getElementById('kpiTotalCustomers');
+            const kpiContractsTotalEl = document.getElementById('kpiContractsTotal');
+            const kpiAvgEl = document.getElementById('kpiAvgContract');
+
+            if (kpiCustomersEl) kpiCustomersEl.textContent = totalCustomers;
+            if (kpiContractsTotalEl) kpiContractsTotalEl.textContent = totalContracts;
+            if (kpiAvgEl) kpiAvgEl.textContent = '₩' + formatNumber(avgContract);
+
+            // 기존 요약 업데이트 (호환성)
+            const oldTotalCustomers = document.getElementById('totalCustomers');
+            const oldTotalContracts = document.getElementById('totalContracts');
+            const oldTotalRevenue = document.getElementById('totalRevenue');
+            const oldAvgContract = document.getElementById('avgContract');
+            if (oldTotalCustomers) oldTotalCustomers.textContent = totalCustomers;
+            if (oldTotalContracts) oldTotalContracts.textContent = totalContracts;
+            if (oldTotalRevenue) oldTotalRevenue.textContent = '₩' + formatNumber(totalRevenue);
+            if (oldAvgContract) oldAvgContract.textContent = '₩' + formatNumber(avgContract);
 
             // 차트 렌더링
-            renderMonthlyChart(data);
-            renderYearlyChart(data); // [추가] 연도별 차트
+            renderProfitabilityChart(filteredData, periodFilter); // 새로운 통합 수익성 차트
             renderStatusChart(data);
             renderSourceChart(data);
             renderBuildingChart(data);
             renderConversionRate(data);
+            renderExpenseBreakdownChart(); // 운영비 분석
 
             // [추가] 작업 로그 렌더링
             renderAuditLog();
+        }
+
+        // [신규] 통합 수익성 차트 (매출 막대, 지출 막대, 순이익 선, 이익률 선)
+        function renderProfitabilityChart(data, periodFilter) {
+            const canvas = document.getElementById('profitabilityChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // 집계 데이터 구조
+            const aggregatedData = {};
+            const isMonthly = statsAggregationType === 'monthly';
+
+            // 1. 매출 집계
+            data.forEach(c => {
+                const date = c.createdAt || c.contractDate;
+                if (!date) return;
+
+                const key = isMonthly ? date.substring(0, 7) : date.substring(0, 4); // YYYY-MM or YYYY
+                if (!aggregatedData[key]) aggregatedData[key] = { revenue: 0, expense: 0 };
+
+                if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
+                    aggregatedData[key].revenue += parseNumber(c.totalAmount);
+                }
+            });
+
+            // 2. 지출 집계
+            if (typeof expensesRows !== 'undefined') {
+                expensesRows.forEach(e => {
+                    if (!e.date) return;
+                    const key = isMonthly ? e.date.substring(0, 7) : e.date.substring(0, 4);
+                    if (!aggregatedData[key]) aggregatedData[key] = { revenue: 0, expense: 0 };
+                    aggregatedData[key].expense += parseNumber(e.amount);
+                });
+            }
+
+            const sortedKeys = Object.keys(aggregatedData).sort();
+            const labels = sortedKeys.map(k => {
+                if (isMonthly) {
+                    const [y, m] = k.split('-');
+                    return `${y.slice(2)}/${m}`;
+                }
+                return k + '년';
+            });
+
+            const revenueData = sortedKeys.map(k => aggregatedData[k].revenue);
+            const expenseData = sortedKeys.map(k => aggregatedData[k].expense);
+            const netProfitData = sortedKeys.map(k => aggregatedData[k].revenue - aggregatedData[k].expense);
+            const profitRateData = sortedKeys.map(k => {
+                const rev = aggregatedData[k].revenue;
+                const net = rev - aggregatedData[k].expense;
+                return rev > 0 ? ((net / rev) * 100).toFixed(1) : 0;
+            });
+
+            if (chartInstances.profitability) chartInstances.profitability.destroy();
+
+            chartInstances.profitability = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['데이터 없음'],
+                    datasets: [
+                        {
+                            label: '매출',
+                            data: revenueData,
+                            backgroundColor: 'rgba(14, 165, 233, 0.8)',
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                            order: 3
+                        },
+                        {
+                            label: '지출',
+                            data: expenseData,
+                            backgroundColor: 'rgba(244, 63, 94, 0.8)',
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                            order: 4
+                        },
+                        {
+                            label: '순이익',
+                            data: netProfitData,
+                            type: 'line',
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#10b981',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y',
+                            order: 1
+                        },
+                        {
+                            label: '이익률(%)',
+                            data: profitRateData,
+                            type: 'line',
+                            borderColor: '#8b5cf6',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 4,
+                            pointBackgroundColor: '#8b5cf6',
+                            yAxisID: 'y1',
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    if (context.dataset.label === '이익률(%)') {
+                                        return context.dataset.label + ': ' + context.parsed.y + '%';
+                                    }
+                                    return context.dataset.label + ': ₩' + formatNumber(context.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: { display: true, text: '금액 (원)' },
+                            ticks: {
+                                callback: v => {
+                                    if (v >= 100000000) return (v / 100000000).toFixed(0) + '억';
+                                    if (v >= 10000000) return (v / 10000000).toFixed(0) + '천만';
+                                    if (v >= 1000000) return (v / 1000000).toFixed(0) + 'M';
+                                    return v;
+                                }
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: { display: true, text: '이익률 (%)' },
+                            max: 100,
+                            grid: { display: false },
+                            ticks: { callback: v => v + '%' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 운영비 분석 차트 (도넛)
+        function renderExpenseBreakdownChart() {
+            const canvas = document.getElementById('expenseBreakdownChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const categoryTotals = {};
+            if (typeof expensesRows !== 'undefined') {
+                expensesRows.forEach(e => {
+                    const cat = e.category || '기타';
+                    categoryTotals[cat] = (categoryTotals[cat] || 0) + parseNumber(e.amount);
+                });
+            }
+
+            const labels = Object.keys(categoryTotals);
+            const values = Object.values(categoryTotals);
+            const colors = ['#0ea5e9', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+
+            if (chartInstances.expenseBreakdown) chartInstances.expenseBreakdown.destroy();
+
+            chartInstances.expenseBreakdown = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['데이터 없음'],
+                    datasets: [{
+                        data: values.length ? values : [1],
+                        backgroundColor: colors.slice(0, labels.length || 1),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ₩' + formatNumber(context.parsed) + ' (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function renderMonthlyChart(data) {
