@@ -488,17 +488,29 @@ function exportCustomerToNotion(customerId, data) {
         throw new Error('Notion API 키가 설정되지 않았습니다. setupNotionProperties() 함수를 실행해주세요.');
     }
 
-    const customerName = data['성명'] || '제목 없음';
+    const customerName = data['성명'] || '이름없음';
+    const projectName = data['공사명'] || data['프로젝트명'] || '';
+    const contractDate = data['계약일'] || '';
 
-    // 1. 기존 페이지 검색 (성명 기준 - Title 속성)
-    // 노션 데이터베이스에 '고객ID' 속성이 없으므로 '성명'(Title)으로 검색
+    // 제목 형식: 이름_공사명_계약일 (예: 홍길동_강남아파트인테리어_2026-01-15)
+    const titleParts = [customerName];
+    if (projectName) titleParts.push(projectName);
+    if (contractDate) titleParts.push(contractDate);
+    const notionTitle = titleParts.join('_');
+
+    console.log('📋 Notion Title:', notionTitle);
+
+    // 1. 기존 페이지 검색 (고객ID로 검색 - 고유값)
+    // 고객ID가 없으면 제목으로 검색
+    const searchId = customerId || notionTitle;
     let searchResponse;
     try {
+        // 먼저 고객ID로 검색 시도 (rich_text 속성)
         searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.PROJECTS + '/query', 'POST', {
             filter: {
-                property: '성명', // Title 속성
-                title: {
-                    equals: customerName
+                property: '고객ID',
+                rich_text: {
+                    equals: customerId
                 }
             }
         });
@@ -522,9 +534,15 @@ function exportCustomerToNotion(customerId, data) {
     // Notion Properties 구성 (스크린샷 기반)
     // 값이 없는 Date 타입은 아예 키를 빼야 에러가 안남
     const properties = {
-        '성명': { title: [{ text: { content: customerName } }] }, // Title Property
+        // 현장명이 Title 속성 (Aa 아이콘) - 이름_공사명_계약일 형식으로 저장
+        '현장명': { title: [{ text: { content: notionTitle } }] },
 
+        // 성명은 rich_text 속성
+        '성명': { rich_text: [{ text: { content: customerName } }] },
+
+        // 연락처는 phone_number 속성
         '연락처': { phone_number: data['연락처'] || null },
+
         '이메일': { email: data['이메일'] || null },
 
         '주소': { rich_text: [{ text: { content: data['주소'] || '' } }] },
@@ -533,8 +551,6 @@ function exportCustomerToNotion(customerId, data) {
         // 배우자 정보
         '배우자 성명': { rich_text: [{ text: { content: data['배우자 성명'] || '' } }] },
 
-        '공사기간 (시작 ~ 종료)': { rich_text: [{ text: { content: data['공사기간'] || '' } }] },
-
         '공사 담당자': { rich_text: [{ text: { content: data['공사 담당자'] || '' } }] },
         '건물유형': { rich_text: [{ text: { content: data['건물유형'] || '' } }] },
         '유입경로': { rich_text: [{ text: { content: data['유입경로'] || '' } }] },
@@ -542,6 +558,7 @@ function exportCustomerToNotion(customerId, data) {
         '고객 요청사항': { rich_text: [{ text: { content: data['고객 요청사항'] || '' } }] },
         '내부 메모': { rich_text: [{ text: { content: data['내부 메모'] || '' } }] },
         '특약사항': { rich_text: [{ text: { content: data['특약사항'] || '' } }] },
+        '고객ID': { rich_text: [{ text: { content: customerId || '' } }] },
 
         '총 계약금액 (VAT 포함)': { number: totalAmount },
         '평수': { number: area }
@@ -588,89 +605,255 @@ function exportCustomerToNotion(customerId, data) {
             pageId = createResponse.id;
             notionUrl = createResponse.url;
         }
+
+        // 스케줄 데이터가 있거나 특약사항이 있으면 페이지 본문에 추가
+        if ((data.scheduleRows && data.scheduleRows.length > 0) || data['특약사항']) {
+            addScheduleBlocksToPageV2(pageId, data.scheduleRows || [], data['특약사항'] || '');
+        }
+
     } catch (e) {
         console.error('노션 페이지 생성/수정 실패:', e.toString());
         throw new Error('노션 페이지 저장 실패: ' + e.toString());
     }
 
     console.log('✅ Notion export successful:', notionUrl);
-    return { url: notionUrl };
+    return { url: notionUrl, pageId: pageId };
 }
 
-// 2. 스케줄 내보내기
-function exportScheduleToNotion(customerId, data) {
-    // 고객 페이지 찾기 (없으면 생성) - 키를 '성명'으로 통일
-    const customerResult = exportCustomerToNotion(customerId, { '성명': data['성명'] || data['고객명'] });
-    // 여기서 반환된 url은 페이지 URL임. page ID를 다시 추출하거나 exportCustomerToNotion을 수정해서 ID도 반환하게 하면 좋음.
-    // 편의상 새 페이지를 생성해서 스케줄 목록을 넣음.
+// 페이지에 스케줄 및 유의사항 블록 추가
+function addScheduleBlocksToPage(pageId, scheduleRows, specialNote) {
+    console.log('📅 Adding schedule/note blocks to page:', pageId);
 
-    // 단순하게: 새로운 페이지를 생성하거나 내용을 추가함.
-    // 여기서는 '공사스케줄' 데이터베이스에 아이템을 추가하는 방식으로 구현
+    // 먼저 기존 블록 가져오기 (싹 지우고 다시 쓰는게 깔끔함)
+    // 주의: 유저가 수동으로 작성한 다른 내용이 있을 수 있으므로, "공정 스케줄" 헤더 아래만 지우거나
+    // 안전하게 구분선 아래를 지우는 방식을 사용
+    try {
+        const existingBlocks = callNotionAPI('/blocks/' + pageId + '/children', 'GET');
 
-    // 1. 기존 스케줄 검색 (고객ID 기준)
-    const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.SCHEDULE + '/query', 'POST', {
-        filter: {
-            property: '고객ID',
-            rich_text: { equals: customerId }
+        let shouldDelete = false;
+        if (existingBlocks.results) {
+            for (const block of existingBlocks.results) {
+                // 구분선(divider)이 있으면 그 아래는 자동 생성 영역으로 간주하고 삭제
+                if (block.type === 'divider') {
+                    shouldDelete = true;
+                }
+
+                // 또는 "📋 공정 스케줄" 헤더가 있으면 그 아래 삭제
+                if (block.type === 'heading_2' && block.heading_2?.rich_text?.[0]?.plain_text?.includes('공정 스케줄')) {
+                    shouldDelete = true;
+                }
+
+                if (shouldDelete) {
+                    try {
+                        callNotionAPI('/blocks/' + block.id, 'DELETE');
+                    } catch (e) {
+                        console.log('블록 삭제 실패 (무시):', e.toString());
+                    }
+                }
+            }
         }
-    });
+    } catch (e) {
+        console.log('기존 블록 조회 실패:', e.toString());
+    }
 
-    // 기존 스케줄이 있으면 삭제하고 다시 만드는게 깔끔할 수 있음 (또는 업데이트)
-    // 여기서는 간단히 '고객명 - 공사 스케줄' 제목으로 페이지 하나 생성/업데이트
+    // 새 블록 구성
+    const blocks = [];
 
-    let pageId;
-    let notionUrl;
+    // 1. 구분선 (자동 생성 영역 시작 표시)
+    blocks.push({ type: 'divider', divider: {} });
 
-    const name = data['성명'] || data['고객명'] || '고객';
-    const title = name + ' - 공사 스케줄';
+    // 2. 유의사항 (특약사항) - 콜아웃 박스로 강조
+    if (specialNote) {
+        blocks.push({
+            type: 'heading_3',
+            heading_3: { rich_text: [{ text: { content: '🔔 유의사항 (특약사항)' } }] }
+        });
 
-    const properties = {
-        '이름': { title: [{ text: { content: title } }] },
-        '고객ID': { rich_text: [{ text: { content: customerId } }] },
-        '현장': { rich_text: [{ text: { content: data.현장주소 || '' } }] }
-    };
+        blocks.push({
+            type: 'callout',
+            callout: {
+                rich_text: [{ text: { content: specialNote } }],
+                icon: { emoji: '�' },
+                color: 'gray_background'
+            }
+        });
 
-    // 스케줄 내용 (블록) 구성
-    const children = [
-        {
-            object: 'block',
+        // 간격
+        blocks.push({ type: 'paragraph', paragraph: { rich_text: [] } });
+    }
+
+    // 3. 스케줄 표
+    if (scheduleRows && scheduleRows.length > 0) {
+        blocks.push({
             type: 'heading_2',
-            heading_2: { rich_text: [{ text: { content: '공사 일정표' } }] }
-        }
-    ];
+            heading_2: { rich_text: [{ text: { content: '📋 공정 스케줄' } }] }
+        });
 
-    if (data.공정목록 && Array.isArray(data.공정목록)) {
-        data.공정목록.forEach(item => {
-            children.push({
-                object: 'block',
-                type: 'to_do',
-                to_do: {
-                    rich_text: [{
-                        text: { content: `[${item.공정}] ${item.시작일} ~ ${item.종료일} (${item.담당자})` }
-                    }],
-                    checked: item.상태 === '완료'
+        const tableRows = [];
+
+        // 헤더 행
+        tableRows.push({
+            type: 'table_row',
+            table_row: {
+                cells: [
+                    [{ type: 'text', text: { content: '공정명', annotations: { bold: true } } }],
+                    [{ type: 'text', text: { content: '기간', annotations: { bold: true } } }],
+                    [{ type: 'text', text: { content: '상태', annotations: { bold: true } } }],
+                    [{ type: 'text', text: { content: '담당/비고', annotations: { bold: true } } }]
+                ]
+            }
+        });
+
+        // 데이터 행
+        for (let i = 0; i < scheduleRows.length; i++) {
+            const row = scheduleRows[i];
+            const category = row.category || row['대분류'] || '';
+            const process = row.process || row['공정명'] || '';
+            const startDate = row.startDate || row['시작일'] || '';
+            const endDate = row.endDate || row['종료일'] || '';
+            const status = row.status || row['상태'] || '';
+            const manager = row.manager || row['담당자'] || '';
+
+            // 날짜 포맷
+            const simpleStart = startDate.substring(5); // MM-DD
+            const simpleEnd = endDate.substring(5);
+            const dateStr = (simpleStart === simpleEnd) ? simpleStart : `${simpleStart}~${simpleEnd}`;
+            const processName = (category ? `[${category}] ` : '') + process;
+
+            // 상태 표현
+            let statusText = status;
+            if (status === '완료') statusText = '✅ 완료';
+            else if (status === '진행중') statusText = '🔄 진행중';
+            else if (status === '지연') statusText = '⚠️ 지연';
+            else if (status === '예정') statusText = '🗓️ 예정';
+
+            tableRows.push({
+                type: 'table_row',
+                table_row: {
+                    cells: [
+                        [{ type: 'text', text: { content: processName } }],
+                        [{ type: 'text', text: { content: dateStr } }],
+                        [{ type: 'text', text: { content: statusText } }],
+                        [{ type: 'text', text: { content: manager } }]
+                    ]
                 }
             });
+        }
+
+        blocks.push({
+            type: 'table',
+            table: {
+                table_width: 4,
+                has_column_header: true,
+                has_row_header: false,
+                children: tableRows
+            }
         });
     }
 
-    if (searchResponse.results.length > 0) {
-        // 업데이트: 기존 블록을 다 지우는건 복잡하므로, 속성만 업데이트하고 내용은 추가
-        pageId = searchResponse.results[0].id;
-        notionUrl = searchResponse.results[0].url;
-        callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
-        callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: children });
-    } else {
-        // 생성
-        const createResponse = callNotionAPI('/pages', 'POST', {
-            parent: { database_id: NOTION_DB_IDS.SCHEDULE },
-            properties: properties,
-            children: children
-        });
-        notionUrl = createResponse.url;
+    // 블록 추가 요청
+    if (blocks.length > 0) {
+        try {
+            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', {
+                children: blocks
+            });
+            console.log('✅ Schedule/Note blocks added successfully');
+        } catch (e) {
+            console.error('블록 추가 실패:', e.toString());
+        }
+    }
+}
+
+
+
+// 2. 스케줄 내보내기 (개별 스케줄 항목을 데이터베이스에 추가)
+function exportScheduleToNotion(customerId, data) {
+    console.log('📅 Exporting schedule to Notion for customer:', customerId);
+
+    // 1. 먼저 고객 페이지 찾기/생성 (pageId 필요)
+    const customerResult = exportCustomerToNotion(customerId, {
+        '성명': data['성명'] || data['고객명'],
+        '현장주소': data['현장주소'] || ''
+    });
+    const customerPageId = customerResult.pageId;
+
+    if (!customerPageId) {
+        throw new Error('고객 페이지를 찾을 수 없습니다.');
     }
 
-    return { url: notionUrl };
+    console.log('👤 Customer page ID:', customerPageId);
+
+    // 2. 기존 스케줄 모두 삭제 (고객ID 기준)
+    try {
+        const existingSchedules = callNotionAPI('/databases/' + NOTION_DB_IDS.SCHEDULE + '/query', 'POST', {
+            filter: {
+                property: '프로젝트 관리',
+                relation: { contains: customerPageId }
+            }
+        });
+
+        if (existingSchedules.results && existingSchedules.results.length > 0) {
+            console.log('🗑️ Deleting existing schedules:', existingSchedules.results.length);
+            for (const page of existingSchedules.results) {
+                try {
+                    callNotionAPI('/pages/' + page.id, 'PATCH', { archived: true });
+                } catch (e) {
+                    console.log('스케줄 삭제 실패 (무시):', e.toString());
+                }
+            }
+        }
+    } catch (e) {
+        console.log('기존 스케줄 검색 실패 (무시):', e.toString());
+    }
+
+    // 3. 새 스케줄 항목들 생성
+    const scheduleList = data.공정목록 || [];
+    let createdCount = 0;
+
+    for (const item of scheduleList) {
+        const processName = item.공정 || item.process || '';
+        const startDate = item.시작일 || item.startDate || '';
+        const endDate = item.종료일 || item.endDate || '';
+        const manager = item.담당자 || item.manager || '';
+        const status = item.상태 || item.status || '';
+        const memo = item.비고 || item.memo || '';
+
+        const properties = {
+            // 공정명이 Title 속성
+            '공정명': { title: [{ text: { content: processName } }] },
+
+            // 프로젝트 관리 - 관계형 (고객 페이지 연결)
+            '프로젝트 관리': { relation: [{ id: customerPageId }] },
+
+            // 담당자
+            '담당자': { rich_text: [{ text: { content: manager } }] },
+
+            // 비고
+            '비고': { rich_text: [{ text: { content: memo } }] }
+        };
+
+        // 시작~종료 날짜 (Date Range)
+        if (startDate && startDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+            const dateObj = { start: startDate };
+            if (endDate && endDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+                dateObj.end = endDate;
+            }
+            properties['시작~종료'] = { date: dateObj };
+        }
+
+        try {
+            callNotionAPI('/pages', 'POST', {
+                parent: { database_id: NOTION_DB_IDS.SCHEDULE },
+                properties: properties
+            });
+            createdCount++;
+        } catch (e) {
+            console.error('스케줄 항목 생성 실패:', processName, e.toString());
+        }
+    }
+
+    console.log('✅ Schedule export complete. Created:', createdCount, 'items');
+    return { url: customerResult.url, createdCount: createdCount };
 }
 
 // 3. 체크리스트 내보내기
@@ -2578,5 +2761,157 @@ function requestPermissions() {
         Logger.log('✅ 권한 승인 완료! 응답: ' + response.getContentText());
     } catch (e) {
         Logger.log('❌ 에러: ' + e.toString());
+    }
+}
+
+// [V2] 페이지에 스케줄 및 유의사항 블록 추가 (Robust Version)
+function addScheduleBlocksToPageV2(pageId, scheduleRows, specialNote) {
+    console.log('📅 Adding schedule/note blocks to page (V2):', pageId);
+
+    // 1. 기존 블록 정리 (Bottom-up, 안전한 삭제)
+    try {
+        const existingBlocks = callNotionAPI('/blocks/' + pageId + '/children', 'GET');
+        
+        if (existingBlocks.results && existingBlocks.results.length > 0) {
+            // 역순으로 탐색
+            for (let i = existingBlocks.results.length - 1; i >= 0; i--) {
+                const block = existingBlocks.results[i];
+                let shouldDelete = false;
+
+                // 자동 생성된 블록 식별 (구분선, 공정 스케줄 헤더, 유의사항 헤더 등)
+                if (block.type === 'divider') shouldDelete = true;
+                if (block.type === 'heading_2' && block.heading_2?.rich_text?.[0]?.plain_text?.includes('공정 스케줄')) shouldDelete = true;
+                if (block.type === 'heading_3' && block.heading_3?.rich_text?.[0]?.plain_text?.includes('유의사항')) shouldDelete = true;
+                
+                // 만약 이 블록이 삭제 대상이라면
+                if (shouldDelete) {
+                    try {
+                        callNotionAPI('/blocks/' + block.id, 'DELETE');
+                    } catch (e) {
+                        // 이미 삭제됨 등 무시
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.log('기존 블록 조회 실패 (무시):', e.toString());
+    }
+
+    // 2. 유의사항(Callout) 추가
+    try {
+        const noteBlocks = [];
+        noteBlocks.push({ type: 'divider', divider: {} }); // 구분선
+
+        if (specialNote && String(specialNote).trim() !== '') {
+            noteBlocks.push({
+                type: 'heading_3',
+                heading_3: { rich_text: [{ text: { content: '🔔 유의사항 (특약사항)' } }] }
+            });
+            
+            noteBlocks.push({
+                type: 'callout',
+                callout: {
+                    rich_text: [{ text: { content: String(specialNote) } }],
+                    icon: { emoji: '💡' },
+                    color: 'gray_background'
+                }
+            });
+            
+            // 여백
+            noteBlocks.push({ type: 'paragraph', paragraph: { rich_text: [] } });
+        }
+
+        if (noteBlocks.length > 0) {
+            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: noteBlocks });
+        }
+    } catch (e) {
+        console.error('유의사항 블록 추가 실패:', e.toString());
+    }
+
+    // 3. 스케줄 테이블 추가
+    try {
+        if (scheduleRows && scheduleRows.length > 0) {
+            const tableBlocks = [];
+            
+            // 제목
+            tableBlocks.push({
+                type: 'heading_2',
+                heading_2: { rich_text: [{ text: { content: '📋 공정 스케줄' } }] }
+            });
+
+            const tableRows = [];
+
+            // [헤더 행]
+            tableRows.push({
+                type: 'table_row',
+                table_row: {
+                    cells: [
+                        [{ type: 'text', text: { content: '공정명', annotations: { bold: true } } }],
+                        [{ type: 'text', text: { content: '기간', annotations: { bold: true } } }],
+                        [{ type: 'text', text: { content: '상태', annotations: { bold: true } } }],
+                        [{ type: 'text', text: { content: '담당/비고', annotations: { bold: true } } }]
+                    ]
+                }
+            });
+
+            // [데이터 행]
+            for (let i = 0; i < scheduleRows.length; i++) {
+                const row = scheduleRows[i];
+                
+                // 데이터 정제 (undefined/null 방지)
+                const process = (row.process || row['공정명'] || '공정 없음').toString();
+                const category = (row.category || row['대분류'] || '').toString();
+                const startDate = (row.startDate || row['시작일'] || '').toString();
+                const endDate = (row.endDate || row['종료일'] || '').toString();
+                const status = (row.status || row['상태'] || '').toString();
+                const manager = (row.manager || row['담당자'] || '').toString();
+                
+                // 날짜 표시
+                let dateStr = '';
+                if (startDate) {
+                    const s = startDate.length >= 10 ? startDate.substring(5) : startDate;
+                    const e = endDate.length >= 10 ? endDate.substring(5) : endDate;
+                    dateStr = (s === e || !e) ? s : `${s}~${e}`;
+                }
+
+                // 공정명 표시
+                const processName = category ? `[${category}] ${process}` : process;
+
+                // 상태 이모지
+                let statusText = status;
+                if (status === '완료') statusText = '✅ 완료';
+                else if (status === '진행중') statusText = '🔄 진행중';
+                else if (status === '지연') statusText = '⚠️ 지연';
+                else if (status === '예정') statusText = '🗓️ 예정';
+
+                tableRows.push({
+                    type: 'table_row',
+                    table_row: {
+                        cells: [
+                            [{ type: 'text', text: { content: processName || '-' } }],
+                            [{ type: 'text', text: { content: dateStr || '-' } }],
+                            [{ type: 'text', text: { content: statusText || '-' } }],
+                            [{ type: 'text', text: { content: manager || '-' } }]
+                        ]
+                    }
+                });
+            }
+
+            // 테이블 블록 감싸기
+            tableBlocks.push({
+                type: 'table',
+                table: {
+                    table_width: 4,
+                    has_column_header: true,
+                    has_row_header: false,
+                    children: tableRows
+                }
+            });
+
+            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: tableBlocks });
+            console.log('✅ Schedule table added successfully');
+        }
+    } catch (e) {
+        console.error('스케줄 테이블 추가 실패:', e.toString());
     }
 }

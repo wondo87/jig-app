@@ -2946,6 +2946,73 @@
             }
         }
 
+        /* 멀티 셀렉트 UI 스타일 */
+        .multi-select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .multi-select-box {
+            padding: 8px 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            margin-top: 4px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            padding: 4px;
+        }
+
+        .multi-select-dropdown.show {
+            display: block;
+        }
+
+        .multi-select-option {
+            display: block;
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        .multi-select-option:hover {
+            background: #f5f5f7;
+        }
+
+        .multi-select-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            width: 100%;
+            padding: 6px 8px !important;
+            margin: 0 !important;
+            font-size: 11px;
+        }
+
+        .multi-select-option input {
+            cursor: pointer;
+            margin: 0;
+            accent-color: #0071e3;
+        }
+
         @media (max-width: 1024px) {
             .main-layout {
                 flex-direction: column;
@@ -3298,7 +3365,7 @@
                         계약견적서</button>
                     <button class="customer-tab" onclick="showCustomerTab('cost')" data-tab="cost">💰 원가관리표</button>
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
-                        스케줄</button>
+                        공사 스케줄</button>
                     <button class="customer-tab" onclick="showCustomerTab('checklist')" data-tab="checklist">✅
                         공정별 체크리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('as_list')" data-tab="as_list">🛠️
@@ -3321,10 +3388,10 @@
                                 <div class="subtitle">Customer Information</div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="notion-export-btn" onclick="exportToNotion('customer', event);"
+                                <button class="notion-export-btn" onclick="exportToNotion('all', event);"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"
                                     title="노션으로 고객 정보 내보내기">
-                                    📤 노션으로 내보내기
+                                    📤 노션 내보내기
                                 </button>
                                 <button class="pdf-btn" onclick="downloadPDF('customerInfoDoc', '고객정보')">🖨️
                                     인쇄/PDF</button>
@@ -3342,6 +3409,17 @@
                                     <div class="info-item">
                                         <label>연락처</label>
                                         <input type="text" class="customer-field" data-field="clientPhone"
+                                            placeholder="010-0000-0000"
+                                            oninput="autoFormatPhone(this); updateCustomerField(this)">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>배우자 성명</label>
+                                        <input type="text" class="customer-field" data-field="spouseName"
+                                            placeholder="배우자 성함" oninput="updateCustomerField(this)">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>배우자 연락처</label>
+                                        <input type="text" class="customer-field" data-field="spousePhone"
                                             placeholder="010-0000-0000"
                                             oninput="autoFormatPhone(this); updateCustomerField(this)">
                                     </div>
@@ -3953,16 +4031,16 @@
                                 <div class="subtitle">Process Checklist</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="sync-btn no-print" onclick="syncChecklistFromCloud()"
-                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="구글 시트에서 체크리스트 불러오기">
-                                    <span style="margin-right: 4px;">↻</span>
-                                    <span>체크리스트 동기화</span>
+                                <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
+                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="저장된 필터 상태 불러오기">
+                                    <span style="margin-right: 4px;">↩</span>
+                                    <span>저장내용 불러오기</span>
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 체크리스트 내보내기">
-                                    📤 노션
+                                    📤 노션 내보내기
                                 </button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printChecklist()"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
@@ -4002,19 +4080,31 @@
                                     <label
                                         style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계
                                         필터</label>
-                                    <select id="checklistStageFilter" onchange="renderChecklistItems()"
-                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
-                                        <option value="all">전체 보기</option>
-                                    </select>
+                                    <select id="checklistStageFilter" style="display:none;"></select>
+                                    <!-- 호환성 유지용 hidden -->
+                                    <div class="multi-select-wrapper" id="checklistStageFilterWrapper">
+                                        <div class="multi-select-box"
+                                            onclick="toggleMultiSelect('checklistStageFilter')">
+                                            <span id="checklistStageFilterLabel">전체 보기</span>
+                                            <span style="font-size: 10px; color: #86868b;">▼</span>
+                                        </div>
+                                        <div class="multi-select-dropdown" id="checklistStageFilterDropdown"></div>
+                                    </div>
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
                                         style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">분류
                                         필터</label>
-                                    <select id="checklistCategoryFilter" onchange="renderChecklistItems()"
-                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
-                                        <option value="all">전체 보기</option>
-                                    </select>
+                                    <select id="checklistCategoryFilter" style="display:none;"></select>
+                                    <!-- 호환성 유지용 hidden -->
+                                    <div class="multi-select-wrapper" id="checklistCategoryFilterWrapper">
+                                        <div class="multi-select-box"
+                                            onclick="toggleMultiSelect('checklistCategoryFilter')">
+                                            <span id="checklistCategoryFilterLabel">전체 보기</span>
+                                            <span style="font-size: 10px; color: #86868b;">▼</span>
+                                        </div>
+                                        <div class="multi-select-dropdown" id="checklistCategoryFilterDropdown"></div>
+                                    </div>
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
@@ -4030,12 +4120,16 @@
                                 <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                                     <thead>
                                         <tr style="background: #f5f5f7;">
+                                            <!-- [추가] 삭제 컬럼 -->
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 50px; color: #ff3b30;">
+                                                삭제</th>
                                             <th
                                                 style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">
                                                 체크</th>
                                             <th
                                                 style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 60px;">
-                                                번호</th>
+                                                NO</th>
                                             <th
                                                 style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">
                                                 항목</th>
@@ -4081,7 +4175,7 @@
                                 <button class="notion-export-btn" onclick="exportToNotion('schedule', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 스케줄 내보내기">
-                                    📤 노션
+                                    📤 노션 내보내기
                                 </button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printSchedule(true)"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
@@ -4091,7 +4185,7 @@
                         <div class="doc-content" style="padding:30px;">
                             <!-- 스케줄 상단 정보 (Schedule Info Table) -->
                             <table class="schedule-info-table"
-                                style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px; border:1px solid #000;">
+                                style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:10px; border:1px solid #000;">
                                 <colgroup>
                                     <col style="width: 15%; background: #fff;">
                                     <col style="width: 35%;">
@@ -4105,7 +4199,7 @@
                                         <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
                                             <input type="text" class="sch-input" id="schManagerInput"
                                                 data-field="manager"
-                                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold; background:transparent;"
+                                                style="width:100%; border:none; outline:none; text-align:center; background:transparent;"
                                                 value="원프로 소장 (010-4650-7013)">
                                         </td>
                                         <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">공사기간(시작~종료)
@@ -4257,6 +4351,9 @@
                                 <button class="sync-btn no-print" onclick="syncASListFromCloud()"
                                     style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
+                                <button class="sync-btn no-print" onclick="exportASListToNotion()"
+                                    style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="노션으로 A/S 리스트 내보내기">📤 노션 내보내기</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printASList(true)"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
                                     인쇄/PDF</button>
@@ -4275,10 +4372,24 @@
                                 <tbody style="text-align: center;">
                                     <tr>
                                         <!-- Row 1 -->
+                                        <!-- Row 1 -->
                                         <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">A/S 담당자</th>
                                         <td
                                             style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; font-weight:bold;">
                                             <span class="synced-display" data-sync="manager">-</span>
+                                        </td>
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">잔금일</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
+                                            <span class="synced-display" data-sync="finalPaymentDate">-</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <!-- Row 2 -->
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;" rowspan="2">
+                                            공사 의뢰인</th>
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; line-height: 1.4;"
+                                            id="asClientInfo1">
+                                            <!-- 본인 정보 -->
                                         </td>
                                         <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">A/S 기간</th>
                                         <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
@@ -4286,24 +4397,12 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <!-- Row 2 -->
-                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;" rowspan="2">
-                                            공사 의뢰인</th>
-                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
-                                            <span class="synced-display" data-sync="clientName">-</span>
-                                        </td>
-                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">연락처</th>
-                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">
-                                            <span class="synced-display" data-sync="clientPhone">-</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
                                         <!-- Row 3 -->
-                                        <td
-                                            style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; background:#f9f9fb;">
-                                            <!-- Empty slot filler -->
+                                        <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px; line-height: 1.4;"
+                                            id="asClientInfo2">
+                                            <!-- 배우자 정보 -->
                                         </td>
-                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">화장실 누수 보증
+                                        <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">화장실 누수 보증 기간
                                         </th>
                                         <td style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;"
                                             id="bathroomLeakWarranty">
@@ -4382,10 +4481,7 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <button class="sync-btn no-print" id="btnLoadSettlement" onclick="syncSettlementFromCloud()"
                                 style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
-                            <button class="sync-btn no-print" id="btnSaveSettlement" onclick="syncSettlementToCloud()"
-                                style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                title="Google Sheets에 저장하기">☁️↑ 저장하기</button>
+                                title="데이터 및 옵션 동기화">🔄 연동하기</button>
                         </div>
                     </div>
 
@@ -4614,6 +4710,8 @@
                 showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
             }
         }
+
+        let asListItems = []; // A/S 관리 리스트 데이터
 
         const categories = [
             { no: '01', name: '가설공사' }, { no: '02', name: '철거공사' }, { no: '03', name: '설비/방수공사' },
@@ -6049,19 +6147,31 @@
 
             // 스케줄 템플릿 로드
             fetchScheduleTemplate();
+
+            // [추가] 체크리스트 초기 렌더링 (데이터가 있으면)
+            if (typeof renderChecklistItems === 'function') {
+                renderChecklistItems();
+                // 필터도 업데이트
+                if (typeof updateChecklistFilters === 'function') {
+                    updateChecklistFilters();
+                }
+            }
         });
 
         // 토스트 알림
-        function showToast(message, type = 'success') {
+        let toastTimer = null;
+        function showToast(message, type = 'success', duration = 2000) {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
 
-            toast.className = 'toast show ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✕';
-            msg.textContent = message;
+            if (toastTimer) clearTimeout(toastTimer);
 
-            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+            toast.className = 'toast show ' + type;
+            icon.textContent = type === 'success' ? '✓' : (type === 'info' ? 'ℹ️' : '✕');
+            msg.innerHTML = message; // [변경] 줄바꿈 지원을 위해 innerHTML 사용
+
+            toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
         }
 
         // 상태 필터
@@ -6202,8 +6312,20 @@
                 document.getElementById('schArea').textContent = currentData.area ? currentData.area + ' PY' : '';
                 document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
 
+                // 공사 의뢰인 1: 메인 고객
                 const clientInfo = currentData.clientName ? (currentData.clientName + ' 고객님' + (currentData.clientPhone ? ' (' + currentData.clientPhone + ')' : '')) : '';
                 document.getElementById('schClient1').textContent = clientInfo;
+
+                // 공사 의뢰인 2: 배우자 정보 자동 채우기
+                const client2Input = document.querySelector('.sch-input[data-field="client2"]');
+                if (client2Input && currentData.spouseName) {
+                    const spouseInfo = currentData.spouseName + (currentData.spousePhone ? ' (' + currentData.spousePhone + ')' : '');
+                    if (!currentData.sch_client2) {
+                        client2Input.value = spouseInfo;
+                        currentData.sch_client2 = spouseInfo;
+                    }
+                }
+
                 document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
 
                 // 2. Manager Input (Special handling)
@@ -6466,6 +6588,36 @@
 
             renderScheduleTable();
             saveScheduleToCustomer();
+        }
+
+        // 유의사항 텍스트 추출 함수 (노션 연동용)
+        function getScheduleGuidelinesText() {
+            const list = document.getElementById('scheduleGuidelinesList');
+            if (!list) return '';
+            const items = list.querySelectorAll('li');
+            return Array.from(items).map(li => li.textContent.trim()).join('\n');
+        }
+
+        function getASGuidelinesText() {
+            const list = document.getElementById('asGuidelinesList');
+            if (!list) return '';
+            const items = list.querySelectorAll('li');
+            return Array.from(items).map(li => li.textContent.trim()).join('\n');
+        }
+
+        // [추가] 유의사항을 배열로 반환 (노션 콜아웃용)
+        function getScheduleGuidelinesArray() {
+            const list = document.getElementById('scheduleGuidelinesList');
+            if (!list) return [];
+            const items = list.querySelectorAll('li');
+            return Array.from(items).map(li => li.textContent.trim()).filter(t => t);
+        }
+
+        function getASGuidelinesArray() {
+            const list = document.getElementById('asGuidelinesList');
+            if (!list) return [];
+            const items = list.querySelectorAll('li');
+            return Array.from(items).map(li => li.textContent.trim()).filter(t => t);
         }
 
         // 스케줄 유의사항 불러오기 (구글 시트에서)
@@ -6947,17 +7099,20 @@
                              style="width:100%; border:none; outline:none; text-align:center;">
                     </td>
                     <!-- Warranty -->
-                    <td style="padding:5px; border:1px solid #d2d2d7; text-align:center;">
-                        <div style="display:flex; flex-direction:column; gap:4px;">
-                            <select class="mh-input no-print" onchange="applyScheduleToWarranty(${index}, this.value)"
-                                style="font-size:11px; color:#555; width:100%; border:none; border-bottom:1px dashed #ddd; outline:none; background:transparent;">
-                                <option value="">📅 스케줄 연동</option>
+                    <td style="padding:0; border:1px solid #d2d2d7; position: relative; height: 40px;">
+                        <input type="text" class="mh-input" value="${row.warranty || ''}" 
+                            id="warrantyInput_${index}"
+                            onchange="updateASListRow(${index}, 'warranty', this.value)"
+                            style="width:100%; height:100%; border:none; outline:none; text-align:center; font-weight:bold; background: transparent; padding-right: 25px;">
+                        
+                        <!-- 스케줄 연동 드롭다운 (아이콘으로 숨김) -->
+                        <div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; overflow: hidden;" class="no-print">
+                            <div style="font-size:14px; cursor:pointer; text-align:center; line-height:20px;">📅</div>
+                            <select onchange="applyScheduleToWarranty(${index}, this.value); this.value='';"
+                                style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+                                <option value="">스케줄 선택</option>
                                 ${getScheduleOptions()}
                             </select>
-                            <input type="text" class="mh-input" value="${row.warranty || ''}" 
-                                id="warrantyInput_${index}"
-                                onchange="updateASListRow(${index}, 'warranty', this.value)"
-                                style="width:100%; border:none; outline:none; text-align:center; font-weight:bold;">
                         </div>
                     </td>
                     <!-- Note -->
@@ -7509,39 +7664,70 @@
             }
         }
 
+        // [추가] 정산 데이터 초기화 (기본 카테고리로)
+        function initializeSettlementRows() {
+            if (typeof SETTLEMENT_CATEGORIES === 'undefined') return;
+            settlementRows = SETTLEMENT_CATEGORIES.map(cat => ({
+                category: cat,
+                process: '',
+                client: '',
+                costType: '',
+                payMethod: '',
+                bizId: '',
+                bankInfo: '',
+                amount: '',
+                date: '',
+                status: '',
+                memo: ''
+            }));
+            renderSettlementTable();
+            saveSettlementToLocal();
+        }
+
         // 구글 시트에서 불러오기
         async function syncSettlementFromCloud() {
-            if (!currentData || !currentData.id) {
-                alert('고객을 먼저 선택해주세요.');
+            // [수정] ID 체크 강화 (id 또는 customerId)
+            const custId = currentData ? (currentData.id || currentData.customerId) : null;
+            if (!custId) {
+                showToast('고객을 먼저 선택해주세요', 'error');
                 return;
             }
 
             const btn = document.getElementById('btnLoadSettlement');
             const originalText = btn ? btn.innerText : '';
             if (btn) {
-                btn.innerText = '⏳ 로딩중...';
+                btn.innerText = '⏳ 연동중...';
                 btn.disabled = true;
             }
 
             try {
+                // 옵션 마스터 데이터 먼저 동기화
+                await fetchSettlementMaster();
+
                 const params = new URLSearchParams({
                     sheet: 'settlement',
-                    customerId: currentData.id
+                    customerId: custId
                 });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
                 if (result.result === 'success') {
-                    settlementRows = result.rows || [];
+                    if (result.rows && result.rows.length > 0) {
+                        settlementRows = result.rows;
+                        showToast('정산 내역 및 옵션을 동기화했습니다.', 'success');
+                    } else {
+                        // [변경] 데이터가 없으면 기본 템플릿 생성
+                        initializeSettlementRows();
+                        showToast('저장된 내역이 없어 기본 항목을 생성했습니다.', 'info');
+                    }
                     renderSettlementTable();
                     saveSettlementToLocal();
-                    showToast('정산 내역을 불러왔습니다.', 'success');
                 } else {
                     throw new Error(result.error || '불러오기 실패');
                 }
             } catch (err) {
                 console.error(err);
-                showToast('불러오기 실패: ' + err.message, 'error');
+                showToast('연동 실패: ' + err.message, 'error');
             } finally {
                 if (btn) {
                     btn.innerText = originalText;
@@ -7552,8 +7738,10 @@
 
         // 구글 시트로 저장하기
         async function syncSettlementToCloud() {
-            if (!currentData || !currentData.id) {
-                alert('고객을 먼저 선택해주세요.');
+            // [수정] ID 체크 강화
+            const custId = currentData ? (currentData.id || currentData.customerId) : null;
+            if (!custId) {
+                showToast('고객을 먼저 선택해주세요', 'error');
                 return;
             }
 
@@ -7570,7 +7758,7 @@
                 // 저장 데이터 구성
                 const payload = {
                     action: 'updateSettlement',
-                    customerId: currentData.id,
+                    customerId: custId,
                     customerName: currentData.clientName,
                     rows: settlementRows
                 };
@@ -7624,15 +7812,161 @@
 
 
         function syncAllFields() {
+            // [Auth Check]
+            if (!currentData) return;
+
+            // [Auto-Calc] 잔금일 기반 A/S 종료일 자동 계산 및 저장 (데이터가 없을 때만)
+            if (currentData.finalPaymentDate && !currentData.asEndDate) {
+                const fDate = new Date(currentData.finalPaymentDate);
+                if (!isNaN(fDate.getTime())) {
+                    fDate.setMonth(fDate.getMonth() + 12);
+                    currentData.asEndDate = fDate.toISOString().split('T')[0];
+                }
+            }
+
+            // 1. Input Fields
             document.querySelectorAll('.synced-input').forEach(field => {
                 field.value = currentData[field.dataset.sync] || '';
             });
+
+            // 2. Display Fields (.synced-display)
             document.querySelectorAll('.synced-display').forEach(field => {
-                field.textContent = currentData[field.dataset.sync] || '-';
+                let value = currentData[field.dataset.sync] || '-';
+
+                // 1) A/S 기간 (warrantyPeriod) 계산 로직
+                if (field.dataset.sync === 'warrantyPeriod') {
+                    if (currentData.asEndDate) {
+                        // 잔금일이 있으면 "잔금일 ~ 종료일" 표시
+                        value = currentData.finalPaymentDate ? `${currentData.finalPaymentDate} ~ ${currentData.asEndDate}` : `~ ${currentData.asEndDate}`;
+                    } else if (currentData.asWarrantyEnd) {
+                        value = `~ ${currentData.asWarrantyEnd}`;
+                    }
+                }
+                field.textContent = value;
             });
+
+            // 3. A/S List Special Fields
+            const asInfo1 = document.getElementById('asClientInfo1');
+            const asInfo2 = document.getElementById('asClientInfo2');
+            if (asInfo1 && asInfo2) {
+                // 라인 1: 본인 성명 (연락처)
+                let name1 = currentData.clientName || '';
+                const phone1 = currentData.clientPhone || '';
+                if (name1 && phone1) name1 += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(phone1) : phone1})`;
+                asInfo1.textContent = name1;
+
+                // 라인 2: 배우자 성명 (연락처)
+                let name2 = currentData.spouseName || '';
+                const phone2 = currentData.spousePhone || '';
+                if (name2) {
+                    if (phone2) name2 += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(phone2) : phone2})`;
+                    asInfo2.textContent = name2;
+                } else {
+                    asInfo2.textContent = '';
+                }
+            }
+
+            const leakEl = document.getElementById('bathroomLeakWarranty');
+            if (leakEl) {
+                leakEl.textContent = currentData.leakWarrantyEnd ? `~ ${currentData.leakWarrantyEnd}` : '-';
+            }
+
+            // 4. [FIX] Schedule Tab Fields Force Sync
+            // 공사 스케줄 탭의 ID 요소들이 synced-display 클래스가 없어 업데이트되지 않는 문제 해결
+            if (document.getElementById('schPeriod')) {
+                document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
+
+                let areaText = (currentData.area || '').toString().replace(' PY', '');
+                if (areaText) areaText += ' PY';
+                document.getElementById('schArea').textContent = areaText;
+
+                document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
+
+                // 공사 의뢰인 (본인) - 성명 (연락처)
+                let clientInfo = '';
+                if (currentData.clientName) {
+                    clientInfo = currentData.clientName + ' 고객님';
+                    if (currentData.clientPhone) clientInfo += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(currentData.clientPhone) : currentData.clientPhone})`;
+                }
+                document.getElementById('schClient1').textContent = clientInfo;
+
+                // 공사 의뢰인 (배우자) - 성명 (연락처) -> Schedule 탭의 input 필드에 할당
+                const client2Input = document.querySelector('.sch-input[data-field="client2"]');
+                if (client2Input) {
+                    let spouseInfo = currentData.spouseName || '';
+                    if (spouseInfo && currentData.spousePhone) {
+                        spouseInfo += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(currentData.spousePhone) : currentData.spousePhone})`;
+                    }
+                    client2Input.value = spouseInfo;
+                }
+
+                document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
+            }
+
             const rep = document.getElementById('companyRep');
             if (rep) {
                 document.querySelectorAll('.company-sync').forEach(f => f.value = rep.value);
+            }
+        }
+
+        async function exportASListToNotion() {
+            if (!currentData.clientName) {
+                showToast('고객을 먼저 선택해주세요', 'error');
+                return;
+            }
+
+            // [UI 통일] confirm 창 제거하고 토스트 메시지로 대체
+            showToast('노션 내보내기를 시작합니다...', 'info');
+
+            const btn = document.querySelector('button[title="노션으로 A/S 리스트 내보내기"]');
+
+            if (btn) {
+                btn.innerHTML = '⏳ 내보내는 중...';
+                btn.disabled = true;
+            }
+
+            try {
+                const exportData = {
+                    manager: currentData.manager || '',
+                    period: currentData.warrantyPeriod || '',
+                    balanceDate: currentData.balanceDate || '',
+                    clientName: currentData.clientName || '',
+                    clientPhone: currentData.clientPhone || '',
+                    spouseName: currentData.spouseName || '',
+                    spousePhone: currentData.spousePhone || '',
+                    siteAddress: currentData.siteAddress || '',
+                    leakWarranty: currentData.leakWarrantyEnd || '',
+                    guidelines: getASGuidelinesArray(), // [추가] A/S 유의사항 배열
+                    items: typeof asListRows !== 'undefined' ? asListRows : []
+                };
+
+                const payload = {
+                    action: 'exportToNotion',
+                    type: 'asList',
+                    customerId: currentData.customerId,
+                    data: JSON.stringify(exportData)
+                };
+
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('✅ 노션으로 내보내기 완료!', 'success');
+                } else {
+                    throw new Error(result.message || '동기화 실패');
+                }
+            } catch (error) {
+                console.error('Notion Sync Error:', error);
+                showToast('노션 내보내기 실패: ' + error.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = '📤 노션 내보내기';
+                    btn.disabled = false;
+                }
             }
         }
 
@@ -8425,6 +8759,11 @@
 
             // 고객별 견적 데이터는 항상 저장
             saveEstimateData();
+
+            // [추가] 체크리스트 필터 상태 저장
+            if (typeof multiSelectState !== 'undefined') {
+                currentData.checklistFilters = JSON.parse(JSON.stringify(multiSelectState));
+            }
             const idx = customers.findIndex(c => c.customerId === currentCustomerId);
 
             // FUNDAMENTAL LOCK CHECK
@@ -11050,25 +11389,34 @@
                         btn.disabled = true;
                     }
 
-                    const response = await fetch('/api/sync-schedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
+                    const payload = {
+                        action: 'exportToNotion',
+                        type: 'schedule',
+                        customerId: currentData.customerId,
+                        data: JSON.stringify({
                             project: currentData.clientName,
-                            schedules: scheduleRows
+                            schedules: scheduleRows // scheduleRows 전역 변수
                         })
+                    };
+
+                    const response = await fetch(CUSTOMER_SYNC_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
                     });
 
                     const result = await response.json();
 
-                    if (response.ok && result.success) {
-                        alert(`✅ Notion 동기화 성공! (${result.count}건)`);
+                    if (result.success) {
+                        alert(`✅ Notion 동기화 성공!`);
+                        if (result.notionUrl) {
+                            // console.log(result.notionUrl);
+                        }
                     } else {
                         throw new Error(result.message || '동기화 실패');
                     }
                 } catch (error) {
                     console.error('Notion Sync Error:', error);
-                    alert(`❌ Notion 동기화 중 오류가 발생했습니다.\n${error.message}`);
+                    alert(`요청이 전송되었습니다.\n(응답 확인 중 오류: ${error.message})`);
                 } finally {
                     const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
                     if (btn) {
@@ -11141,13 +11489,28 @@
         // 공정별 체크리스트 기능
         // ============================
         // 체크리스트는 CUSTOMER_SYNC_URL 사용
-        let checklistMasterData = []; // 구글 시트에서 불러온 마스터 데이터
+        // [Fix] 체크리스트 데이터 로컬 스토리지 연동 (초기화 방지)
+        let checklistMasterData = [];
+        try {
+            const savedChecklist = localStorage.getItem('dz_checklist_master');
+            if (savedChecklist) {
+                checklistMasterData = JSON.parse(savedChecklist);
+            }
+        } catch (e) {
+            console.error('로컬 스토리지 로드 실패:', e);
+        }
 
-        // 구글 시트에서 체크리스트 불러오기
+        // 체크리스트 마스터 데이터 불러오기 (Google Sheet)
         async function syncChecklistFromCloud() {
-            const btn = event.target.closest('button');
+            if (!isLoggedIn()) {
+                showToast('관리자 로그인이 필요합니다', 'error');
+                showAdminModal();
+                return;
+            }
+
+            const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span>⏳ 불러오는 중...</span>';
+            btn.innerHTML = '<span class="loading-spinner"></span> 불러오는 중...';
             btn.disabled = true;
 
             try {
@@ -11171,6 +11534,9 @@
                     throw new Error(result.message || '데이터를 불러올 수 없습니다');
                 }
 
+                // [추가] 로컬 스토리지 저장 (영구 유지)
+                localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+
                 console.log('✅ 체크리스트 데이터 로드 완료:', checklistMasterData.length + '개 항목');
 
                 // 필터 옵션 업데이트
@@ -11189,21 +11555,58 @@
             }
         }
 
-        // 필터 옵션 업데이트
+        // [추가] 저장된 체크리스트 필터 상태 불러오기
+        function loadSavedChecklistState() {
+            if (!currentData || !currentData.checklistFilters) {
+                showToast('저장된 필터 상태가 없습니다.', 'info');
+                return;
+            }
+
+            const savedFilters = currentData.checklistFilters;
+
+            // 저장된 필터 적용
+            Object.keys(savedFilters).forEach(key => {
+                const values = savedFilters[key];
+                multiSelectState[key] = values;
+
+                // UI 체크박스 상태 동기화
+                const dropdown = document.getElementById(key + 'Dropdown');
+                if (dropdown) {
+                    // 전체 체크박스
+                    const allCb = dropdown.querySelector('input[value="all"]');
+                    if (allCb) allCb.checked = values.includes('all');
+
+                    // 개별 체크박스
+                    dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        if (cb.value !== 'all') {
+                            cb.checked = values.includes(cb.value);
+                        }
+                    });
+
+                    updateMultiSelectLabel(key);
+                }
+            });
+
+            // 필터 종속성 업데이트 (진행단계 -> 분류)
+            if (typeof updateCategoryOptionsBasedOnStage === 'function') {
+                updateCategoryOptionsBasedOnStage();
+            }
+
+            renderChecklistItems();
+            showToast('이전 필터 상태를 불러왔습니다.', 'success');
+        }
+
+        // 필터 옵션 업데이트 (멀티 셀렉트 초기화)
         function updateChecklistFilters() {
             if (!checklistMasterData || checklistMasterData.length === 0) return;
 
             // 진행단계 옵션
-            const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))];
-            const stageFilter = document.getElementById('checklistStageFilter');
-            stageFilter.innerHTML = '<option value="all">전체 보기</option>' +
-                stages.map(stage => `<option value="${stage}">${stage}</option>`).join('');
+            const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))].sort();
+            initMultiSelect('checklistStageFilter', stages);
 
             // 분류 옵션
-            const categories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))];
-            const categoryFilter = document.getElementById('checklistCategoryFilter');
-            categoryFilter.innerHTML = '<option value="all">전체 보기</option>' +
-                categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            const categories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))].sort();
+            initMultiSelect('checklistCategoryFilter', categories);
         }
 
         // 체크리스트 아이템 렌더링
@@ -11221,24 +11624,92 @@
             // 현재 고객의 체크 상태 가져오기
             const customerChecklistData = getCurrentCustomerChecklistData();
 
-            // 필터 적용
-            const stageFilter = document.getElementById('checklistStageFilter').value;
-            const categoryFilter = document.getElementById('checklistCategoryFilter').value;
+            // 필터 적용 (멀티 셀렉트 지원)
+            let stageFilter = ['all'];
+            let categoryFilter = ['all'];
+
+            if (typeof getMultiSelectValues === 'function') {
+                stageFilter = getMultiSelectValues('checklistStageFilter');
+                categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+            }
+
             const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
             let filteredData = checklistMasterData.filter(item => {
-                if (stageFilter !== 'all' && item.진행단계 !== stageFilter) return false;
-                if (categoryFilter !== 'all' && item.분류 !== categoryFilter) return false;
+                // 진행단계 필터
+                if (!stageFilter.includes('all')) {
+                    if (!stageFilter.includes(item.진행단계 || '')) return false;
+                }
+                // 분류 필터
+                if (!categoryFilter.includes('all')) {
+                    if (!categoryFilter.includes(item.분류 || '')) return false;
+                }
+
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
 
             // 테이블 렌더링
             const tbody = document.getElementById('checklistTableBody');
+
+            // 분류별 노션 색상 매핑
+            function getCategoryColor(category) {
+                if (!category) return { bg: '#F1F1EF', text: '#37352F' }; // 기본
+
+                const c = category.trim();
+
+                // Notion Color Palette (Standard)
+                const palette = [
+                    { bg: '#E3E2E0', text: '#32302C' }, // Gray
+                    { bg: '#EEE0DA', text: '#442A1E' }, // Brown
+                    { bg: '#FADEC9', text: '#49290E' }, // Orange
+                    { bg: '#FDECC8', text: '#402C1B' }, // Yellow
+                    { bg: '#DBEDDB', text: '#1C3829' }, // Green
+                    { bg: '#D3E5EF', text: '#183347' }, // Blue
+                    { bg: '#E8DEEE', text: '#412454' }, // Purple
+                    { bg: '#F5E0E9', text: '#4C2337' }, // Pink
+                    { bg: '#FFE2DD', text: '#5D1715' }, // Red
+                ];
+
+                // [Optional] 주요 키워드 고정 매핑
+                if (c.includes('철거')) return palette[8]; // Red
+                if (c.includes('설비') || c.includes('수도')) return palette[5]; // Blue
+                if (c.includes('전기') || c.includes('조명')) return palette[3]; // Yellow
+                if (c.includes('목공')) return palette[2]; // Orange
+                if (c.includes('타일') || c.includes('욕실')) return palette[4]; // Green
+                if (c.includes('도배') || c.includes('바닥') || c.includes('마루')) return palette[1]; // Brown
+                if (c.includes('도장') || c.includes('필름') || c.includes('페인트')) return palette[7]; // Pink
+                if (c.includes('가구') || c.includes('싱크') || c.includes('주방')) return palette[6]; // Purple
+                if (c.includes('공통') || c.includes('가설') || c.includes('준공') || c.includes('마감')) return palette[0]; // Gray
+
+                // 그 외: 문자열 해시로 자동 색상 선택 (모든 분류에 색상 적용 보장)
+                let hash = 0;
+                for (let i = 0; i < c.length; i++) {
+                    hash = c.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const index = Math.abs(hash) % palette.length;
+                return palette[index];
+            }
+
             tbody.innerHTML = filteredData.map((item, index) => {
                 const isChecked = customerChecklistData[item.번호] || false;
+                const categoryColor = getCategoryColor(item.분류);
                 return `
-                    <tr style="background: ${isChecked ? '#f0f9ff' : 'white'};">
+                    <tr draggable="true" 
+                        ondragstart="handleChecklistDragStart(event, ${index})" 
+                        ondragover="handleChecklistDragOver(event)" 
+                        ondrop="handleChecklistDrop(event, ${index})"
+                        ondragend="handleChecklistDragEnd(event)"
+                        data-index="${index}"
+                        style="background: ${isChecked ? '#f0f9ff' : 'white'}; cursor: grab;">
+                        <!-- [추가] 삭제 버튼 -->
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
+                            <button onclick="deleteChecklistItem(${item.번호})" 
+                                    style="border: none; background: transparent; color: #ff3b30; cursor: pointer; font-size: 14px; padding: 4px;"
+                                    title="삭제">
+                                🗑️
+                            </button>
+                        </td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
                             <input type="checkbox"
                                    ${isChecked ? 'checked' : ''}
@@ -11255,7 +11726,7 @@
                             </span>
                         </td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
-                            <span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                            <span style="background: ${categoryColor.bg}; color: ${categoryColor.text}; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
                                 ${item.분류 || ''}
                             </span>
                         </td>
@@ -11294,7 +11765,12 @@
 
             // 체크 상태 토글
             const currentState = customers[customerIndex].checklistData[itemNumber] || false;
-            customers[customerIndex].checklistData[itemNumber] = !currentState;
+            const newState = !currentState;
+            customers[customerIndex].checklistData[itemNumber] = newState;
+
+            // [FIX] currentData에도 즉시 반영 (저장 버튼 클릭 시 덮어쓰기 방지)
+            if (!currentData.checklistData) currentData.checklistData = {};
+            currentData.checklistData[itemNumber] = newState;
 
             // 저장
             saveCustomers();
@@ -11305,11 +11781,127 @@
             showToast(currentState ? '체크 해제되었습니다' : '체크되었습니다', 'success');
         }
 
+        // [추가] 체크리스트 아이템 삭제 (알림창 없이 즉시 삭제)
+        function deleteChecklistItem(itemNumber) {
+            // 마스터 데이터에서 제거
+            checklistMasterData = checklistMasterData.filter(item => item.번호 !== itemNumber);
+
+            // 로컬 스토리지 업데이트
+            localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+
+            // 체크 상태 데이터도 정리
+            if (currentCustomerId) {
+                const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+                if (customerIndex !== -1 && customers[customerIndex].checklistData) {
+                    delete customers[customerIndex].checklistData[itemNumber];
+                    // currentData에도 반영
+                    if (currentData.checklistData) delete currentData.checklistData[itemNumber];
+                    saveCustomers();
+                }
+            }
+
+            // UI 갱신
+            updateChecklistFilters();
+            renderChecklistItems();
+
+            showToast('항목이 삭제되었습니다.', 'info');
+        }
+
+        // [추가] 체크리스트 드래그 앤 드롭 기능
+        let checklistDraggedIndex = null;
+        let checklistFilteredData = []; // 필터링된 데이터 저장용
+
+        function handleChecklistDragStart(e, index) {
+            checklistDraggedIndex = index;
+            e.target.style.opacity = '0.4';
+            e.dataTransfer.effectAllowed = 'move';
+
+            // 현재 필터링된 데이터 저장
+            const stageFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistStageFilter') : ['all'];
+            const categoryFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistCategoryFilter') : ['all'];
+            const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
+
+            checklistFilteredData = checklistMasterData.filter(item => {
+                if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
+                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.분류 || '')) return false;
+                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
+                return true;
+            });
+        }
+
+        function handleChecklistDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const row = e.target.closest('tr');
+            if (row) {
+                row.style.borderTop = '2px solid #0071e3';
+            }
+        }
+
+        function handleChecklistDrop(e, targetIndex) {
+            e.preventDefault();
+            if (checklistDraggedIndex === null || checklistDraggedIndex === targetIndex) return;
+
+            // 필터된 데이터에서 실제 마스터 데이터의 인덱스 찾기
+            const draggedItem = checklistFilteredData[checklistDraggedIndex];
+            const targetItem = checklistFilteredData[targetIndex];
+
+            const draggedMasterIndex = checklistMasterData.findIndex(item => item.번호 === draggedItem.번호);
+            const targetMasterIndex = checklistMasterData.findIndex(item => item.번호 === targetItem.번호);
+
+            if (draggedMasterIndex === -1 || targetMasterIndex === -1) return;
+
+            // 마스터 데이터에서 순서 변경
+            const [removed] = checklistMasterData.splice(draggedMasterIndex, 1);
+            checklistMasterData.splice(targetMasterIndex, 0, removed);
+
+            // [추가] 번호 재정렬 (1, 2, 3, 4, 5... 순서로)
+            checklistMasterData.forEach((item, idx) => {
+                item.번호 = idx + 1;
+            });
+
+            // 로컬 스토리지 업데이트
+            localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+
+            // UI 갱신
+            renderChecklistItems();
+            showToast('순서가 변경되었습니다.', 'success');
+        }
+
+        function handleChecklistDragEnd(e) {
+            e.target.style.opacity = '1';
+            checklistDraggedIndex = null;
+            // 모든 행의 border 초기화
+            document.querySelectorAll('#checklistTableBody tr').forEach(row => {
+                row.style.borderTop = '';
+            });
+        }
+
         // 체크리스트 통계 업데이트
         function updateChecklistStats() {
-            const total = checklistMasterData.length;
+            // 현재 필터 적용하여 보이는 항목만 계산
+            let stageFilter = ['all'];
+            let categoryFilter = ['all'];
+
+            if (typeof getMultiSelectValues === 'function') {
+                stageFilter = getMultiSelectValues('checklistStageFilter');
+                categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+            }
+            const searchText = document.getElementById('checklistSearchInput') ?
+                document.getElementById('checklistSearchInput').value.toLowerCase() : '';
+
+            const filteredData = checklistMasterData.filter(item => {
+                if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
+                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.분류 || '')) return false;
+                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
+                return true;
+            });
+
+            const total = filteredData.length; // 필터된 항목 수
             const customerChecklistData = getCurrentCustomerChecklistData();
-            const completed = Object.values(customerChecklistData).filter(v => v === true).length;
+
+            // 필터된 항목 중 체크된 것만 카운트
+            const completed = filteredData.filter(item => customerChecklistData[item.번호] === true).length;
             const inProgress = total - completed;
             const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -11399,6 +11991,17 @@
 
                 // 타입별 데이터 준비 (Backend update_apps_script.js와 키 일치시킴)
                 if (type === 'customer') {
+                    // 스케줄 데이터 준비
+                    const scheduleData = targetData.schedules || [];
+                    const scheduleRows = scheduleData.map((item, idx) => ({
+                        category: item.category || '',
+                        process: item.name || '',
+                        startDate: item.start || '',
+                        endDate: item.end || '',
+                        status: item.checkPoint || '',
+                        manager: item.inCharge || ''
+                    }));
+
                     requestData.data = {
                         '성명': targetData.clientName || '',
                         '연락처': targetData.clientPhone || '',
@@ -11419,13 +12022,111 @@
                         '이사날짜': targetData.movingDate || '',
                         '잔금일': targetData.finalPaymentDate || '',
                         '계약일': targetData.contractDate || '',
+                        '공사명': targetData.projectName || '',
 
                         '공사 담당자': targetData.manager || '',
                         '총계약금액': targetData.totalAmount || '',
 
                         '고객 요청사항': targetData.customerRequest || '',
                         '내부 메모': targetData.internalMemo || '',
-                        '특약사항': targetData.specialNote || ''
+                        '특약사항': targetData.specialNote || '',
+                        'A/S 기간': targetData.asEndDate || '', // A/S 종료일
+
+                        // 유의사항 (스케줄/A/S)
+                        '공사 유의사항': getScheduleGuidelinesText(),
+                        'A/S 유의사항': getASGuidelinesText(),
+
+                        // 스케줄 데이터 포함
+                        scheduleRows: scheduleRows
+                    };
+
+                } else if (type === 'all') {
+                    // [통합] 전체 데이터 내보내기
+
+                    // 1. Customer (기존 customer 로직 재사용)
+                    const customerData = {
+                        '성명': targetData.clientName || '',
+                        '연락처': targetData.clientPhone || '',
+                        '이메일': targetData.clientEmail || '',
+                        '주소': targetData.clientAddress || '',
+                        '현장주소': targetData.siteAddress || '',
+                        '배우자 성명': targetData.spouseName || '',
+                        '배우자 연락처': targetData.spousePhone || '',
+                        '고객 요청사항': targetData.clientNeeds || '',
+                        '내부 메모': targetData.internalNote || '',
+                        '특약사항': targetData.specialContract || '',
+                        '공사 담당자': targetData.constructionManager || '',
+                        '건물유형': targetData.buildingType || '',
+                        '유입경로': targetData.funnel || '',
+                        '총 계약금액 (VAT 포함)': typeof calculateTotalAmount === 'function' ? calculateTotalAmount() : 0,
+                        '평수': document.getElementById('pyeongInput')?.value || targetData.area || 0,
+                        '이사날짜': targetData.moveDate || '',
+                        '계약일': targetData.contractDate || '',
+                        '착공일': startDateVal,
+                        '준공일': endDateVal,
+                        '잔금일': targetData.balanceDate || '',
+                        'A/S 기간': targetData.asEndDate || '',
+                        '공사 유의사항': getScheduleGuidelinesText(),
+                        'A/S 유의사항': getASGuidelinesText()
+                    };
+
+                    // 2. Schedule
+                    // 전역 scheduleRows 우선 사용, 없으면 저장된 데이터 fallback
+                    const sData = (typeof scheduleRows !== 'undefined' && scheduleRows.length > 0) ? scheduleRows : (targetData.schedules || []);
+                    let scheduleData = null;
+                    if (sData.length > 0) {
+                        scheduleData = {
+                            'guidelines': getScheduleGuidelinesArray(),
+                            '공정목록': sData.map(item => ({
+                                공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
+                                시작일: item.start || '',
+                                종료일: item.end || '',
+                                담당자: item.inCharge || '',
+                                상태: item.checkPoint || '',
+                                비고: item.memo || ''
+                            }))
+                        };
+                    }
+
+                    // 3. Checklist
+                    let checklistData = null;
+                    if (checklistMasterData && checklistMasterData.length > 0) {
+                        const customerChecklistData = getCurrentCustomerChecklistData();
+                        checklistData = {
+                            '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
+                            '전체항목수': checklistMasterData.length,
+                            '체크리스트': checklistMasterData.map(item => {
+                                const isChecked = !!customerChecklistData[item.번호];
+                                return {
+                                    번호: item.번호,
+                                    항목: item.항목 || '',
+                                    내용: item.내용 || '',
+                                    진행단계: item.진행단계 || '',
+                                    분류: item.분류 || '',
+                                    비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
+                                    isChecked: isChecked
+                                };
+                            })
+                        };
+                    }
+
+                    // 4. A/S List
+                    let asListData = null;
+                    const aData = (typeof asListRows !== 'undefined' && asListRows.length > 0) ? asListRows : [];
+                    if (aData.length > 0) {
+                        asListData = {
+                            manager: targetData.manager || '',
+                            period: targetData.warrantyPeriod || '',
+                            guidelines: getASGuidelinesArray(),
+                            items: aData
+                        };
+                    }
+
+                    requestData.data = {
+                        customer: customerData,
+                        schedule: scheduleData,
+                        checklist: checklistData,
+                        asList: asListData
                     };
 
                 } else if (type === 'schedule') {
@@ -11436,6 +12137,7 @@
                         '현장주소': targetData.siteAddress || '',
                         '착공일': startDateVal,
                         '준공일': endDateVal,
+                        'guidelines': getScheduleGuidelinesArray(), // [추가] 유의사항 배열
                         '공정목록': scheduleData.map(item => ({
                             공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
                             시작일: item.start || '',
@@ -11447,20 +12149,51 @@
                     };
                 } else if (type === 'checklist') {
                     const customerChecklistData = getCurrentCustomerChecklistData();
-                    const checkedItems = checklistMasterData.filter(item => customerChecklistData[item.번호]);
+
+                    // [변경] 현재 필터링된 항목만 내보내기Logic
+                    let stageFilter = ['all'];
+                    let categoryFilter = ['all'];
+
+                    if (typeof getMultiSelectValues === 'function') {
+                        stageFilter = getMultiSelectValues('checklistStageFilter');
+                        categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+                    }
+                    const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
+
+                    // 필터링 적용
+                    const filteredItems = checklistMasterData.filter(item => {
+                        // 진행단계 필터
+                        if (!stageFilter.includes('all')) {
+                            if (!stageFilter.includes(item.진행단계 || '')) return false;
+                        }
+                        // 분류 필터
+                        if (!categoryFilter.includes('all')) {
+                            if (!categoryFilter.includes(item.분류 || '')) return false;
+                        }
+                        // 검색 필터
+                        if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
+                        return true;
+                    });
+
+                    // [변경] filteredItems만 전송
                     requestData.data = {
                         '성명': targetData.clientName || '',
                         '현장주소': targetData.siteAddress || '',
-                        '완료항목수': checkedItems.length,
+                        '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
                         '전체항목수': checklistMasterData.length,
-                        '체크리스트': checkedItems.map(item => ({
-                            번호: item.번호,
-                            항목: item.항목 || '',
-                            내용: item.내용 || '',
-                            진행단계: item.진행단계 || '',
-                            분류: item.분류 || '',
-                            비고: item.비고 || ''
-                        }))
+                        '체크리스트': filteredItems.map(item => {
+                            const isChecked = !!customerChecklistData[item.번호];
+                            return {
+                                번호: item.번호,
+                                항목: item.항목 || '',
+                                내용: item.내용 || '',
+                                진행단계: item.진행단계 || '',
+                                분류: item.분류 || '',
+                                // 체크된 항목은 비고 앞에 [완료] 표시
+                                비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
+                                isChecked: isChecked
+                            };
+                        })
                     };
                 }
 
@@ -11494,12 +12227,26 @@
                 }
 
                 if (result.success) {
-                    showToast('노션으로 내보내기 완료!', 'success');
-                    if (result.notionUrl) {
-                        const openNotion = confirm('노션 페이지를 여시겠습니까?');
-                        if (openNotion) {
-                            window.open(result.notionUrl, '_blank');
-                        }
+                    if (type === 'all' && result.details) {
+                        let lines = [];
+                        lines.push('<b>[노션 통합 내보내기 결과]</b>');
+                        const map = { customer: '고객정보', schedule: '공사스케줄', checklist: '체크리스트', asList: 'A/S 관리 리스트' };
+
+                        ['customer', 'schedule', 'checklist', 'asList'].forEach(k => {
+                            const d = result.details[k];
+                            if (d) {
+                                if (d.message === '데이터 없음') {
+                                    lines.push(`${map[k]}: <span style="opacity:0.7">⚪️ 빈 상태</span>`);
+                                } else if (d.success) {
+                                    lines.push(`${map[k]}: <b>✅ 성공</b>`);
+                                } else {
+                                    lines.push(`${map[k]}: ❌ 실패 (${d.message})`);
+                                }
+                            }
+                        });
+                        showToast(lines.join('<br>'), 'info', 5000);
+                    } else {
+                        showToast('✅ 노션으로 내보내기 완료!', 'success');
                     }
                 } else {
                     throw new Error(result.message || '내보내기 실패');
@@ -11911,6 +12658,178 @@
                 }
             }
         }
+
+        // ==========================================
+        // 멀티 셀렉트 (Multi-Select) 헬퍼 함수들
+        // ==========================================
+        const multiSelectState = {
+            checklistStageFilter: ['all'],
+            checklistCategoryFilter: ['all']
+        };
+
+        // 드롭다운 초기화
+        function initMultiSelect(elementId, options) {
+            const dropdown = document.getElementById(elementId + 'Dropdown');
+            if (!dropdown) return;
+
+            // 기존 상태 유지하면서 옵션 재생성
+            const currentState = multiSelectState[elementId];
+
+            let html = '';
+            // 전체 보기 항목
+            const isAllChecked = currentState.includes('all');
+            html += `<div class="multi-select-option">
+                        <label>
+                            <input type="checkbox" value="all" ${isAllChecked ? 'checked' : ''} onchange="handleMultiSelectChange('${elementId}', this)">
+                            전체 보기
+                        </label>
+                     </div>`;
+
+            // 개별 항목들
+            options.forEach(opt => {
+                const isChecked = currentState.includes(opt);
+                html += `<div class="multi-select-option">
+                            <label>
+                                <input type="checkbox" value="${opt}" ${isChecked ? 'checked' : ''} onchange="handleMultiSelectChange('${elementId}', this)">
+                                ${opt}
+                            </label>
+                         </div>`;
+            });
+
+            dropdown.innerHTML = html;
+            updateMultiSelectLabel(elementId);
+        }
+
+        // 체크박스 변경 처리
+        function handleMultiSelectChange(elementId, input) {
+            const value = input.value;
+            const isChecked = input.checked;
+            const checkboxes = document.querySelectorAll(`#${elementId}Dropdown input[type="checkbox"]`);
+
+            if (value === 'all') {
+                if (isChecked) {
+                    // 전체 선택 시 -> 나머지 해제
+                    checkboxes.forEach(cb => {
+                        if (cb.value !== 'all') cb.checked = false;
+                    });
+                    multiSelectState[elementId] = ['all'];
+                } else {
+                    // 전체 해제 시 -> 빈 상태 (허용)
+                    multiSelectState[elementId] = [];
+                }
+            } else {
+                // 개별 선택 시
+                if (isChecked) {
+                    // 전체 체크박스 해제
+                    const allCb = document.querySelector(`#${elementId}Dropdown input[value="all"]`);
+                    if (allCb) allCb.checked = false;
+                }
+
+                // 체크된 항목들 수집
+                const selected = [];
+                checkboxes.forEach(cb => {
+                    if (cb.value !== 'all' && cb.checked) {
+                        selected.push(cb.value);
+                    }
+                });
+
+                if (selected.length === 0) {
+                    // 모두 해제되면 자동으로 '전체'로 복귀
+                    const allCb = document.querySelector(`#${elementId}Dropdown input[value="all"]`);
+                    if (allCb) allCb.checked = true;
+                    multiSelectState[elementId] = ['all'];
+                } else {
+                    multiSelectState[elementId] = selected;
+                }
+            }
+
+            updateMultiSelectLabel(elementId);
+
+            // [추가] 진행단계 필터가 변경되면 분류 필터 옵션을 갱신 (Dependent Dropdown)
+            if (elementId === 'checklistStageFilter') {
+                updateCategoryOptionsBasedOnStage();
+            }
+
+            renderChecklistItems();
+        }
+
+        // [추가] 진행단계 선택에 따른 분류 필터 옵션 갱신
+        function updateCategoryOptionsBasedOnStage() {
+            const selectedStages = multiSelectState['checklistStageFilter'];
+            let validCategories = [];
+
+            if (selectedStages.includes('all') || selectedStages.length === 0) {
+                // 전체 선택 시 -> 모든 분류 표시
+                validCategories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))].sort();
+            } else {
+                // 특정 단계 선택 시 -> 해당 단계에 포함된 분류만 추출
+                const filteredItems = checklistMasterData.filter(item => selectedStages.includes(item.진행단계));
+                validCategories = [...new Set(filteredItems.map(item => item.분류).filter(Boolean))].sort();
+            }
+
+            // 기존 선택된 분류 중 유효하지 않은 것은 제거 (UX 개선)
+            const currentCategoryState = multiSelectState['checklistCategoryFilter'];
+            if (!currentCategoryState.includes('all')) {
+                const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
+                // 하나도 없으면 'all'로 리셋
+                multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
+            }
+
+            // 분류 필터 옵션 재생성
+            initMultiSelect('checklistCategoryFilter', validCategories);
+        }
+
+        // 라벨 업데이트
+        function updateMultiSelectLabel(elementId) {
+            const label = document.getElementById(elementId + 'Label');
+            if (!label) return;
+
+            const state = multiSelectState[elementId];
+            if (state.includes('all') || state.length === 0) {
+                label.innerText = '전체 보기';
+                label.style.fontWeight = 'normal';
+                label.style.color = 'inherit';
+            } else {
+                // 선택된 항목 이름 표시 (너무 길면 줄임)
+                let text = state.join(', ');
+                if (text.length > 20) {
+                    text = state[0] + (state.length > 1 ? ` 외 ${state.length - 1}개` : '');
+                }
+                label.innerText = text;
+                label.style.fontWeight = '600';
+                label.style.color = '#0071e3';
+            }
+        }
+
+        // 드롭다운 토글
+        function toggleMultiSelect(elementId) {
+            const dropdown = document.getElementById(elementId + 'Dropdown');
+            if (!dropdown) return;
+
+            const isVisible = dropdown.style.display === 'block';
+
+            // 다른 드롭다운 닫기
+            document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+                if (d.id !== elementId + 'Dropdown') d.style.display = 'none';
+            });
+
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function getMultiSelectValues(elementId) {
+            const val = multiSelectState[elementId];
+            if (!val || val.length === 0) return ['all'];
+            return val;
+        }
+
+        // 외부 클릭 시 드롭다운 닫기
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.multi-select-wrapper')) {
+                document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+                    d.style.display = 'none';
+                });
+            }
+        });
     </script>
 </body>
 
