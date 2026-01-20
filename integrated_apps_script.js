@@ -687,7 +687,8 @@ function exportCustomerToNotion(customerId, data) {
             }
         });
 
-        // 공사 유의사항 (스케줄 하위에 배치)
+        // 공사 유의사항 삭제됨 (사용자 요청)
+        /*
         if (data['공사 유의사항'] && data['공사 유의사항'].trim()) {
             pageBlocks.push({
                 object: 'block',
@@ -710,6 +711,7 @@ function exportCustomerToNotion(customerId, data) {
                 });
             });
         }
+        */
 
         pageBlocks.push({
             object: 'block',
@@ -878,7 +880,8 @@ function exportScheduleToNotion(customerId, data) {
         count++;
     });
 
-    // [추가] 고객 페이지에 공사 진행 안내 및 유의사항 콜아웃 추가
+    // [삭제] 고객 페이지에 공사 진행 안내 및 유의사항 콜아웃 추가 (사용자 요청)
+    /*
     try {
         const guidelines = data.guidelines || data.유의사항 || [];
         if (guidelines.length > 0) {
@@ -906,6 +909,7 @@ function exportScheduleToNotion(customerId, data) {
     } catch (e) {
         console.warn('유의사항 콜아웃 추가 실패:', e.toString());
     }
+    */
 
     return { url: '', count: count };
 }
@@ -1075,7 +1079,8 @@ function exportASListToNotion(customerId, data) {
         count++;
     });
 
-    // [추가] 고객 페이지에 A/S 유의사항 콜아웃 추가
+    // [삭제] 고객 페이지에 A/S 유의사항 콜아웃 추가 (사용자 요청)
+    /*
     try {
         const guidelines = data.guidelines || data.유의사항 || [];
         if (guidelines.length > 0) {
@@ -1103,6 +1108,7 @@ function exportASListToNotion(customerId, data) {
     } catch (e) {
         console.warn('A/S 유의사항 콜아웃 추가 실패:', e.toString());
     }
+    */
 
     return { url: '', count: count };
 }
