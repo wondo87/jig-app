@@ -3374,6 +3374,69 @@
                     </div>
 
                     <div style="padding:30px;">
+                        <!-- 월 선택 및 고정지출 설정 영역 -->
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <label style="font-weight:600; color:#374151; font-size:14px;">📅 조회 월:</label>
+                                <input type="month" id="expenseMonthFilter" onchange="renderExpensesTable()"
+                                    style="padding:8px 14px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; cursor:pointer;">
+                            </div>
+                            <button onclick="toggleFixedExpenseSettings()"
+                                style="padding:10px 16px; background:linear-gradient(135deg, #f59e0b, #d97706); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                ⚙️ 고정지출 설정
+                            </button>
+                        </div>
+
+                        <!-- 고정지출 설정 패널 (접이식) -->
+                        <div id="fixedExpenseSettingsPanel"
+                            style="display:none; margin-bottom:24px; background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border:2px solid #f59e0b; border-radius:12px; padding:20px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <h4 style="margin:0; color:#92400e; font-size:16px;">🔒 고정지출 항목 설정</h4>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="addFixedExpenseItem()"
+                                        style="padding:8px 14px; background:#d97706; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                                        ➕ 항목 추가
+                                    </button>
+                                    <button onclick="saveFixedExpenses()"
+                                        style="padding:8px 14px; background:#059669; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                                        💾 저장
+                                    </button>
+                                </div>
+                            </div>
+                            <p style="margin:0 0 12px 0; font-size:12px; color:#92400e;">매월 자동으로 반영되는 고정 비용입니다. (예: 임대료,
+                                인건비, 차량운영비 등)</p>
+                            <table
+                                style="width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden;">
+                                <thead>
+                                    <tr style="background:#fef3c7;">
+                                        <th
+                                            style="padding:10px 8px; border:1px solid #fcd34d; font-size:12px; color:#92400e; width:40px;">
+                                        </th>
+                                        <th
+                                            style="padding:10px 8px; border:1px solid #fcd34d; font-size:12px; color:#92400e;">
+                                            항목명</th>
+                                        <th
+                                            style="padding:10px 8px; border:1px solid #fcd34d; font-size:12px; color:#92400e; width:120px;">
+                                            대분류</th>
+                                        <th
+                                            style="padding:10px 8px; border:1px solid #fcd34d; font-size:12px; color:#92400e; width:120px;">
+                                            월 고정금액</th>
+                                        <th
+                                            style="padding:10px 8px; border:1px solid #fcd34d; font-size:12px; color:#92400e; width:100px;">
+                                            결제수단</th>
+                                        <th
+                                            style="padding:10px 8px; border:1px solid #fcd34d; font-size:12px; color:#92400e; width:60px;">
+                                            활성화</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fixedExpenseTableBody">
+                                    <!-- JS로 렌더링 -->
+                                </tbody>
+                            </table>
+                        </div>
+
                         <table class="data-table" style="width:100%; border-collapse:collapse;">
                             <thead>
                                 <tr style="background:linear-gradient(135deg, #f0fdf4, #ecfdf5);">
@@ -13922,13 +13985,130 @@
         // [신규] 운영비 관리 (Operating Expenses) & 뷰 스위칭
         // ============================
         let expensesRows = [];
+        let fixedExpenseItems = []; // 고정지출 설정 항목
         const EXPENSE_CATEGORIES = ['인건비', '차량운영비', '임대료', '운영비', '마케팅/영업', '세금/금융', '기타'];
 
         // 초기 로드 (로컬 스토리지)
         try {
             const savedExpenses = localStorage.getItem('designzig_expenses');
             if (savedExpenses) expensesRows = JSON.parse(savedExpenses);
-        } catch (e) { expensesRows = []; }
+            const savedFixed = localStorage.getItem('designzig_fixed_expenses');
+            if (savedFixed) fixedExpenseItems = JSON.parse(savedFixed);
+        } catch (e) { expensesRows = []; fixedExpenseItems = []; }
+
+        // 현재 월 필터 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            const monthFilter = document.getElementById('expenseMonthFilter');
+            if (monthFilter) {
+                const now = new Date();
+                monthFilter.value = now.toISOString().slice(0, 7); // YYYY-MM
+            }
+        });
+
+        // 고정지출 설정 패널 토글
+        function toggleFixedExpenseSettings() {
+            const panel = document.getElementById('fixedExpenseSettingsPanel');
+            if (panel) {
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                if (panel.style.display === 'block') {
+                    renderFixedExpenseTable();
+                }
+            }
+        }
+
+        // 고정지출 항목 추가
+        function addFixedExpenseItem() {
+            fixedExpenseItems.push({
+                itemName: '',
+                category: '',
+                amount: 0,
+                payMethod: '',
+                active: true
+            });
+            renderFixedExpenseTable();
+        }
+
+        // 고정지출 항목 삭제
+        function removeFixedExpenseItem(index) {
+            fixedExpenseItems.splice(index, 1);
+            renderFixedExpenseTable();
+        }
+
+        // 고정지출 항목 수정
+        function updateFixedExpenseItem(index, field, value) {
+            if (field === 'active') {
+                fixedExpenseItems[index][field] = value;
+            } else if (field === 'amount') {
+                fixedExpenseItems[index][field] = parseNumber(value);
+            } else {
+                fixedExpenseItems[index][field] = value;
+            }
+        }
+
+        // 고정지출 설정 테이블 렌더링
+        function renderFixedExpenseTable() {
+            const tbody = document.getElementById('fixedExpenseTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = fixedExpenseItems.map((item, index) => `
+                <tr>
+                    <td style="text-align:center; padding:8px;">
+                        <button onclick="removeFixedExpenseItem(${index})" style="color:#dc2626; border:none; background:none; cursor:pointer; font-size:14px;">🗑️</button>
+                    </td>
+                    <td style="padding:4px;"><input type="text" value="${item.itemName || ''}" onchange="updateFixedExpenseItem(${index}, 'itemName', this.value)" style="width:100%; padding:6px; border:1px solid #fcd34d; border-radius:4px;"></td>
+                    <td style="padding:4px;">
+                        <select onchange="updateFixedExpenseItem(${index}, 'category', this.value)" style="width:100%; padding:6px; border:1px solid #fcd34d; border-radius:4px;">
+                            <option value="">선택</option>
+                            ${EXPENSE_CATEGORIES.map(c => `<option value="${c}" ${c === item.category ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td style="padding:4px;"><input type="text" value="${formatNumber(item.amount)}" onchange="updateFixedExpenseItem(${index}, 'amount', this.value)" style="width:100%; padding:6px; border:1px solid #fcd34d; border-radius:4px; text-align:right;"></td>
+                    <td style="padding:4px;"><input type="text" value="${item.payMethod || ''}" onchange="updateFixedExpenseItem(${index}, 'payMethod', this.value)" style="width:100%; padding:6px; border:1px solid #fcd34d; border-radius:4px;"></td>
+                    <td style="padding:4px; text-align:center;">
+                        <input type="checkbox" ${item.active ? 'checked' : ''} onchange="updateFixedExpenseItem(${index}, 'active', this.checked)" style="width:18px; height:18px; cursor:pointer;">
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 고정지출 저장
+        async function saveFixedExpenses() {
+            localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+
+            try {
+                const payload = {
+                    action: 'updateExpenses',
+                    expenses: expensesRows.map((row, idx) => ({
+                        no: idx + 1,
+                        date: row.date || '',
+                        category: row.category || '',
+                        detail: row.detail || '',
+                        amount: parseNumber(row.amount),
+                        payMethod: row.payMethod || row.method || '',
+                        receipt: row.receipt || row.proof || '',
+                        memo: row.memo || row.note || ''
+                    })),
+                    fixedExpenses: fixedExpenseItems
+                };
+
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    showToast('고정지출 설정이 저장되었습니다.', 'success');
+                } else {
+                    throw new Error(result.error || '저장 실패');
+                }
+            } catch (err) {
+                console.error('고정지출 저장 오류:', err);
+                showToast('로컬에만 저장되었습니다.', 'warning');
+            }
+
+            renderExpensesTable();
+        }
 
         function showMainView(viewName) {
             const mainContent = document.getElementById('mainContent');
@@ -13957,40 +14137,83 @@
             const tbody = document.getElementById('expensesTableBody');
             if (!tbody) return;
 
-            let total = 0;
-            tbody.innerHTML = expensesRows.map((row, index) => {
+            // 현재 선택된 월 가져오기
+            const monthFilter = document.getElementById('expenseMonthFilter');
+            const selectedMonth = monthFilter?.value || new Date().toISOString().slice(0, 7);
+
+            let fixedTotal = 0;
+            let variableTotal = 0;
+            let rows = [];
+
+            // 1. 활성화된 고정지출 항목을 행으로 추가 (읽기 전용)
+            const activeFixed = fixedExpenseItems.filter(f => f.active);
+            activeFixed.forEach((item, idx) => {
+                const amt = parseNumber(item.amount);
+                fixedTotal += amt;
+                rows.push(`
+                    <tr style="border-bottom:1px solid #fcd34d; background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
+                        <td style="text-align:center; padding:10px; color:#92400e;">
+                            🔒 ${idx + 1}
+                        </td>
+                        <td style="padding:8px;">
+                            <span style="color:#92400e; font-size:12px;">${selectedMonth}-01</span>
+                        </td>
+                        <td style="padding:8px;">
+                            <span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">${item.category || '-'}</span>
+                        </td>
+                        <td style="padding:8px;">
+                            <span style="color:#92400e; font-weight:600;">🔒 ${item.itemName || '-'}</span>
+                            <span style="font-size:10px; color:#d97706; margin-left:6px; background:#fef3c7; padding:2px 6px; border-radius:10px;">고정지출</span>
+                        </td>
+                        <td style="padding:8px; text-align:right; font-weight:700; color:#92400e;">${formatNumber(amt)}</td>
+                        <td style="padding:8px; color:#92400e;">${item.payMethod || '-'}</td>
+                        <td style="padding:8px; color:#92400e;">-</td>
+                        <td style="padding:8px; color:#92400e; font-size:11px;">매월 자동 반영</td>
+                    </tr>
+                `);
+            });
+
+            // 2. 변동지출 항목 (선택된 월과 일치하는 것만)
+            expensesRows.forEach((row, index) => {
+                const rowMonth = (row.date || '').substring(0, 7);
+                if (rowMonth !== selectedMonth && selectedMonth !== 'all') return;
+
                 const amt = parseNumber(row.amount);
-                total += amt;
-                return `
+                variableTotal += amt;
+                rows.push(`
                     <tr style="border-bottom:1px solid #eee;">
                         <td style="text-align:center; padding:10px;">
                             <button onclick="removeExpenseRow(${index})" style="color:#ff3b30;border:none;background:none;cursor:pointer;">🗑️</button>
-                            ${index + 1}
+                            ${activeFixed.length + index + 1}
                         </td>
-                        <td style="padding:4px;"><input type="date" value="${row.date}" onchange="updateExpenseRow(${index}, 'date', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="date" value="${row.date || ''}" onchange="updateExpenseRow(${index}, 'date', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
                         <td style="padding:4px;">
                             <select onchange="updateExpenseRow(${index}, 'category', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;">
                                 <option value="">선택</option>
                                 ${EXPENSE_CATEGORIES.map(c => `<option value="${c}" ${c === row.category ? 'selected' : ''}>${c}</option>`).join('')}
                             </select>
                         </td>
-                        <td style="padding:4px;"><input type="text" value="${row.detail}" onchange="updateExpenseRow(${index}, 'detail', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.detail || ''}" onchange="updateExpenseRow(${index}, 'detail', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
                         <td style="padding:4px;"><input type="text" value="${formatNumber(row.amount)}" onchange="updateExpenseRow(${index}, 'amount', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; text-align:right;"></td>
-                        <td style="padding:4px;"><input type="text" value="${row.method}" onchange="updateExpenseRow(${index}, 'method', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
-                        <td style="padding:4px;"><input type="text" value="${row.proof}" onchange="updateExpenseRow(${index}, 'proof', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
-                        <td style="padding:4px;"><input type="text" value="${row.note}" onchange="updateExpenseRow(${index}, 'note', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.method || row.payMethod || ''}" onchange="updateExpenseRow(${index}, 'method', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.proof || row.receipt || ''}" onchange="updateExpenseRow(${index}, 'proof', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
+                        <td style="padding:4px;"><input type="text" value="${row.note || row.memo || ''}" onchange="updateExpenseRow(${index}, 'note', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
                     </tr>
-                `;
-            }).join('');
+                `);
+            });
 
+            tbody.innerHTML = rows.join('');
+
+            // 합계 표시 (고정 + 변동)
+            const totalAmount = fixedTotal + variableTotal;
             const footer = document.getElementById('totalExpenseFooter');
-            if (footer) footer.textContent = '₩' + formatNumber(total);
-
-            // 차트 갱신 (데이터 변경 시점)
-            if (chartInstances.monthly) {
-                // 데이터를 다시 불러오거나 refresh 해야 함. 
-                // 현재 구조상 renderMonthlyChart는 customers 데이터를 인자로 받음.
-                // 따라서 여기서 직접 호출하기보다는, 나중에 통계 탭 열릴 때 반영됨.
+            if (footer) {
+                footer.innerHTML = `
+                    <span style="font-size:12px; color:#64748b; margin-right:12px;">
+                        고정: ₩${formatNumber(fixedTotal)} / 변동: ₩${formatNumber(variableTotal)}
+                    </span>
+                    <span style="color:#dc2626; font-weight:700; font-size:16px;">₩${formatNumber(totalAmount)}</span>
+                `;
             }
         }
 
@@ -14091,6 +14314,9 @@
                 const result = await response.json();
 
                 if (result.result === 'success') {
+                    let loadedCount = 0;
+
+                    // 변동 운영비 불러오기
                     if (result.expenses && result.expenses.length > 0) {
                         expensesRows = result.expenses.map(exp => ({
                             date: exp.date || '',
@@ -14101,9 +14327,27 @@
                             receipt: exp.receipt || '',
                             memo: exp.memo || ''
                         }));
-                        renderExpensesTable();
                         saveExpensesLocal();
-                        showToast(`${result.expenses.length}건의 운영비를 불러왔습니다.`, 'success');
+                        loadedCount += result.expenses.length;
+                    }
+
+                    // 고정지출 설정 불러오기
+                    if (result.fixedExpenses && result.fixedExpenses.length > 0) {
+                        fixedExpenseItems = result.fixedExpenses.map(f => ({
+                            itemName: f.itemName || '',
+                            category: f.category || '',
+                            amount: f.amount || 0,
+                            payMethod: f.payMethod || '',
+                            active: f.active !== false
+                        }));
+                        localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+                    }
+
+                    renderExpensesTable();
+                    renderFixedExpenseTable();
+
+                    if (loadedCount > 0 || (result.fixedExpenses && result.fixedExpenses.length > 0)) {
+                        showToast(`운영비 ${loadedCount}건, 고정지출 ${result.fixedExpenses?.length || 0}건을 불러왔습니다.`, 'success');
                     } else {
                         showToast('저장된 운영비 데이터가 없습니다.', 'info');
                     }
