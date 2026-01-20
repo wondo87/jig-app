@@ -2563,3 +2563,20 @@ function handleChecklistGet(e) {
         })).setMimeType(ContentService.MimeType.JSON);
     }
 }
+
+// 권한 요청용 테스트 함수 (한 번 실행하면 권한 팝업이 뜹니다)
+function requestPermissions() {
+    try {
+        const response = UrlFetchApp.fetch('https://api.notion.com/v1/users/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + getNotionApiKey(),
+                'Notion-Version': '2022-06-28'
+            },
+            muteHttpExceptions: true
+        });
+        Logger.log('✅ 권한 승인 완료! 응답: ' + response.getContentText());
+    } catch (e) {
+        Logger.log('❌ 에러: ' + e.toString());
+    }
+}
