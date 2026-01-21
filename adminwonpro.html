@@ -14082,6 +14082,15 @@
 
                 // Finished rendering for mobile
                 updateChecklistStats();
+
+                // [Fix] Restore mobile toolbar & add padding
+                if (mobileContainer) mobileContainer.style.paddingBottom = '100px';
+                const mtb = document.getElementById('mobileToolbar');
+                if (mtb) {
+                    mtb.style.display = 'flex';
+                    mtb.style.zIndex = '10000'; // Force top
+                }
+
                 return;
             } else {
                 // Desktop: Show table, Hide card list
