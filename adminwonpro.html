@@ -14500,15 +14500,47 @@
             }
         }
 
+        // [신규] 로그 상세내용 포맷터
+        function formatLogDetail(detail) {
+            if (!detail) return '';
+            let parsed = null;
+            let isJson = false;
+
+            if (typeof detail === 'string' && detail.trim().startsWith('{')) {
+                try {
+                    parsed = JSON.parse(detail);
+                    isJson = true;
+                } catch (e) { }
+            }
+
+            if (isJson && parsed) {
+                // {type:"ExcelExport", scope:"single", customerName:"..."}
+                if (parsed.type === 'ExcelExport') {
+                    const scope = (parsed.scope === 'single' || parsed.scope === 'current') ? '1명 고객' : '전체 고객';
+                    const name = parsed.customerName ? ` · ${parsed.customerName}` : '';
+                    return `Excel 내보내기 · ${scope}${name}`;
+                }
+                // {module:"expenses", action:"load"}
+                if (parsed.module) {
+                    const modName = parsed.module === 'expenses' ? '운영비 시트' : (parsed.module === 'fixed' ? '고정지출 설정' : parsed.module);
+                    const actName = parsed.action === 'load' ? '불러오기' : (parsed.action === 'save' ? '저장' : parsed.action);
+                    return `${modName} ${actName}`;
+                }
+                // Fallback
+                return Object.entries(parsed).map(([k, v]) => `${k}:${v}`).join(' · ');
+            }
+
+            // Plain text (Truncate)
+            let str = String(detail);
+            return str.length > 200 ? str.slice(0, 200) + '...' : str;
+        }
+
         // 로그 렌더링 함수 (서버 조회)
         async function renderActionLog(targetId) {
-            // [Guard] Capture Intent
             const reqId = targetId || currentCustomerId;
             let tbody = document.getElementById('auditLogTableBody');
 
-            // 호환성: 기존 ID가 auditLogTableBody임
             if (!tbody) {
-                // 혹시 panel-stats 내부의 tbody를 찾음
                 const panel = document.getElementById('panel-stats');
                 if (panel) {
                     const tbl = panel.querySelector('tbody');
@@ -14529,36 +14561,39 @@
 
                 if (result.success && result.logs) {
                     if (result.logs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">기록이 없습니다.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">편집 이력이 없습니다.</td></tr>';
                         return;
                     }
 
+                    // 최근 200건 제한
+                    const displayLogs = result.logs.slice(0, 200);
 
                     let html = '';
-                    result.logs.forEach(log => {
+                    displayLogs.forEach(log => {
+                        const formattedDetail = formatLogDetail(log.detail);
                         html += `
                             <tr style="border-bottom: 1px solid #eee;">
                                 <td style="padding: 8px 10px; color:#666; font-size:12px; white-space:nowrap;">${log.timestamp}</td>
                                 <td style="padding: 8px 10px; font-weight:600; font-size:12px; color:#0071e3;">${log.adminId}</td>
                                 <td style="padding: 8px 10px; color:#333; font-size:12px;">
                                     <span style="font-weight:600; color:#1d1d1f; margin-right:4px;">[${log.actionType}]</span>
-                                    ${log.detail}
+                                    ${formattedDetail}
                                 </td>
                             </tr>
                         `;
                     });
                     tbody.innerHTML = html;
 
-                    // 요약 정보 업데이트 (건수만)
+                    // 요약 정보 업데이트
                     const countEl = document.getElementById('logEditCount');
                     if (countEl) countEl.textContent = result.logs.length + '건';
 
-                    // 고객 정보 요약은 시스템 로그에서는 불필요할 수 있으나, 기존 UI 유지 혹은 숨김
-                    // 여기서는 '전체 시스템 로그'로 표시 변경
                     const nameEl = document.getElementById('logCustomerName');
                     if (nameEl) nameEl.textContent = '전체 시스템';
+
                     const statusEl = document.getElementById('logCustomerStatus');
                     if (statusEl) statusEl.textContent = 'Active';
+
                     const amountEl = document.getElementById('logCustomerAmount');
                     if (amountEl) amountEl.textContent = '-';
 
@@ -14567,7 +14602,8 @@
                 }
             } catch (e) {
                 console.error('Log fetch error:', e);
-                targetTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:red;">오류 발생</td></tr>';
+                // 에러 발생 시에도 안전하게 메시지 출력
+                if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">오류 발생</td></tr>';
             }
         }
 

@@ -3934,67 +3934,116 @@ function handleExcelExport(e) {
 
             // 각 고객별 시트 생성
             customers.forEach(function (cust, idx) {
-                // 시트 이름 생성 (최대 31자, 특수문자 제거)
-                var sheetName = ((cust.clientName || '고객') + '_' + (cust.projectName || cust.customerId || ''))
+                // 시트 이름 생성: 디자인지그_고객명_현장명_계약일
+                var contractDateStr = '';
+                if (cust.contractDate) {
+                    try {
+                        var d = new Date(cust.contractDate);
+                        if (!isNaN(d.getTime())) {
+                            contractDateStr = Utilities.formatDate(d, 'GMT+9', 'yyyyMMdd');
+                        }
+                    } catch (e) { }
+                }
+                var sheetName = ('디자인지그_' + (cust.clientName || '고객') + '_' + (cust.projectName || '') + (contractDateStr ? '_' + contractDateStr : ''))
                     .replace(/[\\/:*?\[\]]/g, '')
                     .substring(0, 31) || ('고객' + (idx + 1));
 
                 var sheet = tempSpreadsheet.insertSheet(sheetName);
                 var rowNum = 1;
 
-                // 1. 고객 기본 정보
-                sheet.getRange(rowNum, 1).setValue('== 고객 기본 정보 ==').setFontWeight('bold');
+                // ========== 1. 고객 기본 정보 ==========
+                sheet.getRange(rowNum, 1).setValue('【 고객 기본 정보 】').setFontWeight('bold').setBackground('#e8f0fe');
                 rowNum++;
-                sheet.getRange(rowNum, 1, 9, 2).setValues([
-                    ['고객ID', cust.customerId || ''],
-                    ['고객명', cust.clientName || ''],
-                    ['연락처', cust.clientPhone || ''],
-                    ['현장명', cust.projectName || ''],
-                    ['현장주소', cust.siteAddress || ''],
-                    ['계약일', cust.contractDate || ''],
-                    ['공사기간', cust.constructionPeriod || ''],
-                    ['상태', cust.status || ''],
-                    ['담당자', cust.manager || '']
-                ]);
-                rowNum += 10;
+                var basicInfo = [
+                    ['고객ID', cust.customerId || '-'],
+                    ['고객명', cust.clientName || '-'],
+                    ['연락처', cust.clientPhone || '-'],
+                    ['이메일', cust.clientEmail || '-'],
+                    ['현장명', cust.projectName || '-'],
+                    ['현장주소', cust.siteAddress || cust.clientAddress || '-'],
+                    ['계약일', cust.contractDate || '-'],
+                    ['공사기간', cust.constructionPeriod || '-'],
+                    ['상태', cust.status || '-'],
+                    ['담당자', cust.manager || '-']
+                ];
+                sheet.getRange(rowNum, 1, basicInfo.length, 2).setValues(basicInfo);
+                // 첫 번째 열 (라벨) 스타일링
+                sheet.getRange(rowNum, 1, basicInfo.length, 1).setFontWeight('bold').setBackground('#f8f9fa');
+                rowNum += basicInfo.length + 1;
 
-                // 2. 스케줄 정보
-                var schedules = cust.schedules || [];
-                if (schedules.length > 0) {
-                    sheet.getRange(rowNum, 1).setValue('== 공사 스케줄 ==').setFontWeight('bold');
-                    rowNum++;
-                    sheet.getRange(rowNum, 1, 1, 5).setValues([['공정', '세부공정', '시작일', '종료일', '상태']]).setFontWeight('bold');
-                    rowNum++;
-                    schedules.forEach(function (s) {
-                        sheet.getRange(rowNum, 1, 1, 5).setValues([[
-                            s.category || '',
-                            s.name || s.stepName || '',
-                            s.start || s.startDate || '',
-                            s.end || s.endDate || '',
-                            s.status || ''
+                // ========== 2. 공정별 체크리스트 (필수) ==========
+                sheet.getRange(rowNum, 1).setValue('【 공정별 체크리스트 】').setFontWeight('bold').setBackground('#e8f0fe');
+                rowNum++;
+                var checklistHeaders = ['공정명', '체크여부', '메모', '완료일'];
+                sheet.getRange(rowNum, 1, 1, checklistHeaders.length).setValues([checklistHeaders]).setFontWeight('bold').setBackground('#f8f9fa');
+                rowNum++;
+
+                var checklist = cust.checklist || cust.checklistItems || [];
+                if (checklist.length > 0) {
+                    checklist.forEach(function (item) {
+                        var checkStatus = item.checked === true || item.checked === 'true' || item.status === 'completed' ? 'O' : 'X';
+                        sheet.getRange(rowNum, 1, 1, 4).setValues([[
+                            item.name || item.stepName || item.process || '-',
+                            checkStatus,
+                            item.memo || item.note || item.remarks || '-',
+                            item.completedDate || item.endDate || item.date || '-'
                         ]]);
                         rowNum++;
                     });
+                } else {
+                    // 데이터 없음 표시
+                    sheet.getRange(rowNum, 1, 1, 4).setValues([['(데이터 없음)', '-', '-', '-']]).setFontColor('#999999');
                     rowNum++;
                 }
+                rowNum++;
 
-                // 3. A/S 리스트
-                var asList = cust.as_list || [];
-                if (asList.length > 0) {
-                    sheet.getRange(rowNum, 1).setValue('== A/S 관리 기록 ==').setFontWeight('bold');
-                    rowNum++;
-                    sheet.getRange(rowNum, 1, 1, 5).setValues([['카테고리', '브랜드', '품목', '보증기간', '비고']]).setFontWeight('bold');
-                    rowNum++;
-                    asList.forEach(function (a) {
+                // ========== 3. 공사 스케줄 ==========
+                sheet.getRange(rowNum, 1).setValue('【 공사 스케줄 】').setFontWeight('bold').setBackground('#e8f0fe');
+                rowNum++;
+                var scheduleHeaders = ['공정', '세부공정', '시작일', '종료일', '상태'];
+                sheet.getRange(rowNum, 1, 1, scheduleHeaders.length).setValues([scheduleHeaders]).setFontWeight('bold').setBackground('#f8f9fa');
+                rowNum++;
+
+                var schedules = cust.schedules || cust.schedule || [];
+                if (schedules.length > 0) {
+                    schedules.forEach(function (s) {
                         sheet.getRange(rowNum, 1, 1, 5).setValues([[
-                            a.category || '',
-                            a.brand || '',
-                            a.item || '',
-                            a.warranty || '',
-                            a.note || ''
+                            s.category || s.process || '-',
+                            s.name || s.stepName || s.detail || '-',
+                            s.start || s.startDate || '-',
+                            s.end || s.endDate || '-',
+                            s.status || '-'
                         ]]);
                         rowNum++;
                     });
+                } else {
+                    sheet.getRange(rowNum, 1, 1, 5).setValues([['(데이터 없음)', '-', '-', '-', '-']]).setFontColor('#999999');
+                    rowNum++;
+                }
+                rowNum++;
+
+                // ========== 4. A/S 관리 기록 ==========
+                sheet.getRange(rowNum, 1).setValue('【 A/S 관리 기록 】').setFontWeight('bold').setBackground('#e8f0fe');
+                rowNum++;
+                var asHeaders = ['카테고리', '브랜드', '품목', '보증기간', '비고'];
+                sheet.getRange(rowNum, 1, 1, asHeaders.length).setValues([asHeaders]).setFontWeight('bold').setBackground('#f8f9fa');
+                rowNum++;
+
+                var asList = cust.as_list || cust.asList || cust.asItems || [];
+                if (asList.length > 0) {
+                    asList.forEach(function (a) {
+                        sheet.getRange(rowNum, 1, 1, 5).setValues([[
+                            a.category || '-',
+                            a.brand || '-',
+                            a.item || a.itemName || '-',
+                            a.warranty || a.warrantyPeriod || '-',
+                            a.note || a.remarks || '-'
+                        ]]);
+                        rowNum++;
+                    });
+                } else {
+                    sheet.getRange(rowNum, 1, 1, 5).setValues([['(데이터 없음)', '-', '-', '-', '-']]).setFontColor('#999999');
+                    rowNum++;
                 }
 
                 // 컬럼 너비 자동 조정
