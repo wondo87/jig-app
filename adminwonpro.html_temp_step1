@@ -1,0 +1,190 @@
+
+<!-- [Step 1] 데이터 진단 및 병합 모달 -->
+<div id="step1Modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="close" onclick="closeStep1Modal()">&times;</span>
+        <h2>🔍 [Step 1] 로컬 데이터 진단 및 병합</h2>
+        <div style="margin: 20px 0; max-height: 500px; overflow-y: auto;">
+            <p>브라우저(로컬)에만 저장되어 있고 클라우드(구글시트)에 없는 데이터를 찾습니다.</p>
+            
+            <div id="step1Status" style="padding: 15px; background: #f5f5f7; border-radius: 8px; margin-bottom: 20px;">
+                <div id="step1Log">진단 시작을 눌러주세요...</div>
+            </div>
+
+            <table class="report-table" style="width:100%; font-size:13px; border-collapse: collapse;">
+                <thead>
+                    <tr style="background:#eee; text-align:left;">
+                        <th style="padding:8px;">데이터 종류 (Key)</th>
+                        <th style="padding:8px;">로컬 건수</th>
+                        <th style="padding:8px;">클라우드 건수</th>
+                        <th style="padding:8px;">로컬 전용 (누락)</th>
+                        <th style="padding:8px;">상태</th>
+                    </tr>
+                </thead>
+                <tbody id="step1ReportBody"></tbody>
+            </table>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn-sub" onclick="runStep1Diagnosis()">▶ 1. 진단 시작</button>
+            <button id="step1MergeBtn" class="btn-main" onclick="runStep1Merge()" style="display:none; margin-left:10px;">☁️ 2. 클라우드로 병합 (저장)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // [Step 1] 전역 변수
+    let step1MergeCandidates = {
+        customers: [],
+        expenses: [],
+        fixedExpenses: []
+    };
+    let step1CloudData = {
+        customers: [],
+        expenses: [],
+        fixedExpenses: []
+    };
+
+    function openStep1Modal() {
+        document.getElementById('step1Modal').classList.add('show');
+        document.getElementById('step1Log').innerHTML = '진단 시작 버튼을 눌러주세요.';
+        document.getElementById('step1MergeBtn').style.display = 'none';
+        document.getElementById('step1ReportBody').innerHTML = '';
+    }
+
+    function closeStep1Modal() {
+        document.getElementById('step1Modal').classList.remove('show');
+    }
+
+    function logStep1(msg) {
+        const logDiv = document.getElementById('step1Log');
+        logDiv.innerHTML += `<div>${msg}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(`[Step1] ${msg}`);
+    }
+
+    async function runStep1Diagnosis() {
+        logStep1('🔄 클라우드 데이터 가져오는 중...');
+        try {
+            // 1. Fetch Cloud Data
+            // Customers
+            const custRes = await fetch(CUSTOMER_SYNC_URL + '?sheet=customer');
+            const custJson = await custRes.json();
+            step1CloudData.customers = custJson.data || [];
+
+            // Expenses
+            const expRes = await fetch(CUSTOMER_SYNC_URL + '?sheet=expenses');
+            const expJson = await expRes.json();
+            step1CloudData.expenses = expJson.data || [];
+            
+            // Fixed Expenses
+            step1CloudData.fixedExpenses = expJson.fixed || [];
+
+            logStep1('✅ 클라우드 데이터 수신 완료.');
+
+            // 2. Load Local Data
+            const localCust = JSON.parse(localStorage.getItem('dz_customers') || '[]');
+            const localExp = JSON.parse(localStorage.getItem('designzig_expenses') || '[]');
+            const localFixed = JSON.parse(localStorage.getItem('designzig_fixed_expenses') || '[]');
+
+            // 3. Compare - Customers
+            const cloudCustIds = new Set(step1CloudData.customers.map(c => c.customerId));
+            const localOnlyCust = localCust.filter(c => !cloudCustIds.has(c.customerId));
+            step1MergeCandidates.customers = localOnlyCust;
+
+            // Compare - Expenses (ID가 없으므로 내용 비교가 어렵지만, 날짜+내용으로 추정하거나 전체 덮어쓰기 정책 확인 필요)
+            // 여기서는 '로컬에만 있는 데이터'를 식별하기 어려우므로 (ID 부재), 단순 개수 비교만 수행
+            // 단, 지출결의서는 ID가 없으므로 병합 자동화가 위험함. 리포트만 제공.
+            
+            const reportBody = document.getElementById('step1ReportBody');
+            reportBody.innerHTML = '';
+
+            // Render Report
+            // Customers
+            addStep1Row('고객 목록 (dz_customers)', localCust.length, step1CloudData.customers.length, localOnlyCust.length, localOnlyCust.length > 0 ? '병합 필요' : '정상');
+            
+            // Expenses
+            // 지출결의서는 동기화 로직이 '전체 로드' 방식이므로 로컬이 더 많다면 아직 저장 안된 것일 수 있음.
+            const expDiff = localExp.length - step1CloudData.expenses.length;
+            addStep1Row('지출결의서 (designzig_expenses)', localExp.length, step1CloudData.expenses.length, expDiff > 0 ? `${expDiff}건 (추정)` : '0', expDiff > 0 ? '확인 필요' : '정상');
+
+            // Fixed Expenses
+            const fixedDiff = localFixed.length - step1CloudData.fixedExpenses.length;
+            addStep1Row('고정지출 (designzig_fixed_expenses)', localFixed.length, step1CloudData.fixedExpenses.length, fixedDiff > 0 ? `${fixedDiff}건 (추정)` : '0', fixedDiff > 0 ? '확인 필요' : '정상');
+
+            logStep1('📊 진단 완료.');
+
+            if (localOnlyCust.length > 0) {
+                document.getElementById('step1MergeBtn').style.display = 'inline-block';
+                logStep1(`❗ 클라우드에 없는 고객 데이터 ${localOnlyCust.length}건이 발견되었습니다.`);
+            } else {
+                 logStep1(`✅ 로컬 전용 고객 데이터가 없습니다.`);
+            }
+
+        } catch (e) {
+            logStep1(`❌ 오류 발생: ${e.message}`);
+            alert('진단 중 오류가 발생했습니다: ' + e.message);
+        }
+    }
+
+    function addStep1Row(name, localCnt, cloudCnt, missingCnt, status) {
+        const tbody = document.getElementById('step1ReportBody');
+        const color = status === '정상' ? 'green' : 'red';
+        const tr = `
+            <tr style="border-bottom:1px solid #ddd;">
+                <td style="padding:8px;">${name}</td>
+                <td style="padding:8px;">${localCnt}</td>
+                <td style="padding:8px;">${cloudCnt}</td>
+                <td style="padding:8px; font-weight:bold; color:${missingCnt > 0 || typeof missingCnt === 'string' && missingCnt !== '0' ? 'red' : 'black'}">${missingCnt}</td>
+                <td style="padding:8px; color:${color}; font-weight:bold;">${status}</td>
+            </tr>
+        `;
+        tbody.innerHTML += tr;
+    }
+
+    async function runStep1Merge() {
+        if (!confirm(`총 ${step1MergeCandidates.customers.length}건의 고객 데이터를 클라우드로 전송하시겠습니까?\n(기존 클라우드 데이터는 보존됩니다)`)) return;
+
+        logStep1('☁️ 데이터 병합(전송) 시작...');
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const cust of step1MergeCandidates.customers) {
+            try {
+                // 개별 고객 저장 API 호출 (기존 saveCustomerToCloud 로직 활용 또는 직접 fetch)
+                // 여기서는 payload를 직접 구성하여 전송
+                const payload = {
+                    action: 'update_customer',
+                    ...cust
+                };
+                
+                // 기존 sync 함수 재사용 불가 시 fetch 직접 호출
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Apps Script Web App requirement
+                    body: JSON.stringify(payload)
+                });
+                
+                const res = await response.json();
+                if (res.result === 'success') {
+                    successCount++;
+                    logStep1(`✅ [전송완료] ${cust.clientName} (${cust.customerId})`);
+                } else {
+                    throw new Error(res.message);
+                }
+            } catch (e) {
+                failCount++;
+                logStep1(`❌ [전송실패] ${cust.clientName}: ${e.message}`);
+            }
+        }
+
+        logStep1(`🏁 병합 종료. 성공: ${successCount}, 실패: ${failCount}`);
+        
+        if (successCount > 0) {
+            alert(`${successCount}건의 데이터를 성공적으로 병합했습니다.`);
+            // 화면 새로고침 권장
+            if(confirm('데이터 갱신을 위해 페이지를 새로고침 하시겠습니까?')) {
+                location.reload();
+            }
+        }
+    }
+</script>
