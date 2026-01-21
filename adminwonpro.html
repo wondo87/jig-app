@@ -477,13 +477,22 @@
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
 
-                /* 1. Safe Area & Header Fix */
+                /* 1. Safe Area & Header Fix (Compact) */
                 .main-header {
-                    padding-top: calc(env(safe-area-inset-top) + 12px) !important;
-                    padding-bottom: 12px !important;
+                    padding-top: env(safe-area-inset-top) !important;
+                    padding-bottom: 8px !important;
                     height: auto !important;
                     background-color: #1d1d1f !important;
                 }
+
+                /* [User Request] Hide all top header icons */
+                .mobile-header-icons,
+                #mobileHeaderIcons,
+                .mobile-icon-btn {
+                    display: none !important;
+                }
+
+
 
                 /* 2. Hide Redundant Detail Card (Red Box 2) */
                 .customer-header-card {
