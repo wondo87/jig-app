@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>디자인지그 통합 관리 시스템</title>
-    <!-- Cache Version: dz-admin-v11 (2026-01-21) -->
+    <!-- Cache Version: dz-admin-v12 (2026-01-21) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
@@ -3134,7 +3134,8 @@
     <!-- 메인 헤더 -->
     <header class="main-header">
         <div class="logo">
-            <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+            <a href="javascript:void(0)" onclick="location.reload();"
+                style="display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;">
                 <div class="logo-icon">DJ</div>
                 <div class="logo-text">디자인지그 <span>통합 관리 시스템</span></div>
             </a>
@@ -14228,10 +14229,11 @@
             activeFixed.forEach((item, idx) => {
                 const amt = parseNumber(item.amount);
                 fixedTotal += amt;
+                const detailText = item.detail || item.itemName || '-';
                 rows.push(`
                     <tr style="border-bottom:1px solid #fcd34d; background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
-                        <td style="text-align:center; padding:10px; color:#92400e;">
-                            🔒 ${idx + 1}
+                        <td style="text-align:center; padding:10px; color:#92400e; font-weight:600;">
+                            ${idx + 1}
                         </td>
                         <td style="padding:8px;">
                             <span style="color:#92400e; font-size:12px;">${selectedMonth}-01</span>
@@ -14240,12 +14242,12 @@
                             <span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">${item.category || '-'}</span>
                         </td>
                         <td style="padding:8px;">
-                            <span style="color:#92400e; font-weight:600;">🔒 ${item.itemName || '-'}</span>
+                            <span style="color:#92400e; font-weight:600;">${detailText}</span>
                             <span style="font-size:10px; color:#d97706; margin-left:6px; background:#fef3c7; padding:2px 6px; border-radius:10px;">고정지출</span>
                         </td>
                         <td style="padding:8px; text-align:right; font-weight:700; color:#92400e;">${formatNumber(amt)}</td>
                         <td style="padding:8px; color:#92400e;">${item.payMethod || '-'}</td>
-                        <td style="padding:8px; color:#92400e;">-</td>
+                        <td style="padding:8px; color:#92400e;">${item.receipt || '-'}</td>
                         <td style="padding:8px; color:#92400e; font-size:11px;">매월 자동 반영</td>
                     </tr>
                 `);
