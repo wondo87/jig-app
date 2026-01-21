@@ -288,13 +288,20 @@
         /* 모바일 PWA 최적화 */
         @media (max-width: 768px) {
             body {
-                padding-top: calc(56px + env(safe-area-inset-top));
+                padding-top: calc(82px + env(safe-area-inset-top)) !important;
                 padding-bottom: env(safe-area-inset-bottom);
             }
 
             .main-header {
-                padding: 12px 16px;
-                padding-top: calc(12px + env(safe-area-inset-top));
+                padding: 4px 12px !important;
+                padding-top: env(safe-area-inset-top) !important;
+                height: auto !important;
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                z-index: 10001;
             }
 
             /* 버튼 터치 영역 44px 이상 확보 */
@@ -321,11 +328,12 @@
 
             /* Toast 위치 조정 (Safe Area) */
             .toast {
-                top: calc(20px + env(safe-area-inset-top));
-                left: 20px;
-                right: 20px;
+                top: calc(10px + env(safe-area-inset-top));
+                left: 10px;
+                right: 10px;
                 width: auto;
                 justify-content: center;
+                z-index: 20000 !important;
             }
 
             /* ===== MOBILE WEB APP UX ===== */
@@ -436,13 +444,7 @@
                 display: none !important;
             }
 
-            /* [수정] 헤더 안전 영역 확보 (화면 잘림 방지) */
-            .main-header {
-                padding-top: calc(16px + env(safe-area-inset-top)) !important;
-                padding-bottom: 16px !important;
-                height: auto !important;
-                min-height: 60px;
-            }
+            /* [수정] 헤더 안전 영역 확보 (화면 잘림 방지) - 제거됨 (상단 통합) */
 
             /* [수정] 공정별 체크리스트 모바일 최적화 */
             .checklist-table th,
@@ -477,457 +479,482 @@
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
 
-                /* 1. Safe Area & Header Fix (Compact) */
-                .main-header {
-                    padding-top: env(safe-area-inset-top) !important;
-                    padding-bottom: 8px !important;
-                    height: auto !important;
-                    background-color: #1d1d1f !important;
-                }
-
-                /* [User Request] Hide all top header icons */
-                .mobile-header-icons,
-                #mobileHeaderIcons,
-                .mobile-icon-btn {
-                    display: none !important;
-                }
-
-
-
-                /* 2. Hide Redundant Detail Card (Red Box 2) */
-                .customer-header-card {
-                    display: none !important;
-                }
-
-                /* [New] Hide checklist stats and top actions on mobile */
-                .checklist-stats,
-                #checklistFilterContainer,
-                .checklist-header-actions {
-                    display: none !important;
-                }
-
-                /* [New] Meta Badge Style for Mobile Card */
-                .meta-badge {
-                    display: inline-block;
-                    font-size: 11px;
-                    font-weight: 500;
-                    padding: 3px 8px;
-                    border-radius: 12px;
-                    margin-right: 6px;
-                    margin-top: 2px;
-                    margin-bottom: 2px;
-                    white-space: nowrap;
-                    line-height: 1.4;
-                }
-
-                /* 3. Cleanup Checklist Header (Red Box 3) */
-                .checklist-header button,
-                .checklist-header .btn-group,
-                .checklist-header-actions,
-                .checklist-filters {
-                    display: none !important;
-                }
-
-                .checklist-header h3 {
-                    margin: 0 !important;
-                    padding: 16px 16px 8px 16px !important;
-                    font-size: 18px !important;
-                }
-
-                /* 4. Tabs & Content Layout */
-                /* 4. Tabs & Content Layout */
-                .customer-tabs {
-                    position: sticky !important;
-                    top: 60px !important;
-                    z-index: 900 !important;
-                    background: #fff !important;
-                    margin-top: 0 !important;
-                    display: flex !important;
-                    flex-wrap: nowrap !important;
-                    overflow-x: auto !important;
-                    -webkit-overflow-scrolling: touch;
-                    padding: 0 16px !important;
-                    gap: 12px !important;
-                    border-bottom: 1px solid #e5e5ea;
-                    scrollbar-width: none;
-                }
-
-                .customer-tabs::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .customer-tab {
-                    flex: 0 0 auto !important;
-                    margin-bottom: 0 !important;
-                    padding: 12px 4px !important;
-                }
-
-                .main-content {
-                    padding: 0 !important;
-                    background-color: #f5f5f7 !important;
-                }
-
-                /* 5. Mobile Icons Styling */
-                .mobile-icon-btn {
-                    background: rgba(255, 255, 255, 0.1) !important;
-                    border-radius: 12px !important;
-                    border: none !important;
-                }
-
-                /* 6. Checklist Stats Grid */
-                .checklist-stats {
-                    display: grid !important;
-                    grid-template-columns: 1fr 1fr !important;
-                    gap: 10px !important;
-                }
+                /* 1. Safe Area & Header Fix - Consolidated above at line 295 */
             }
 
-
-
-            /* 헤더 고정 및 너비 100% 보장 (상태바 대응) */
-            .main-header {
-                width: 100vw !important;
-                max-width: 100% !important;
-                left: 0 !important;
-                right: 0 !important;
-                padding-top: calc(16px + env(safe-area-inset-top)) !important;
-                padding-bottom: 20px !important;
-                box-sizing: border-box !important;
-                position: sticky !important;
-                top: 0;
-                z-index: 1000;
-            }
-
-            /* 상세 화면: 불필요한 데스크톱 툴바 숨김 */
-            .action-toolbar,
-            .customer-header-actions,
-            .print-btn-group,
-            .header-info-actions {
+            /* [User Request] Only Bottom Toolbar is Execution Area (Icons restored to header) */
+            .customer-header-right,
+            #headerDesktopInfo,
+            .doc-header .btn,
+            .doc-header button,
+            .doc-header .notion-export-btn,
+            .doc-header .restore-btn,
+            .checklist-stats,
+            #checklistFilterContainer,
+            .checklist-header-actions,
+            .checklist-filters {
                 display: none !important;
             }
 
-            /* 상세 화면: 정보 카드 최적화 */
-            .customer-header-card {
-                padding: 20px 16px !important;
-                width: 100% !important;
-                border-radius: 0 !important;
-                margin: 0 !important;
-                border: none !important;
-                border-bottom: 1px solid #f2f2f7 !important;
-            }
-
-            .header-info-main {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 12px;
-            }
-
-            .header-title-row {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            /* 상세 화면: 탭 메뉴 가로 스크롤 */
-            .modules-tabs {
+            .mobile-header-icons {
                 display: flex !important;
-                flex-wrap: nowrap !important;
-                overflow-x: auto !important;
-                -webkit-overflow-scrolling: touch;
-                padding: 0 16px !important;
-                gap: 12px !important;
-                background: #fff;
-                border-bottom: 1px solid #e5e5ea;
-                scrollbar-width: none;
+                align-items: center;
+                gap: 12px;
+                margin-left: auto;
             }
 
-            .modules-tabs::-webkit-scrollbar {
+            .mobile-icon-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                background: transparent;
+                border: none;
+                color: #fff;
+                cursor: pointer;
+                padding: 0;
+            }
+
+            #headerMobileInfo {
+                display: block !important;
+            }
+
+            /* 2. Hide Redundant Detail Card */
+            .customer-header-card {
+                display: none !important;
+            }
+
+            /* [New] Meta Badge Style for Mobile Card */
+            .meta-badge {
+                display: inline-block;
+                font-size: 10px;
+                font-weight: 500;
+                padding: 2px 6px;
+                border-radius: 6px;
+                margin: 0;
+                white-space: nowrap;
+                line-height: 1.4;
+            }
+
+            /* 3. Cleanup Content Headers */
+            .checklist-header h3 {
+                margin: 0 !important;
+                padding: 16px 16px 8px 16px !important;
+                font-size: 18px !important;
+            }
+
+            /* 4. Tabs & Content Layout */
+            .customer-tabs {
+                display: none !important;
+            }
+
+            .customer-tabs::-webkit-scrollbar {
                 display: none;
             }
 
-            .tab-btn {
+            .customer-tab {
                 flex: 0 0 auto !important;
                 margin-bottom: 0 !important;
                 padding: 12px 4px !important;
             }
 
-            /* 체크리스트: 통계 카드 2열 그리드 */
-            .checklist-stats {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: 10px !important;
-                padding: 16px !important;
+            .main-content {
+                padding: 0 !important;
+                background-color: #f5f5f7 !important;
             }
 
-            .stat-card {
-                margin: 0 !important;
-                min-width: 0 !important;
-            }
-
-            /* 체크리스트: 필터 세로 정렬 */
-            .checklist-filters {
-                flex-direction: column;
-                padding: 0 16px 16px 16px !important;
-            }
-
-            .checklist-filters select,
-            .checklist-filters input {
-                width: 100% !important;
-                max-width: none !important;
-            }
-
-            .mobile-icon-btn {
-                width: 44px;
-                height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(255, 255, 255, 0.15);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 10px;
-                color: #fff;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            .mobile-icon-btn:active {
-                background: rgba(255, 255, 255, 0.3);
-                transform: scale(0.95);
-            }
-
-            .mobile-icon-btn svg {
-                width: 22px;
-                height: 22px;
-            }
-
-            /* 햄버거 메뉴 버튼 (SVG 사용으로 단순화) */
-            .mobile-hamburger {
-                z-index: 1010;
-            }
-
-            /* 이전 span 기반 햄버거는 더 이상 사용 안함 - SVG 사용 */
-
-            /* ===== 모바일 필터 드롭다운 ===== */
-            .mobile-filter-dropdown {
-                display: none;
-                position: fixed;
-                top: calc(56px + env(safe-area-inset-top));
-                left: 0;
-                right: 0;
-                background: #fff;
-                z-index: 999;
-                padding: 16px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                max-height: 60vh;
-                overflow-y: auto;
-            }
-
-            .mobile-filter-dropdown.show {
-                display: block;
-            }
-
-            .mobile-filter-search {
-                width: 100%;
-                padding: 12px 16px;
-                border: 1px solid #e8e8ed;
-                border-radius: 10px;
-                font-size: 16px;
-                margin-bottom: 12px;
-                -webkit-appearance: none;
-                appearance: none;
-            }
-
-            .mobile-filter-chips {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .mobile-filter-chip {
-                padding: 8px 14px;
-                border-radius: 20px;
-                border: 1px solid #e8e8ed;
-                background: #fff;
-                font-size: 13px;
-                cursor: pointer;
-                transition: all 0.2s;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            .mobile-filter-chip.active {
-                background: #0071e3;
-                color: #fff;
-                border-color: #0071e3;
-            }
-
-            .mobile-filter-chip:active {
-                transform: scale(0.95);
-            }
-
-            /* 모바일 툴바 (고객 선택 시 JS로 display: flex) */
+            /* 5. Mobile Toolbar (Bottom) Restoration */
             .mobile-toolbar {
-                display: none;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: #1d1d1f;
-                padding: 12px 16px;
-                padding-bottom: calc(12px + env(safe-area-inset-bottom));
-                gap: 8px;
-                z-index: 1000;
-                justify-content: space-around;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+                display: flex !important;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: calc(70px + env(safe-area-inset-bottom)) !important;
+                background: rgba(0, 0, 0, 0.85) !important;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                z-index: 10000 !important;
+                padding-bottom: env(safe-area-inset-bottom) !important;
+                box-sizing: border-box;
             }
 
             .mobile-toolbar button {
                 flex: 1;
-                height: 50px;
-                padding: 0;
-                border: none;
-                border-radius: 12px;
-                font-size: 11px;
-                font-weight: 500;
-                cursor: pointer;
+                height: 100%;
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
                 align-items: center;
+                justify-content: center;
+                background: transparent;
+                border: none;
+                color: #fff;
+                font-size: 11px;
                 gap: 4px;
-                background: rgba(255, 255, 255, 0.1);
-                color: #b0b0b5;
-                transition: all 0.2s;
-                -webkit-tap-highlight-color: transparent;
-            }
-
-            .mobile-toolbar button:active {
-                transform: scale(0.96);
-                background: rgba(255, 255, 255, 0.2);
-            }
-
-            .mobile-toolbar button.active,
-            .mobile-toolbar button:hover {
-                color: #fff;
-            }
-
-            .mobile-toolbar button.primary {
-                background: #0071e3;
-                color: #fff;
-            }
-
-            .mobile-toolbar button.primary:active {
-                background: #0077ed;
-            }
-
-            .mobile-toolbar button.success {
-                background: #34c759;
-                color: #fff;
-            }
-
-            .mobile-toolbar button.success:active {
-                background: #3ac15c;
+                padding: 0;
+                min-height: 44px;
             }
 
             .mobile-toolbar button svg {
-                width: 20px;
-                height: 20px;
-                stroke-width: 2px;
+                width: 24px;
+                height: 24px;
             }
 
-            /* 모바일 슬라이드 메뉴 */
-            .mobile-menu-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 1005;
+            /* 6. Card Layout Refinement */
+            #checklistMobileContainer {
+                padding: 0 !important;
+                margin-top: 0 !important;
             }
 
-            .mobile-menu-overlay.show {
-                display: block;
+            .checklist-card {
+                background: white;
+                border-bottom: 1px solid #eee;
+                padding: 12px 0;
+                margin: 0;
             }
 
-            .mobile-menu {
-                position: fixed;
-                top: 0;
-                right: -280px;
-                width: 280px;
-                height: 100%;
-                background: #fff;
-                z-index: 1006;
-                transition: right 0.3s ease;
-                padding: calc(env(safe-area-inset-top) + 60px) 20px 20px;
-                overflow-y: auto;
+            .meta-badge {
+                font-size: 9px !important;
+                padding: 2px 4px !important;
+                border-radius: 4px !important;
+                white-space: nowrap !important;
             }
+        }
 
-            .mobile-menu.show {
-                right: 0;
-            }
 
-            .mobile-menu h3 {
-                font-size: 14px;
-                color: #86868b;
-                margin-bottom: 12px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #e8e8ed;
-            }
 
-            .mobile-menu-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 14px 16px;
-                border-radius: 10px;
-                margin-bottom: 4px;
-                cursor: pointer;
-                transition: background 0.2s;
-                font-size: 14px;
-                font-weight: 500;
-                color: #1d1d1f;
-            }
+        /* 헤더 고정 및 너비 100% 보장 (상태바 대응) - 상단 통합됨 */
 
-            .mobile-menu-item:hover {
-                background: #f5f5f7;
-            }
+        /* 상세 화면: 불필요한 데스크톱 툴바 숨김 */
+        .action-toolbar,
+        .customer-header-actions,
+        .print-btn-group,
+        .header-info-actions {
+            display: none !important;
+        }
 
-            .mobile-menu-item.readonly {
-                color: #86868b;
-            }
+        /* 상세 화면: 정보 카드 최적화 */
+        .customer-header-card {
+            padding: 20px 16px !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            border-bottom: 1px solid #f2f2f7 !important;
+        }
 
-            .mobile-menu-item.readonly::after {
-                content: '읽기전용';
-                font-size: 10px;
-                background: #e8e8ed;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-left: auto;
-            }
+        .header-info-main {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px;
+        }
 
-            /* 고객 선택 전: 고객 목록만 표시 */
-            .customer-list-mobile {
-                display: block !important;
-            }
+        .header-title-row {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-            /* 고객 선택 후: 체크리스트 패널 표시 */
-            body.mobile-customer-selected .customer-list-mobile {
-                display: none !important;
-            }
+        /* 상세 화면: 탭 메뉴 가로 스크롤 */
+        .modules-tabs {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 16px !important;
+            gap: 12px !important;
+            background: #fff;
+            border-bottom: 1px solid #e5e5ea;
+            scrollbar-width: none;
+        }
 
-            body.mobile-customer-selected #customerView {
-                display: block !important;
-            }
+        .modules-tabs::-webkit-scrollbar {
+            display: none;
+        }
 
-            body.mobile-customer-selected .mobile-toolbar {
-                display: flex !important;
-            }
+        .tab-btn {
+            flex: 0 0 auto !important;
+            margin-bottom: 0 !important;
+            padding: 12px 4px !important;
+        }
 
-            /* 모바일에서 body 하단 여백 (툴바 공간) */
-            body.mobile-customer-selected {
-                padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
-            }
+        /* 체크리스트: 통계 카드 2열 그리드 */
+        .checklist-stats {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            padding: 16px !important;
+        }
+
+        .stat-card {
+            margin: 0 !important;
+            min-width: 0 !important;
+        }
+
+        /* 체크리스트: 필터 세로 정렬 */
+        .checklist-filters {
+            flex-direction: column;
+            padding: 0 16px 16px 16px !important;
+        }
+
+        .checklist-filters select,
+        .checklist-filters input {
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        .mobile-icon-btn {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-icon-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+
+        .mobile-icon-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* 햄버거 메뉴 버튼 (SVG 사용으로 단순화) */
+        .mobile-hamburger {
+            z-index: 1010;
+        }
+
+        /* 이전 span 기반 햄버거는 더 이상 사용 안함 - SVG 사용 */
+
+        /* ===== 모바일 필터 드롭다운 ===== */
+        .mobile-filter-dropdown {
+            display: none;
+            position: fixed;
+            top: calc(56px + env(safe-area-inset-top));
+            left: 0;
+            right: 0;
+            background: #fff;
+            z-index: 999;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .mobile-filter-dropdown.show {
+            display: block;
+        }
+
+        .mobile-filter-search {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e8e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .mobile-filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mobile-filter-chip {
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid #e8e8ed;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-filter-chip.active {
+            background: #0071e3;
+            color: #fff;
+            border-color: #0071e3;
+        }
+
+        .mobile-filter-chip:active {
+            transform: scale(0.95);
+        }
+
+        /* 모바일 툴바 (고객 선택 시 JS로 display: flex) */
+        .mobile-toolbar {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1d1d1f;
+            padding: 12px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            gap: 8px;
+            z-index: 1000;
+            justify-content: space-around;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-toolbar button {
+            flex: 1;
+            height: 50px;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #b0b0b5;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-toolbar button:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-toolbar button.active,
+        .mobile-toolbar button:hover {
+            color: #fff;
+        }
+
+        .mobile-toolbar button.primary {
+            background: #0071e3;
+            color: #fff;
+        }
+
+        .mobile-toolbar button.primary:active {
+            background: #0077ed;
+        }
+
+        .mobile-toolbar button.success {
+            background: #34c759;
+            color: #fff;
+        }
+
+        .mobile-toolbar button.success:active {
+            background: #3ac15c;
+        }
+
+        .mobile-toolbar button svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2px;
+        }
+
+        /* 모바일 슬라이드 메뉴 */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1005;
+        }
+
+        .mobile-menu-overlay.show {
+            display: block;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100%;
+            background: #fff;
+            z-index: 1006;
+            transition: right 0.3s ease;
+            padding: calc(env(safe-area-inset-top) + 60px) 20px 20px;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.show {
+            right: 0;
+        }
+
+        .mobile-menu h3 {
+            font-size: 14px;
+            color: #86868b;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8e8ed;
+        }
+
+        .mobile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1d1d1f;
+        }
+
+        .mobile-menu-item:hover {
+            background: #f5f5f7;
+        }
+
+        .mobile-menu-item.readonly {
+            color: #86868b;
+        }
+
+        .mobile-menu-item.readonly::after {
+            content: '읽기전용';
+            font-size: 10px;
+            background: #e8e8ed;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        /* 고객 선택 전: 고객 목록만 표시 */
+        .customer-list-mobile {
+            display: block !important;
+        }
+
+        /* 고객 선택 후: 체크리스트 패널 표시 */
+        body.mobile-customer-selected .customer-list-mobile {
+            display: none !important;
+        }
+
+        body.mobile-customer-selected #customerView {
+            display: block !important;
+        }
+
+        body.mobile-customer-selected .mobile-toolbar {
+            display: flex !important;
+        }
+
+        /* 모바일에서 body 하단 여백 (툴바 공간) */
+        body.mobile-customer-selected {
+            padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
         }
 
         /* 관리자 모달 */
@@ -3855,15 +3882,15 @@
             <button class="header-btn secondary" onclick="exportCurrentCustomerData()">💾 고객저장(JSON)</button>
         </div>
         <!-- 모바일 헤더 아이콘들 (CSS에서 display 제어) -->
-        <div class="mobile-header-icons" id="mobileHeaderIcons" style="display:none;">
-            <!-- Icon #1: 다시 연결 (Reconnect) -->
-            <button class="mobile-icon-btn" id="mobileReconnectBtn" onclick="mobileReconnect()" title="다시 연결">
+        <div class="mobile-header-icons" id="mobileHeaderIcons">
+            <!-- Icon #1: 공사 스케줄 바로가기 (Schedule) -->
+            <button class="mobile-icon-btn" id="mobileScheduleBtn" onclick="navigateToSchedule()" title="공사 스케줄">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                    <path d="M21 3v5h-5" />
-                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                    <path d="M8 16H3v5" />
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
             </button>
             <!-- Icon #2: 검색/필터 (Search + Filter) -->
@@ -4259,11 +4286,17 @@
                 <div class="customer-header-bar">
                     <div class="customer-header-left">
                         <h2 id="headerCustomerName">고객명</h2>
-                        <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;" id="headerDesktopInfo">
                             <div class="customer-id-display" id="headerCustomerId">DJ-000000</div>
                             <button id="lockToggleBtn" onclick="toggleCustomerLock()"
                                 class="lock-toggle-btn unlocked">🔓 열림</button>
                             <span id="headerCreatedBy" style="font-size:10px;color:#86868b;">📝 -</span>
+                        </div>
+                        <!-- [New] Mobile-only info block -->
+                        <div id="headerMobileInfo"
+                            style="display:none; font-size:11px; color:#ffffff; margin-top:4px; opacity: 1.0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            📍 <span id="headerSiteAddress">현장주소</span> | 📞 <span id="headerClientPhone">연락처</span> |
+                            📅 <span id="headerPeriod">공사기간</span>
                         </div>
                     </div>
                     <div class="customer-header-right">
@@ -4999,7 +5032,7 @@
                         </div>
                         <div class="doc-content" style="padding:30px;">
                             <!-- 진행 상황 요약 -->
-                            <div
+                            <div class="checklist-stats"
                                 style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
                                 <div
                                     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px; border-radius: 10px; color: white;">
@@ -5067,7 +5100,8 @@
 
                             <!-- 체크리스트 테이블 -->
                             <!-- [모바일 전용] 체크리스트 카드 뷰 컨테이너 -->
-                            <div id="checklistMobileContainer" style="display: none; padding: 12px 16px;"></div>
+                            <div id="checklistMobileContainer"
+                                style="display: none; padding: 0 0 80px 0; background: #f2f2f7;"></div>
 
                             <div id="checklistTableContainer" style="overflow-x: auto;">
                                 <table id="checklistTable"
@@ -7595,7 +7629,7 @@
 
         // 토스트 알림
         let toastTimer = null;
-        function showToast(message, type = 'success', duration = 2000) {
+        function showToast(message, type = 'success', duration = 1500) {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
@@ -7604,7 +7638,7 @@
 
             toast.className = 'toast show ' + type;
             icon.textContent = type === 'success' ? '✓' : (type === 'info' ? 'ℹ️' : '✕');
-            msg.innerHTML = message; // [변경] 줄바꿈 지원을 위해 innerHTML 사용
+            msg.innerHTML = message;
 
             toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
         }
@@ -10535,6 +10569,14 @@
         }
 
         async function saveData() {
+            if (isMobile()) {
+                // 모바일에서는 체크리스트 패널에서만 저장 가능 여부 체크
+                const checklistPanel = document.getElementById('panel-checklist');
+                if (checklistPanel && checklistPanel.style.display === 'none') {
+                    showToast('저장은 체크리스트 화면에서만 가능합니다.', 'warning');
+                    return;
+                }
+            }
             if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
             if (!isLoggedIn()) {
@@ -14035,46 +14077,60 @@
                 if (tableContainer) tableContainer.style.display = 'none';
                 if (mobileContainer) {
                     mobileContainer.style.display = 'block';
-                    mobileContainer.innerHTML = filteredData.map(item => {
-                        const isChecked = customerChecklistData[item.번호] || false;
+
+                    // [New] Sticky simplified filter bar
+                    const currentSearchTerm = document.getElementById('checklistSearchInput').value;
+                    let filterBarHtml = `
+                    <div style="position: sticky; top: calc(72px + env(safe-area-inset-top)); z-index: 800; background: #f2f2f7; padding: 10px 16px; border-bottom: 1px solid #e5e5ea; width: 100vw; margin-left: -16px; margin-right: -16px; box-sizing: border-box;">
+                        <input type="text" id="chkSearchMob" placeholder="공정 항목 검색..." 
+                            value="${currentSearchTerm}"
+                            oninput="document.getElementById('checklistSearchInput').value=this.value; renderChecklistItems();"
+                            style="width: 100%; padding: 10px 14px; border: 1px solid #d2d2d7; border-radius: 10px; font-size: 14px; -webkit-appearance: none; box-sizing: border-box; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    </div>`;
+
+                    mobileContainer.innerHTML = filterBarHtml + filteredData.map(item => {
+                        // Current customer's specific data for this item (can be boolean or object)
+                        const cData = customerChecklistData[item.번호];
+                        const isChecked = (typeof cData === 'boolean') ? cData : (cData?.checked || false);
+                        const userContent = (cData && typeof cData === 'object') ? cData.content : '';
+                        const userRemarks = (cData && typeof cData === 'object') ? cData.remarks : '';
+
                         const categoryColor = getCategoryColor(item.분류);
 
                         return `
-                        <div class="checklist-card" style="background: white; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e5e5ea;">
-                            <!-- 1. Header Line: Checkbox + Title -->
-                            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px;">
-                                <!-- Checkbox with large touch target -->
-                                <div onclick="toggleChecklistItem(${item.번호})" style="padding: 4px 0; cursor: pointer;">
-                                    <input type="checkbox" ${isChecked ? 'checked' : ''} 
-                                        style="width: 24px; height: 24px; margin: 0; pointer-events: none; accent-color: #0071e3;">
-                                </div>
-                                <div style="flex: 1; padding-top: 2px;">
-                                    <div style="font-size: 16px; font-weight: 600; color: #1d1d1f; line-height: 1.4; word-break: break-all;">
-                                        ${item.항목 || '항목 없음'}
+                        <div class="checklist-card">
+                            <!-- Top Row: Check + Title + Badges -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 16px 8px 16px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                    <div onclick="toggleChecklistItem(${item.번호})" style="cursor: pointer; display: flex; align-items: center; padding: 4px;"> 
+                                        <input type="checkbox" ${isChecked ? 'checked' : ''} style="width: 22px; height: 22px; margin: 0; pointer-events: none; accent-color: #0071e3;">
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #1d1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        ${item.항목}
                                     </div>
                                 </div>
+                                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                    <span class="meta-badge" style="background: ${(item.진행단계 === '인테리어 시작 전') ? '#fff3e0' : '#e8f5e9'}; color: ${(item.진행단계 === '인테리어 시작 전') ? '#ff9500' : '#34c759'};">${item.진행단계 || ''}</span>
+                                    <span class="meta-badge" style="background: ${categoryColor.bg}; color: ${categoryColor.text};">${item.분류 || ''}</span>
+                                </div>
                             </div>
-
-                            <!-- [New] 2. Meta Badges (One line) -->
-                            <div style="margin-bottom: 12px; padding-left: 36px;">
-                                <span class="meta-badge" style="background: ${(item.진행단계 === '인테리어 시작 전') ? '#fff3e0' : '#e8f5e9'}; color: ${(item.진행단계 === '인테리어 시작 전') ? '#ff9500' : '#34c759'};">
-                                    ${item.진행단계 || '미지정'}
-                                </span>
-                                <span class="meta-badge" style="background: ${categoryColor.bg}; color: ${categoryColor.text};">
-                                    ${item.분류 || '미분류'}
-                                </span>
-                            </div>
-
-                            <!-- 2. Content (Read-only Textarea) -->
-                            <div style="margin-bottom: 10px;">
-                                <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">내용</div>
-                                <textarea readonly style="width: 100%; border: 1px solid #d2d2d7; background: #fff; border-radius: 8px; padding: 10px; font-size: 14px; line-height: 1.5; color: #333; resize: none; min-height: 48px; box-sizing: border-box; -webkit-appearance: none;">${item.내용 || ''}</textarea>
-                            </div>
-
-                            <!-- 3. Note (Read-only Textarea) -->
-                            <div>
-                                <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">비고</div>
-                                <textarea readonly style="width: 100%; border: 1px solid #d2d2d7; background: #fff; border-radius: 8px; padding: 10px; font-size: 14px; line-height: 1.5; color: #333; resize: none; min-height: 48px; box-sizing: border-box; -webkit-appearance: none;">${item.비고 || ''}</textarea>
+                            
+                            <!-- Bottom Row: Multi-column Inputs (Compact) -->
+                            <div style="display: flex; gap: 8px; padding: 0 16px;">
+                                <div style="flex: 2; position: relative;">
+                                    <span style="position: absolute; left: 8px; top: 6px; font-size: 8px; color: #86868b; text-transform: uppercase;">내용</span>
+                                    <input onchange="updateChecklistField(${item.번호}, 'content', this.value)" 
+                                           placeholder="내용 입력..."
+                                           value="${userContent || item.내용 || ''}" 
+                                           style="width: 100%; border: 1px solid #e5e5ea; border-radius: 8px; padding: 14px 8px 4px 8px; font-size: 12px; height: 38px; -webkit-appearance: none; box-sizing: border-box; background: #f5f5f7; color: #1d1d1f;">
+                                </div>
+                                <div style="flex: 1; position: relative;">
+                                    <span style="position: absolute; left: 8px; top: 6px; font-size: 8px; color: #86868b; text-transform: uppercase;">비고</span>
+                                    <input onchange="updateChecklistField(${item.번호}, 'remarks', this.value)" 
+                                           placeholder="비고..."
+                                           value="${userRemarks || item.비고 || ''}" 
+                                           style="width: 100%; border: 1px solid #e5e5ea; border-radius: 8px; padding: 14px 8px 4px 8px; font-size: 12px; height: 38px; -webkit-appearance: none; box-sizing: border-box; background: #f5f5f7; color: #1d1d1f;">
+                                </div>
                             </div>
                         </div>`;
                     }).join('');
@@ -14089,6 +14145,15 @@
                 if (mtb) {
                     mtb.style.display = 'flex';
                     mtb.style.zIndex = '10000'; // Force top
+                }
+
+                // [Fix] Restore focus for mobile search bar after re-render
+                if (isMobile() && document.activeElement && document.activeElement.id === 'chkSearchMob') {
+                    const chkInp = document.getElementById('chkSearchMob');
+                    if (chkInp) {
+                        chkInp.focus();
+                        chkInp.setSelectionRange(chkInp.value.length, chkInp.value.length);
+                    }
                 }
 
                 return;
@@ -14171,14 +14236,23 @@
                 customers[customerIndex].checklistData = {};
             }
 
-            // 체크 상태 토글
-            const currentState = customers[customerIndex].checklistData[itemNumber] || false;
-            const newState = !currentState;
-            customers[customerIndex].checklistData[itemNumber] = newState;
+            let itemData = customers[customerIndex].checklistData[itemNumber];
+            let isNowChecked;
 
-            // [FIX] currentData에도 즉시 반영 (저장 버튼 클릭 시 덮어쓰기 방지)
+            if (typeof itemData === 'object') {
+                itemData.checked = !itemData.checked;
+                isNowChecked = itemData.checked;
+            } else {
+                isNowChecked = !itemData;
+                itemData = isNowChecked; // Keep as boolean if it was boolean, but usually we prefer objects now.
+                // However, to maintain simplicity for legacy checks, we can keep it as is unless converted.
+            }
+
+            customers[customerIndex].checklistData[itemNumber] = itemData;
+
+            // [FIX] currentData에도 즉시 반영
             if (!currentData.checklistData) currentData.checklistData = {};
-            currentData.checklistData[itemNumber] = newState;
+            currentData.checklistData[itemNumber] = itemData;
 
             // 저장
             saveCustomers();
@@ -14186,7 +14260,32 @@
             // 다시 렌더링
             renderChecklistItems();
 
-            showToast(currentState ? '체크 해제되었습니다' : '체크되었습니다', 'success');
+            showToast(isNowChecked ? '체크되었습니다' : '체크 해제되었습니다', 'success');
+        }
+
+        // [New] 체크리스트 특정 필드(내용/비고) 업데이트
+        function updateChecklistField(itemNumber, field, value) {
+            if (!currentCustomerId) return;
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex === -1) return;
+
+            if (!customers[customerIndex].checklistData) customers[customerIndex].checklistData = {};
+
+            // 데이터가 boolean이면 object로 변환
+            let itemData = customers[customerIndex].checklistData[itemNumber];
+            if (typeof itemData !== 'object') {
+                itemData = { checked: !!itemData, content: '', remarks: '' };
+            }
+
+            itemData[field] = value;
+            customers[customerIndex].checklistData[itemNumber] = itemData;
+
+            // currentData 연동
+            if (!currentData.checklistData) currentData.checklistData = {};
+            currentData.checklistData[itemNumber] = itemData;
+
+            // 저장 (백그라운드)
+            saveCustomers();
         }
 
         // [추가] 체크리스트 아이템 삭제 (알림창 없이 즉시 삭제)
@@ -14358,6 +14457,14 @@
          */
         window.exportToNotion = async function (type, event) {
             console.log('🚀 노션 내보내기 시작 - 타입:', type);
+
+            if (isMobile()) {
+                const checklistPanel = document.getElementById('panel-checklist');
+                if (checklistPanel && checklistPanel.style.display === 'none') {
+                    showToast('노션 연동은 체크리스트 화면에서만 가능합니다.', 'warning');
+                    return;
+                }
+            }
 
             // 이벤트 객체 확보
             const evt = event || window.event;
@@ -16166,6 +16273,19 @@
                     _origSelect(customerId);
                     if (isMobile()) {
                         document.body.classList.add('mobile-customer-selected');
+
+                        // [New] Populate mobile header info
+                        const customer = customers.find(c => c.id === customerId);
+                        if (customer) {
+                            const mobInfo = document.getElementById('headerMobileInfo');
+                            if (mobInfo) {
+                                mobInfo.style.display = 'block';
+                                document.getElementById('headerSiteAddress').innerText = customer.siteAddress || '-';
+                                document.getElementById('headerClientPhone').innerText = customer.clientPhone || '-';
+                                document.getElementById('headerPeriod').innerText = (customer.startDate && customer.endDate) ? `${customer.startDate} ~ ${customer.endDate}` : '-';
+                            }
+                        }
+
                         // 체크리스트 패널을 기본으로 표시
                         mobileGoToPanel('panel-checklist');
                         // 모바일 툴바 표시
@@ -16175,6 +16295,20 @@
                 };
             }
         })();
+
+        // [New] Navigate to Schedule shortcut
+        function navigateToSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
+            }
+            if (isMobile()) {
+                showCustomerTab('schedule');
+                mobileGoToPanel('panel-schedule');
+            } else {
+                showCustomerTab('schedule');
+            }
+        }
 
         // 페이지 로드 시 모바일 체크
         document.addEventListener('DOMContentLoaded', () => {
