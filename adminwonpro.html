@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>디자인지그 통합 관리 시스템</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
@@ -335,15 +335,32 @@
                 display: none !important;
             }
 
-            /* 사이드바 숨김 (모바일에서는 고객 리스트만 보임) */
+            /* 사이드바: 모바일 메인 화면 (고객 목록) */
+            .container {
+                flex-direction: column;
+            }
+
             .sidebar {
+                display: flex !important;
+                width: 100% !important;
+                height: calc(100vh - 56px - env(safe-area-inset-top));
+                border-right: none;
+                z-index: 10;
+            }
+
+            /* 상세 내용: 초기에는 숨김 */
+            .main-content {
+                display: none;
+                width: 100%;
+            }
+
+            /* 고객 선택 시: 사이드바 숨기고 상세 내용 표시 */
+            body.mobile-customer-selected .sidebar {
                 display: none !important;
             }
 
-            /* 메인 컨텐츠 전체 너비 */
-            .main-content {
-                margin-left: 0 !important;
-                padding: 16px !important;
+            body.mobile-customer-selected .main-content {
+                display: block !important;
             }
 
             /* ===== 모바일 헤더 아이콘들 ===== */
