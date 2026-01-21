@@ -5,7 +5,7 @@
  * 2. 관리자 페이지(adminwonpro.html) 고객 데이터 동기화
  * 3. 트리거 기반 자동화 (상담 상태 변경 시 이동, A/S 만료 알림)
  *
- * 마지막 업데이트: 2026-01-19 (공사 스케줄 관리 시트 연동 수정)
+ * 마지막 업데이트: 2026-01-21 (고객 상태 자동 갱신 기능 추가)
  */
 
 // ==========================================
@@ -3405,4 +3405,228 @@ function handleExpensesUpdate(payload) {
             error: err.toString()
         })).setMimeType(ContentService.MimeType.JSON);
     }
+}
+
+// ==========================================
+// 7. 고객 상태 자동 갱신 (공사기간/A/S 기간 기반)
+// ==========================================
+
+/**
+ * 상태 자동 갱신 규칙:
+ * - 오늘 < 공사시작일 → 상태 유지 (또는 "공사예정")
+ * - 공사시작일 ≤ 오늘 ≤ 공사종료일 → 상태 = "공사중"
+ * - 공사종료일 < 오늘 ≤ A/S종료일 → 상태 = "A/S기간"
+ * - 오늘 > A/S종료일 → 상태 = "A/S 만료"
+ */
+function updateCustomerStatusByDate() {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = spreadsheet.getSheetByName('계약완료');
+        if (!sheet) {
+            console.log('[상태갱신] 계약완료 시트가 없습니다.');
+            return { updated: 0, checked: 0, error: null };
+        }
+
+        var lastRow = sheet.getLastRow();
+        if (lastRow < 2) {
+            console.log('[상태갱신] 데이터가 없습니다.');
+            return { updated: 0, checked: 0, error: null };
+        }
+
+        // 헤더 읽기
+        var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        var headerMap = {};
+        headers.forEach(function (h, i) {
+            headerMap[String(h).trim()] = i;
+        });
+
+        // 필수 컬럼 인덱스
+        var IDX_STATUS = headerMap['상태'];
+        var IDX_CONSTRUCTION = headerMap['공사기간'];
+        var IDX_AS = headerMap['A/S 기간'];
+
+        if (IDX_STATUS === undefined || IDX_CONSTRUCTION === undefined) {
+            console.log('[상태갱신] 필수 컬럼이 없습니다. 상태:', IDX_STATUS, '공사기간:', IDX_CONSTRUCTION);
+            return { updated: 0, checked: 0, error: '필수 컬럼 없음' };
+        }
+
+        var data = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        var updatedCount = 0;
+        var checkedCount = 0;
+
+        for (var i = 0; i < data.length; i++) {
+            var row = data[i];
+            var currentStatus = String(row[IDX_STATUS] || '').trim();
+            var constructionPeriod = String(row[IDX_CONSTRUCTION] || '');
+            var asEndDateStr = String(row[IDX_AS] || '');
+
+            // 공사기간 파싱 (형식: "YYYY.MM.DD ~ YYYY.MM.DD" 또는 "YYYY-MM-DD ~ YYYY-MM-DD")
+            var startDate = null;
+            var endDate = null;
+
+            if (constructionPeriod) {
+                var cleanPeriod = constructionPeriod.replace(/\s+/g, '');
+                var parts = cleanPeriod.split('~');
+                if (parts.length >= 1 && parts[0]) {
+                    startDate = parseFlexDate(parts[0]);
+                }
+                if (parts.length >= 2 && parts[1]) {
+                    endDate = parseFlexDate(parts[1]);
+                }
+            }
+
+            // A/S 종료일 파싱
+            var asEndDate = null;
+            if (asEndDateStr) {
+                asEndDate = parseFlexDate(asEndDateStr);
+            }
+
+            // 필수 날짜 없으면 스킵 (상태 유지)
+            if (!startDate || !endDate) {
+                continue;
+            }
+
+            checkedCount++;
+            var newStatus = '';
+
+            // 상태 결정 로직
+            if (today < startDate) {
+                // 공사 시작 전 → 상태 유지 (기존 상태 그대로)
+                continue;
+            } else if (today >= startDate && today <= endDate) {
+                // 공사중
+                newStatus = '공사중';
+            } else if (today > endDate) {
+                // 공사 완료 후
+                if (asEndDate && today <= asEndDate) {
+                    // A/S 기간 중
+                    newStatus = 'A/S기간';
+                } else if (asEndDate && today > asEndDate) {
+                    // A/S 기간 만료
+                    newStatus = 'A/S 만료';
+                } else {
+                    // A/S 종료일 정보 없으면 공사완료 처리
+                    newStatus = '공사완료';
+                }
+            }
+
+            // 상태가 변경되어야 하고 현재 상태와 다를 때만 업데이트
+            if (newStatus && newStatus !== currentStatus) {
+                // 시트에 업데이트 (행 번호 = i + 2)
+                sheet.getRange(i + 2, IDX_STATUS + 1).setValue(newStatus);
+                updatedCount++;
+                console.log('[상태갱신] 행 ' + (i + 2) + ': "' + currentStatus + '" → "' + newStatus + '"');
+            }
+        }
+
+        console.log('[상태갱신] 완료 - 확인: ' + checkedCount + '건, 업데이트: ' + updatedCount + '건');
+        return { updated: updatedCount, checked: checkedCount, error: null };
+
+    } catch (err) {
+        console.error('[상태갱신] 오류:', err);
+        return { updated: 0, checked: 0, error: err.toString() };
+    }
+}
+
+/**
+ * 다양한 날짜 형식 파싱 (YYYY.MM.DD, YYYY-MM-DD, YYYY/MM/DD)
+ */
+function parseFlexDate(str) {
+    if (!str) return null;
+
+    var cleaned = String(str).trim();
+
+    // Date 객체가 이미 들어온 경우
+    if (str instanceof Date) {
+        return str;
+    }
+
+    // 숫자(타임스탬프)인 경우
+    if (!isNaN(str) && str > 10000000) {
+        return new Date(str);
+    }
+
+    // 문자열 형식 파싱
+    // 점, 대시, 슬래시 모두 지원
+    var normalized = cleaned.replace(/\./g, '-').replace(/\//g, '-');
+
+    // YYYY-MM-DD 형식 체크
+    var match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (match) {
+        var d = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    // 그냥 Date 파싱 시도
+    var parsed = new Date(cleaned);
+    if (!isNaN(parsed.getTime())) {
+        parsed.setHours(0, 0, 0, 0);
+        return parsed;
+    }
+
+    return null;
+}
+
+/**
+ * 매일 자동 실행 트리거 설정 (00:10 KST)
+ * 이 함수를 한 번 수동 실행하면 트리거가 설치됩니다.
+ */
+function setupDailyStatusTrigger() {
+    // 기존 트리거 제거
+    removeDailyStatusTrigger();
+
+    // 새 트리거 설정 (매일 00:00~01:00 사이 실행)
+    ScriptApp.newTrigger('updateCustomerStatusByDate')
+        .timeBased()
+        .atHour(0)      // 00시
+        .nearMinute(10) // 약 10분
+        .everyDays(1)   // 매일
+        .inTimezone('Asia/Seoul')
+        .create();
+
+    console.log('✅ 상태 자동 갱신 트리거가 설치되었습니다. (매일 00:10 KST)');
+    return '트리거 설치 완료';
+}
+
+/**
+ * 상태 자동 갱신 트리거 제거
+ */
+function removeDailyStatusTrigger() {
+    var triggers = ScriptApp.getProjectTriggers();
+    var removed = 0;
+
+    triggers.forEach(function (trigger) {
+        if (trigger.getHandlerFunction() === 'updateCustomerStatusByDate') {
+            ScriptApp.deleteTrigger(trigger);
+            removed++;
+        }
+    });
+
+    if (removed > 0) {
+        console.log('🗑️ 기존 트리거 ' + removed + '개 제거됨');
+    }
+    return removed + '개 제거됨';
+}
+
+/**
+ * 수동 테스트용 함수 - 상태 갱신 결과 확인
+ */
+function testStatusUpdate() {
+    var result = updateCustomerStatusByDate();
+    console.log('테스트 결과:', JSON.stringify(result));
+
+    if (result.error) {
+        SpreadsheetApp.getUi().alert('오류 발생: ' + result.error);
+    } else {
+        SpreadsheetApp.getUi().alert(
+            '상태 자동 갱신 완료!\n' +
+            '- 확인: ' + result.checked + '건\n' +
+            '- 업데이트: ' + result.updated + '건'
+        );
+    }
+    return result;
 }
