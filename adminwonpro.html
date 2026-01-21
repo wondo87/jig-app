@@ -431,6 +431,41 @@
                 margin-bottom: 8px;
             }
 
+            /* [수정] 모바일에서 통계/운영비 버튼 숨김 */
+            .sidebar-stats-btn {
+                display: none !important;
+            }
+
+            /* [수정] 헤더 안전 영역 확보 (화면 잘림 방지) */
+            .main-header {
+                padding-top: calc(16px + env(safe-area-inset-top)) !important;
+                padding-bottom: 16px !important;
+                height: auto !important;
+                min-height: 60px;
+            }
+
+            /* [수정] 공정별 체크리스트 모바일 최적화 */
+            .checklist-table th,
+            .checklist-table td {
+                padding: 8px 4px !important;
+                /* 좌우 패딩 축소 */
+                font-size: 13px !important;
+                /* 폰트 축소 */
+            }
+
+            .checklist-table input[type="checkbox"] {
+                width: 20px !important;
+                height: 20px !important;
+                margin: 0 auto;
+                display: block;
+            }
+
+            .checklist-category-header {
+                font-size: 14px !important;
+                padding: 10px !important;
+            }
+
+
             .mobile-icon-btn {
                 width: 44px;
                 height: 44px;
