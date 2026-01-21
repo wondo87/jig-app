@@ -370,6 +370,67 @@
                 gap: 8px;
             }
 
+            /* 모바일에서 데스크톱용 사이드바 요소 숨기기 (빨간 박스 영역 제거) */
+            .sidebar-header button,
+            /* 데스크톱 버튼 숨김 */
+            .sidebar-search,
+            .date-filter,
+            .status-filter,
+            .dashboard-section {
+                display: none !important;
+            }
+
+            /* 모바일 사이드바 헤더 조정 */
+            .sidebar-header {
+                padding: 12px 16px;
+                display: none !important;
+                /* 헤더 텍스트도 모바일엔 불필요하면 숨김 */
+            }
+
+            /* 모바일 고객 리스트 아이템 스타일 (카드형, 버튼식) */
+            .customer-item {
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 16px;
+                margin: 0 16px 12px 16px;
+                /* 좌우 여백 및 하단 간격 */
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                /* 부드러운 그림자 */
+                border-bottom: none !important;
+                /* 기존 border 제거 */
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .customer-item:active {
+                transform: scale(0.98);
+                background-color: #f5f5f7;
+            }
+
+            .customer-info {
+                width: 100%;
+            }
+
+            .customer-name {
+                font-size: 16px;
+                font-weight: 600;
+                color: #1d1d1f;
+                margin-bottom: 2px;
+            }
+
+            .customer-phone,
+            .customer-address {
+                font-size: 14px;
+                color: #86868b;
+            }
+
+            /* 상태 뱃지 위치 조정 */
+            .customer-status {
+                align-self: flex-start;
+                margin-bottom: 8px;
+            }
+
             .mobile-icon-btn {
                 width: 44px;
                 height: 44px;
@@ -9788,14 +9849,25 @@
                 document.getElementById('prevPageBtn').disabled = currentPage <= 1;
                 document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
 
-                // 페이징된 목록 렌더링
-                renderCustomerItems(container, pageItems);
+                // [모바일] 최대 4개 제한
+                let itemsToRender = pageItems;
+                if (window.innerWidth <= 768) {
+                    itemsToRender = itemsToRender.slice(0, 4);
+                    paginationContainer.style.display = 'none'; // 페이징 숨김
+                }
+
+                renderCustomerItems(container, itemsToRender);
             } else {
                 // 페이징 UI 숨김
                 paginationContainer.style.display = 'none';
 
-                // 전체 목록 렌더링
-                renderCustomerItems(container, filteredCustomers);
+                // [모바일] 최대 4개 제한
+                let itemsToRender = filteredCustomers;
+                if (window.innerWidth <= 768) {
+                    itemsToRender = itemsToRender.slice(0, 4);
+                }
+
+                renderCustomerItems(container, itemsToRender);
             }
         }
 
