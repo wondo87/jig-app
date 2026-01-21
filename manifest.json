@@ -1,0 +1,17 @@
+{
+    "name": "DESIGN JIG Admin",
+    "short_name": "DESIGN JIG",
+    "description": "디자인지그 통합 관리 시스템",
+    "start_url": "./adminwonpro.html",
+    "display": "standalone",
+    "background_color": "#f5f5f7",
+    "theme_color": "#1d1d1f",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

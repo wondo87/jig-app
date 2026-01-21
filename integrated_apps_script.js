@@ -9,6 +9,21 @@
  */
 
 // ==========================================
+// [디버그용] DriveApp 권한 승인 함수 (실행 후 삭제 가능)
+// 1. 이 함수를 선택하고 '실행' 버튼을 클릭하세요.
+// 2. 권한 검토 팝업에서 승인을 완료하세요.
+// ==========================================
+function debugUseDriveApp() {
+    console.log("Drive 권한 확인 중...");
+    var files = DriveApp.getFiles();
+    if (files.hasNext()) {
+        console.log("Drive 접근 성공: " + files.next().getName());
+    } else {
+        console.log("Drive 접근 성공 (파일 없음)");
+    }
+}
+
+// ==========================================
 // 1. 설정 및 상수 정의
 // ==========================================
 
@@ -147,9 +162,12 @@ function doPost(e) {
         }
 
         // --- [라우팅 로직] ---
-        // 1. 원가관리표 업데이트 요청
+        // 1. 원가관리표 업데이트 요청 (DISABLED: Master DB는 읽기 전용)
         if (payload.action === 'updateCost') {
-            return handleCostUpdate(payload);
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '마스터 데이터베이스(원가관리표)는 이 API를 통해 수정할 수 없습니다. 시트에서 직접 수정하세요.'
+            })).setMimeType(ContentService.MimeType.JSON);
         }
 
         // 1.5. 샘플 견적서 처리
@@ -160,7 +178,10 @@ function doPost(e) {
             return handleDeleteSampleEstimate(payload);
         }
         if (payload.action === 'restoreCostDatabase') {
-            return handleRestoreCostDatabase(payload);
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '마스터 데이터베이스 복구 기능이 비활성화되었습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
         }
 
         // 1.6 정산 관리 대장 저장
@@ -178,9 +199,12 @@ function doPost(e) {
             return handleLogUserAction(payload);
         }
 
-        // 1.9 공정별 체크리스트 마스터 저장 [추가]
+        // 1.9 공정별 체크리스트 마스터 저장 (DISABLED: Master DB는 읽기 전용)
         if (payload.action === 'updateChecklistMaster' || payload.action === 'saveChecklistMaster') {
-            return handleChecklistUpdate(payload);
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '마스터 데이터베이스(체크리스트)는 이 API를 통해 수정할 수 없습니다. 시트에서 직접 수정하세요.'
+            })).setMimeType(ContentService.MimeType.JSON);
         }
 
         // 2. 노션 내보내기 요청 (반드시 CustomerSync보다 먼저 체크!)
@@ -284,6 +308,12 @@ function doGet(e) {
         }
         if (actionParam === 'getSampleEstimate') {
             return handleGetSampleEstimate(e.parameter.id);
+        }
+
+
+        // 2.6. Excel 내보내기 (읽기 전용)
+        if (actionParam === 'exportExcel') {
+            return handleExcelExport(e);
         }
 
         // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
@@ -2540,11 +2570,19 @@ function handleCostGet(e) {
 
 
 /**
- * 원가관리표 데이터베이스 업데이트 (POST)
- * Google Sheets에 원가관리표 데이터를 저장합니다.
- * 새 구조: A열=카테고리, B열=NO/MEMO, C열=구분, D열=품명, E열=상세내용, F열=단위, G열=수량, H열=단가, I열=합계
+ * [DISABLED] 원가관리표 데이터베이스 업데이트 (POST)
+ * 마스터 데이터 정합성을 위해 API를 통한 쓰기 권한이 제거되었습니다.
  */
 function handleCostUpdate(payload) {
+    return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'Master DB (Cost) is read-only via API.'
+    })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 원본 로직 보존 (필요시 백업 참고)
+/*
+function handleCostUpdate_ORIGINAL(payload) {
     try {
         var costData = payload.data || [];
         var memoData = payload.memos || {};
@@ -2641,12 +2679,10 @@ function handleCostUpdate(payload) {
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            error: err.toString(),
-            stack: err.stack
-        })).setMimeType(ContentService.MimeType.JSON);
+        // ...
     }
 }
+*/
 
 // ==========================================
 // 10. 샘플 견적서 기능
@@ -3756,11 +3792,19 @@ function getOrCreateLogSheet() {
 }
 
 /**
- * [추가] 공정별 체크리스트 마스터 데이터 업데이트
- * action: updateChecklistMaster
- * payload.data: [ {번호, 항목, 내용, 진행단계, 분류, 비고}, ... ]
+ * [DISABLED] 공정별 체크리스트 마스터 데이터 업데이트
+ * 마스터 데이터 정합성을 위해 API를 통한 쓰기 권한이 제거되었습니다.
  */
 function handleChecklistUpdate(payload) {
+    return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'Master DB (Checklist) is read-only via API.'
+    })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 원본 로직 보존
+/*
+function handleChecklistUpdate_ORIGINAL(payload) {
     try {
         Logger.log('[Checklist Update] Started');
         Logger.log('Admin ID: ' + (payload.adminId || 'unknown'));
@@ -3819,11 +3863,188 @@ function handleChecklistUpdate(payload) {
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (e) {
-        Logger.log('[Checklist Update Error] ' + e.toString());
+        // ...
+    }
+}
+*/
+
+// ==========================================
+// 15. Excel Export (Read-Only Report)
+// ==========================================
+
+/**
+ * Excel 데이터 내보내기 핸들러
+ * Google Sheets 데이터를 읽어 Excel 형식으로 반환
+ * @param {Object} e - 요청 파라미터
+ */
+function handleExcelExport(e) {
+    try {
+        var customerId = e.parameter.customerId; // 특정 고객 또는 'all'
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var customerSheet = spreadsheet.getSheetByName('고객관리_견적서');
+
+        if (!customerSheet || customerSheet.getLastRow() < 2) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '고객 데이터가 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 고객 데이터 로드
+        var customerData = customerSheet.getDataRange().getValues();
+        var customers = [];
+
+        for (var i = 1; i < customerData.length; i++) {
+            var row = customerData[i];
+            if (!row[0]) continue;
+
+            var customer = buildCustomerFromRow(row);
+
+            // JSON 데이터가 있으면 파싱
+            if (row[17]) {
+                try {
+                    var jsonData = JSON.parse(row[17]);
+                    customer = Object.assign(customer, jsonData);
+                } catch (err) { }
+            }
+
+            // 특정 고객만 필터링
+            if (customerId && customerId !== 'all' && customer.customerId !== customerId) {
+                continue;
+            }
+
+            customers.push(customer);
+        }
+
+        if (customers.length === 0) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                error: '해당 고객을 찾을 수 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 임시 스프레드시트 생성
+        var today = Utilities.formatDate(new Date(), 'GMT+9', 'yyyyMMdd');
+        var tempSpreadsheet = SpreadsheetApp.create('디자인지그_고객데이터_' + today);
+        var tempFile = DriveApp.getFileById(tempSpreadsheet.getId());
+
+        try {
+            // 기본 시트 삭제 (나중에 실제 시트 추가 후)
+            var sheets = tempSpreadsheet.getSheets();
+
+            // 각 고객별 시트 생성
+            customers.forEach(function (cust, idx) {
+                // 시트 이름 생성 (최대 31자, 특수문자 제거)
+                var sheetName = ((cust.clientName || '고객') + '_' + (cust.projectName || cust.customerId || ''))
+                    .replace(/[\\/:*?\[\]]/g, '')
+                    .substring(0, 31) || ('고객' + (idx + 1));
+
+                var sheet = tempSpreadsheet.insertSheet(sheetName);
+                var rowNum = 1;
+
+                // 1. 고객 기본 정보
+                sheet.getRange(rowNum, 1).setValue('== 고객 기본 정보 ==').setFontWeight('bold');
+                rowNum++;
+                sheet.getRange(rowNum, 1, 9, 2).setValues([
+                    ['고객ID', cust.customerId || ''],
+                    ['고객명', cust.clientName || ''],
+                    ['연락처', cust.clientPhone || ''],
+                    ['현장명', cust.projectName || ''],
+                    ['현장주소', cust.siteAddress || ''],
+                    ['계약일', cust.contractDate || ''],
+                    ['공사기간', cust.constructionPeriod || ''],
+                    ['상태', cust.status || ''],
+                    ['담당자', cust.manager || '']
+                ]);
+                rowNum += 10;
+
+                // 2. 스케줄 정보
+                var schedules = cust.schedules || [];
+                if (schedules.length > 0) {
+                    sheet.getRange(rowNum, 1).setValue('== 공사 스케줄 ==').setFontWeight('bold');
+                    rowNum++;
+                    sheet.getRange(rowNum, 1, 1, 5).setValues([['공정', '세부공정', '시작일', '종료일', '상태']]).setFontWeight('bold');
+                    rowNum++;
+                    schedules.forEach(function (s) {
+                        sheet.getRange(rowNum, 1, 1, 5).setValues([[
+                            s.category || '',
+                            s.name || s.stepName || '',
+                            s.start || s.startDate || '',
+                            s.end || s.endDate || '',
+                            s.status || ''
+                        ]]);
+                        rowNum++;
+                    });
+                    rowNum++;
+                }
+
+                // 3. A/S 리스트
+                var asList = cust.as_list || [];
+                if (asList.length > 0) {
+                    sheet.getRange(rowNum, 1).setValue('== A/S 관리 기록 ==').setFontWeight('bold');
+                    rowNum++;
+                    sheet.getRange(rowNum, 1, 1, 5).setValues([['카테고리', '브랜드', '품목', '보증기간', '비고']]).setFontWeight('bold');
+                    rowNum++;
+                    asList.forEach(function (a) {
+                        sheet.getRange(rowNum, 1, 1, 5).setValues([[
+                            a.category || '',
+                            a.brand || '',
+                            a.item || '',
+                            a.warranty || '',
+                            a.note || ''
+                        ]]);
+                        rowNum++;
+                    });
+                }
+
+                // 컬럼 너비 자동 조정
+                sheet.autoResizeColumns(1, 5);
+            });
+
+            // 기본 빈 시트 삭제
+            var allSheets = tempSpreadsheet.getSheets();
+            if (allSheets.length > 1 && allSheets[0].getName() === 'Sheet1') {
+                tempSpreadsheet.deleteSheet(allSheets[0]);
+            }
+
+            // xlsx로 변환 (export URL 사용)
+            var exportUrl = 'https://docs.google.com/spreadsheets/d/' + tempSpreadsheet.getId() + '/export?format=xlsx';
+
+            // 다운로드 URL 반환 (직접 다운로드용)
+            // 또는 base64로 반환
+            var xlsxBlob = UrlFetchApp.fetch(exportUrl, {
+                headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() }
+            }).getBlob();
+
+            var base64Data = Utilities.base64Encode(xlsxBlob.getBytes());
+            var fileName = 'designjig_고객데이터_' + today + '.xlsx';
+
+            // 임시 파일 삭제
+            tempFile.setTrashed(true);
+
+            return ContentService.createTextOutput(JSON.stringify({
+                result: 'success', // User request strict key
+                success: true,     // Backward compatibility
+                fileName: fileName,
+                customerCount: customers.length,
+                mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                data: base64Data
+            })).setMimeType(ContentService.MimeType.JSON);
+
+        } catch (innerErr) {
+            // 에러 시 임시 파일 정리
+            try { tempFile.setTrashed(true); } catch (e) { }
+            throw innerErr;
+        }
+
+    } catch (err) {
         return ContentService.createTextOutput(JSON.stringify({
             success: false,
-            result: 'error',
-            error: e.toString()
+            error: err.toString(),
+            stack: err.stack
         })).setMimeType(ContentService.MimeType.JSON);
     }
 }
+
+
+

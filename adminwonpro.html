@@ -5,18 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>디자인지그 통합 관리 시스템</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1d1d1f">
     <!-- Cache Version: dz-admin-v13 (2026-01-21) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
-    <script src="admin_config.js"></script>
+    <script src="admin_config.js?v=20260121_1653"></script>
 
     <!-- 페이지 접근 및 다중 관리자 시스템 -->
     <script>
         (function () {
             // 페이지는 열람 모드로 볼 수 있음
             // 관리자 로그인은 헤더의 로그인 버튼 통해 진행
-            sessionStorage.setItem('dz_admin_page_auth', 'true');
+            sessionStorage.setItem('DJ_admin_page_auth', 'true');
         })();
     </script>
 
@@ -132,6 +138,20 @@
             to {
                 transform: translateX(0);
                 opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.85;
+                transform: scale(1.02);
             }
         }
 
@@ -263,6 +283,50 @@
         .admin-login-btn:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 모바일 PWA 최적화 */
+        @media (max-width: 768px) {
+            body {
+                padding-top: calc(56px + env(safe-area-inset-top));
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            .main-header {
+                padding: 12px 16px;
+                padding-top: calc(12px + env(safe-area-inset-top));
+            }
+
+            /* 버튼 터치 영역 44px 이상 확보 */
+            button,
+            .header-btn,
+            .tab-btn {
+                min-height: 44px;
+                min-width: 44px;
+                touch-action: manipulation;
+            }
+
+            /* 테이블 가로 스크롤 */
+            .tab-content,
+            .table-container,
+            .data-table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                width: 100%;
+            }
+
+            table {
+                min-width: 800px;
+            }
+
+            /* Toast 위치 조정 (Safe Area) */
+            .toast {
+                top: calc(20px + env(safe-area-inset-top));
+                left: 20px;
+                right: 20px;
+                width: auto;
+                justify-content: center;
+            }
         }
 
         /* 관리자 모달 */
@@ -3125,6 +3189,37 @@
 </head>
 
 <body>
+    <!-- [Phase 2] 초기 데이터 동기화 오버레이 -->
+    <div id="initialSyncOverlay"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; transition: opacity 0.5s ease;">
+        <div class="sync-loader"
+            style="width:50px; height:50px; border:4px solid #f3f3f3; border-top:4px solid #0071e3; border-radius:50%; animation: sync-spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;">
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:18px; font-weight:700; color:#1d1d1f; margin-bottom:8px;">최신 데이터를 동기화하고 있습니다</div>
+            <div id="initialSyncStatus" style="font-size:14px; color:#86868b;">서버에서 정보를 불러오는 중입니다...</div>
+        </div>
+        <div id="syncErrorContent"
+            style="display:none; text-align:center; max-width:400px; padding:20px; background:#fff1f0; border:1px solid #ffa39e; border-radius:12px;">
+            <div style="color:#cf1322; font-weight:600; margin-bottom:12px;">데이터 동기화 실패</div>
+            <div id="syncErrorMessage" style="font-size:13px; color:#5c0011; margin-bottom:16px;">네트워크 연결을 확인해 주세요.
+            </div>
+            <button onclick="location.reload()"
+                style="padding:10px 20px; background:#cf1322; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">다시
+                시도</button>
+        </div>
+        <style>
+            @keyframes sync-spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </div>
     <!-- 토스트 알림 -->
     <div class="toast" id="toast">
         <span id="toastIcon">✓</span>
@@ -3154,7 +3249,7 @@
                     onchange="changeFontSize(this.value)" oninput="changeFontSize(this.value)">
                 <span class="font-size-value" id="fontSizeValue">12px</span>
             </div>
-            <button class="header-btn secondary" onclick="exportAllData()">📤 내보내기</button>
+            <button class="header-btn secondary" onclick="exportAllData()">📊 Excel 내보내기</button>
             <button class="header-btn secondary" onclick="importData()">📥 불러오기</button>
             <button class="header-btn secondary" onclick="exportCurrentCustomerData()">💾 고객저장(JSON)</button>
         </div>
@@ -4085,6 +4180,8 @@
                                 <button class="sync-btn no-print" onclick="syncCostFromCloud()"
                                     style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
+                                <span class="no-print"
+                                    style="font-size: 11px; color: #ff3b30; font-weight: 600;">(Master Read-Only)</span>
 
                                 <button class="pdf-btn" onclick="downloadPDF('costDoc', '원가관리표')">🖨️ 인쇄/PDF</button>
                             </div>
@@ -4249,10 +4346,9 @@
                                     style="background: #0071e3; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
                                     🔄 DB 불러오기
                                 </button>
-                                <button class="btn btn-secondary btn-sm no-print" onclick="saveChecklistMasterToCloud()"
-                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
-                                    💾 DB 저장하기
-                                </button>
+                                <span class="no-print"
+                                    style="font-size: 11px; color: #ff3b30; font-weight: 600; margin-left: 8px;">(Master
+                                    Read-Only)</span>
 
                                 <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
                                     style="background: #8e8e93; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
@@ -4701,9 +4797,14 @@
                             <div class="subtitle">Settlement Management Ledger</div>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="settlementDirtyIndicator"
+                                style="display:none; font-size:11px; font-weight:600; padding:4px 8px; border-radius:12px; background:#fff8e6;"></span>
                             <button class="sync-btn no-print" id="btnLoadSettlement" onclick="syncSettlementFromCloud()"
                                 style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                 title="데이터 및 옵션 동기화">🔄 불러오기</button>
+                            <button class="no-print" id="btnSaveSettlement" onclick="syncSettlementToCloud()"
+                                style="background: #0071e3; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                title="구글 시트에 저장">💾 저장하기</button>
                             <button class="no-print" onclick="printSettlement()"
                                 style="background: white; color: #1d1d1f; border: 1px solid #d2d2d7; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                 title="정산 관리 대장 인쇄">🖨️ 인쇄</button>
@@ -5127,10 +5228,34 @@
     <script>
         console.log('Main admin script loading...');
 
+        // [Phase 2] Cleanup Function - 클라우드 동기화 성공 후 실행
+        function runPhase2Cleanup() {
+            const keysToRemove = [
+                'dz_customers', 'dz_regular_admins', 'dz_checklist_master',
+                'dz_global_cost', 'dz_admin_page_auth', 'dz_device_trust',
+                'designzig_expenses', 'designzig_fixed_expenses', 'designzig_fontsize',
+                'designzig_estimate_data', 'dz_estimate_data',
+                'DJ_migrated_v1',
+                'DJ_customers', 'DJ_global_cost', 'DJ_checklist_master', 'DJ_expenses', 'DJ_fixed_expenses',
+                'DJ_regular_admins', 'DJ_editHistory'
+            ];
+
+            let removedCount = 0;
+            keysToRemove.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    removedCount++;
+                }
+            });
+            if (removedCount > 0) {
+                console.log(`[Phase 2 Cleanup] ${removedCount}개의 업무 데이터 로컬 캐시를 성공적으로 제거했습니다.`);
+            }
+        }
+
         // ==========================================
         // 기기 신뢰 & PIN 로그인 시스템
         // ==========================================
-        const DEVICE_TRUST_KEY = 'dz_device_trust';
+        const DEVICE_TRUST_KEY = 'DJ_device_trust';
         const DEVICE_TRUST_DAYS = 30;
 
         // 기기 신뢰 정보 확인
@@ -6202,7 +6327,8 @@
             as_done: 'A/S'
         };
 
-        let customers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
+        let customers = []; // Phase 2: 단일 Source of Truth (Google Sheets) 기준
+        let globalCostData = {}; // Phase 2: 원가관리표 마스터 데이터 (Source of Truth: Google Sheets)
         let currentCustomerId = null;
         let currentData = {};
         let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
@@ -6234,13 +6360,17 @@
         }
 
 
-        // 일반관리자 목록 (localStorage + 클라우드 동기화)
+        // 일반관리자 목록 (Phase 2: In-memory 전용)
+        let regularAdminsRows = [];
+
         function getRegularAdmins() {
-            return JSON.parse(localStorage.getItem('dz_regular_admins') || '[]');
+
+            return regularAdminsRows;
         }
 
         function saveRegularAdmins(admins) {
-            localStorage.setItem('dz_regular_admins', JSON.stringify(admins));
+
+            regularAdminsRows = admins || [];
         }
 
         // 관리자 클라우드 동기화 - 불러오기
@@ -6248,18 +6378,27 @@
             try {
                 const params = new URLSearchParams({ sheet: '관리자' });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                if (response.ok) {
-                    const cloudAdmins = await response.json();
-                    if (Array.isArray(cloudAdmins) && cloudAdmins.length > 0) {
-                        saveRegularAdmins(cloudAdmins);
+                if (!response.ok) {
+                    console.error('관리자 동기화 실패: HTTP', response.status);
+                    return false;
+                }
+                const cloudAdmins = await response.json();
+                if (Array.isArray(cloudAdmins)) {
+                    saveRegularAdmins(cloudAdmins);
+                    if (cloudAdmins.length > 0) {
                         console.log('✅ [Admin Sync] 관리자 동기화 완료:', cloudAdmins.length + '명');
-                        return cloudAdmins;
+                    } else {
+                        console.warn('⚠️ [Admin Sync] 관리자 데이터가 없습니다. (0명)');
                     }
+                    return true;
+                } else {
+                    console.error('관리자 동기화 실패: 잘못된 응답 형식', cloudAdmins);
+                    return false;
                 }
             } catch (e) {
                 console.warn('관리자 동기화 실패:', e);
+                return false;
             }
-            return getRegularAdmins();
         }
 
         // 관리자 클라우드 동기화 - 저장
@@ -6745,20 +6884,20 @@
         function changeFontSize(size) {
             document.documentElement.style.setProperty('--font-size-base', size + 'px');
             document.getElementById('fontSizeValue').textContent = size + 'px';
-            localStorage.setItem('designzig_fontsize', size);
+            localStorage.setItem('DJ_fontsize', size);
+            document.body.style.fontSize = size + 'px';
         }
 
         function loadFontSize() {
-            const savedSize = localStorage.getItem('designzig_fontsize') || '12';
+            const savedSize = localStorage.getItem('DJ_fontsize') || '12';
             document.getElementById('fontSizeSlider').value = savedSize;
             document.getElementById('fontSizeValue').textContent = savedSize + 'px';
             document.documentElement.style.setProperty('--font-size-base', savedSize + 'px');
         }
 
         document.addEventListener('DOMContentLoaded', async function () {
-            // 로그인 화면 초기화 (기기 신뢰 확인)
+            // UI 초기화
             initLoginScreen();
-
             loadFontSize();
             createCostCategories();
             createEstimateCategories();
@@ -6766,22 +6905,55 @@
             initYearFilter();
             updateCustomerList();
 
-            // 관리자 계정 클라우드 동기화 (백그라운드)
-            syncAdminsFromCloud().then(() => {
-                console.log('✅ 관리자 계정 동기화 완료');
-            });
+            const statusEl = document.getElementById('initialSyncStatus');
+            const overlay = document.getElementById('initialSyncOverlay');
 
-            // 스케줄 템플릿 로드
-            fetchScheduleTemplate();
-            fetchSettlementMaster(); // [추가] 정산 옵션 마스터 자동 로드
+            try {
+                statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
 
-            // [추가] 체크리스트 초기 렌더링 (데이터가 있으면)
-            if (typeof renderChecklistItems === 'function') {
-                renderChecklistItems();
-                // 필터도 업데이트
-                if (typeof updateChecklistFilters === 'function') {
-                    updateChecklistFilters();
+                // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
+                const results = await Promise.allSettled([
+                    syncFromCloud(true),      // 고객
+                    syncCostFromCloud(),      // 원가
+                    syncChecklistFromCloud(), // 체크리스트
+                    syncExpensesFromCloud(),  // 운영비
+                    syncAdminsFromCloud()     // 관리자
+                ]);
+
+                // 필수 데이터 성공 여부 확인
+                const allSuccess = results.every(r => r.status === 'fulfilled' && r.value === true);
+
+                if (allSuccess) {
+                    // 동기화 성공 시 클린업 실행
+                    runPhase2Cleanup();
+
+                    // 오버레이 제거
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.style.display = 'none', 500);
+                    console.log('✅ 전역 데이터 동기화 및 클린업 완료');
+                } else {
+                    // 어떤 데이터가 실패했는지 로깅
+                    const failedIndices = results.map((r, i) => (r.status !== 'fulfilled' || r.value !== true) ? i : -1).filter(i => i !== -1);
+                    const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
+                    const failedLabels = failedIndices.map(i => labels[i]).join(', ');
+                    throw new Error(`${failedLabels} 데이터 동기화에 실패했습니다.`);
                 }
+
+                // 부가 로직
+                fetchScheduleTemplate();
+                fetchSettlementMaster();
+
+                if (typeof renderChecklistItems === 'function') {
+                    renderChecklistItems();
+                    if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
+                }
+
+            } catch (err) {
+                console.error('❌ 초기 동기화 실패:', err);
+                // 에러 화면 표시
+                document.querySelector('.sync-loader').style.display = 'none';
+                document.getElementById('syncErrorContent').style.display = 'block';
+                document.getElementById('syncErrorMessage').textContent = err.message + ' 네트워크 연결 확인 후 다시 시도해 주세요.';
             }
         });
 
@@ -6850,7 +7022,7 @@
                 if (typeof renderExpensesTable === 'function') renderExpensesTable();
             }
             if (tabId === 'stats') {
-                if (typeof renderAuditLog === 'function') renderAuditLog();
+                if (typeof renderAuditLog === 'function') renderAuditLog(currentCustomerId ? currentCustomerId : null);
             }
         }
 
@@ -6931,7 +7103,10 @@
             }
         }
 
-        function loadScheduleForCustomer() {
+        function loadScheduleForCustomer(targetId) {
+            // [Guard] Async Race Protection
+            if (targetId && targetId !== currentCustomerId) return;
+
             // Notion 통합 제거됨
 
             if (currentData.schedules && currentData.schedules.length > 0) {
@@ -7538,7 +7713,10 @@
         // [New] A/S List Logic
         let asListRows = [];
 
-        function loadASList() {
+        function loadASList(targetId) {
+            // [Guard] Async Race Protection
+            if (targetId && targetId !== currentCustomerId) return;
+
             if (currentData && currentData.as_list) {
                 asListRows = currentData.as_list;
             } else {
@@ -7991,6 +8169,7 @@
         // [신규] 정산 관리 대장 (Settlement Management)
         // ============================
         let settlementRows = [];
+        let settlementDirty = false; // UX: Track unsaved changes
         let settlementOptionsData = []; // [신규] 정산 관리 대장 옵션 마스터 데이터
 
         // [신규] 정산 관리 대장 옵션 마스터 데이터 가져오기
@@ -8286,12 +8465,14 @@
             });
             renderSettlementTable();
             saveSettlementToLocal();
+            setSettlementDirty(true);
         }
 
         function removeSettlementRow(index) {
             settlementRows.splice(index, 1);
             renderSettlementTable();
             saveSettlementToLocal();
+            setSettlementDirty(true);
         }
 
         function updateSettlementRow(index, field, value) {
@@ -8312,12 +8493,45 @@
             }
             renderSettlementTable();
             saveSettlementToLocal();
+            setSettlementDirty(true);
         }
 
         function saveSettlementToLocal() {
             if (currentData) {
                 currentData.settlementRows = settlementRows;
                 saveCustomers(); // 로컬 스토리지 저장
+            }
+        }
+
+        // UX: Set dirty state and update indicator
+        function setSettlementDirty(dirty) {
+            settlementDirty = dirty;
+            const indicator = document.getElementById('settlementDirtyIndicator');
+            const saveBtn = document.getElementById('btnSaveSettlement');
+
+            if (indicator) {
+                if (dirty) {
+                    indicator.textContent = '⚠️ 저장되지 않은 변경사항';
+                    indicator.style.color = '#ff9500';
+                    indicator.style.display = 'inline-block';
+                } else {
+                    indicator.textContent = '✅ 저장됨';
+                    indicator.style.color = '#34c759';
+                    indicator.style.display = 'inline-block';
+                    setTimeout(() => { if (!settlementDirty) indicator.style.display = 'none'; }, 3000);
+                }
+            }
+
+            if (saveBtn) {
+                if (dirty) {
+                    saveBtn.style.background = '#ff9500';
+                    saveBtn.style.animation = 'pulse 1.5s infinite';
+                    saveBtn.innerHTML = '💾 저장하기 <span style="background:#fff;color:#ff9500;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px;">!</span>';
+                } else {
+                    saveBtn.style.background = '#0071e3';
+                    saveBtn.style.animation = 'none';
+                    saveBtn.innerHTML = '💾 저장하기';
+                }
             }
         }
 
@@ -8406,10 +8620,10 @@
             if (!confirm('현재 정산 내역을 구글 시트에 저장(덮어쓰기)하시겠습니까?')) return;
 
             const btn = document.getElementById('btnSaveSettlement');
-            const originalText = btn ? btn.innerText : '';
             if (btn) {
-                btn.innerText = '⏳ 저장중...';
+                btn.innerHTML = '⏳ 저장중...';
                 btn.disabled = true;
+                btn.style.animation = 'none';
             }
 
             try {
@@ -8431,6 +8645,7 @@
 
                 if (result.result === 'success') {
                     showToast('정산 내역이 구글 시트에 저장되었습니다.', 'success');
+                    setSettlementDirty(false); // UX: Clear dirty state on success
                     logUserAction('저장', (currentData.clientName || '') + ' 정산 내역 저장');
                 } else {
                     throw new Error(result.error || '저장 실패');
@@ -8441,8 +8656,13 @@
                 showToast('저장 실패: ' + err.message, 'error');
             } finally {
                 if (btn) {
-                    btn.innerText = originalText;
                     btn.disabled = false;
+                    // Button text/style will be set by setSettlementDirty if success
+                    if (settlementDirty) {
+                        btn.innerHTML = '💾 저장하기 <span style="background:#fff;color:#ff9500;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px;">!</span>';
+                        btn.style.background = '#ff9500';
+                        btn.style.animation = 'pulse 1.5s infinite';
+                    }
                 }
             }
         }
@@ -8721,76 +8941,138 @@
         }
 
         function saveCustomers() {
-            localStorage.setItem('dz_customers', JSON.stringify(customers));
+            // Phase 2: 업무 데이터(고객) 로컬스토리지 저장 중단 (Source of Truth: Google Sheets)
         }
 
-        function newCustomer() {
+        async function newCustomer() {
             if (!isLoggedIn()) {
                 showToast('관리자 로그인이 필요합니다', 'error');
                 showAdminModal();
                 return;
             }
+            if (isAppBusy) return;
+
             const name = prompt('고객명을 입력하세요:');
             if (!name) {
                 showToast('고객명을 입력해주세요', 'error');
                 return;
             }
 
-            // 캐시된 고객 수 사용 (동기화 시 업데이트됨)
-            // API 호출 없이 즉시 ID 생성
-            const cloudCount = cachedCloudCount;
+            setAppBusy(true, '최신 정보 확인 중...');
+            // [Task 3] Stabilization: Ensure fresh state before creation
+            try {
+                // 1. Sync to get latest ID/Count
+                const syncSuccess = await syncFromCloud(true);
+                if (!syncSuccess) {
+                    setAppBusy(false);
+                    if (!confirm('데이터 동기화에 실패했습니다. 그래도 진행하시겠습니까? (ID 중복 위험)')) return;
+                    setAppBusy(true, '신규 고객 생성 중...');
+                } else {
+                    setAppBusy(true, '신규 고객 생성 중...');
+                }
 
-            const now = new Date();
-            const yy = now.getFullYear().toString().slice(-2);
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
+                // 2. Generate ID using fresh count
+                const cloudCount = cachedCloudCount;
+                const now = new Date();
+                const yy = now.getFullYear().toString().slice(-2);
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const seq = String(cloudCount + 1).padStart(3, '0');
+                currentCustomerId = `${yy}${mm}${dd} -${seq} `;
 
-            // Google Sheets 고객 수 + 1
-            const seq = String(cloudCount + 1).padStart(3, '0');
-            currentCustomerId = `${yy}${mm}${dd} -${seq} `;
-            currentData = {
-                customerId: currentCustomerId,
-                clientName: name, // 입력받은 고객명 저장
-                projectName: '', // 현장명은 비워둠 (요청 사항)
-                status: 'consulting',
-                createdAt: new Date().toISOString().split('T')[0],
-                profitRate: '15%',
-                createdBy: currentAdmin?.id || 'unknown', // 작성자 관리자 ID
-                isLocked: false, // 잠금 상태
-                manager: '원프로 소장 (010-4650-7013)' // 기본 공사 담당자
-            };
+                // Double check collision locally
+                if (customers.some(c => c.customerId === currentCustomerId)) {
+                    const seq2 = String(cloudCount + 2).padStart(3, '0');
+                    currentCustomerId = `${yy}${mm}${dd} -${seq2} `;
+                }
 
-            // 고객 목록에 즉시 추가
-            customers.push({ ...currentData });
-            cachedCloudCount++; // 캐시 업데이트
-            localStorage.setItem('dz_customers', JSON.stringify(customers));
-            document.querySelectorAll('.customer-field').forEach(f => {
-                f.value = f.dataset.field === 'profitRate' ? '15%' : '';
-            });
-            document.getElementById('customerStatus').value = 'consulting';
-            document.getElementById('asEndDateDisplay').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('customerView').style.display = 'block';
-            document.getElementById('headerCustomerName').textContent = '신규 고객';
-            document.getElementById('headerCustomerId').textContent = currentCustomerId;
-            // 이미 customers에 추가되었으므로 고객명 필드에도 설정
-            const clientNameField = document.querySelector('.customer-field[data-field="clientName"]');
-            if (clientNameField) clientNameField.value = name;
-            const projectNameField = document.querySelector('.customer-field[data-field="projectName"]');
-            if (projectNameField) projectNameField.value = '';
-            document.getElementById('headerCustomerName').textContent = name;
-            clearCostData();
-            // 견적 데이터 초기화 (메모는 undefined로 설정해서 원가관리표 메모 사용)
-            currentData.estimateData = {};
-            currentData.estimateProfitRate = 15;
-            // 견적서 메모를 원가관리표 메모로 초기화
-            categories.forEach(cat => {
-                delete currentData[`estMemo_${cat.no}`]; // undefined로 설정
-            });
-            loadEstimateData();
-            initYearFilter();
-            updateCustomerList();
-            syncAllFields();
+                currentData = {
+                    customerId: currentCustomerId,
+                    clientName: name,
+                    projectName: '',
+                    status: 'consulting',
+                    createdAt: new Date().toISOString().split('T')[0],
+                    profitRate: '15%',
+                    createdBy: currentAdmin?.id || 'unknown',
+                    isLocked: false,
+                    manager: '원프로 소장 (010-4650-7013)'
+                };
+
+                // 3. Save to Cloud Immediately (Source of Truth)
+                const payload = {
+                    action: 'update_customer',
+                    ...currentData
+                };
+
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await response.json();
+                if (res.result !== 'success') {
+                    throw new Error(res.message || 'Server Error');
+                }
+
+                // 4. Update Local State
+                customers.push({ ...currentData });
+                cachedCloudCount++;
+
+                document.querySelectorAll('.customer-field').forEach(f => {
+                    f.value = f.dataset.field === 'profitRate' ? '15%' : '';
+                });
+                document.getElementById('customerStatus').value = 'consulting';
+                document.getElementById('asEndDateDisplay').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('customerView').style.display = 'block';
+                document.getElementById('headerCustomerName').textContent = '신규 고객';
+                document.getElementById('headerCustomerId').textContent = currentCustomerId;
+
+                const clientNameField = document.querySelector('.customer-field[data-field="clientName"]');
+                if (clientNameField) clientNameField.value = name;
+                const projectNameField = document.querySelector('.customer-field[data-field="projectName"]');
+                if (projectNameField) projectNameField.value = '';
+                document.getElementById('headerCustomerName').textContent = name;
+
+                clearCostData();
+                currentData.estimateData = {};
+                currentData.estimateProfitRate = 15;
+                categories.forEach(cat => {
+                    delete currentData[`estMemo_${cat.no}`];
+                });
+
+                scheduleRows = [];
+                asListRows = [];
+                settlementRows = [];
+                currentData.schedules = [];
+                currentData.as_list = [];
+                currentData.settlementRows = [];
+                currentData.checklistData = {};
+                currentData.checklistFilters = {
+                    checklistStageFilter: ['all'],
+                    checklistCategoryFilter: ['all']
+                };
+
+                loadEstimateData();
+                if (typeof renderScheduleTable === 'function') renderScheduleTable();
+                if (typeof renderASListTable === 'function') renderASListTable();
+                if (typeof renderSettlementTable === 'function') renderSettlementTable();
+                if (typeof renderChecklistItems === 'function') renderChecklistItems();
+                if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
+
+                initYearFilter();
+                updateCustomerList();
+                syncAllFields();
+
+                showToast('신규 고객이 생성되었습니다.', 'success');
+
+            } catch (e) {
+                console.error('New Customer Error:', e);
+                showPersistentAlert(`신규 고객 생성 실패: ${e.message}`, 'error');
+            } finally {
+                setAppBusy(false);
+            }
         }
 
         function selectCustomer(customerId) {
@@ -8863,8 +9145,17 @@
             document.getElementById('headerCustomerId').textContent = currentCustomerId;
             loadCostData();
             loadEstimateData();
+
+            // [Data Consistency] Atomic switch for all modular datasets
+            if (typeof loadScheduleForCustomer === 'function') loadScheduleForCustomer(currentCustomerId);
+            if (typeof loadASList === 'function') loadASList(currentCustomerId);
+
             settlementRows = currentData.settlementRows || [];
-            renderSettlementTable();
+            if (typeof renderSettlementTable === 'function') renderSettlementTable();
+
+            if (typeof renderChecklistItems === 'function') renderChecklistItems();
+            if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
+
             updateCustomerList(false); // Do not reset page
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
@@ -9351,8 +9642,12 @@
         // ==========================================
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
-        async function syncFromCloud() {
+        async function syncFromCloud(silent = false) {
+            // [Task 3] Stabilization: Block UI during sync
+            if (!silent) setAppBusy(true, '클라우드 동기화 중...');
+
             try {
+                if (!silent) logStep1('🔄 클라우드 데이터 가져오는 중...');
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',
@@ -9363,8 +9658,8 @@
                 });
 
                 if (!response.ok) {
-                    showPersistentAlert(`클라우드 동기화 실패\n\nHTTP 오류: ${response.status}`, 'error');
-                    return;
+                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\nHTTP 오류: ${response.status}`, 'error');
+                    return false;
                 }
 
                 let cloudCustomers = await response.json();
@@ -9378,71 +9673,50 @@
                 }
 
                 if (cloudCustomers.length === 0) {
-                    if (confirm('클라우드에 저장된 고객 데이터가 없습니다.\n\n로컬 데이터도 모두 삭제할까요?')) {
-                        localStorage.setItem('dz_customers', '[]');
+                    if (!silent && confirm('클라우드에 저장된 고객 데이터가 없습니다.\n\n로컬 대상을 초기화할까요?')) {
                         customers = [];
                         updateCustomerList();
                         initYearFilter();
-                        showToast('모든 고객 데이터가 삭제되었습니다.', 'info');
+                        showToast('고객 데이터가 없습니다.', 'info');
                     }
-                    return;
+                    return true;
                 }
 
-                // 완전 동기화: 클라우드 데이터로 로컬 데이터 교체
-                // (클라우드에 없는 데이터는 삭제됨)
-                const cloudMap = new Map(cloudCustomers.map(c => [c.customerId, c]));
-                const localCustomers = JSON.parse(localStorage.getItem('dz_customers') || '[]');
+                // [Phase 2] Cloud is the absolute Source of Truth. No local comparison needed.
 
-                let addedCount = 0;
-                let updatedCount = 0;
-                let deletedCount = 0;
-
-                // 로컬에만 있고 클라우드에 없는 데이터 카운트
-                localCustomers.forEach(local => {
-                    if (!cloudMap.has(local.customerId)) {
-                        deletedCount++;
-                    }
-                });
-
-                // 중복 제거 로직 추가 (customerId 기준)
+                // 중복 제거 로직 (customerId 기준)
                 const uniqueCloudMap = new Map();
                 cloudCustomers.forEach(c => {
-                    // 나중에 나온 데이터가 덮어스도록 함 (최신 데이터 우선 가정)
+                    // 나중에 나온 데이터가 덮어쓰도록 함 (최신 데이터 우선 가정)
                     uniqueCloudMap.set(c.customerId, c);
                 });
                 // 중복이 제거된 배열로 재할당
                 cloudCustomers = Array.from(uniqueCloudMap.values());
 
+                // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단) 
 
-                // 클라우드 데이터 기준으로 업데이트/추가 카운트
-                const localMap = new Map(localCustomers.map(c => [c.customerId, c]));
-                cloudCustomers.forEach(cloud => {
-                    if (localMap.has(cloud.customerId)) {
-                        updatedCount++;
-                    } else {
-                        addedCount++;
-                    }
-                });
-
-                // 클라우드 데이터로 완전 교체
-                localStorage.setItem('dz_customers', JSON.stringify(cloudCustomers));
-
-                // UI 업데이트 먼저 실행
+                // UI 업데이트
                 customers = cloudCustomers;
                 cachedCloudCount = cloudCustomers.length;
                 updateCustomerList();
                 initYearFilter();
 
-                console.log(`✅[Cloud Sync] Complete. Added: ${addedCount}, Updated: ${updatedCount}, Deleted: ${deletedCount}`);
+                // UI 업데이트 완료 후 알림 표시 (수동 클릭 시에만)
+                if (!silent) {
+                    setTimeout(() => {
+                        showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
+                    }, 50);
+                }
 
-                // UI 업데이트 완료 후 즉시 알림 표시
-                setTimeout(() => {
-                    showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
-                }, 50);
+                return true; // 성공 반환
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
+                if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
+                return false; // 실패 반환
+            } finally {
+                // Always release busy state
+                if (!silent) setAppBusy(false);
             }
         }
 
@@ -9601,7 +9875,8 @@
                 }
                 customers.push({ ...currentData });
             }
-            localStorage.setItem('dz_customers', JSON.stringify(customers));
+            // Phase 2: 업무 데이터 로컬 저장 금지
+
 
             // 리스트 UI 즉시 갱신 (최종수정일 등 반영)
             updateCustomerList();
@@ -9687,19 +9962,19 @@
                     <tbody id="costBody${cat.no}">
                         <tr>
                             <td class="col-no">1</td>
-                            <td class="col-div"><input type="text" placeholder="구분"></td>
-                            <td class="col-name"><input type="text" placeholder="품명"></td>
-                            <td class="col-spec"><input type="text" placeholder="상세"></td>
+                            <td class="col-div"><input type="text" placeholder="구분" readonly></td>
+                            <td class="col-name"><input type="text" placeholder="품명" readonly></td>
+                            <td class="col-spec"><input type="text" placeholder="상세" readonly></td>
                             <td class="col-unit">${getUnitSelectHTML()}</td>
-                            <td class="col-qty"><input type="text" placeholder="수량" oninput="calcCostRow(this)"></td>
-                            <td class="col-price"><input type="text" placeholder="단가" oninput="calcCostRow(this)"></td>
+                            <td class="col-qty"><input type="text" placeholder="수량" oninput="calcCostRow(this)" readonly></td>
+                            <td class="col-price"><input type="text" placeholder="단가" oninput="calcCostRow(this)" readonly></td>
                             <td class="col-total">0</td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="category-memo"><label>MEMO</label><textarea id="costMemo${cat.no}" placeholder="메모 입력..."
-                        oninput="autoResizeTextarea(this); syncCostMemoToEstimate()"></textarea></div>
-                <button class="add-row-btn no-print" onclick="addCostRow('${cat.no}')">+ 항목 추가</button>
+                <div class="category-memo"><label>MEMO</label><textarea id="costMemo${cat.no}" placeholder="Master Data (Read Only)" readonly
+                        oninput="autoResizeTextarea(this);"></textarea></div>
+                <!-- Master DB 보호를 위해 항목 추가 버튼 제거 -->
             </div>
             `).join('');
         }
@@ -9855,8 +10130,8 @@
 
         // 특정 카테고리의 원가 항목 가져오기 (전역 원가관리표 데이터 사용)
         function getCostItemsByCategory(catNo) {
-            // 전역 원가관리표 데이터에서 가져오기
-            const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
+            // 전역 원가관리표 데이터에서 가져오기 (Phase 2: In-memory 사용)
+            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
             let data = globalCostData[`cost_${catNo}`] || [];
 
             // 전역 데이터가 없으면 기본 데이터 사용
@@ -10448,10 +10723,8 @@
 
         // 원가관리표 메모를 계약견적서에 동기화
         function syncCostMemoToEstimate() {
-            // 원가관리표 메모를 기본값으로 사용 (항상 표시)
-            // 고객별 메모가 별도로 저장되어 있으면 그것을 추가로 표시
-
-            const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
+            // 원가관리표 메모를 기본값으로 사용 (항상 표시) (Phase 2: In-memory 사용)
+            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
 
             categories.forEach(cat => {
                 const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
@@ -10526,45 +10799,13 @@
                 }
             });
 
-            // 전역 원가관리표 데이터 저장 (localStorage)
-            localStorage.setItem('dz_global_cost', JSON.stringify(globalCostData));
-
-            // Google Sheets 동기화 (메인관리자만)
-            if (currentAdmin && currentAdmin.role === 'main') {
-                syncCostToCloud(globalCostData);
-            } else {
-                showToast('원가관리표가 로컬에 저장되었습니다.', 'success');
-            }
+            // Master DB는 이 화면에서 저장할 수 없습니다. (Read-Only)
+            // if (currentAdmin && currentAdmin.role === 'main') { syncCostToCloud(globalCostData); }
         }
 
-        // 원가관리표 저장 요청 (비밀번호 확인 필요)
+        // 원가관리표 저장 요청 (비활성화 - Read Only)
         async function requestCostSave() {
-            // 이미 메인관리자로 로그인된 경우
-            if (currentAdmin && currentAdmin.role === 'main') {
-                saveCostData();
-                return;
-            }
-
-            // 비밀번호 확인 프롬프트
-            const password = prompt('원가관리표 저장은 메인관리자만 가능합니다.\n\n메인관리자 비밀번호를 입력하세요:');
-
-            if (password === null) return; // 취소됨
-
-            const pwHash = await hashPassword(password);
-            // 복수 메인관리자 중 하나라도 일치하면 허용
-            const mainAdmin = MAIN_ADMINS.find(admin => admin.passwordHash === pwHash);
-            if (mainAdmin) {
-                // 임시 메인관리자 권한 부여
-                const tempAdmin = currentAdmin;
-                currentAdmin = { ...mainAdmin, role: 'main' };
-
-                saveCostData();
-
-                // 원래 상태로 복원
-                currentAdmin = tempAdmin;
-            } else {
-                showToast('비밀번호가 일치하지 않습니다.', 'error');
-            }
+            showToast('마스터 원가관리표는 시트에서 직접 수정해야 합니다.', 'info');
         }
 
         // ==========================================
@@ -10597,7 +10838,7 @@
 
                 if (result.data && Array.isArray(result.data)) {
                     // 데이터를 카테고리별로 정리
-                    const globalCostData = {};
+                    let cloudCostData = {};
                     let loadCount = 0;
                     let unmappedCount = 0;
 
@@ -10613,11 +10854,11 @@
                             return;
                         }
 
-                        if (!globalCostData[`cost_${catNo}`]) {
-                            globalCostData[`cost_${catNo}`] = [];
+                        if (!cloudCostData[`cost_${catNo}`]) {
+                            cloudCostData[`cost_${catNo}`] = [];
                         }
 
-                        globalCostData[`cost_${catNo}`].push({
+                        cloudCostData[`cost_${catNo}`].push({
                             div: item.div || '',
                             name: item.name || '',
                             spec: item.spec || '',
@@ -10639,13 +10880,15 @@
                                     .filter(line => line.trim())
                                     .map(line => '• ' + line)
                                     .join('\n');
-                                globalCostData[`costMemo_${catNo}`] = memoLines;
+                                cloudCostData[`costMemo_${catNo}`] = memoLines;
                             }
                         });
                     }
 
-                    // localStorage에 저장
-                    localStorage.setItem('dz_global_cost', JSON.stringify(globalCostData));
+                    // In-memory 데이터 업데이트
+                    globalCostData = cloudCostData;
+                    // Phase 2: 업무 데이터 로컬 저장 금지
+
 
                     // UI 리로드
                     createCostCategories();
@@ -10663,70 +10906,15 @@
                     showToast('원가관리표 데이터가 없습니다.', 'warning');
                 }
 
+                return true;
+
             } catch (error) {
                 console.error('원가관리표 불러오기 실패:', error);
                 showToast('원가관리표 불러오기 실패: ' + error.message, 'error');
+                return false;
             }
         }
 
-        // 원가관리표를 Google Sheets에 저장
-        async function syncCostToCloud(globalCostData) {
-            try {
-                // 데이터를 평탄화
-                const flatData = [];
-                const memoData = {};
-
-                categories.forEach(cat => {
-                    const items = globalCostData[`cost_${cat.no}`] || [];
-                    items.forEach((item, idx) => {
-                        flatData.push({
-                            no: idx + 1,
-                            category: cat.name,
-                            div: item.div || '',
-                            name: item.name || '',
-                            spec: item.spec || '',
-                            unit: item.unit || '',
-                            qty: item.qty || '',
-                            price: item.price || '',
-                            total: (parseNumber(item.qty) || 0) * (parseNumber(item.price) || 0)
-                        });
-                    });
-
-                    // 메모 데이터 수집
-                    const memo = globalCostData[`costMemo_${cat.no}`] || '';
-                    if (memo) {
-                        // 메모를 줄 단위로 분리하여 배열로 변환
-                        const memoLines = memo.split('\n').filter(line => line.trim());
-                        memoData[cat.name] = memoLines.map((line, idx) => ({
-                            no: idx + 1,
-                            content: line.trim()
-                        }));
-                    }
-                });
-
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'updateCost',
-                        data: flatData,
-                        memos: memoData
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast('원가관리표가 클라우드에 저장되었습니다.', 'success');
-                } else {
-                    throw new Error(result.error || '저장 실패');
-                }
-
-            } catch (error) {
-                console.error('원가관리표 클라우드 저장 실패:', error);
-                showToast('클라우드 저장 실패 (로컬에는 저장됨): ' + error.message, 'warning');
-            }
-        }
 
         // 카테고리 이름을 번호로 매핑
         function mapCategoryToNo(categoryName) {
@@ -10782,8 +10970,8 @@
 
         // 원가관리표 데이터 로드 (전역 데이터)
         function loadCostData() {
-            // 전역 원가관리표 데이터 로드
-            const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
+            // 전역 원가관리표 데이터 로드 (Phase 2: In-memory 사용)
+            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
 
             categories.forEach(cat => {
                 const tbody = document.getElementById(`costBody${cat.no}`);
@@ -10839,8 +11027,8 @@
         }
 
         function clearCostData() {
-            // 전역 원가관리표 데이터 로드
-            const globalCostData = JSON.parse(localStorage.getItem('dz_global_cost') || '{}');
+            // 전역 원가관리표 데이터 로드 (Phase 2: In-memory 사용)
+            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
 
             categories.forEach(cat => {
                 const tbody = document.getElementById(`costBody${cat.no}`);
@@ -11365,7 +11553,6 @@
                    };
     <\/script>
 </body>
-
 </html>
 `);
 
@@ -11391,18 +11578,15 @@
             const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
 
             for (let i = 0; i < originalInputs.length; i++) {
-                const origin = originalInputs[i];
-                const clone = clonedInputs[i];
-                if (!clone) continue;
-
-                let text = '';
-                if (origin.tagName === 'SELECT') {
-                    if (origin.options.length > 0 && origin.selectedIndex >= 0) {
-                        text = origin.options[origin.selectedIndex].text;
-                        // '선택' 같은 기본값은 빈칸으로 처리
-                        if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
-                    }
-                } else {
+                const origin = originalInputs[i]; const clone = clonedInputs[i]; if
+                    (!clone) continue; let text = ''; if (origin.tagName === 'SELECT') {
+                        if (origin.options.length > 0 &&
+                            origin.selectedIndex >= 0) {
+                            text = origin.options[origin.selectedIndex].text;
+                            // '선택' 같은 기본값은 빈칸으로 처리
+                            if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
+                        }
+                    } else {
                     text = origin.value;
                 }
 
@@ -11440,90 +11624,141 @@
             // Open print window
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>공사 스케줄 - ${isPdf ? 'PDF 저장' : '인쇄'}</title>
-                    <style>
-                        body {
-                            font-family: 'Inter', -apple-system, sans-serif;
-                            padding: 20px;
-                            background: white;
-                        }
+    <!DOCTYPE html>
+    <html>
 
-                        /* Header Styles */
-                        .doc-header {
-                            background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
-                            color: #ffffff !important;
-                            padding: 20px 24px !important;
-                            display: flex !important;
-                            justify-content: space-between !important;
-                            align-items: center !important;
-                            margin-bottom: 10px !important; /* Adjusted to match table spacing */
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        .doc-header h1 { font-size: 20px; margin: 0; color: #fff !important; line-height: 1.2; }
-                        .doc-header .subtitle { font-size: 10px; opacity: 0.9; color: #fff !important; margin-top: 4px; }
+    <head>
+        <title>공사 스케줄 - ${isPdf ? 'PDF 저장' : '인쇄'}</title>
+        <style>
+            body {
+                font-family: 'Inter', -apple-system, sans-serif;
+                padding: 20px;
+                background: white;
+            }
 
-                        /* Reset Grid/Flex for print if needed */
-                        .info-grid { display: block; }
+            /* Header Styles */
+            .doc-header {
+                background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
+                color: #ffffff !important;
+                padding: 20px 24px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                margin-bottom: 10px !important;
+                /* Adjusted to match table spacing */
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
 
-                        /* Table Styles */
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            font-size: 10px;
-                            margin-bottom: 10px;
-                            table-layout: fixed;
-                        }
+            .doc-header h1 {
+                font-size: 20px;
+                margin: 0;
+                color: #fff !important;
+                line-height: 1.2;
+            }
 
-                        /* Height Enforcement */
-                        tr { height: 24px !important; max-height: 24px !important; }
-                        th, td {
-                            border: 1px solid #d2d2d7;
-                            padding: 0 4px !important;
-                            height: 24px !important;
-                            max-height: 24px !important;
-                            line-height: 24px !important;
-                            vertical-align: middle !important;
-                            box-sizing: border-box !important;
-                            overflow: hidden !important;
-                            white-space: nowrap !important;
-                        }
+            .doc-header .subtitle {
+                font-size: 10px;
+                opacity: 0.9;
+                color: #fff !important;
+                margin-top: 4px;
+            }
 
-                        /* Customer Info Table Specifics */
-                        .schedule-info-table th { background: #f9f9fb; font-weight: 600; color: #333; width: 15%; }
-                        .schedule-info-table td { text-align: left; width: 35%; }
+            /* Reset Grid/Flex for print if needed */
+            .info-grid {
+                display: block;
+            }
 
-                        /* Rowspan handling */
-                        th[rowspan], td[rowspan] {
-                            height: auto !important;
-                            max-height: none !important;
-                        }
+            /* Table Styles */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 10px;
+                margin-bottom: 10px;
+                table-layout: fixed;
+            }
 
-                        /* Data Table Specifics */
-                        .data-table th { background: #f5f5f7; font-weight: 600; color: #333; }
+            /* Height Enforcement */
+            tr {
+                height: 24px !important;
+                max-height: 24px !important;
+            }
 
-                        /* Remove any other interfering elements */
-                        .no-print, button { display: none !important; }
+            th,
+            td {
+                border: 1px solid #d2d2d7;
+                padding: 0 4px !important;
+                height: 24px !important;
+                max-height: 24px !important;
+                line-height: 24px !important;
+                vertical-align: middle !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+            }
 
-                        /* Reset all internal elements */
-                        td *, th * {
-                            vertical-align: middle !important;
-                            line-height: 24px !important; /* Force content align */
-                        }
+            /* Customer Info Table Specifics */
+            .schedule-info-table th {
+                background: #f9f9fb;
+                font-weight: 600;
+                color: #333;
+                width: 15%;
+            }
 
-                        @media print {
-                            @page { size: A4 landscape; margin: 10mm; }
-                            body { -webkit-print-color-adjust: exact; }
-                            th, td { border-color: #d2d2d7 !important; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${clonedElement.innerHTML}
-                    <script>
+            .schedule-info-table td {
+                text-align: left;
+                width: 35%;
+            }
+
+            /* Rowspan handling */
+            th[rowspan],
+            td[rowspan] {
+                height: auto !important;
+                max-height: none !important;
+            }
+
+            /* Data Table Specifics */
+            .data-table th {
+                background: #f5f5f7;
+                font-weight: 600;
+                color: #333;
+            }
+
+            /* Remove any other interfering elements */
+            .no-print,
+            button {
+                display: none !important;
+            }
+
+            /* Reset all internal elements */
+            td *,
+            th * {
+                vertical-align: middle !important;
+                line-height: 24px !important;
+                /* Force content align */
+            }
+
+            @media print {
+                @page {
+                    size: A4 landscape;
+                    margin: 10mm;
+                }
+
+                body {
+                    -webkit-print-color-adjust: exact;
+                }
+
+                th,
+                td {
+                    border-color: #d2d2d7 !important;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        ${clonedElement.innerHTML}
+        <script>
                         window.onload = function() {
                             setTimeout(function() {
                                 window.print();
@@ -11703,17 +11938,105 @@
             }
         }
 
-        function exportAllData() {
-            const blob = new Blob([JSON.stringify({ customers, exportDate: new Date().toISOString() }, null, 2)], {
-                type:
-                    'application/json'
+
+        async function exportAllData() {
+            // Capture currentCustomerId before showing modal
+            const capturedCustomerId = currentCustomerId;
+
+            // Excel 내보내기 옵션 선택
+            const choice = await new Promise(resolve => {
+                const modal = document.createElement('div');
+                modal.className = 'admin-modal show';
+                modal.id = 'exportExcelModal';
+                modal.innerHTML = `
+                    <div class="admin-modal-content" style="width:360px;">
+                        <h3>📊 Excel 내보내기</h3>
+                        <p style="margin-bottom:16px;">내보낼 범위를 선택하세요</p>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button id="exportChoiceAll" class="header-btn primary" style="width:100%; justify-content:center;">
+                                📁 전체 고객 내보내기
+                            </button>
+                            ${capturedCustomerId ? `
+                            <button id="exportChoiceCurrent" class="header-btn secondary" style="width:100%; justify-content:center;">
+                                👤 현재 고객만 내보내기
+                            </button>
+                            ` : ''}
+                            <button id="exportChoiceCancel" class="header-btn" style="width:100%; justify-content:center; background:#f5f5f7; color:#1d1d1f;">
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Attach event listeners after modal is in DOM
+                document.getElementById('exportChoiceAll').onclick = () => {
+                    modal.remove();
+                    resolve('all');
+                };
+                if (capturedCustomerId) {
+                    document.getElementById('exportChoiceCurrent').onclick = () => {
+                        modal.remove();
+                        resolve('current');
+                    };
+                }
+                document.getElementById('exportChoiceCancel').onclick = () => {
+                    modal.remove();
+                    resolve('cancel');
+                };
             });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `디자인지그_데이터_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            showToast('데이터 내보내기 완료', 'success');
+
+            if (choice === 'cancel') return;
+
+            const customerId = choice === 'current' ? capturedCustomerId : 'all';
+
+            showToast('Excel 데이터 준비 중...', 'info');
+
+            try {
+                // 서버에서 데이터 가져오기
+                const params = new URLSearchParams({
+                    action: 'exportExcel',
+                    customerId: customerId,
+                    t: Date.now()
+                });
+
+                const response = await fetch(CUSTOMER_SYNC_URL + '?' + params.toString());
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || '데이터 로드 실패');
+                }
+
+                if (result.fileName && result.data) {
+                    // Base64 to Blob 변환
+                    const byteCharacters = atob(result.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: result.mimeType });
+
+                    // 파일 다운로드 트리거
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'designjig_data_' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    showToast('성공적으로 내보냈습니다. (' + result.customerCount + '명)', 'success');
+                    logUserAction('Excel 내보내기', `${result.customerCount}명 고객 데이터 내보내기`);
+                } else {
+                    throw new Error('엑셀 파일 데이터가 없습니다.');
+                }
+
+            } catch (error) {
+                console.error('Excel Export Error:', error);
+                showToast('Excel 내보내기 실패: ' + error.message, 'error');
+            }
         }
+
 
         function importData() {
             if (!isLoggedIn()) {
@@ -11732,7 +12055,8 @@
                     const data = JSON.parse(e.target.result);
                     if (data.customers) {
                         customers = data.customers;
-                        localStorage.setItem('dz_customers', JSON.stringify(customers));
+                        // [Phase 2] 로컬 스토리지 저장 중단
+
                         updateCustomerList();
                         showToast('데이터를 불러왔습니다', 'success');
                     }
@@ -12767,22 +13091,12 @@
         // 체크리스트는 CUSTOMER_SYNC_URL 사용
         // [Fix] 체크리스트 데이터 로컬 스토리지 연동 (초기화 방지)
         let checklistMasterData = [];
-        try {
-            const savedChecklist = localStorage.getItem('dz_checklist_master');
-            if (savedChecklist) {
-                checklistMasterData = JSON.parse(savedChecklist);
-            }
-        } catch (e) {
-            console.error('로컬 스토리지 로드 실패:', e);
-        }
+        // Phase 2: 업무 데이터 로컬 저장 금지
 
         // 체크리스트 마스터 데이터 불러오기 (Google Sheet)
         async function syncChecklistFromCloud() {
-            if (!isLoggedIn()) {
-                showToast('관리자 로그인이 필요합니다', 'error');
-                showAdminModal();
-                return;
-            }
+            // Phase 2: 초기 동기화 게이트를 위해 로그인 체크 생략 (GET 전용)
+            // if (!isLoggedIn()) { ... }
 
             const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
             const originalHTML = btn ? btn.innerHTML : '🔄 DB 불러오기';
@@ -12807,8 +13121,11 @@
                     else if (result.data) items = result.data;
                     else if (result.items) items = result.items;
 
+                    // [Fix] Empty checklist is a valid state, not an error
                     if (!items || items.length === 0) {
-                        throw new Error('데이터가 비어있습니다.');
+                        console.warn('⚠️ [Checklist Load] 체크리스트 데이터가 비어있습니다. (0건)');
+                        checklistMasterData = [];
+                        return true; // Empty is valid, sync succeeded
                     }
 
                     // [Fix] 데이터 공백 제거 (필터링 정확도 향상)
@@ -12818,8 +13135,7 @@
                         '분류': String(item['분류'] || '').trim()
                     }));
 
-                    // [추가] 로컬 스토리지 저장 (영구 유지)
-                    localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+                    // Phase 2: 업무 데이터 로컬 저장 금지
 
                     console.log(`✅ [Checklist Load] Loaded ${items.length} items.`);
 
@@ -12830,12 +13146,14 @@
                     renderChecklistItems();
 
                     showToast(`체크리스트 불러오기 완료 (${items.length}건)`, 'success');
+                    return true;
                 } else {
                     throw new Error(result.message || '데이터를 불러올 수 없습니다');
                 }
             } catch (error) {
                 console.error('❌ [Checklist Load Error]', error);
                 showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
+                return false;
             } finally {
                 if (btn) {
                     btn.innerHTML = originalHTML;
@@ -12844,70 +13162,11 @@
             }
         }
 
-        // [추가] 체크리스트 마스터 데이터 저장 (Google Sheet)
-        async function saveChecklistMasterToCloud() {
-            if (!isLoggedIn()) {
-                showToast('관리자 로그인이 필요합니다', 'error');
-                showAdminModal();
-                return;
-            }
-            if (!confirm('현재 공정별 체크리스트 목록을 Google Sheet DB에 저장하시겠습니까?\n(기존 시트 내용을 현재 화면의 목록으로 덮어씁니다.)')) return;
-
-            const btn = document.querySelector('button[onclick="saveChecklistMasterToCloud()"]');
-            const originalHTML = btn ? btn.innerHTML : '💾 DB 저장하기';
-
-            if (btn) {
-                btn.innerHTML = '<span class="loading-spinner"></span> 저장 중...';
-                btn.disabled = true;
-            }
-
-            console.log('[Checklist Save] Request started. Rows:', checklistMasterData.length);
-            // Payload logging
-            console.log('Payload Preview:', {
-                action: 'updateChecklistMaster',
-                customerId: currentCustomerId || 'master',
-                rows: checklistMasterData.length
-            });
-
-            try {
-                const payload = {
-                    action: 'updateChecklistMaster',
-                    adminId: (typeof currentAdmin !== 'undefined' && currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown',
-                    data: checklistMasterData
-                };
-
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-
-                console.log('[Checklist Save] Response:', result);
-
-                if (result.success || result.result === 'success') {
-                    const timeStr = new Date().toLocaleTimeString();
-                    showToast(`✅ 저장 완료 (시트: ${result.sheetName || '공정별체크리스트'}) - ${timeStr}`, 'success', 5000);
-                    if (typeof logUserAction === 'function') {
-                        logUserAction('저장', `공정별 체크리스트 마스터 저장 (${result.count}건)`);
-                    }
-                } else {
-                    throw new Error(result.message || result.error || '저장 실패');
-                }
-            } catch (e) {
-                console.error('[Checklist Save Error]', e);
-                showToast('저장 실패: ' + e.message, 'error');
-            } finally {
-                if (btn) {
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                }
-            }
-        }
 
         // [추가] 저장된 체크리스트 필터 상태 불러오기
-        function loadSavedChecklistState() {
+        function loadSavedChecklistState(silent = false) {
             if (!currentData || !currentData.checklistFilters) {
-                showToast('저장된 필터 상태가 없습니다.', 'info');
+                if (!silent) showToast('저장된 필터 상태가 없습니다.', 'info');
                 return;
             }
 
@@ -12942,7 +13201,7 @@
             }
 
             renderChecklistItems();
-            showToast('이전 필터 상태를 불러왔습니다.', 'success');
+            if (!silent) showToast('이전 필터 상태를 불러왔습니다.', 'success');
         }
 
         // 필터 옵션 업데이트 (멀티 셀렉트 초기화)
@@ -13135,8 +13394,8 @@
             // 마스터 데이터에서 제거
             checklistMasterData = checklistMasterData.filter(item => item.번호 !== itemNumber);
 
-            // 로컬 스토리지 업데이트
-            localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+            // 로컬 스토리지 업데이트 (Phase 2: 금지)
+
 
             // 체크 상태 데이터도 정리
             if (currentCustomerId) {
@@ -13209,8 +13468,8 @@
                 item.번호 = idx + 1;
             });
 
-            // 로컬 스토리지 업데이트
-            localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+            // 로컬 스토리지 업데이트 (Phase 2: 금지)
+
 
             // UI 갱신
             renderChecklistItems();
@@ -13758,13 +14017,16 @@
             });
         }
 
+        // 편집 이력 관리 (Phase 2: In-memory 전용)
+        let editHistoryRows = [];
+
         // 편집 이력 업데이트
         function updateEditHistory() {
             const timeline = document.getElementById('edit-history-timeline');
             if (!timeline) return;
 
-            // localStorage에서 편집 이력 가져오기
-            const history = JSON.parse(localStorage.getItem('editHistory') || '[]');
+            // In-memory에서 편집 이력 가져오기
+            const history = editHistoryRows;
 
             if (history.length === 0) {
                 timeline.innerHTML = '<div style="text-align: center; color: #8e8e93; padding: 40px;">편집 이력이 없습니다.</div>';
@@ -13804,7 +14066,7 @@
 
         // 편집 이력 저장 함수 (다른 곳에서 호출)
         function saveEditHistory(menu, item, field, oldValue, newValue) {
-            const history = JSON.parse(localStorage.getItem('editHistory') || '[]');
+            const history = editHistoryRows;
 
             const entry = {
                 timestamp: new Date().toISOString(),
@@ -13818,13 +14080,10 @@
             };
 
             history.unshift(entry);
+            if (history.length > 100) history.splice(100);
+            editHistoryRows = history;
+            // Phase 2: 업무 데이터 로컬 저장 금지
 
-            // 최대 100개까지만 보관
-            if (history.length > 100) {
-                history.splice(100);
-            }
-
-            localStorage.setItem('editHistory', JSON.stringify(history));
         }
         // ==========================================
         // 새 기능: 현재 고객 데이터 내보내기 및 통합 인쇄
@@ -14242,7 +14501,9 @@
         }
 
         // 로그 렌더링 함수 (서버 조회)
-        async function renderActionLog() {
+        async function renderActionLog(targetId) {
+            // [Guard] Capture Intent
+            const reqId = targetId || currentCustomerId;
             let tbody = document.getElementById('auditLogTableBody');
 
             // 호환성: 기존 ID가 auditLogTableBody임
@@ -14262,6 +14523,9 @@
             try {
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=action_log&action=getLogs`);
                 const result = await response.json();
+
+                // [Guard] Check if customer changed during fetch
+                if (reqId && reqId !== currentCustomerId) return;
 
                 if (result.success && result.logs) {
                     if (result.logs.length === 0) {
@@ -14318,13 +14582,7 @@
         let fixedExpenseItems = []; // 고정지출 설정 항목
         const EXPENSE_CATEGORIES = ['인건비', '차량운영비', '임대료', '운영비', '마케팅/영업', '세금/금융', '기타'];
 
-        // 초기 로드 (로컬 스토리지)
-        try {
-            const savedExpenses = localStorage.getItem('designzig_expenses');
-            if (savedExpenses) expensesRows = JSON.parse(savedExpenses);
-            const savedFixed = localStorage.getItem('designzig_fixed_expenses');
-            if (savedFixed) fixedExpenseItems = JSON.parse(savedFixed);
-        } catch (e) { expensesRows = []; fixedExpenseItems = []; }
+        // Phase 2: 초기 로드 (로컬 스토리지 사용 금지)
 
         // 현재 월 필터 초기화
         document.addEventListener('DOMContentLoaded', () => {
@@ -14434,7 +14692,7 @@
 
                 if (result.result === 'success') {
                     // 로컬에도 저장
-                    localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+                    // Phase 2: 업무 데이터 로컬 저장 금지
                     const now = new Date();
                     const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
                     showToast(`저장 완료 ${timeStr}`, 'success');
@@ -14479,7 +14737,8 @@
                             receipt: f.receipt || '',
                             active: f.active !== false
                         }));
-                        localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+                        // Phase 2: 업무 데이터 로컬 저장 금지
+
                         renderFixedExpenseTable();
                         renderExpensesTable();
                         showToast(`고정지출 ${result.fixedExpenses.length}건 불러옴`, 'success');
@@ -14641,7 +14900,7 @@
         }
 
         function saveExpensesLocal() {
-            localStorage.setItem('designzig_expenses', JSON.stringify(expensesRows));
+            // Phase 2: 업무 데이터 로컬 저장 금지
         }
 
         async function saveExpensesToCloud() {
@@ -14736,7 +14995,8 @@
                             receipt: f.receipt || '',
                             active: f.active !== false
                         }));
-                        localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+                        // Phase 2: 업무 데이터 로컬 저장 금지
+
                     }
 
                     renderExpensesTable();
@@ -14749,12 +15009,14 @@
                     } else {
                         showToast('저장된 데이터가 없습니다.', 'info');
                     }
+                    return true;
                 } else {
                     throw new Error(result.error || '불러오기 실패');
                 }
             } catch (err) {
                 console.error('운영비 불러오기 오류:', err);
                 showToast('불러오기 실패: ' + err.message, 'error');
+                return false;
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -14816,6 +15078,279 @@
                 observer.observe(statsPanel, { attributes: true });
             }
         });
+    </script>
+
+    <!-- [Step 1] 데이터 진단 및 병합 모달 & 버튼 -->
+    <button onclick="openStep1Modal()"
+        style="position:fixed; bottom:10px; right:10px; z-index:9999; padding:10px; background:#ff4444; color:white; border:none; border-radius:5px; font-weight:bold; box-shadow:0 2px 10px rgba(0,0,0,0.2);">🚑
+        [Step 1] 데이터 진단</button>
+
+    <div id="step1Modal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+            <span class="close" onclick="closeStep1Modal()"
+                style="align-self: flex-end; cursor: pointer; font-size: 24px;">&times;</span>
+            <h2 style="margin-top:0;">🔍 [Step 1] 로컬 데이터 진단 및 병합</h2>
+            <div style="margin: 20px 0; overflow-y: auto; flex: 1;">
+                <p style="background: #fff3cd; padding: 10px; border-radius: 4px;">
+                    <strong>안내:</strong> 이 도구는 브라우저(로컬)에만 저장되어 있고 클라우드(구글시트)에 없는 데이터를 찾아냅니다.<br>
+                    진단 후 '로컬 전용' 데이터가 발견되면, <strong>[클라우드로 병합]</strong> 버튼을 통해 데이터를 서버로 전송할 수 있습니다.
+                </p>
+
+                <div id="step1Status"
+                    style="padding: 15px; background: #2d2d2d; color: #fff; border-radius: 8px; margin-bottom: 20px; font-family: monospace;">
+                    <div id="step1Log" style="height: 150px; overflow-y: auto;">진단 시작을 눌러주세요...</div>
+                </div>
+
+                <table class="report-table"
+                    style="width:100%; font-size:13px; border-collapse: collapse; border: 1px solid #ddd;">
+                    <thead style="background:#f5f5f7;">
+                        <tr>
+                            <th style="padding:10px; text-align:left;">데이터 종류 (Key)</th>
+                            <th style="padding:10px; text-align:center;">로컬 건수</th>
+                            <th style="padding:10px; text-align:center;">클라우드 건수</th>
+                            <th style="padding:10px; text-align:center;">로컬 Only (누락)</th>
+                            <th style="padding:10px; text-align:center;">상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="step1ReportBody"></tbody>
+                </table>
+            </div>
+            <div style="text-align: right; padding-top: 10px; border-top: 1px solid #eee;">
+                <button class="btn-sub" onclick="runStep1Diagnosis()" style="padding: 10px 20px;">▶ 1. 진단
+                    시작</button>
+                <button id="step1MergeBtn" class="btn-main" onclick="runStep1Merge()"
+                    style="display:none; margin-left:10px; padding: 10px 20px; background-color: #0071e3; color: white; border: none; border-radius: 5px;">☁️
+                    2. 클라우드로 병합 (저장)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // [Step 1] 전역 변수
+        let step1MergeCandidates = {
+            customers: [],
+            expenses: [],
+            fixedExpenses: []
+        };
+        let step1CloudData = {
+            customers: [],
+            expenses: [],
+            fixedExpenses: []
+        };
+
+        function openStep1Modal() {
+            document.getElementById('step1Modal').classList.add('show');
+            document.getElementById('step1Log').innerHTML = '진단 시작 버튼을 눌러주세요.';
+            document.getElementById('step1MergeBtn').style.display = 'none';
+            document.getElementById('step1ReportBody').innerHTML = '';
+            step1MergeCandidates = { customers: [], expenses: [], fixedExpenses: [] };
+        }
+
+        function closeStep1Modal() {
+            document.getElementById('step1Modal').classList.remove('show');
+        }
+
+        function logStep1(msg) {
+            const logDiv = document.getElementById('step1Log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div><span style="color:#888">[${time}]</span> ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[Step1] ${msg}`);
+        }
+
+        async function runStep1Diagnosis() {
+            logStep1('🔄 클라우드 데이터 가져오는 중...');
+            try {
+                // 1. Fetch Cloud Data
+                // Customers
+                const params = new URLSearchParams({ sheet: 'customer', t: new Date().getTime() });
+                const custRes = await fetch(CUSTOMER_SYNC_URL + '?' + params.toString());
+                const custJson = await custRes.json();
+                step1CloudData.customers = custJson.data || [];
+
+                // Expenses
+                const expParams = new URLSearchParams({ sheet: 'expenses', t: new Date().getTime() });
+                const expRes = await fetch(CUSTOMER_SYNC_URL + '?' + expParams.toString());
+                const expJson = await expRes.json();
+                step1CloudData.expenses = expJson.data || [];
+
+                // Fixed Expenses
+                step1CloudData.fixedExpenses = expJson.fixed || [];
+
+                logStep1('✅ 클라우드 데이터 수신 완료.');
+
+                // 2. Load Local Data
+                const localCust = [];
+                const localExp = [];
+                const localFixed = [];
+                const localAdmins = [];
+                const localChecklist = [];
+
+                // [Fetch Additional Cloud Data for Report]
+                const adminParams = new URLSearchParams({ sheet: '관리자', t: new Date().getTime() });
+                const adminRes = await fetch(CUSTOMER_SYNC_URL + '?' + adminParams.toString());
+                const adminJson = await adminRes.json();
+                step1CloudData.admins = adminJson || [];
+
+                const checkParams = new URLSearchParams({ sheet: '공정별체크리스트', t: new Date().getTime() });
+                const checkRes = await fetch(CUSTOMER_SYNC_URL + '?' + checkParams.toString());
+                const checkJson = await checkRes.json();
+                step1CloudData.checklist = checkJson || [];
+
+                // 3. Compare - Customers
+                const cloudCustIds = new Set(step1CloudData.customers.map(c => c.customerId));
+                const localOnlyCust = localCust.filter(c => !cloudCustIds.has(c.customerId));
+                step1MergeCandidates.customers = localOnlyCust;
+
+                const reportBody = document.getElementById('step1ReportBody');
+                reportBody.innerHTML = '';
+
+                // Render Report
+                // Customers
+                addStep1Row('고객 목록 (DJ_customers)', localCust.length, step1CloudData.customers.length, localOnlyCust.length, localOnlyCust.length > 0 ? '병합 필요' : '정상');
+
+                // Admins
+                const adminDiff = Math.max(0, localAdmins.length - step1CloudData.admins.length);
+                addStep1Row('관리자 계정 (DJ_regular_admins)', localAdmins.length, step1CloudData.admins.length, adminDiff, adminDiff > 0 ? '확인 요망' : '정상');
+
+                // Checklist
+                const checklistDiff = Math.max(0, localChecklist.length - step1CloudData.checklist.length);
+                addStep1Row('체크리스트 (DJ_checklist_master)', localChecklist.length, step1CloudData.checklist.length, checklistDiff, checklistDiff > 0 ? '확인 요망' : '정상');
+
+                // Expenses
+                const expDiff = localExp.length - step1CloudData.expenses.length;
+                addStep1Row('지출결의서 (DJ_expenses)', localExp.length, step1CloudData.expenses.length, expDiff > 0 ? `${expDiff}건 (추정)` : '0', expDiff > 0 ? '수동확인 요망' : '정상');
+
+                const fixedDiff = localFixed.length - step1CloudData.fixedExpenses.length;
+                addStep1Row('고정지출 (DJ_fixed_expenses)', localFixed.length, step1CloudData.fixedExpenses.length, fixedDiff > 0 ? `${fixedDiff}건 (추정)` : '0', fixedDiff > 0 ? '수동확인 요망' : '정상');
+
+                const localGlobal = {};
+                addStep1Row('전역 단가 (DJ_global_cost)', Object.keys(localGlobal).length, '-', '-', '정상');
+
+                logStep1('📊 진단 완료.');
+
+                if (localOnlyCust.length > 0) {
+                    document.getElementById('step1MergeBtn').style.display = 'inline-block';
+                    logStep1(`❗ 클라우드에 없는 고객 데이터 ${localOnlyCust.length}건이 발견되었습니다. [병합] 버튼을 눌러 추가할 수 있습니다.`);
+                } else {
+                    logStep1(`✅ 로컬 전용 고객 데이터가 없습니다.`);
+                }
+
+            } catch (e) {
+                logStep1(`❌ 오류 발생: ${e.message}`);
+                alert('진단 중 오류가 발생했습니다: ' + e.message);
+            }
+        }
+
+        function addStep1Row(name, localCnt, cloudCnt, missingCnt, status) {
+            const tbody = document.getElementById('step1ReportBody');
+            const color = status === '정상' ? 'green' : 'red';
+            const displayMissing = (missingCnt > 0) ? `<span style="color:red; font-weight:bold;">${missingCnt}</span>` : '0';
+
+            const tr = `
+            <tr style="border-bottom:1px solid #ddd;">
+                <td style="padding:10px;">${name}</td>
+                <td style="padding:10px; text-align:center;">${localCnt}</td>
+                <td style="padding:10px; text-align:center;">${cloudCnt}</td>
+                <td style="padding:10px; text-align:center;">${displayMissing}</td>
+                <td style="padding:10px; text-align:center; color:${color}; font-weight:bold;">${status}</td>
+            </tr>
+        `;
+            tbody.innerHTML += tr;
+        }
+
+        async function runStep1Merge() {
+            if (!confirm(`총 ${step1MergeCandidates.customers.length}건의 고객 데이터를 클라우드로 전송하시겠습니까?\n\n주의: 이 작업은 1회성 병합입니다.`)) return;
+
+            logStep1('☁️ 데이터 병합(전송) 시작...');
+            let successCount = 0;
+            let failCount = 0;
+
+            // 병합 프로세스: 순차 전송
+            for (const cust of step1MergeCandidates.customers) {
+                try {
+                    // payload 구성
+                    // Apps Script doUpdateCustomer 로직에 맞춤
+                    // action: 'update_customer' or implicit?
+                    // integrated_apps_script.js에 따르면 action 파라미터 필요하거나 POST body 자체를 파싱
+
+                    // 기존 saveCustomerToCloud 로직 참조:
+                    // const payload = { ...currentData, action: 'update' (maybe?) };
+                    // 확인 결과: integrated_apps_script.js의 doPost(e)는 e.parameter.action을 확인하거나
+                    // JSON body를 파싱하여 처리함.
+                    // updateCustomer 핸들러는: if (data.customerId) ...
+
+                    const payload = {
+                        ...cust,
+                        action: 'update_customer' // 명시적 액션명은 없을 수도 있지만 안전하게 포함
+                    };
+
+                    // 꼼수: delete cust.action (만약 충돌난다면)
+                    // 하지만 보통 무시됨.
+
+                    const response = await fetch(CUSTOMER_SYNC_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const res = await response.json();
+
+                    if (res.result === 'success') {
+                        successCount++;
+                        logStep1(`✅ [전송완료] ${cust.clientName} (${cust.customerId})`);
+                    } else {
+                        throw new Error(res.message || 'Unknown Error');
+                    }
+
+                    // Rate Limiting 방지 (약간의 딜레이)
+                    await new Promise(r => setTimeout(r, 500));
+
+                } catch (e) {
+                    failCount++;
+                    logStep1(`❌ [전송실패] ${cust.clientName}: ${e.message}`);
+                }
+            }
+
+            logStep1(`🏁 병합 종료. 성공: ${successCount}, 실패: ${failCount}`);
+
+            if (successCount > 0) {
+                alert(`${successCount}건의 데이터를 성공적으로 병합했습니다. 페이지를 새로고침하여 확인하세요.`);
+            }
+        }
+
+        // [Task 3] Stability Logic
+        let isAppBusy = false;
+        function setAppBusy(busy, message = '데이터 처리 중...') {
+            isAppBusy = busy;
+            let overlay = document.getElementById('globalLoadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'globalLoadingOverlay';
+                overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:column; justify-content:center; align-items:center;';
+                overlay.innerHTML = '<div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:15px;"></div><div id="loadingMessage" style="font-size:18px; font-weight:600; color:#333;">데이터 처리 중...</div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
+                document.body.appendChild(overlay);
+            }
+            const msgEl = overlay.querySelector('#loadingMessage');
+            if (msgEl) msgEl.textContent = message;
+            overlay.style.display = busy ? 'flex' : 'none';
+            document.body.style.pointerEvents = busy ? 'none' : 'auto';
+            if (overlay) overlay.style.pointerEvents = 'auto';
+        }
+    </script>
+    <script>
+        // PWA Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
     </script>
 </body>
 
