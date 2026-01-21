@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>디자인지그 통합 관리 시스템</title>
-    <!-- Cache Version: dz-admin-v12 (2026-01-21) -->
+    <!-- Cache Version: dz-admin-v13 (2026-01-21) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
@@ -5119,6 +5119,170 @@
     <script>
         console.log('Main admin script loading...');
 
+        // ==========================================
+        // 기기 신뢰 & PIN 로그인 시스템
+        // ==========================================
+        const DEVICE_TRUST_KEY = 'dz_device_trust';
+        const DEVICE_TRUST_DAYS = 30;
+
+        // 기기 신뢰 정보 확인
+        function checkDeviceTrust() {
+            try {
+                const trustData = localStorage.getItem(DEVICE_TRUST_KEY);
+                if (!trustData) return null;
+
+                const trust = JSON.parse(trustData);
+                const now = Date.now();
+                const expiry = trust.expiry || 0;
+
+                // 30일 경과 시 만료
+                if (now > expiry) {
+                    localStorage.removeItem(DEVICE_TRUST_KEY);
+                    return null;
+                }
+
+                // 환경 변경 감지 (간단한 fingerprint 비교)
+                if (trust.fingerprint !== getDeviceFingerprint()) {
+                    localStorage.removeItem(DEVICE_TRUST_KEY);
+                    return null;
+                }
+
+                return trust;
+            } catch (e) {
+                localStorage.removeItem(DEVICE_TRUST_KEY);
+                return null;
+            }
+        }
+
+        // 간단한 기기 핑거프린트 생성
+        function getDeviceFingerprint() {
+            const ua = navigator.userAgent;
+            const lang = navigator.language;
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const screen = `${window.screen.width}x${window.screen.height}`;
+            return btoa(ua + lang + tz + screen).slice(0, 32);
+        }
+
+        // 로그인 화면 전환
+        function showLoginView(view) {
+            document.getElementById('loginCardIdPw').style.display = 'none';
+            document.getElementById('loginCardPin').style.display = 'none';
+            document.getElementById('loginCardPinSetup').style.display = 'none';
+
+            if (view === 'idpw') {
+                document.getElementById('loginCardIdPw').style.display = 'block';
+                document.getElementById('loginId').focus();
+            } else if (view === 'pin') {
+                document.getElementById('loginCardPin').style.display = 'block';
+                document.getElementById('loginPin').value = '';
+                document.getElementById('loginPin').focus();
+            } else if (view === 'setup') {
+                document.getElementById('loginCardPinSetup').style.display = 'block';
+                document.getElementById('newPin').value = '';
+                document.getElementById('confirmPin').value = '';
+                document.getElementById('newPin').focus();
+            }
+        }
+
+        // PIN 로그인 처리
+        async function performPinLogin() {
+            const pin = document.getElementById('loginPin').value;
+            if (pin.length !== 4) {
+                showToast('PIN 4자리를 입력하세요', 'warning');
+                return;
+            }
+
+            const trust = checkDeviceTrust();
+            if (!trust) {
+                showToast('기기 신뢰가 만료되었습니다', 'error');
+                showLoginView('idpw');
+                return;
+            }
+
+            const pinHash = await hashPassword(pin);
+            if (pinHash !== trust.pinHash) {
+                showToast('PIN이 일치하지 않습니다', 'error');
+                document.getElementById('loginPin').value = '';
+                document.getElementById('loginPin').focus();
+                return;
+            }
+
+            // PIN 일치 - 저장된 관리자 정보로 로그인
+            currentAdmin = {
+                id: trust.adminId,
+                role: trust.adminRole,
+                name: trust.adminName
+            };
+
+            document.getElementById('loginOverlay').style.display = 'none';
+            activateAdminMode();
+            showToast(`${trust.adminName || trust.adminId}님 환영합니다`, 'success');
+        }
+
+        // PIN 설정 (기기 신뢰 생성)
+        async function setupDevicePin() {
+            const newPin = document.getElementById('newPin').value;
+            const confirmPin = document.getElementById('confirmPin').value;
+
+            if (newPin.length !== 4) {
+                showToast('PIN은 4자리 숫자로 입력하세요', 'warning');
+                return;
+            }
+
+            if (newPin !== confirmPin) {
+                showToast('PIN이 일치하지 않습니다', 'error');
+                document.getElementById('confirmPin').value = '';
+                document.getElementById('confirmPin').focus();
+                return;
+            }
+
+            const pinHash = await hashPassword(newPin);
+            const expiry = Date.now() + (DEVICE_TRUST_DAYS * 24 * 60 * 60 * 1000);
+
+            const trustData = {
+                adminId: currentAdmin.id,
+                adminRole: currentAdmin.role,
+                adminName: currentAdmin.name || currentAdmin.id,
+                pinHash: pinHash,
+                fingerprint: getDeviceFingerprint(),
+                expiry: expiry,
+                createdAt: Date.now()
+            };
+
+            localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trustData));
+
+            document.getElementById('loginOverlay').style.display = 'none';
+            activateAdminMode();
+            showToast('PIN이 설정되었습니다. 다음부터 빠르게 로그인하세요!', 'success');
+        }
+
+        // PIN 설정 건너뛰기
+        function skipPinSetup() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            activateAdminMode();
+            showToast(`${currentAdmin.name || currentAdmin.id}로 로그인되었습니다`, 'success');
+        }
+
+        // 기기 신뢰 해제 (다른 계정 로그인)
+        function clearDeviceTrust() {
+            localStorage.removeItem(DEVICE_TRUST_KEY);
+            showLoginView('idpw');
+            showToast('기기 신뢰가 해제되었습니다', 'info');
+        }
+
+        // 페이지 로드 시 기기 신뢰 확인
+        function initLoginScreen() {
+            const trust = checkDeviceTrust();
+            if (trust) {
+                // 기기 신뢰 있음 → PIN 로그인 화면
+                document.getElementById('trustedUserName').textContent = trust.adminName || trust.adminId;
+                showLoginView('pin');
+            } else {
+                // 기기 신뢰 없음 → ID/PW 로그인 화면
+                showLoginView('idpw');
+            }
+        }
+
         // (performLogin function has been moved to script top)
         // 오버레이 로그인 처리 (스크립트 최상단 이동)
         async function performLogin() {
@@ -5136,9 +5300,8 @@
             const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
             if (mainAdmin) {
                 currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
-                document.getElementById('loginOverlay').style.display = 'none';
-                activateAdminMode();
-                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
+                // PIN 설정 화면으로 전환
+                showLoginView('setup');
                 return;
             }
 
@@ -5148,17 +5311,15 @@
 
             // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
             if (!found) {
-                // showToast('서버에서 관리자 정보를 확인 중입니다...', 'info'); // UX상 생략 가능하지만 있으면 좋음
                 await syncAdminsFromCloud();
                 admins = getRegularAdmins();
                 found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
             }
 
             if (found) {
-                currentAdmin = { id: found.id, role: 'regular' };
-                document.getElementById('loginOverlay').style.display = 'none';
-                activateAdminMode();
-                showToast(`${found.name} 관리자로 로그인되었습니다`, 'success');
+                currentAdmin = { id: found.id, role: 'regular', name: found.name || found.id };
+                // PIN 설정 화면으로 전환
+                showLoginView('setup');
             } else {
                 showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
             }
@@ -6488,13 +6649,14 @@
         function logoutAdmin() {
             currentAdmin = null;
 
-            // 로그인 오버레이 표시
+            // 기기 신뢰 해제 (정책: 로그아웃 시 기기 신뢰 해제)
+            localStorage.removeItem(DEVICE_TRUST_KEY);
+
+            // 로그인 오버레이 표시 (ID/PW 로그인 화면)
             const overlay = document.getElementById('loginOverlay');
             if (overlay) {
                 overlay.style.display = 'flex';
-                document.getElementById('loginId').value = '';
-                document.getElementById('loginPw').value = '';
-                document.getElementById('loginId').focus();
+                showLoginView('idpw');
             }
 
             // UI 초기화 (필요시)
@@ -6508,7 +6670,7 @@
             // 탭 가시성 업데이트
             updateTabVisibility();
 
-            showToast('로그아웃되었습니다', 'success');
+            showToast('로그아웃되었습니다. 기기 신뢰가 해제됩니다.', 'success');
         }
 
         // 비밀번호 변경 (기능 비활성화)
@@ -6586,6 +6748,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', async function () {
+            // 로그인 화면 초기화 (기기 신뢰 확인)
+            initLoginScreen();
+
             loadFontSize();
             createCostCategories();
             createEstimateCategories();
@@ -12484,9 +12649,10 @@
         // Initialize Master Data
         fetchScheduleTemplate();
     </script>
-    <!-- 로그인 오버레이 (최우선 표시) -->
+    <!-- 로그인 오버레이 (최우선 표시) - PIN 기반 기기 신뢰 정책 -->
     <div class="login-overlay" id="loginOverlay">
-        <div class="login-card">
+        <!-- ID/PW 로그인 (최초 또는 기기 신뢰 만료 시) -->
+        <div class="login-card" id="loginCardIdPw">
             <div class="login-logo">DESIGN JIG</div>
             <div class="login-subtitle">통합 관리 시스템</div>
             <input type="text" class="login-input" id="loginId" placeholder="아이디" autocomplete="username"
@@ -12495,6 +12661,49 @@
                 onkeypress="if(event.key==='Enter') performLogin()">
             <button class="login-btn-primary" onclick="performLogin()">로그인</button>
         </div>
+
+        <!-- PIN 로그인 (기기 신뢰 시) -->
+        <div class="login-card" id="loginCardPin" style="display:none;">
+            <div class="login-logo">DESIGN JIG</div>
+            <div class="login-subtitle">통합 관리 시스템</div>
+            <div style="margin-bottom:16px; color:#666; font-size:13px;">
+                <span id="trustedUserName" style="color:#B4956F; font-weight:600;"></span>님, 환영합니다
+            </div>
+            <input type="password" class="login-input" id="loginPin" placeholder="PIN 4자리" maxlength="4"
+                inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                onkeypress="if(event.key==='Enter') performPinLogin()"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button class="login-btn-primary" onclick="performPinLogin()">PIN 로그인</button>
+            <button onclick="clearDeviceTrust()"
+                style="margin-top:12px; background:transparent; border:none; color:#86868b; font-size:12px; cursor:pointer; text-decoration:underline;">
+                다른 계정으로 로그인
+            </button>
+        </div>
+
+        <!-- PIN 설정 (최초 로그인 성공 후) -->
+        <div class="login-card" id="loginCardPinSetup" style="display:none;">
+            <div class="login-logo">🔐</div>
+            <div class="login-subtitle" style="margin-bottom:8px;">PIN 설정</div>
+            <div style="margin-bottom:16px; color:#666; font-size:13px; line-height:1.5;">
+                이 기기를 신뢰하면 다음부터<br>
+                <strong>4자리 PIN</strong>으로 빠르게 로그인할 수 있습니다.<br>
+                <span style="font-size:11px; color:#999;">(30일간 유효)</span>
+            </div>
+            <input type="password" class="login-input" id="newPin" placeholder="새 PIN 4자리" maxlength="4"
+                inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                onkeypress="if(event.key==='Enter') document.getElementById('confirmPin').focus()"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <input type="password" class="login-input" id="confirmPin" placeholder="PIN 확인" maxlength="4"
+                inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+                onkeypress="if(event.key==='Enter') setupDevicePin()"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button class="login-btn-primary" onclick="setupDevicePin()">PIN 설정 완료</button>
+            <button onclick="skipPinSetup()"
+                style="margin-top:12px; background:transparent; border:none; color:#86868b; font-size:12px; cursor:pointer; text-decoration:underline;">
+                건너뛰기 (매번 ID/PW 입력)
+            </button>
+        </div>
+
         <div style="margin-top: 20px; font-size: 11px; color: #a1a1a6;">
             Unauthorized access is strictly prohibited.
         </div>
