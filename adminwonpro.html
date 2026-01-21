@@ -499,6 +499,27 @@
                     display: none !important;
                 }
 
+                /* [New] Hide checklist stats and top actions on mobile */
+                .checklist-stats,
+                #checklistFilterContainer,
+                .checklist-header-actions {
+                    display: none !important;
+                }
+
+                /* [New] Meta Badge Style for Mobile Card */
+                .meta-badge {
+                    display: inline-block;
+                    font-size: 11px;
+                    font-weight: 500;
+                    padding: 3px 8px;
+                    border-radius: 12px;
+                    margin-right: 6px;
+                    margin-top: 2px;
+                    margin-bottom: 2px;
+                    white-space: nowrap;
+                    line-height: 1.4;
+                }
+
                 /* 3. Cleanup Checklist Header (Red Box 3) */
                 .checklist-header button,
                 .checklist-header .btn-group,
@@ -14020,8 +14041,8 @@
 
                         return `
                         <div class="checklist-card" style="background: white; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e5e5ea;">
-                            <!-- 1. Header Line: Checkbox + Title + Status + Category -->
-                            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                            <!-- 1. Header Line: Checkbox + Title -->
+                            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px;">
                                 <!-- Checkbox with large touch target -->
                                 <div onclick="toggleChecklistItem(${item.번호})" style="padding: 4px 0; cursor: pointer;">
                                     <input type="checkbox" ${isChecked ? 'checked' : ''} 
@@ -14030,11 +14051,18 @@
                                 <div style="flex: 1; padding-top: 2px;">
                                     <div style="font-size: 16px; font-weight: 600; color: #1d1d1f; line-height: 1.4; word-break: break-all;">
                                         ${item.항목 || '항목 없음'}
-                                        <span style="font-size: 13px; font-weight: 400; color: #86868b; margin-left: 6px; white-space: nowrap;">
-                                            ${item.진행단계 || ''} · ${item.분류 || ''}
-                                        </span>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- [New] 2. Meta Badges (One line) -->
+                            <div style="margin-bottom: 12px; padding-left: 36px;">
+                                <span class="meta-badge" style="background: ${(item.진행단계 === '인테리어 시작 전') ? '#fff3e0' : '#e8f5e9'}; color: ${(item.진행단계 === '인테리어 시작 전') ? '#ff9500' : '#34c759'};">
+                                    ${item.진행단계 || '미지정'}
+                                </span>
+                                <span class="meta-badge" style="background: ${categoryColor.bg}; color: ${categoryColor.text};">
+                                    ${item.분류 || '미분류'}
+                                </span>
                             </div>
 
                             <!-- 2. Content (Read-only Textarea) -->
