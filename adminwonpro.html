@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>디자인지그 통합 관리 시스템</title>
+    <!-- Cache Version: dz-admin-v11 (2026-01-21) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/6.8.1/global/all.js" type="text/javascript"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
@@ -3373,11 +3374,11 @@
                                 style="padding:10px 16px; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.3); transition:all 0.2s;">
                                 ➕ 행 추가
                             </button>
-                            <button onclick="saveExpensesToCloud()"
+                            <button onclick="saveExpensesToCloud()" id="btnSaveExpenses"
                                 style="padding:10px 16px; background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(59,130,246,0.3); transition:all 0.2s;">
                                 ☁️ 저장하기
                             </button>
-                            <button onclick="syncExpensesFromCloud()"
+                            <button onclick="syncExpensesFromCloud()" id="btnLoadExpenses"
                                 style="padding:10px 16px; background:white; color:#059669; border:2px solid #10b981; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;">
                                 🔄 불러오기
                             </button>
@@ -3410,9 +3411,13 @@
                                         style="padding:8px 14px; background:#d97706; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
                                         ➕ 항목 추가
                                     </button>
-                                    <button onclick="saveFixedExpenses()"
+                                    <button onclick="saveFixedExpensesToCloud()" id="btnSaveFixed"
                                         style="padding:8px 14px; background:#059669; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
                                         💾 저장
+                                    </button>
+                                    <button onclick="loadFixedExpensesFromCloud()" id="btnLoadFixed"
+                                        style="padding:8px 14px; background:#3b82f6; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                                        🔄 불러오기
                                     </button>
                                 </div>
                             </div>
@@ -14087,30 +14092,26 @@
             `).join('');
         }
 
-        // 고정지출 저장
-        async function saveFixedExpenses() {
-            localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+        // 고정지출 저장 (클라우드)
+        async function saveFixedExpensesToCloud() {
+            const btn = document.getElementById('btnSaveFixed');
+            const originalText = btn?.innerText || '💾 저장';
 
             try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerText = '저장 중...';
+                }
+
                 const payload = {
                     action: 'updateExpenses',
-                    expenses: expensesRows.map((row, idx) => ({
-                        no: idx + 1,
-                        date: row.date || '',
-                        category: row.category || '',
-                        detail: row.detail || '',
-                        amount: parseNumber(row.amount),
-                        payMethod: row.payMethod || row.method || '',
-                        receipt: row.receipt || row.proof || '',
-                        memo: row.memo || row.note || ''
-                    })),
                     fixedExpenses: fixedExpenseItems.map(item => ({
-                        category: item.category,
-                        detail: item.detail || item.itemName,
-                        amount: item.amount,
-                        payMethod: item.payMethod,
-                        receipt: item.receipt,
-                        active: item.active
+                        category: item.category || '',
+                        detail: item.detail || item.itemName || '',
+                        amount: parseNumber(item.amount),
+                        payMethod: item.payMethod || '',
+                        receipt: item.receipt || '',
+                        active: item.active !== false
                     }))
                 };
 
@@ -14121,16 +14122,70 @@
                 const result = await response.json();
 
                 if (result.result === 'success') {
-                    showToast('고정지출 설정이 저장되었습니다.', 'success');
+                    // 로컬에도 저장
+                    localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+                    const now = new Date();
+                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                    showToast(`저장 완료 ${timeStr}`, 'success');
+                    renderExpensesTable();
                 } else {
                     throw new Error(result.error || '저장 실패');
                 }
             } catch (err) {
                 console.error('고정지출 저장 오류:', err);
-                showToast('로컬에만 저장되었습니다.', 'warning');
+                showToast('저장 실패: ' + err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
             }
+        }
 
-            renderExpensesTable();
+        // 고정지출 불러오기 (클라우드)
+        async function loadFixedExpensesFromCloud() {
+            const btn = document.getElementById('btnLoadFixed');
+            const originalText = btn?.innerText || '🔄 불러오기';
+
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerText = '불러오는 중...';
+                }
+
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=expenses`);
+                const result = await response.json();
+
+                if (result.result === 'success') {
+                    // 고정지출 데이터만 불러오기
+                    if (result.fixedExpenses && result.fixedExpenses.length > 0) {
+                        fixedExpenseItems = result.fixedExpenses.map(f => ({
+                            category: f.category || '',
+                            detail: f.detail || f.itemName || '',
+                            amount: f.amount || 0,
+                            payMethod: f.payMethod || '',
+                            receipt: f.receipt || '',
+                            active: f.active !== false
+                        }));
+                        localStorage.setItem('designzig_fixed_expenses', JSON.stringify(fixedExpenseItems));
+                        renderFixedExpenseTable();
+                        renderExpensesTable();
+                        showToast(`고정지출 ${result.fixedExpenses.length}건 불러옴`, 'success');
+                    } else {
+                        showToast('저장된 고정지출이 없습니다.', 'info');
+                    }
+                } else {
+                    throw new Error(result.error || '불러오기 실패');
+                }
+            } catch (err) {
+                console.error('고정지출 불러오기 오류:', err);
+                showToast('불러오기 실패: ' + err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            }
         }
 
         function showMainView(viewName) {
@@ -14276,8 +14331,8 @@
         }
 
         async function saveExpensesToCloud() {
-            const btn = event?.target;
-            const originalText = btn?.innerText || '저장하기';
+            const btn = document.getElementById('btnSaveExpenses') || event?.target;
+            const originalText = btn?.innerText || '☁️ 저장하기';
 
             try {
                 if (btn) {
@@ -14293,9 +14348,9 @@
                         category: row.category || '',
                         detail: row.detail || '',
                         amount: parseNumber(row.amount),
-                        payMethod: row.payMethod || '',
-                        receipt: row.receipt || '',
-                        memo: row.memo || ''
+                        payMethod: row.payMethod || row.method || '',
+                        receipt: row.receipt || row.proof || '',
+                        memo: row.memo || row.note || ''
                     }))
                 };
 
@@ -14306,14 +14361,16 @@
                 const result = await response.json();
 
                 if (result.result === 'success') {
-                    showToast('운영비가 클라우드에 저장되었습니다.', 'success');
                     saveExpensesLocal(); // 로컬에도 저장
+                    const now = new Date();
+                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                    showToast(`저장 완료 ${timeStr}`, 'success');
                 } else {
                     throw new Error(result.error || '저장 실패');
                 }
             } catch (err) {
                 console.error('운영비 저장 오류:', err);
-                showToast('클라우드 저장 실패: ' + err.message, 'error');
+                showToast('저장 실패: ' + err.message, 'error');
                 saveExpensesLocal(); // 실패해도 로컬에는 저장
             } finally {
                 if (btn) {
@@ -14324,8 +14381,8 @@
         }
 
         async function syncExpensesFromCloud() {
-            const btn = event?.target;
-            const originalText = btn?.innerText || '불러오기';
+            const btn = document.getElementById('btnLoadExpenses') || event?.target;
+            const originalText = btn?.innerText || '🔄 불러오기';
 
             try {
                 if (btn) {
@@ -14345,13 +14402,13 @@
                             date: exp.date || '',
                             category: exp.category || '',
                             detail: exp.detail || '',
-                            amount: exp.amount ? formatNumber(exp.amount) : '',
-                            payMethod: exp.payMethod || '',
-                            receipt: exp.receipt || '',
-                            memo: exp.memo || ''
+                            amount: exp.amount || 0,
+                            method: exp.payMethod || '',
+                            proof: exp.receipt || '',
+                            note: exp.memo || ''
                         }));
                         saveExpensesLocal();
-                        loadedCount += result.expenses.length;
+                        loadedCount = result.expenses.length;
                     }
 
                     // 고정지출 설정 불러오기
@@ -14370,17 +14427,18 @@
                     renderExpensesTable();
                     renderFixedExpenseTable();
 
-                    if (loadedCount > 0 || (result.fixedExpenses && result.fixedExpenses.length > 0)) {
-                        showToast(`운영비 ${loadedCount}건, 고정지출 ${result.fixedExpenses?.length || 0}건을 불러왔습니다.`, 'success');
+                    const fixedCount = result.fixedExpenses?.length || 0;
+                    if (loadedCount > 0 || fixedCount > 0) {
+                        showToast(`운영비 ${loadedCount}건, 고정지출 ${fixedCount}건 불러옴`, 'success');
                     } else {
-                        showToast('저장된 운영비 데이터가 없습니다.', 'info');
+                        showToast('저장된 데이터가 없습니다.', 'info');
                     }
                 } else {
                     throw new Error(result.error || '불러오기 실패');
                 }
             } catch (err) {
                 console.error('운영비 불러오기 오류:', err);
-                showToast('클라우드 불러오기 실패: ' + err.message, 'error');
+                showToast('불러오기 실패: ' + err.message, 'error');
             } finally {
                 if (btn) {
                     btn.disabled = false;
