@@ -25,6 +25,7 @@ const CUSTOMER_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 // [원가관리표용] 스프레드시트 ID (통합 시트에 추가됨)
 const COST_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 const SETTLEMENT_SHEET_NAME = '정산관리대장';
+const LOG_SHEET_NAME = '작업기록';
 
 // [상담용] 설문 Form URL
 const FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdcsD1hjKMNezFTaPAZRlKovdRDfCW08cy4VfLHL_LJDcmbVw/viewform';
@@ -172,6 +173,16 @@ function doPost(e) {
             return handleExpensesUpdate(payload);
         }
 
+        // 1.8 작업 기록 저장
+        if (payload.action === 'logUserAction') {
+            return handleLogUserAction(payload);
+        }
+
+        // 1.9 공정별 체크리스트 마스터 저장 [추가]
+        if (payload.action === 'updateChecklistMaster' || payload.action === 'saveChecklistMaster') {
+            return handleChecklistUpdate(payload);
+        }
+
         // 2. 노션 내보내기 요청 (반드시 CustomerSync보다 먼저 체크!)
         // exportToNotion 요청도 customerId를 포함하므로, 먼저 체크해야 함
         if (payload.action === 'exportToNotion') {
@@ -260,6 +271,11 @@ function doGet(e) {
         // [추가] 운영비 관리 대장 조회
         if (sheetParam === 'expenses' || sheetParam === '운영비관리') {
             return handleExpensesGet(e);
+        }
+
+        // [추가] 작업 기록 조회
+        if (sheetParam === 'action_log' || actionParam === 'getLogs') {
+            return handleGetActionLogs(e);
         }
 
         // 2.5. 샘플 견적서 조회
@@ -3629,4 +3645,185 @@ function testStatusUpdate() {
         );
     }
     return result;
+}
+
+// ==========================================
+// 작업 기록 (Action Log) 관리
+// ==========================================
+
+/**
+ * 작업 기록 저장 (POST)
+ */
+function handleLogUserAction(payload) {
+    var lock = LockService.getScriptLock();
+    // 로깅은 중요하지만 메인 프로세스를 막으면 안 되므로 짧게 대기
+    try {
+        if (!lock.tryLock(3000)) {
+            // 락 획득 실패 시 에러보다는 그냥 패스하거나 에러 로그
+            console.error('Lock failed for logging');
+            return ContentService.createTextOutput(JSON.stringify({ result: "error", error: "Lock failed" })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var sheet = getOrCreateLogSheet();
+
+        var timestamp = Utilities.formatDate(new Date(), "GMT+9", "yyyy-MM-dd HH:mm");
+        var adminId = payload.adminId || 'Unknown';
+        var actionType = payload.actionType || 'Unknown';
+        var detail = payload.detail || '';
+
+        // 데이터 추가: [일시, 작업자ID, 구분, 상세내용]
+        sheet.appendRow([timestamp, adminId, actionType, detail]);
+
+        return ContentService.createTextOutput(JSON.stringify({ result: "success" })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (e) {
+        return ContentService.createTextOutput(JSON.stringify({ result: "error", error: e.toString() })).setMimeType(ContentService.MimeType.JSON);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
+ * 작업 기록 조회 (GET)
+ * 최근 50건 반환 (역순)
+ */
+function handleGetActionLogs(e) {
+    try {
+        var sheet = getOrCreateLogSheet();
+        var lastRow = sheet.getLastRow();
+
+        if (lastRow < 2) {
+            return ContentService.createTextOutput(JSON.stringify({ success: true, logs: [] })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 최근 50건만 가져오기
+        var limit = 50;
+        var startRow = Math.max(2, lastRow - limit + 1);
+        var numRows = lastRow - startRow + 1;
+
+        if (numRows <= 0) {
+            return ContentService.createTextOutput(JSON.stringify({ success: true, logs: [] })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getRange(startRow, 1, numRows, 4).getValues();
+
+        // 역순 정렬 (최신순)
+        data.reverse();
+
+        // 객체 배열로 변환
+        var logs = data.map(function (row) {
+            const date = new Date(row[0]);
+            // 날짜 객체인 경우 포맷팅
+            const ts = (row[0] instanceof Date)
+                ? Utilities.formatDate(row[0], "GMT+9", "yyyy-MM-dd HH:mm")
+                : row[0];
+
+            return {
+                timestamp: ts,
+                adminId: row[1],
+                actionType: row[2],
+                detail: row[3]
+            };
+        });
+
+        return ContentService.createTextOutput(JSON.stringify({ success: true, logs: logs })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (e) {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, error: e.toString() })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 작업기록 시트 가져오기 또는 생성
+ */
+function getOrCreateLogSheet() {
+    var ss = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+    var sheet = ss.getSheetByName(LOG_SHEET_NAME);
+
+    if (!sheet) {
+        sheet = ss.insertSheet(LOG_SHEET_NAME);
+        // 헤더 설정
+        sheet.getRange(1, 1, 1, 4).setValues([['일시', '작업자', '구분', '상세내용']]);
+        sheet.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#f3f3f3');
+        sheet.setColumnWidth(1, 150); // 일시
+        sheet.setColumnWidth(2, 100); // 작업자
+        sheet.setColumnWidth(3, 120); // 구분
+        sheet.setColumnWidth(4, 400); // 상세내용
+        sheet.setFrozenRows(1);
+    }
+
+    return sheet;
+}
+
+/**
+ * [추가] 공정별 체크리스트 마스터 데이터 업데이트
+ * action: updateChecklistMaster
+ * payload.data: [ {번호, 항목, 내용, 진행단계, 분류, 비고}, ... ]
+ */
+function handleChecklistUpdate(payload) {
+    try {
+        Logger.log('[Checklist Update] Started');
+        Logger.log('Admin ID: ' + (payload.adminId || 'unknown'));
+
+        var newData = payload.data;
+        if (!newData || !Array.isArray(newData)) {
+            throw new Error('유효한 데이터가 아닙니다.');
+        }
+
+        var ss = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        var sheet = ss.getSheetByName('공정별체크리스트');
+
+        // 시트가 없으면 생성 (헤더 포함)
+        if (!sheet) {
+            sheet = ss.insertSheet('공정별체크리스트');
+        }
+
+        // 헤더 정의
+        var headers = ['번호', '항목', '내용', '진행단계', '분류', '비고'];
+
+        // 기존 데이터 클리어 (헤더 제외하고 데이터만 교체하거나, 전체 교체)
+        // 안전하게 전체 클리어 후 다시 쓰기
+        sheet.clear();
+
+        // 2D 배열로 변환
+        var values = [headers];
+        newData.forEach(function (item) {
+            var row = [
+                item.번호 || item.no || '',
+                item.항목 || item.title || '',
+                item.내용 || item.content || '',
+                item.진행단계 || item.stage || '',
+                item.분류 || item.category || '',
+                item.비고 || item.note || ''
+            ];
+            values.push(row);
+        });
+
+        // 데이터 쓰기
+        if (values.length > 0) {
+            sheet.getRange(1, 1, values.length, values[0].length).setValues(values);
+        }
+
+        // 서식 적용 (옵션)
+        sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#efefef');
+        sheet.setFrozenRows(1);
+
+        Logger.log('[Checklist Update] Saved ' + (values.length - 1) + ' rows.');
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            result: 'success',
+            count: values.length - 1,
+            sheetName: '공정별체크리스트',
+            updatedAt: new Date().toISOString()
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (e) {
+        Logger.log('[Checklist Update Error] ' + e.toString());
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            result: 'error',
+            error: e.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
 }

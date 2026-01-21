@@ -3371,10 +3371,6 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <button onclick="addExpenseRow()"
-                                style="padding:10px 16px; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.3); transition:all 0.2s;">
-                                ➕ 행 추가
-                            </button>
                             <button onclick="saveExpensesToCloud()" id="btnSaveExpenses"
                                 style="padding:10px 16px; background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(59,130,246,0.3); transition:all 0.2s;">
                                 ☁️ 저장하기
@@ -3395,10 +3391,16 @@
                                 <input type="month" id="expenseMonthFilter" onchange="renderExpensesTable()"
                                     style="padding:8px 14px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; cursor:pointer;">
                             </div>
-                            <button onclick="toggleFixedExpenseSettings()"
-                                style="padding:10px 16px; background:linear-gradient(135deg, #f59e0b, #d97706); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
-                                ⚙️ 고정지출 설정
-                            </button>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <button onclick="addExpenseRow()"
+                                    style="padding:10px 16px; background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(16,185,129,0.3); transition:all 0.2s;">
+                                    ➕ 행 추가
+                                </button>
+                                <button onclick="toggleFixedExpenseSettings()"
+                                    style="padding:10px 16px; background:linear-gradient(135deg, #f59e0b, #d97706); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                    ⚙️ 고정지출 설정
+                                </button>
+                            </div>
                         </div>
 
                         <!-- 고정지출 설정 패널 (접이식) -->
@@ -4242,11 +4244,20 @@
                                 <div class="subtitle">Process Checklist</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
+                                <!-- [추가] DB 불러오기/저장 버튼 -->
+                                <button class="btn btn-secondary btn-sm no-print" onclick="syncChecklistFromCloud()"
+                                    style="background: #0071e3; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                    🔄 DB 불러오기
+                                </button>
+                                <button class="btn btn-secondary btn-sm no-print" onclick="saveChecklistMasterToCloud()"
+                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                    💾 DB 저장하기
+                                </button>
+
                                 <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
-                                    style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
-                                    title="저장된 필터 상태 불러오기">
-                                    <span style="margin-right: 4px;">↩</span>
-                                    <span>저장내용 불러오기</span>
+                                    style="background: #8e8e93; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="마지막 필터 상태 복원">
+                                    <span>↩ 필터복원</span>
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
@@ -4290,7 +4301,7 @@
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
                                         style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계
-                                        필터</label>
+                                        필터 (다중 선택)</label>
                                     <select id="checklistStageFilter" style="display:none;"></select>
                                     <!-- 호환성 유지용 hidden -->
                                     <div class="multi-select-wrapper" id="checklistStageFilterWrapper">
@@ -4784,7 +4795,7 @@
 
 
 
-    <!-- [신규] 현황 및 작업기록 패널 -->
+    <!-- [신규] 작업기록 패널 -->
     <div class="tab-panel" id="panel-stats">
         <div class="document-wrapper" style="min-height: 500px;">
             <div class="doc-header" style="border-bottom: 2px solid #e5e7eb;">
@@ -4792,16 +4803,13 @@
                     <div
                         style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#667eea;">
                         DESIGN JIG</div>
-                    <h1 style="margin:0 0 8px 0;">📋 현황 및 작업기록</h1>
+                    <h1 style="margin:0 0 8px 0;">📋 작업기록</h1>
                     <div
                         style="background:#f0f4ff; border-left:4px solid #667eea; padding:12px 16px; border-radius:0 8px 8px 0; margin-top:12px;">
-                        <div style="font-size:13px; font-weight:600; color:#1d1d1f; margin-bottom:6px;">📝 해당 고객 정보 수정에
-                            관한 편집 기록</div>
+                        <div style="font-size:13px; font-weight:600; color:#1d1d1f; margin-bottom:6px;">📝 시스템 작업 로그
+                        </div>
                         <div style="font-size:12px; color:#6b7280; line-height:1.6;">
-                            이 섹션에서는 <strong>현재 선택된 고객</strong>에 대한 모든 편집 기록을 확인할 수 있습니다.<br>
-                            • <strong>작업일시</strong>: 수정이 이루어진 날짜와 시간<br>
-                            • <strong>관리자 ID</strong>: 수정을 수행한 관리자 계정<br>
-                            • <strong>작업내용</strong>: UI 버튼 클릭 또는 필드 수정 내용<br>
+                            저장, 불러오기, 인쇄, 노션 내보내기 등 모든 작업이 자동으로 기록됩니다.<br>
                             <span style="color:#667eea; font-weight:500;">※ 최근 50건까지 표시됩니다.</span>
                         </div>
                     </div>
@@ -4833,7 +4841,7 @@
                             <div id="logCustomerAmount" style="font-size:16px; font-weight:600;">₩0</div>
                         </div>
                         <div style="text-align:center;">
-                            <div style="font-size:12px; opacity:0.85;">편집 기록 수</div>
+                            <div style="font-size:12px; opacity:0.85;">작업 기록 수</div>
                             <div id="logEditCount" style="font-size:16px; font-weight:600;">0건</div>
                         </div>
                     </div>
@@ -4842,9 +4850,9 @@
                 <div style="margin-bottom:12px;">
                     <h3
                         style="margin:0 0 8px 0; font-size:15px; color:#1d1d1f; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:18px;">📝</span> 편집 정보 (최근 50건)
+                        <span style="font-size:18px;">📝</span> 작업기록 (최근 50건)
                     </h3>
-                    <p style="margin:0; font-size:12px; color:#6b7280;">해당 고객의 정보가 수정될 때마다 자동으로 기록됩니다.</p>
+                    <p style="margin:0; font-size:12px; color:#6b7280;">저장, 불러오기, 인쇄, 노션 내보내기 등 모든 작업이 기록됩니다.</p>
                 </div>
                 <table class="data-table"
                     style="width:100%; border-collapse:collapse; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
@@ -8364,6 +8372,7 @@
                     if (result.rows && result.rows.length > 0) {
                         settlementRows = result.rows;
                         showToast('정산 내역 및 옵션을 동기화했습니다.', 'success');
+                        logUserAction('불러오기', (currentData.clientName || '') + ' 정산 내역 불러오기');
                     } else {
                         // [변경] 데이터가 없으면 기본 템플릿 생성
                         initializeSettlementRows();
@@ -8422,6 +8431,7 @@
 
                 if (result.result === 'success') {
                     showToast('정산 내역이 구글 시트에 저장되었습니다.', 'success');
+                    logUserAction('저장', (currentData.clientName || '') + ' 정산 내역 저장');
                 } else {
                     throw new Error(result.error || '저장 실패');
                 }
@@ -8487,6 +8497,9 @@
                 printWindow.print();
                 printWindow.close();
             }, 500);
+
+            // 로그 기록
+            logUserAction('인쇄', (currentData?.clientName || customerName) + ' 정산 관리 대장 인쇄');
         }
 
         // Settlement Drag & Drop Handlers
@@ -9186,13 +9199,13 @@
                     const subInfo = (c.clientName || '') + (c.clientName && c.clientPhone ? ' / ' : '') + (c.clientPhone || '');
                     const lockIcon = c.isLocked ? '🔒' : '';
                     const creatorInfo = c.createdBy ? ` / <span style="color:#ff9500; font-weight:600;">${c.createdBy}</span>` : '';
-                    const updateInfo = c.updatedAt ? ` / <span style="color:#ff3b30; font-weight:600;">${c.updatedAt}</span>` : '';
+                    // [수정] 날짜(updatedAt) 제거 - 고객목록에서 날짜 표시 안함
 
                     return `
                 <div class="customer-item ${c.customerId === currentCustomerId ? 'active' : ''}"
                     onclick="selectCustomer('${c.customerId}')">
                     <div class="customer-item-header">
-                        <span class="customer-item-id">${lockIcon}${c.customerId}${creatorInfo}${updateInfo}</span>
+                        <span class="customer-item-id">${lockIcon}${c.customerId}${creatorInfo}</span>
                         <span class="status-badge ${c.status}">${statusText}</span>
                     </div>
                     <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
@@ -12772,49 +12785,122 @@
             }
 
             const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="loading-spinner"></span> 불러오는 중...';
-            btn.disabled = true;
+            const originalHTML = btn ? btn.innerHTML : '🔄 DB 불러오기';
+
+            if (btn) {
+                btn.innerHTML = '<span class="loading-spinner"></span> 불러오는 중...';
+                btn.disabled = true;
+            }
+
+            console.log('[Checklist Load] Request started...');
 
             try {
                 const params = new URLSearchParams({ sheet: '공정별체크리스트' });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
-                console.log('🔍 API 응답:', result);
+                console.log('[Checklist Load] Response:', result);
 
-                // 응답 형식 처리: 배열 또는 객체
-                if (Array.isArray(result)) {
-                    // 배열 형식 응답
-                    checklistMasterData = result;
-                } else if (result.success && result.data) {
-                    // 객체 형식 응답 { success: true, data: [...] }
-                    checklistMasterData = result.data;
-                } else if (result.result === 'success' && result.items) {
-                    // 다른 형식 { result: "success", items: [...] }
-                    checklistMasterData = result.items;
+                if (result.success === true || result.result === 'success' || Array.isArray(result) || (result.data && Array.isArray(result.data))) {
+                    let items = [];
+                    if (Array.isArray(result)) items = result;
+                    else if (result.data) items = result.data;
+                    else if (result.items) items = result.items;
+
+                    if (!items || items.length === 0) {
+                        throw new Error('데이터가 비어있습니다.');
+                    }
+
+                    // [Fix] 데이터 공백 제거 (필터링 정확도 향상)
+                    checklistMasterData = items.map(item => ({
+                        ...item,
+                        '진행단계': String(item['진행단계'] || '').trim(),
+                        '분류': String(item['분류'] || '').trim()
+                    }));
+
+                    // [추가] 로컬 스토리지 저장 (영구 유지)
+                    localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
+
+                    console.log(`✅ [Checklist Load] Loaded ${items.length} items.`);
+
+                    // 필터 옵션 업데이트
+                    updateChecklistFilters();
+
+                    // 테이블 렌더링
+                    renderChecklistItems();
+
+                    showToast(`체크리스트 불러오기 완료 (${items.length}건)`, 'success');
                 } else {
                     throw new Error(result.message || '데이터를 불러올 수 없습니다');
                 }
-
-                // [추가] 로컬 스토리지 저장 (영구 유지)
-                localStorage.setItem('dz_checklist_master', JSON.stringify(checklistMasterData));
-
-                console.log('✅ 체크리스트 데이터 로드 완료:', checklistMasterData.length + '개 항목');
-
-                // 필터 옵션 업데이트
-                updateChecklistFilters();
-
-                // 테이블 렌더링
-                renderChecklistItems();
-
-                showToast('체크리스트를 불러왔습니다!', 'success');
             } catch (error) {
-                console.error('❌ 체크리스트 로드 실패:', error);
+                console.error('❌ [Checklist Load Error]', error);
                 showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
             } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        // [추가] 체크리스트 마스터 데이터 저장 (Google Sheet)
+        async function saveChecklistMasterToCloud() {
+            if (!isLoggedIn()) {
+                showToast('관리자 로그인이 필요합니다', 'error');
+                showAdminModal();
+                return;
+            }
+            if (!confirm('현재 공정별 체크리스트 목록을 Google Sheet DB에 저장하시겠습니까?\n(기존 시트 내용을 현재 화면의 목록으로 덮어씁니다.)')) return;
+
+            const btn = document.querySelector('button[onclick="saveChecklistMasterToCloud()"]');
+            const originalHTML = btn ? btn.innerHTML : '💾 DB 저장하기';
+
+            if (btn) {
+                btn.innerHTML = '<span class="loading-spinner"></span> 저장 중...';
+                btn.disabled = true;
+            }
+
+            console.log('[Checklist Save] Request started. Rows:', checklistMasterData.length);
+            // Payload logging
+            console.log('Payload Preview:', {
+                action: 'updateChecklistMaster',
+                customerId: currentCustomerId || 'master',
+                rows: checklistMasterData.length
+            });
+
+            try {
+                const payload = {
+                    action: 'updateChecklistMaster',
+                    adminId: (typeof currentAdmin !== 'undefined' && currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown',
+                    data: checklistMasterData
+                };
+
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                console.log('[Checklist Save] Response:', result);
+
+                if (result.success || result.result === 'success') {
+                    const timeStr = new Date().toLocaleTimeString();
+                    showToast(`✅ 저장 완료 (시트: ${result.sheetName || '공정별체크리스트'}) - ${timeStr}`, 'success', 5000);
+                    if (typeof logUserAction === 'function') {
+                        logUserAction('저장', `공정별 체크리스트 마스터 저장 (${result.count}건)`);
+                    }
+                } else {
+                    throw new Error(result.message || result.error || '저장 실패');
+                }
+            } catch (e) {
+                console.error('[Checklist Save Error]', e);
+                showToast('저장 실패: ' + e.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
             }
         }
 
@@ -13511,6 +13597,10 @@
                     } else {
                         showToast('✅ 노션으로 내보내기 완료!', 'success');
                     }
+                    // 성공 로그 (타입별 상세 내용)
+                    const typeNameMap = { 'customer': '고객 정보', 'schedule': '공사 스케줄', 'checklist': '체크리스트', 'all': '전체 데이터' };
+                    const tName = typeNameMap[type] || type;
+                    logUserAction('노션 내보내기', (targetData.clientName || targetData.projectName || '고객') + ' ' + tName + ' 내보내기');
                 } else {
                     throw new Error(result.message || '내보내기 실패');
                 }
@@ -14019,23 +14109,42 @@
         // [추가] 진행단계 선택에 따른 분류 필터 옵션 갱신
         function updateCategoryOptionsBasedOnStage() {
             const selectedStages = multiSelectState['checklistStageFilter'];
+            console.log('[Filter Logic] Selected Stages:', selectedStages);
+
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                console.warn('[Filter Logic] No master data available for filtering');
+                return;
+            }
+
             let validCategories = [];
 
             if (selectedStages.includes('all') || selectedStages.length === 0) {
                 // 전체 선택 시 -> 모든 분류 표시
-                validCategories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))].sort();
+                validCategories = [...new Set(checklistMasterData.map(item => (item.분류 || '').trim()).filter(Boolean))].sort();
             } else {
                 // 특정 단계 선택 시 -> 해당 단계에 포함된 분류만 추출
-                const filteredItems = checklistMasterData.filter(item => selectedStages.includes(item.진행단계));
-                validCategories = [...new Set(filteredItems.map(item => item.분류).filter(Boolean))].sort();
+                const filteredItems = checklistMasterData.filter(item => {
+                    const itemStage = (item.진행단계 || '').trim();
+                    // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
+                    // To be safe, we rely on exact values from options. 
+                    // But here we just used item.진행단계 to build options, so it should match.
+                    return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
+                });
+                validCategories = [...new Set(filteredItems.map(item => (item.분류 || '').trim()).filter(Boolean))].sort();
             }
+
+            console.log('[Filter Logic] Valid Categories:', validCategories);
 
             // 기존 선택된 분류 중 유효하지 않은 것은 제거 (UX 개선)
             const currentCategoryState = multiSelectState['checklistCategoryFilter'];
+
             if (!currentCategoryState.includes('all')) {
                 const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
                 // 하나도 없으면 'all'로 리셋
                 multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
+            } else {
+                // If it was 'all', keep it 'all' unless validCategories is empty? 
+                // 'all' is always valid if validCategories has items.
             }
 
             // 분류 필터 옵션 재생성
@@ -14095,119 +14204,111 @@
         });
 
         // ============================
-        // [신규] 현황 및 작업기록 (Customer Edit Audit Log)
+        // [신규] 현황 및 작업기록 (System Action Log)
         // ============================
-        const MAX_AUDIT_LOGS = 500; // 전체 저장 최대치
-        let auditLogs = []; // { time, adminId, action, customerId, customerName }
+        // 서버 연동 방식으로 변경됨
 
-        // 초기 로드
-        try {
-            const savedLogs = localStorage.getItem('designzig_audit_logs');
-            if (savedLogs) {
-                auditLogs = JSON.parse(savedLogs);
-            }
-        } catch (e) {
-            console.error('Audit log load error', e);
-            auditLogs = [];
-        }
+        // 로그 기록 함수 (서버 전송)
+        async function logUserAction(actionType, detailText) {
+            const adminId = (currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown';
 
-        // 로그 기록 함수 (고객 ID 포함)
-        function logUserAction(actionName, detailText) {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            // UI에 즉시 반영을 위해 로컬 호출 (선택적)
+            // renderAuditLog(); // 서버에서 다시 불러오는 것이 정확함
 
-            const logItem = {
-                time: `${dateStr} ${timeStr}`,
-                timestamp: now.getTime(),
-                adminId: (currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown',
-                action: actionName,
-                detail: detailText || '-',
-                customerId: currentCustomerId || null,
-                customerName: (currentData && currentData.clientName) ? currentData.clientName : '-'
-            };
-
-            auditLogs.unshift(logItem); // 최신순 추가
-
-            // 최대 개수 제한
-            if (auditLogs.length > MAX_AUDIT_LOGS) {
-                auditLogs = auditLogs.slice(0, MAX_AUDIT_LOGS);
-            }
-
-            // 로컬 저장
-            localStorage.setItem('designzig_audit_logs', JSON.stringify(auditLogs));
-
-            // 화면 갱신 (현황 탭이 열려있다면)
-            if (document.getElementById('panel-stats') && document.getElementById('panel-stats').classList.contains('active')) {
-                renderAuditLog();
+            try {
+                // 비동기 전송 (결과 기다리지 않음)
+                fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'logUserAction',
+                        adminId: adminId,
+                        actionType: actionType,
+                        detail: detailText
+                    })
+                }).then(res => res.json())
+                    .then(data => {
+                        console.log('Log saved:', data);
+                        // 현재 작업기록 탭을 보고 있다면 갱신
+                        if (document.getElementById('panel-stats') &&
+                            (document.getElementById('panel-stats').style.display === 'block' ||
+                                document.getElementById('panel-stats').classList.contains('active'))) {
+                            renderActionLog();
+                        }
+                    })
+                    .catch(err => console.error('Log save error:', err));
+            } catch (e) {
+                console.error('Log error:', e);
             }
         }
 
-        // 로그 렌더링 함수 (현재 고객 기준 필터링)
-        function renderAuditLog() {
-            const tbody = document.getElementById('auditLogTableBody');
+        // 로그 렌더링 함수 (서버 조회)
+        async function renderActionLog() {
+            let tbody = document.getElementById('auditLogTableBody');
+
+            // 호환성: 기존 ID가 auditLogTableBody임
+            if (!tbody) {
+                // 혹시 panel-stats 내부의 tbody를 찾음
+                const panel = document.getElementById('panel-stats');
+                if (panel) {
+                    const tbl = panel.querySelector('tbody');
+                    if (tbl) tbody = tbl;
+                }
+            }
+
             if (!tbody) return;
 
-            // 현황 요약 업데이트
-            updateCustomerStatusSummary();
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">로딩 중...</td></tr>';
 
-            // 현재 고객 ID로 필터링 (최대 50건)
-            const filteredLogs = auditLogs
-                .filter(log => log.customerId === currentCustomerId)
-                .slice(0, 50);
+            try {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=action_log&action=getLogs`);
+                const result = await response.json();
 
-            if (filteredLogs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; color:#999;">이 고객에 대한 편집 기록이 없습니다.</td></tr>';
-                return;
+                if (result.success && result.logs) {
+                    if (result.logs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">기록이 없습니다.</td></tr>';
+                        return;
+                    }
+
+
+                    let html = '';
+                    result.logs.forEach(log => {
+                        html += `
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 8px 10px; color:#666; font-size:12px; white-space:nowrap;">${log.timestamp}</td>
+                                <td style="padding: 8px 10px; font-weight:600; font-size:12px; color:#0071e3;">${log.adminId}</td>
+                                <td style="padding: 8px 10px; color:#333; font-size:12px;">
+                                    <span style="font-weight:600; color:#1d1d1f; margin-right:4px;">[${log.actionType}]</span>
+                                    ${log.detail}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+
+                    // 요약 정보 업데이트 (건수만)
+                    const countEl = document.getElementById('logEditCount');
+                    if (countEl) countEl.textContent = result.logs.length + '건';
+
+                    // 고객 정보 요약은 시스템 로그에서는 불필요할 수 있으나, 기존 UI 유지 혹은 숨김
+                    // 여기서는 '전체 시스템 로그'로 표시 변경
+                    const nameEl = document.getElementById('logCustomerName');
+                    if (nameEl) nameEl.textContent = '전체 시스템';
+                    const statusEl = document.getElementById('logCustomerStatus');
+                    if (statusEl) statusEl.textContent = 'Active';
+                    const amountEl = document.getElementById('logCustomerAmount');
+                    if (amountEl) amountEl.textContent = '-';
+
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:red;">불러오기 실패</td></tr>';
+                }
+            } catch (e) {
+                console.error('Log fetch error:', e);
+                targetTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:red;">오류 발생</td></tr>';
             }
-
-            let html = '';
-            filteredLogs.forEach(log => {
-                html += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px 10px; color:#666; font-size:12px; white-space:nowrap;">${log.time}</td>
-                        <td style="padding: 8px 10px; font-weight:600; font-size:12px; color:#0071e3;">${log.adminId}</td>
-                        <td style="padding: 8px 10px; color:#333; font-size:12px;">${log.action}${log.detail && log.detail !== '-' ? ' (' + log.detail + ')' : ''}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
         }
 
-        // 고객 현황 요약 업데이트
-        function updateCustomerStatusSummary() {
-            if (!currentData) return;
-
-            const statusLabelsKo = {
-                consulting: '상담중',
-                hold: '보류',
-                budget_over: '예산초과',
-                other_company: '타사계약',
-                contracted: '계약완료',
-                in_progress: '공사중',
-                completed: '공사완료',
-                as_done: 'A/S완료'
-            };
-
-            document.getElementById('logCustomerName').textContent = currentData.clientName || currentData.projectName || '-';
-            document.getElementById('logCustomerStatus').textContent = statusLabelsKo[currentData.status] || currentData.status || '-';
-            document.getElementById('logCustomerCreated').textContent = currentData.createdAt || '-';
-
-            const totalAmount = currentData.totalAmount ? parseInt(String(currentData.totalAmount).replace(/,/g, '')) : 0;
-            document.getElementById('logCustomerAmount').textContent = '₩' + totalAmount.toLocaleString();
-
-            const editCount = auditLogs.filter(log => log.customerId === currentCustomerId).length;
-            document.getElementById('logEditCount').textContent = editCount + '건';
-        }
-
-        // 통계 모달 열릴 때 렌더링 연결
-        // (기존 openStatsModal 함수에 renderAuditLog() 추가 필요 - 여기서는 오버라이딩 대신 후킹 방식 사용)
-        /*
-           주의: 기존 openStatsModal 함수 내부를 수정하거나, 
-           아래처럼 클릭 이벤트 등에 바인딩해야 함. 
-           하지만 이미 HTML onclick="openStatsModal()"이 있으므로,
-           openStatsModal 함수를 찾아서 수정하는 편이 좋음.
-        */
+        // renderAuditLog (구버전 호환)
+        const renderAuditLog = renderActionLog;
 
 
         // ============================
@@ -14338,6 +14439,7 @@
                     const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
                     showToast(`저장 완료 ${timeStr}`, 'success');
                     renderExpensesTable();
+                    logUserAction('저장', '고정지출 설정 저장');
                 } else {
                     throw new Error(result.error || '저장 실패');
                 }
@@ -14381,6 +14483,7 @@
                         renderFixedExpenseTable();
                         renderExpensesTable();
                         showToast(`고정지출 ${result.fixedExpenses.length}건 불러옴`, 'success');
+                        logUserAction('불러오기', '고정지출 설정 불러오기');
                     } else {
                         showToast('저장된 고정지출이 없습니다.', 'info');
                     }
@@ -14576,6 +14679,7 @@
                     const now = new Date();
                     const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
                     showToast(`저장 완료 ${timeStr}`, 'success');
+                    logUserAction('저장', '운영비 시트 저장');
                 } else {
                     throw new Error(result.error || '저장 실패');
                 }
@@ -14641,6 +14745,7 @@
                     const fixedCount = result.fixedExpenses?.length || 0;
                     if (loadedCount > 0 || fixedCount > 0) {
                         showToast(`운영비 ${loadedCount}건, 고정지출 ${fixedCount}건 불러옴`, 'success');
+                        logUserAction('불러오기', '운영비 시트 불러오기');
                     } else {
                         showToast('저장된 데이터가 없습니다.', 'info');
                     }
@@ -14688,6 +14793,29 @@
             }
         }
 
+    </script>
+    <script>
+        // [추가] 탭 전환 감지 및 작업기록 갱신 (MutationObserver)
+        document.addEventListener('DOMContentLoaded', () => {
+            const statsPanel = document.getElementById('panel-stats');
+            if (statsPanel) {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.attributeName === 'class') {
+                            if (statsPanel.classList.contains('active')) {
+                                renderActionLog();
+                            }
+                        }
+                        if (mutation.attributeName === 'style') {
+                            if (statsPanel.style.display === 'block' && statsPanel.style.display !== 'none') {
+                                renderActionLog();
+                            }
+                        }
+                    });
+                });
+                observer.observe(statsPanel, { attributes: true });
+            }
+        });
     </script>
 </body>
 
