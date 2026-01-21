@@ -5045,8 +5045,12 @@
                             </div>
 
                             <!-- 체크리스트 테이블 -->
+                            <!-- [모바일 전용] 체크리스트 카드 뷰 컨테이너 -->
+                            <div id="checklistMobileContainer" style="display: none; padding: 12px 16px;"></div>
+
                             <div id="checklistTableContainer" style="overflow-x: auto;">
-                                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                <table id="checklistTable"
+                                    style="width: 100%; border-collapse: collapse; font-size: 12px;">
                                     <thead>
                                         <tr style="background: #f5f5f7;">
                                             <!-- [추가] 삭제 컬럼 -->
@@ -14001,6 +14005,63 @@
                 return palette[index];
             }
 
+            // [모바일/데스크톱 분기 렌더링]
+            const tableContainer = document.getElementById('checklistTableContainer');
+            const mobileContainer = document.getElementById('checklistMobileContainer');
+
+            if (window.innerWidth <= 768) {
+                // Mobile: Hide table, Show card list
+                if (tableContainer) tableContainer.style.display = 'none';
+                if (mobileContainer) {
+                    mobileContainer.style.display = 'block';
+                    mobileContainer.innerHTML = filteredData.map(item => {
+                        const isChecked = customerChecklistData[item.번호] || false;
+                        const categoryColor = getCategoryColor(item.분류);
+
+                        return `
+                        <div class="checklist-card" style="background: white; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e5e5ea;">
+                            <!-- 1. Header Line: Checkbox + Title + Status + Category -->
+                            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                                <!-- Checkbox with large touch target -->
+                                <div onclick="toggleChecklistItem(${item.번호})" style="padding: 4px 0; cursor: pointer;">
+                                    <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                                        style="width: 24px; height: 24px; margin: 0; pointer-events: none; accent-color: #0071e3;">
+                                </div>
+                                <div style="flex: 1; padding-top: 2px;">
+                                    <div style="font-size: 16px; font-weight: 600; color: #1d1d1f; line-height: 1.4; word-break: break-all;">
+                                        ${item.항목 || '항목 없음'}
+                                        <span style="font-size: 13px; font-weight: 400; color: #86868b; margin-left: 6px; white-space: nowrap;">
+                                            ${item.진행단계 || ''} · ${item.분류 || ''}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Content (Read-only Textarea) -->
+                            <div style="margin-bottom: 10px;">
+                                <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">내용</div>
+                                <textarea readonly style="width: 100%; border: 1px solid #d2d2d7; background: #fff; border-radius: 8px; padding: 10px; font-size: 14px; line-height: 1.5; color: #333; resize: none; min-height: 48px; box-sizing: border-box; -webkit-appearance: none;">${item.내용 || ''}</textarea>
+                            </div>
+
+                            <!-- 3. Note (Read-only Textarea) -->
+                            <div>
+                                <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">비고</div>
+                                <textarea readonly style="width: 100%; border: 1px solid #d2d2d7; background: #fff; border-radius: 8px; padding: 10px; font-size: 14px; line-height: 1.5; color: #333; resize: none; min-height: 48px; box-sizing: border-box; -webkit-appearance: none;">${item.비고 || ''}</textarea>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+
+                // Finished rendering for mobile
+                updateChecklistStats();
+                return;
+            } else {
+                // Desktop: Show table, Hide card list
+                if (tableContainer) tableContainer.style.display = 'block';
+                if (mobileContainer) mobileContainer.style.display = 'none';
+            }
+
+            // Desktop Render Logic
             tbody.innerHTML = filteredData.map((item, index) => {
                 const isChecked = customerChecklistData[item.번호] || false;
                 const categoryColor = getCategoryColor(item.분류);
