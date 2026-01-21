@@ -470,11 +470,89 @@
             /* [iOS 최적화] 글로벌 레이아웃 리셋 */
             html,
             body {
-                overflow-x: hidden !important;
-                width: 100% !important;
-                position: relative;
-                -webkit-text-size-adjust: 100%;
+
+                background-color: #f5f5f7;
             }
+
+            /* ===== MOBILE UI OVERRIDES (Priority) ===== */
+            @media (max-width: 768px) {
+
+                /* 1. Safe Area & Header Fix */
+                .main-header {
+                    padding-top: calc(env(safe-area-inset-top) + 12px) !important;
+                    padding-bottom: 12px !important;
+                    height: auto !important;
+                    background-color: #1d1d1f !important;
+                }
+
+                /* 2. Hide Redundant Detail Card (Red Box 2) */
+                .customer-header-card {
+                    display: none !important;
+                }
+
+                /* 3. Cleanup Checklist Header (Red Box 3) */
+                .checklist-header button,
+                .checklist-header .btn-group,
+                .checklist-header-actions,
+                .checklist-filters {
+                    display: none !important;
+                }
+
+                .checklist-header h3 {
+                    margin: 0 !important;
+                    padding: 16px 16px 8px 16px !important;
+                    font-size: 18px !important;
+                }
+
+                /* 4. Tabs & Content Layout */
+                /* 4. Tabs & Content Layout */
+                .customer-tabs {
+                    position: sticky !important;
+                    top: 60px !important;
+                    z-index: 900 !important;
+                    background: #fff !important;
+                    margin-top: 0 !important;
+                    display: flex !important;
+                    flex-wrap: nowrap !important;
+                    overflow-x: auto !important;
+                    -webkit-overflow-scrolling: touch;
+                    padding: 0 16px !important;
+                    gap: 12px !important;
+                    border-bottom: 1px solid #e5e5ea;
+                    scrollbar-width: none;
+                }
+
+                .customer-tabs::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .customer-tab {
+                    flex: 0 0 auto !important;
+                    margin-bottom: 0 !important;
+                    padding: 12px 4px !important;
+                }
+
+                .main-content {
+                    padding: 0 !important;
+                    background-color: #f5f5f7 !important;
+                }
+
+                /* 5. Mobile Icons Styling */
+                .mobile-icon-btn {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 12px !important;
+                    border: none !important;
+                }
+
+                /* 6. Checklist Stats Grid */
+                .checklist-stats {
+                    display: grid !important;
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 10px !important;
+                }
+            }
+
+
 
             /* 헤더 고정 및 너비 100% 보장 (상태바 대응) */
             .main-header {
@@ -9681,6 +9759,15 @@
             if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
 
             updateCustomerList(false); // Do not reset page
+
+            // [모바일 UX] 고객 선택 시 기본으로 '공정별 체크리스트' 탭 열기
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    const checklistTab = document.querySelector('button[onclick*="showCustomerTab(\'checklist\')"]');
+                    if (checklistTab) checklistTab.click();
+                }, 200);
+            }
+
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
 
