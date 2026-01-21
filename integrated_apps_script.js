@@ -3278,16 +3278,19 @@ function handleExpensesGet(e) {
         var fixedExpenses = [];
         var fixedSheet = spreadsheet.getSheetByName('고정지출 설정');
         if (fixedSheet && fixedSheet.getLastRow() >= 2) {
-            var fixedData = fixedSheet.getRange(2, 1, fixedSheet.getLastRow() - 1, 5).getValues();
+            // [수정] 6개 컬럼 읽기 (대분류, 상세내역, 금액, 결제수단, 증빙자료, 활성화)
+            var fixedData = fixedSheet.getRange(2, 1, fixedSheet.getLastRow() - 1, 6).getValues();
             for (var j = 0; j < fixedData.length; j++) {
                 var fRow = fixedData[j];
-                if (fRow[0]) {
+                // 대분류나 상세내역이 있으면 유효한 데이터로 간주
+                if (fRow[0] || fRow[1]) {
                     fixedExpenses.push({
-                        itemName: fRow[0] || '',
-                        category: fRow[1] || '',
+                        category: fRow[0] || '',
+                        detail: fRow[1] || '',
                         amount: fRow[2] || 0,
                         payMethod: fRow[3] || '',
-                        active: fRow[4] !== 'N' // 기본 활성화
+                        receipt: fRow[4] || '',
+                        active: fRow[5] !== 'N' // 기본 활성화 ('N'일 때만 false)
                     });
                 }
             }
@@ -3360,8 +3363,8 @@ function handleExpensesUpdate(payload) {
             var fixedSheet = spreadsheet.getSheetByName('고정지출 설정');
             if (!fixedSheet) {
                 fixedSheet = spreadsheet.insertSheet('고정지출 설정');
-                // [수정] 항목명, 대분류, 월 고정금액, 결제수단, 활성화 여부
-                var fixedHeaders = ['항목명', '대분류', '월 고정금액', '결제수단', '활성화'];
+                // [수정] 대분류, 상세내역, 월 고정금액, 결제수단, 증빙자료, 활성화
+                var fixedHeaders = ['대분류', '상세내역', '월 고정금액', '결제수단', '증빙자료', '활성화'];
                 fixedSheet.appendRow(fixedHeaders);
                 var fHeaderRange = fixedSheet.getRange(1, 1, 1, fixedHeaders.length);
                 fHeaderRange.setBackground('#FF9800');
@@ -3373,20 +3376,21 @@ function handleExpensesUpdate(payload) {
             // 기존 고정지출 삭제
             var fLastRow = fixedSheet.getLastRow();
             if (fLastRow > 1) {
-                fixedSheet.getRange(2, 1, fLastRow - 1, 5).clearContent();
+                fixedSheet.getRange(2, 1, fLastRow - 1, 6).clearContent();
             }
 
             // 새 고정지출 입력
             var fixedData = payload.fixedExpenses.map(function (f) {
                 return [
-                    f.itemName || f.detail || '',
                     f.category || '',
+                    f.detail || f.itemName || '', // itemName -> detail로 명칭 변경 대응
                     f.amount || 0,
                     f.payMethod || '',
+                    f.receipt || '', // 증빙자료 추가
                     f.active !== false ? 'Y' : 'N'
                 ];
             });
-            fixedSheet.getRange(2, 1, fixedData.length, 5).setValues(fixedData);
+            fixedSheet.getRange(2, 1, fixedData.length, 6).setValues(fixedData);
         }
 
         return ContentService.createTextOutput(JSON.stringify({
