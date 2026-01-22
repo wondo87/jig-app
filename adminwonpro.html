@@ -478,6 +478,92 @@
 
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
+                #scheduleNoticeBlock {
+                    display: none !important;
+                }
+
+                #btnAddScheduleRow {
+                    display: none !important;
+                }
+
+                #headerMobileInfo {
+                    display: flex !important;
+                }
+
+                #headerMobileTitle {
+                    display: block !important;
+                }
+
+                #panel-schedule .data-table thead,
+                #panel-schedule #scheduleTableBody {
+                    display: none !important;
+                }
+
+                /* Mobile Checklist Refinement */
+                .mobile-card.checked {
+                    background-color: #f6fff6 !important;
+                    /* Very light green */
+                    border: 1px solid #ccebd4 !important;
+                    /* Greenish border */
+                    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.08) !important;
+                }
+
+                .mobile-check-btn {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 6px;
+                    border: 2px solid #d1d1d6;
+                    background-color: #fff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    margin-right: 2px;
+                    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+                }
+
+                .mobile-check-btn.active {
+                    background-color: #34c759;
+                    border-color: #34c759;
+                    color: white;
+                    transform: scale(1.05);
+                }
+
+                .mobile-card-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #1d1d1f;
+                    line-height: 1.4;
+                }
+
+                .mobile-card.checked .mobile-card-title {
+                    color: #2e7d32;
+                    /* Contrast green title */
+                }
+
+                /* Hide stats box on mobile */
+                .checklist-stats {
+                    display: none !important;
+                }
+
+                /* Hide redundant page title inside the card on mobile */
+                #panel-checklist .doc-header h1 {
+                    display: none !important;
+                }
+
+                /* Ensure the mobile header title (right side) is visible and larger */
+                #headerMobileTitle {
+                    display: block !important;
+                    font-size: 16px !important;
+                    font-weight: 700 !important;
+                    margin-left: auto;
+                    /* Push to right if container is flex */
+                }
+
+                #headerMobileTitle {
+                    display: block !important;
+                }
 
                 .schedule-info-table,
                 .schedule-table-container,
@@ -4396,9 +4482,17 @@
                         </div>
                         <!-- [New] Mobile-only info block -->
                         <div id="headerMobileInfo"
-                            style="display:none; font-size:11px; color:#ffffff; margin-top:4px; opacity: 1.0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            📍 <span id="headerSiteAddress">현장주소</span> | 📞 <span id="headerClientPhone">연락처</span> |
-                            📅 <span id="headerPeriod">공사기간</span>
+                            style="display:none; margin-top:4px; opacity: 1.0; align-items: center; justify-content: space-between;">
+                            <div
+                                style="font-size:11px; color:#ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                                📍 <span id="headerSiteAddress">현장주소</span> | 📞 <span id="headerClientPhone">연락처</span>
+                                |
+                                📅 <span id="headerPeriod">공사기간</span>
+                            </div>
+                            <!-- [New] Page Title (Right) -->
+                            <div id="headerMobileTitle"
+                                style="font-weight:700; font-size:12px; color:#fff; margin-left:8px; white-space:nowrap; display:none;">
+                            </div>
                         </div>
                     </div>
                     <div class="customer-header-right">
@@ -5370,7 +5464,7 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <div
+                            <div id="scheduleNoticeBlock"
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
                                 <div
                                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -5412,7 +5506,7 @@
                                     <!-- Dynamic Rows-->
                                 </tbody>
                             </table>
-                            <button onclick="addScheduleRow()" class="no-print"
+                            <button id="btnAddScheduleRow" onclick="addScheduleRow()" class="no-print"
                                 style="width:100%; padding:15px; margin-top:10px; border:1px dashed #d2d2d7; background:#fafafa; color:#86868b; font-size:13px; cursor:pointer; border-radius:6px; transition: all 0.2s;">
                                 + 공정 추가
                             </button>
@@ -7781,6 +7875,25 @@
                 }
             });
 
+            // Mobile Header Title Update
+            const headerTitleEl = document.getElementById('headerMobileTitle');
+            if (headerTitleEl) {
+                let titleText = '';
+                if (tabId === 'checklist') titleText = '공정별 체크리스트';
+                else if (tabId === 'schedule') titleText = '공사 스케줄';
+                else if (tabId === 'customer') titleText = '고객 정보';
+                else if (tabId === 'stats') titleText = '현황 및 통계';
+                else if (tabId === 'expenses') titleText = '비용 관리';
+                else if (tabId === 'files') titleText = '파일함';
+                else if (tabId === 'estimate') titleText = '견적서';
+                else if (tabId === 'cost') titleText = '원가 관리';
+                else if (tabId === 'as_list') titleText = 'A/S 관리';
+                else if (tabId === 'settlement') titleText = '정산 관리';
+
+                headerTitleEl.innerText = titleText;
+                headerTitleEl.style.display = titleText ? 'block' : 'none';
+            }
+
             syncAllFields();
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
@@ -8036,22 +8149,10 @@
                                     <div class="mobile-date-text">${dateStr}</div>
                                 </div>
                                 
-                                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 6px;">
-                                    <div class="mobile-chip chip-category">${row.category || '미분류'}</div>
-                                    ${row.inCharge ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#333;">👤 ${row.inCharge}</div>` : ''}
+                                <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+                                    ${row.inCharge ? `<div style="font-size:12px; color:#555;">👤 ${row.inCharge}</div>` : ''}
+                                    ${row.memo ? `<div style="font-size:12px; color:#86868b; overflow:hidden; text-overflow:ellipsis;">✏️ ${row.memo}</div>` : ''}
                                 </div>
-                                
-                                ${row.checkPoint ? `
-                                <div style="font-size:13px; color:#333; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                    ${row.checkPoint}
-                                </div>
-                                ` : ''}
-
-                                ${row.memo ? `
-                                <div style="font-size:12px; color:#86868b; display:flex; align-items:center; gap:4px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                    ✏️ ${row.memo}
-                                </div>
-                                ` : ''}
                             </div>`;
                         }).join('');
                     }
@@ -14312,33 +14413,41 @@
                             const dateStr = relatedSchedule ? formatMobileDateRange(relatedSchedule.start, relatedSchedule.end) : '';
                             const catColor = getCategoryColor(item.카테고리);
 
+                            // Custom Checkbox Logic
+                            const checkBtn = isChecked ?
+                                `<div class="mobile-check-btn active" onclick="toggleChecklistItem('${item.번호}')"><span style="font-size:14px; font-weight:bold;">✔</span></div>` :
+                                `<div class="mobile-check-btn" onclick="toggleChecklistItem('${item.번호}')"></div>`;
+
+                            const cardClass = isChecked ? 'mobile-card checked' : 'mobile-card';
+                            const titleCheck = isChecked ? `<span style="color:#34c759; margin-right:4px; font-size:14px;">✔</span>` : ``;
+
                             return `
-                            <div class="mobile-card">
+                            <div class="${cardClass}">
                                 <div class="mobile-card-row" style="margin-bottom:2px;">
                                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                                         ${isChecked ? `<div class="mobile-chip chip-green" onclick="toggleChecklistItem('${item.번호}')">✅ 완료</div>` : `<input type="checkbox" onchange="toggleChecklistItem('${item.번호}')" style="width:20px; height:20px; border-radius:6px; flex-shrink:0;">`}
-                                        <div class="mobile-card-title">${item.항목}</div>
+                                        ${checkBtn}
+                                        <div class="mobile-card-title">${titleCheck}${item.항목}</div>
                                     </div>
                                     <div class="mobile-date-text">${dateStr}</div>
                                 </div>
 
-                                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; margin-left: 34px;">
                                     <div class="mobile-chip chip-category" style="background:${catColor.bg}; color:${catColor.text};">${item.카테고리 || '미분류'}</div>
                                     ${item.진행단계 ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#86868b;">${item.진행단계}</div>` : ''}
                                 </div>
                                 
-                                <div style="margin-top:4px;">
+                                <div style="margin-top:4px; margin-left: 34px;">
                                     <input type="text" class="mobile-edit-field" value="${userContent || item.내용 || ''}" 
-                                           placeholder="내용 입력..." onchange="updateChecklistField('${item.번호}', 'content', this.value)"
-                                           style="font-weight:400; color:#333;">
+                                        placeholder="내용 입력..." onchange="updateChecklistField('${item.번호}', 'content', this.value)"
+                                        style="font-weight:400; color:#333; width:100%;">
                                 </div>
                                 
-                                <div style="border-top:1px dashed #f0f0f0; padding-top:4px; margin-top:4px; display:flex; align-items:center;">
+                                <div style="border-top:1px dashed #e5e5ea; padding-top:6px; margin-top:6px; display:flex; align-items:center; margin-left: 34px;">
                                     <span style="font-size:11px; color:#bdbdbd; margin-right:6px;">비고</span>
                                     <input type="text" class="mobile-edit-field" value="${userRemarks || item.비고 || ''}" 
-                                           placeholder="비고 입력" onchange="updateChecklistField('${item.번호}', 'remarks', this.value)"
-                                           style="color:#666;">
-                                    <div style="color:#d2d2d7; font-size:12px;">✏️</div>
+                                        placeholder="비고 입력" onchange="updateChecklistField('${item.번호}', 'remarks', this.value)"
+                                        style="color:#666; width:100%;">
+                                    <div style="color:#d2d2d7; font-size:12px; margin-left:4px;">✏️</div>
                                 </div>
                             </div>`;
                         }).join('');
