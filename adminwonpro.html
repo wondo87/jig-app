@@ -15002,6 +15002,8 @@
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=expenses`);
                 const result = await response.json();
 
+                console.log('[운영비 불러오기] API 응답:', result);
+
                 if (result.result === 'success') {
                     let loadedCount = 0;
 
@@ -15050,7 +15052,8 @@
                 }
             } catch (err) {
                 console.error('운영비 불러오기 오류:', err);
-                showToast('불러오기 실패: ' + err.message, 'error');
+                console.error('API URL:', `${CUSTOMER_SYNC_URL}?sheet=expenses`);
+                showToast('운영비 불러오기 실패: ' + err.message, 'error');
                 return false;
             } finally {
                 if (btn) {
