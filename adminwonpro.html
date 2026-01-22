@@ -558,7 +558,9 @@
             background: #fff;
             border-right: 1px solid #e8e8ed;
             flex-shrink: 0;
-            overflow: visible;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
         }
 
         .sidebar-header {
@@ -645,9 +647,10 @@
         }
 
         .customer-list {
-            flex: none !important;
-            overflow-y: visible !important;
+            display: block !important;
+            overflow: visible !important;
             height: auto !important;
+            max-height: none !important;
         }
 
         .customer-item {
