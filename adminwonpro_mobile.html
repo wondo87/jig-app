@@ -8146,6 +8146,10 @@
             // 모바일에서는 기본 필터를 "공사중"으로 설정
             if (window.innerWidth <= 768) {
                 currentStatusFilter = 'in_progress';
+                // 필터 버튼 UI 업데이트
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.status === 'in_progress');
+                });
             }
 
             updateCustomerList();
