@@ -521,29 +521,9 @@
                 padding: 10px !important;
             }
 
-            /* 모바일 체크리스트 상단 고객 정보 */
+            /* 모바일 체크리스트 상단 고객 정보 - 숨김 (상단 헤더에만 표시) */
             .mobile-checklist-customer-info {
-                display: block !important;
-                margin-top: 12px;
-                padding: 12px;
-                background: #f5f5f7;
-                border-radius: 8px;
-            }
-
-            .mobile-checklist-customer-info .info-line {
-                font-size: 13px;
-                color: #1d1d1f;
-                line-height: 1.6;
-                margin-bottom: 4px;
-            }
-
-            .mobile-checklist-customer-info .info-line:last-child {
-                margin-bottom: 0;
-            }
-
-            .mobile-checklist-customer-info a {
-                color: #007aff;
-                text-decoration: none;
+                display: none !important;
             }
 
 
@@ -776,9 +756,59 @@
                 overflow: hidden !important;
             }
 
-            /* [Strict Hide] Info Card (Old Header) */
-            #panel-checklist .doc-header {
+            /* [모바일] 모든 패널 헤더 검정색 상단 바로 아래 고정 */
+            #panel-checklist .doc-header,
+            #panel-schedule .doc-header,
+            #panel-customer-info .doc-header {
+                display: block !important;
+                position: fixed !important;
+                top: 54px !important;
+                /* 검정색 헤더(54px) 바로 아래 */
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                z-index: 99 !important;
+                background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                padding: 10px 16px !important;
+                /* 높이 최소화: 10px 상하 패딩 */
+                height: 40px !important;
+                /* 고정 높이 */
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            /* 모바일 헤더 내부 텍스트 크기 통일 */
+            #panel-checklist .doc-header h1,
+            #panel-schedule .doc-header h1,
+            #panel-customer-info .doc-header h1 {
+                font-size: 15px !important;
+                margin: 0 !important;
+                line-height: 1 !important;
+                font-weight: 600 !important;
+            }
+
+            /* 헤더 내 모든 불필요한 요소 숨김 */
+            #panel-checklist .doc-header button,
+            #panel-schedule .doc-header button,
+            #panel-customer-info .doc-header button,
+            #panel-checklist .doc-header .subtitle,
+            #panel-schedule .doc-header .subtitle,
+            #panel-customer-info .doc-header .subtitle,
+            #panel-checklist .doc-header div[style*="DESIGN JIG"],
+            #panel-schedule .doc-header div[style*="DESIGN JIG"],
+            #panel-customer-info .doc-header div[style*="DESIGN JIG"] {
                 display: none !important;
+            }
+
+            /* 헤더 고정으로 인한 컨텐츠 영역 padding 추가 */
+            #panel-checklist .doc-content,
+            #panel-schedule .doc-content,
+            #panel-customer-info .doc-content {
+                padding-top: 100px !important;
+                /* 검정 헤더(54px) + 파란 헤더(40px) + 여유(6px) */
             }
 
             /* [New] Mobile Filter Bar Wrapper (Sticky) */
@@ -812,26 +842,9 @@
                 align-items: center !important;
             }
 
-            /* 2. Blue Customer Header Fixed below Black Header */
+            /* 2. Blue Customer Header 숨김 */
             .customer-header-bar {
-                position: fixed !important;
-                top: 54px !important;
-                /* Directly below 54px header */
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 10000 !important;
-                margin: 0 !important;
-                width: 100% !important;
-                border-radius: 0 !important;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
-                padding: 12px 16px !important;
-                height: 84px !important;
-                /* Fixed height for consistency */
-                background: #0071e3 !important;
-                /* Ensuring Blue background */
-                display: flex !important;
-                flex-direction: column;
-                justify-content: center;
+                display: none !important;
             }
 
             /* 3. Push Content Down */
@@ -5528,13 +5541,7 @@
                         style="width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
                         <div class="doc-header">
                             <div>
-                                <h1>공정별 체크리스트</h1>
-                                <!-- 모바일 고객 정보 (상단 3줄) -->
-                                <div class="mobile-checklist-customer-info" style="display:none;">
-                                    <div class="info-line" id="mobileChecklistInfo1"></div>
-                                    <div class="info-line" id="mobileChecklistInfo2"></div>
-                                    <div class="info-line" id="mobileChecklistInfo3"></div>
-                                </div>
+                                <h1 style="margin: 0; font-size: 15px; font-weight: 600;">공정별 체크리스트</h1>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <!-- [추가] DB 불러오기/저장 버튼 -->
@@ -5542,9 +5549,6 @@
                                     style="background: #0071e3; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
                                     🔄 DB 불러오기
                                 </button>
-                                <span class="no-print"
-                                    style="font-size: 11px; color: #ff3b30; font-weight: 600; margin-left: 8px;">(Master
-                                    Read-Only)</span>
 
                                 <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
                                     style="background: #8e8e93; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
@@ -5710,16 +5714,7 @@
                         style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
                         <div class="doc-header">
                             <div>
-                                <div
-                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
-                                    DESIGN JIG</div>
-                                <h1>📅 공사 스케줄 관리</h1>
-                                <div class="subtitle">Construction Schedule Manager</div>
-                                <!-- 모바일: 체크리스트 바로가기 -->
-                                <button class="mobile-schedule-to-checklist" onclick="showCustomerTab('checklist')"
-                                    style="display:none; margin-top:8px; padding:8px 12px; background:#007aff; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
-                                    ✅ 공정별 체크리스트 보기
-                                </button>
+                                <h1 style="margin: 0; font-size: 15px; font-weight: 600;">공사 스케줄</h1>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <button class="notion-export-btn" onclick="exportToNotion('schedule', event)"
@@ -5885,6 +5880,136 @@
                                 등록된 스케줄이 없습니다. 공정을 추가해주세요.
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 고객 정보 패널 (모바일 전용 - 읽기 전용) -->
+                <div class="tab-panel" id="panel-customer-info">
+                    <div class="document-wrapper"
+                        style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                        <div class="doc-header" style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: white;">
+                            <div>
+                                <h1 style="margin: 0; font-size: 15px; font-weight: 600; color: white;">고객 정보</h1>
+                            </div>
+                        </div>
+
+                        <!-- 모바일 고객 정보 (블럭 형태) -->
+                        <div class="doc-content" style="padding: 16px; background: #f5f5f7;">
+
+                            <!-- 01. 인적사항 -->
+                            <div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">01</span>
+                                    인적사항
+                                </div>
+                                <div style="display: grid; gap: 10px;">
+                                    <div class="info-block">
+                                        <div class="info-label">성명</div>
+                                        <div class="info-value customer-field" data-field="clientName">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">연락처</div>
+                                        <div class="info-value customer-field" data-field="clientPhone">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">배우자 성명</div>
+                                        <div class="info-value customer-field" data-field="spouseName">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">배우자 연락처</div>
+                                        <div class="info-value customer-field" data-field="spousePhone">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">주소</div>
+                                        <div class="info-value customer-field" data-field="clientAddress">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">이메일</div>
+                                        <div class="info-value customer-field" data-field="clientEmail">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">유입경로</div>
+                                        <div class="info-value customer-field" data-field="clientSource">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 02. 공사정보 -->
+                            <div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">02</span>
+                                    공사정보
+                                </div>
+                                <div style="display: grid; gap: 10px;">
+                                    <div class="info-block">
+                                        <div class="info-label">공사명</div>
+                                        <div class="info-value customer-field" data-field="projectName">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">현장주소</div>
+                                        <div class="info-value customer-field" data-field="siteAddress">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">평수</div>
+                                        <div class="info-value customer-field" data-field="siteSize">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">공사기간</div>
+                                        <div class="info-value customer-field" data-field="constructionPeriod">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">준공일</div>
+                                        <div class="info-value customer-field" data-field="completionDate">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 03. 기타정보 -->
+                            <div style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">03</span>
+                                    기타정보
+                                </div>
+                                <div style="display: grid; gap: 10px;">
+                                    <div class="info-block">
+                                        <div class="info-label">메모</div>
+                                        <div class="info-value customer-field" data-field="memo" style="white-space: pre-wrap;">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">작성자</div>
+                                        <div class="info-value customer-field" data-field="createdBy">-</div>
+                                    </div>
+                                    <div class="info-block">
+                                        <div class="info-label">고객 ID</div>
+                                        <div class="info-value customer-field" data-field="customerId">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <style>
+                            .info-block {
+                                border-bottom: 1px solid #f0f0f0;
+                                padding-bottom: 8px;
+                            }
+                            .info-block:last-child {
+                                border-bottom: none;
+                                padding-bottom: 0;
+                            }
+                            .info-label {
+                                font-size: 12px;
+                                color: #86868b;
+                                margin-bottom: 4px;
+                                font-weight: 500;
+                            }
+                            .info-value {
+                                font-size: 14px;
+                                color: #1d1d1f;
+                                font-weight: 500;
+                                word-wrap: break-word;
+                            }
+                        </style>
                     </div>
                 </div>
 
@@ -8275,6 +8400,26 @@
             }
 
             syncAllFields();
+
+            // 고객정보 탭 표시 시 데이터 재적용 (모바일 화면 대응)
+            if (tabId === 'customer' && currentData) {
+                console.log('🔄 [Tab Switch] 고객정보 탭 표시, 데이터 재적용');
+
+                // DOM이 완전히 렌더링된 후 데이터 적용
+                setTimeout(() => {
+                    document.querySelectorAll('.customer-field').forEach(f => {
+                        const fieldName = f.dataset.field;
+                        const fieldValue = currentData[fieldName] || '';
+
+                        if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
+                            f.value = fieldValue;
+                        } else {
+                            f.textContent = fieldValue || '-';
+                        }
+                    });
+                }, 100);
+            }
+
             if (tabId === 'estimate') updateEstimateFromCost();
             if (tabId === 'schedule') loadScheduleForCustomer();
             if (tabId === 'as_list') loadASList();
@@ -8304,22 +8449,25 @@
             const info3 = document.getElementById('mobileChecklistInfo3');
 
             if (info1 && info2 && info3) {
-                // 1줄: 현장명 | 공사기간
-                const siteName = customer.siteAddress || customer.projectName || '현장명 없음';
-                const period = customer.constructionPeriod || '-';
-                info1.innerHTML = `<strong>${siteName}</strong> | ${period}`;
+                // 1줄: 현장명 | 공사기간 (줄바꿈 허용)
+                const siteName = customer.projectName || '현장명 없음';
+                const period = customer.constructionPeriod || customer.field4 || '-';
+                info1.innerHTML = `<div style="white-space: normal; word-wrap: break-word;"><strong>${siteName}</strong> | 공사기간 ${period}</div>`;
 
-                // 2줄: 고객명 | 전화번호 (클릭시 전화)
-                const clientName = customer.clientName || '-';
-                const clientPhone = customer.clientPhone || '';
-                const phoneLink = clientPhone ? `<a href="tel:${clientPhone}">${clientPhone}</a>` : '-';
-                info2.innerHTML = `${clientName} | ${phoneLink}`;
+                // 2줄: 현장주소 (줄바꿈 허용)
+                const siteAddress = customer.siteAddress || '현장주소 없음';
+                info2.innerHTML = `<div style="white-space: normal; word-wrap: break-word;">${siteAddress}</div>`;
 
-                // 3줄: 배우자명 | 전화번호 (클릭시 전화)
-                const spouseName = customer.spouseName || '-';
-                const spousePhone = customer.spousePhone || '';
-                const spousePhoneLink = spousePhone ? `<a href="tel:${spousePhone}">${spousePhone}</a>` : '-';
-                info3.innerHTML = `${spouseName} | ${spousePhoneLink}`;
+                // 3줄: 성명 | 연락처, 배우자 성명 | 연락처 (줄바꿈 허용)
+                const clientName = customer.clientName || '성명 없음';
+                const clientPhone = customer.clientPhone || customer.phone || '';
+                const phoneLink = clientPhone ? `<a href="tel:${clientPhone}" style="color:#0071e3; text-decoration:none;">${clientPhone}</a>` : '연락처 없음';
+
+                const spouseName = customer.spouseName || customer.field5 || '배우자 성명 없음';
+                const spousePhone = customer.spousePhone || customer.field6 || '';
+                const spousePhoneLink = spousePhone ? `<a href="tel:${spousePhone}" style="color:#0071e3; text-decoration:none;">${spousePhone}</a>` : '연락처 없음';
+
+                info3.innerHTML = `<div style="white-space: normal; word-wrap: break-word;">${clientName} | ${phoneLink}, ${spouseName} | ${spousePhoneLink}</div>`;
             }
         }
 
@@ -10453,8 +10601,18 @@
         function selectCustomer(customerId) {
             if (typeof showMainView === 'function') showMainView('customer');
             fetchASListDB(); // Load A/S DB if not already loaded
+
+            // [DEBUG] 고객 데이터 확인
+            console.log('🔍 [Mobile Debug] selectCustomer 호출:', customerId);
+            console.log('🔍 [Mobile Debug] customers 배열 길이:', customers.length);
+
             const customer = customers.find(c => c.customerId === customerId);
-            if (!customer) return;
+            console.log('🔍 [Mobile Debug] 찾은 고객:', customer);
+
+            if (!customer) {
+                console.error('❌ [Mobile Debug] 고객을 찾을 수 없음:', customerId);
+                return;
+            }
             currentCustomerId = customerId;
 
             // Legacy Data Compatibility (Cloud Compatibility Fix)
@@ -10499,8 +10657,24 @@
             const delBtn = document.querySelector('.delete-btn');
             if (delBtn) delBtn.style.visibility = (editable && !isCustomerLocked()) ? 'visible' : 'hidden';
 
+            // [DEBUG] 필드 업데이트 시작
+            console.log('🔍 [Mobile Debug] currentData:', currentData);
+
+            const fields = document.querySelectorAll('.customer-field');
+            console.log('🔍 [Mobile Debug] 찾은 필드 수:', fields.length);
+
             document.querySelectorAll('.customer-field').forEach(f => {
-                f.value = currentData[f.dataset.field] || '';
+                const fieldName = f.dataset.field;
+                const fieldValue = currentData[fieldName] || '';
+
+                console.log(`🔍 [Mobile Debug] 필드 "${fieldName}":`, fieldValue, '(태그:', f.tagName + ')');
+
+                // 모바일 버전: div 요소는 textContent, input 요소는 value 사용
+                if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
+                    f.value = fieldValue;
+                } else {
+                    f.textContent = fieldValue || '-';
+                }
             });
             document.getElementById('customerStatus').value = currentData.status || 'consulting';
 
@@ -11222,7 +11396,10 @@
                 );
 
                 // UI 업데이트
+                console.log('🔄 [Mobile Debug] 고객 데이터 설정 전 customers 길이:', customers.length);
                 customers = cloudCustomers;
+                console.log('🔄 [Mobile Debug] 고객 데이터 설정 후 customers 길이:', customers.length);
+                console.log('🔄 [Mobile Debug] 설정된 고객 목록:', customers.map(c => c.customerId));
                 cachedCloudCount = cloudCustomers.length;
                 updateCustomerList();
                 initYearFilter();
@@ -17076,9 +17253,9 @@
             const overlay = document.getElementById('mobileMenuOverlay');
             const menu = document.getElementById('mobileMenu');
 
-            hamburger.classList.remove('active');
-            overlay.classList.remove('show');
-            menu.classList.remove('show');
+            if (hamburger) hamburger.classList.remove('active');
+            if (overlay) overlay.classList.remove('show');
+            if (menu) menu.classList.remove('show');
         }
 
         // [Mobile Navigation Helper]
@@ -17221,33 +17398,19 @@
                             `<div style="font-size:12px; opacity:0.9; margin-top:2px;">${spouseName} | ${spouseLink}</div>` :
                             '';
 
-                        const headerHtml = `
-                            <div style="width: 100%; display: flex; flex-direction: column; gap: 3px; color: #fff;">
-                                <div style="font-size: 11px; font-weight: 700; line-height: 1.2; margin-bottom: 2px;">공정별 체크리스트</div>
-                                <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
-                                    ${customer.projectName || '현장명 없음'} | 공사기간 ${period}
-                                </div>
-                                <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
-                                    ${customer.siteAddress || '현장주소 없음'}
-                                </div>
-                                <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
-                                    ${customer.clientName || '성명 없음'} | ${phoneLink || '연락처 없음'}
-                                </div>
-                            </div>
-                        `;
-
-                        // 헤더 업데이트 (에러 방지)
+                        // 검정색 상단 헤더는 고객 정보 표시하지 않음
                         const mobInfo = document.getElementById('headerMobileInfo');
                         if (mobInfo) {
-                            mobInfo.innerHTML = headerHtml;
-                            mobInfo.style.display = 'flex';
-                        } else {
-                            console.warn('[Mobile] headerMobileInfo element not found');
+                            mobInfo.innerHTML = '';
+                            mobInfo.style.display = 'none';
                         }
 
                         // 모바일 툴바 표시
                         const toolbar = document.getElementById('mobileToolbar');
                         if (toolbar) toolbar.style.display = 'flex';
+
+                        // 고객 정보 패널 업데이트
+                        updateMobileCustomerInfo(customer);
 
                         // 체크리스트 패널 이동
                         setTimeout(() => mobileGoToPanel('panel-checklist'), 10);
@@ -17290,6 +17453,22 @@
                 closeMobileMenu();
                 document.body.classList.remove('mobile-customer-selected');
             }
+
+            // 화면 크기 변경 시 현재 선택된 고객 데이터 다시 적용
+            if (currentCustomerId && currentData) {
+                console.log('🔄 [Resize] 화면 크기 변경, 고객 데이터 재적용:', currentCustomerId);
+
+                document.querySelectorAll('.customer-field').forEach(f => {
+                    const fieldName = f.dataset.field;
+                    const fieldValue = currentData[fieldName] || '';
+
+                    if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
+                        f.value = fieldValue;
+                    } else {
+                        f.textContent = fieldValue || '-';
+                    }
+                });
+            }
         });
     </script>
     <script>
@@ -17300,8 +17479,7 @@
             const container = document.getElementById('mobileHeaderIcons');
             if (!container) return;
 
-            // Define Buttons (Order: Customer List -> Checklist -> Schedule -> Hamburger)
-            // Note: navigateToSchedule is already defined in existing code.
+            // Define Buttons (Order: Customer List -> Checklist -> Schedule -> Customer Info -> Hamburger)
             const buttons = [
                 {
                     id: 'btn-customer-list',
@@ -17325,12 +17503,11 @@
                     action: 'navigateToSchedule()'
                 },
                 {
-                    id: 'btn-hamburger',
-                    title: '메뉴',
-                    // Hamburger Icon
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>`,
-                    action: 'toggleMobileMenu()',
-                    extraClass: 'mobile-hamburger'
+                    id: 'btn-customer-info',
+                    title: '고객 정보',
+                    // Info Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+                    action: 'navigateToCustomerInfo()'
                 }
             ];
 
@@ -17367,6 +17544,42 @@
             if (typeof mobileGoToPanel === 'function') {
                 mobileGoToPanel('panel-checklist');
             }
+        }
+
+        function navigateToCustomerInfo() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
+            }
+            if (typeof mobileGoToPanel === 'function') {
+                mobileGoToPanel('panel-customer-info');
+            }
+        }
+
+        function updateMobileCustomerInfo(customer) {
+            if (!customer) return;
+
+            console.log('[Mobile] Updating customer info:', customer);
+
+            // 모든 customer-field 요소를 업데이트
+            const fields = document.querySelectorAll('#panel-customer-info .customer-field[data-field]');
+            fields.forEach(field => {
+                const fieldName = field.getAttribute('data-field');
+                let value = customer[fieldName] || '-';
+
+                // 전화번호는 tel: 링크로 표시
+                if (fieldName === 'clientPhone' || fieldName === 'spousePhone') {
+                    if (value && value !== '-') {
+                        field.innerHTML = `<a href="tel:${value}" style="color:#0071e3; text-decoration:none;">${value}</a>`;
+                    } else {
+                        field.textContent = '-';
+                    }
+                } else {
+                    field.textContent = value;
+                }
+            });
+
+            console.log('[Mobile] Customer info updated successfully');
         }
 
         // 3. Toast UI Enhancement (Faster Disappear)
