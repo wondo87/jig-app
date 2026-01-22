@@ -9693,6 +9693,21 @@
 
                 // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단) 
 
+                // [DEBUG] 상태별 고객 수 확인
+                const statusCounts = {};
+                cloudCustomers.forEach(c => {
+                    const status = c.status || 'undefined';
+                    statusCounts[status] = (statusCounts[status] || 0) + 1;
+                });
+                console.log('📊 [PC Web Debug] 클라우드 데이터 상태별 고객 수:', statusCounts);
+                console.log('📊 [PC Web Debug] 공사중 고객 목록:',
+                    cloudCustomers.filter(c => c.status === 'in_progress').map(c => ({
+                        id: c.customerId,
+                        name: c.projectName || c.clientName,
+                        status: c.status
+                    }))
+                );
+
                 // UI 업데이트
                 customers = cloudCustomers;
                 cachedCloudCount = cloudCustomers.length;
