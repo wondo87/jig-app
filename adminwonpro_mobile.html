@@ -10808,6 +10808,12 @@
 
             console.log(`[DEBUG] updateCustomerList: Total=${customers.length}, Filtered=${filteredCustomers.length}, Status=${currentStatusFilter}, Year=${yearFilter}`);
 
+            // [MOBILE DEBUG] 화면에 디버그 정보 표시
+            if (window.innerWidth <= 768 && currentStatusFilter === 'in_progress') {
+                const debugInfo = filteredCustomers.map(c => `${c.customerId}: ${c.projectName || c.clientName} (${c.status})`).join('\n');
+                console.log('🔍 [Mobile] 필터링된 공사중 고객:\n' + debugInfo);
+            }
+
             // 최신순 정렬 (customerId 기준: YYMMDD-XXX)
             filteredCustomers.sort((a, b) => {
                 // createdAt이 있으면 우선 사용
@@ -10877,6 +10883,7 @@
 
         // 고객 목록 아이템 렌더링 (공통)
         function renderCustomerItems(container, items) {
+            console.log(`🎨 [Mobile] renderCustomerItems: 렌더링할 아이템 수 = ${items.length}`);
             if (items.length === 0) {
                 container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
             } else {
@@ -11224,7 +11231,9 @@
                 // UI 업데이트 완료 후 알림 표시 (수동 클릭 시에만)
                 if (!silent) {
                     setTimeout(() => {
-                        showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
+                        const inProgressCount = cloudCustomers.filter(c => c.status === 'in_progress').length;
+                        const statusInfo = Object.entries(statusCounts).map(([k,v]) => `${k}: ${v}`).join(', ');
+                        showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명\n공사중: ${inProgressCount}명\n\n상태별: ${statusInfo}`, 'success');
                     }, 50);
                 }
 
