@@ -4012,34 +4012,7 @@
         </div>
         <!-- 모바일 헤더 아이콘들 (CSS에서 display 제어) -->
         <div class="mobile-header-icons" id="mobileHeaderIcons">
-            <!-- Icon #1: 공사 스케줄 바로가기 (Schedule) -->
-            <button class="mobile-icon-btn" id="mobileScheduleBtn" onclick="navigateToSchedule()" title="공사 스케줄">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-            </button>
-            <!-- Icon #2: 검색/필터 (Search + Filter) -->
-            <button class="mobile-icon-btn" id="mobileFilterBtn" onclick="toggleMobileFilter()" title="검색/필터">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                </svg>
-            </button>
-            <!-- Icon #3: 햄버거 메뉴 (표준 3줄) -->
-            <button class="mobile-icon-btn mobile-hamburger" id="mobileHamburger" onclick="toggleMobileMenu()"
-                title="메뉴">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="6" x2="20" y2="6" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="18" x2="20" y2="18" />
-                </svg>
-            </button>
+            <!-- Icons will be rendered by updateMobileHeaderActions() -->
         </div>
     </header>
 
@@ -16551,6 +16524,121 @@
                 document.body.classList.remove('mobile-customer-selected');
             }
         });
+    </script>
+    <script>
+        // [New] Mobile Header Refinement Logic
+
+        // 1. Header Rendering Function
+        function updateMobileHeaderActions() {
+            const container = document.getElementById('mobileHeaderIcons');
+            if (!container) return;
+
+            // Define Buttons (Order: Customer List -> Checklist -> Schedule -> Hamburger)
+            // Note: navigateToSchedule is already defined in existing code.
+            const buttons = [
+                {
+                    id: 'btn-customer-list',
+                    title: '공사중 고객',
+                    // User/List Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+                    action: 'navigateToInProgressCustomers()'
+                },
+                {
+                    id: 'btn-checklist',
+                    title: '공정별 체크리스트',
+                    // Checklist Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
+                    action: 'navigateToChecklist()'
+                },
+                {
+                    id: 'btn-schedule',
+                    title: '공사 스케줄',
+                    // Calendar Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+                    action: 'navigateToSchedule()'
+                },
+                {
+                    id: 'btn-hamburger',
+                    title: '메뉴',
+                    // Hamburger Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>`,
+                    action: 'toggleMobileMenu()',
+                    extraClass: 'mobile-hamburger'
+                }
+            ];
+
+            // Render buttons
+            container.innerHTML = buttons.map(btn => `
+                <button class="mobile-icon-btn ${btn.extraClass || ''}" 
+                        id="${btn.id}" 
+                        onclick="${btn.action}" 
+                        title="${btn.title}">
+                    ${btn.icon}
+                </button>
+            `).join('');
+        }
+
+        // 2. Navigation Actions
+        function navigateToInProgressCustomers() {
+            // Return to customer list (clears selection)
+            if (typeof mobileGoBack === 'function') mobileGoBack();
+
+            // Set filter to 'construction' (In Progress) and apply
+            if (typeof setMobileStatusFilter === 'function') {
+                setMobileStatusFilter('construction');
+            } else {
+                console.warn('setMobileStatusFilter function not found');
+            }
+        }
+
+        function navigateToChecklist() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
+            }
+            showCustomerTab('checklist');
+            if (typeof mobileGoToPanel === 'function') {
+                mobileGoToPanel('panel-checklist');
+            }
+        }
+
+        // 3. Toast UI Enhancement (Faster Disappear)
+        // Overwrite existing showToast to ensure timing behavior
+        window.showToast = function (message, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+
+            // Icon Logic
+            const icon = document.getElementById('toastIcon');
+            if (icon) {
+                if (type === 'success') icon.innerText = '✓';
+                else if (type === 'error') icon.innerText = '✕';
+                else if (type === 'warning') icon.innerText = '!';
+                else icon.innerText = 'ℹ';
+            }
+
+            document.getElementById('toastMessage').innerText = message;
+
+            // Apply Colors
+            if (type === 'success') toast.style.backgroundColor = '#34c759';
+            else if (type === 'error') toast.style.backgroundColor = '#ff3b30';
+            else if (type === 'warning') toast.style.backgroundColor = '#ff9500';
+            else toast.style.backgroundColor = '#333';
+
+            // Show
+            toast.classList.add('show');
+
+            // Clear Previous Timeout
+            if (window.toastTimer) clearTimeout(window.toastTimer);
+
+            // Hide after 1500ms (Faster than default)
+            window.toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 1500);
+        };
+
+        // Initialize Header
+        document.addEventListener('DOMContentLoaded', updateMobileHeaderActions);
     </script>
 </body>
 
