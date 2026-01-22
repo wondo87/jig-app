@@ -6,18 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>디자인지그 모바일 (최신 버전)</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png?v=black">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png?v=black">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png?v=black">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png?v=black">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png?v=black">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=black">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
     <!-- Cache Version: dz-admin-v15 (2026-01-22) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript" onerror="console.warn('Cloudinary widget failed to load')"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"
+        onerror="console.warn('Cloudinary widget failed to load')"></script>
     <!-- 환경 설정 파일 로드 (비밀번호 등) -->
     <script src="admin_config.js?v=20260122_1830"></script>
 
@@ -5574,9 +5575,8 @@
                             <div class="mobile-checklist-controls" style="display:none;">
                                 <select id="mobileStageFilter" class="mobile-filter-select"
                                     onchange="renderChecklistItems()">
-                                    <option value="">진행 단계 ▾</option>
-                                    <option value="complete">완료</option>
-                                    <option value="incomplete">미완료</option>
+                                    <option value="all">전체 단계</option>
+                                    <!-- 실제 진행단계 옵션은 동적으로 추가됨 -->
                                 </select>
                                 <div style="width:1px; height:16px; background:#d2d2d7;"></div>
                                 <select id="mobileCategoryFilter" class="mobile-filter-select"
@@ -5891,7 +5891,8 @@
                 <div class="tab-panel" id="panel-customer-info">
                     <div class="document-wrapper"
                         style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
-                        <div class="doc-header" style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: white;">
+                        <div class="doc-header"
+                            style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: white;">
                             <div>
                                 <h1 style="margin: 0; font-size: 15px; font-weight: 600; color: white;">고객 정보</h1>
                             </div>
@@ -5901,9 +5902,12 @@
                         <div class="doc-content" style="padding: 16px; background: #f5f5f7;">
 
                             <!-- 01. 인적사항 -->
-                            <div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                <div style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                                    <span style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">01</span>
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div
+                                    style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span
+                                        style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">01</span>
                                     인적사항
                                 </div>
                                 <div style="display: grid; gap: 10px;">
@@ -5939,9 +5943,12 @@
                             </div>
 
                             <!-- 02. 공사정보 -->
-                            <div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                <div style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                                    <span style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">02</span>
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div
+                                    style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span
+                                        style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">02</span>
                                     공사정보
                                 </div>
                                 <div style="display: grid; gap: 10px;">
@@ -5969,15 +5976,19 @@
                             </div>
 
                             <!-- 03. 기타정보 -->
-                            <div style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                <div style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                                    <span style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">03</span>
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div
+                                    style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span
+                                        style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">03</span>
                                     기타정보
                                 </div>
                                 <div style="display: grid; gap: 10px;">
                                     <div class="info-block">
                                         <div class="info-label">메모</div>
-                                        <div class="info-value customer-field" data-field="memo" style="white-space: pre-wrap;">-</div>
+                                        <div class="info-value customer-field" data-field="memo"
+                                            style="white-space: pre-wrap;">-</div>
                                     </div>
                                     <div class="info-block">
                                         <div class="info-label">작성자</div>
@@ -5997,16 +6008,19 @@
                                 border-bottom: 1px solid #f0f0f0;
                                 padding-bottom: 8px;
                             }
+
                             .info-block:last-child {
                                 border-bottom: none;
                                 padding-bottom: 0;
                             }
+
                             .info-label {
                                 font-size: 12px;
                                 color: #86868b;
                                 margin-bottom: 4px;
                                 font-weight: 500;
                             }
+
                             .info-value {
                                 font-size: 14px;
                                 color: #1d1d1f;
@@ -11412,7 +11426,7 @@
                 if (!silent) {
                     setTimeout(() => {
                         const inProgressCount = cloudCustomers.filter(c => c.status === 'in_progress').length;
-                        const statusInfo = Object.entries(statusCounts).map(([k,v]) => `${k}: ${v}`).join(', ');
+                        const statusInfo = Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(', ');
                         showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명\n공사중: ${inProgressCount}명\n\n상태별: ${statusInfo}`, 'success');
                     }, 50);
                 }
@@ -14934,9 +14948,18 @@
             // 진행단계 옵션
             const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))].sort();
             initMultiSelect('checklistStageFilter', stages);
-            // [Mobile] Populate Stage Filter (Fixed options usually, but can be dynamic)
-            // Mobile Stage is fixed in HTML (All/Complete/Incomplete) or can be dynamic?
-            // User requested "All/Complete/Incomplete". The HTML has fixed options.
+
+            // [Mobile] Populate Stage Filter with actual stages
+            const mStageSelect = document.getElementById('mobileStageFilter');
+            if (mStageSelect) {
+                mStageSelect.innerHTML = '<option value="all">전체 단계</option>'; // Reset
+                stages.forEach(stage => {
+                    const opt = document.createElement('option');
+                    opt.value = stage;
+                    opt.textContent = stage;
+                    mStageSelect.appendChild(opt);
+                });
+            }
 
             // 카테고리 옵션
             const categories = [...new Set(checklistMasterData.map(item => item.카테고리).filter(Boolean))].sort();
@@ -14996,21 +15019,12 @@
             // [Mobile/Desktop Filtering Logic Switch]
             if (window.innerWidth <= 768) {
                 // Mobile: Read from Mobile DOM Inputs
-                const mStageVal = document.getElementById('mobileStageFilter') ? document.getElementById('mobileStageFilter').value : '';
+                const mStageVal = document.getElementById('mobileStageFilter') ? document.getElementById('mobileStageFilter').value : 'all';
                 const mCatVal = document.getElementById('mobileCategoryFilter') ? document.getElementById('mobileCategoryFilter').value : '';
                 const mSearchVal = document.getElementById('mobileSearchInput') ? document.getElementById('mobileSearchInput').value : '';
 
-                // Map mobile values to "all" logic
-                stageFilter = mStageVal ? [mStageVal] : ['all']; // 'complete', 'incomplete' handled later?
-                // Wait, 'complete' vs 'incomplete' is NOT in the data. Data has '진행단계' text.
-                // Ah, the user requested "Complete/Incomplete" status filter? 
-                // Currently checklist data has '진행단계' like '시공전', etc.
-                // The Filter logic needs to match data.
-                // BUT User UI says "Complete/Incomplete".
-                // Let's assume 'complete' means "Checked items" and 'incomplete' means "Unchecked items"?
-                // Previous logic used `checklistCompletedCount` etc.
-                // I will filter based on CHECKED STATE if value is complete/incomplete.
-
+                // Mobile now uses actual stage values (시공전, 철거, 설비, etc.)
+                stageFilter = mStageVal && mStageVal !== 'all' ? [mStageVal] : ['all'];
                 categoryFilter = mCatVal ? [mCatVal] : ['all'];
                 searchText = mSearchVal.toLowerCase().trim();
 
@@ -15024,24 +15038,8 @@
             }
 
             let filteredData = checklistMasterData.filter((item, index) => {
-                const itemHash = item.항목 + (item.내용 || '') + index; // Simple ID simulation
-                const isChecked = customerChecklistData[index] && customerChecklistData[index].checked; // Based on index? Or hash? 
-                // render logic uses index. logic below uses index.
-
-                // [Mobile Special Filter: Complete/Incomplete]
-                if (window.innerWidth <= 768 && stageFilter[0] !== 'all') {
-                    if (stageFilter[0] === 'complete') {
-                        if (!isChecked) return false;
-                    } else if (stageFilter[0] === 'incomplete') {
-                        if (isChecked) return false;
-                    }
-                    // Ignore '진행단계' data field if using Complete/Incomplete logic?
-                    // Or logic mismatch? The user said "Process Status Filter: All/Complete/Incomplete".
-                    // This usually refers to Checked Status.
-                } else if (stageFilter.includes && !stageFilter.includes('all')) {
-                    // Desktop OR Mobile with specific stage string?
-                    // If mobile select has "complete", we handled it.
-                    // If standard stages, handle it.
+                // 진행단계 필터 (모바일/데스크톱 공통)
+                if (!stageFilter.includes('all')) {
                     if (!stageFilter.includes(item.진행단계 || '')) return false;
                 }
 
