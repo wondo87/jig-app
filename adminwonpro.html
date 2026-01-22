@@ -625,8 +625,7 @@
 
         /* 상태 필터 */
         .status-filter {
-            padding: 10px 14px;
-            border-bottom: 1px solid #e8e8ed;
+            padding: 8px 14px;
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
@@ -653,8 +652,9 @@
         }
 
         .customer-list {
-            flex: 1;
-            overflow-y: auto;
+            flex: none !important;
+            overflow-y: visible !important;
+            height: auto !important;
         }
 
         .customer-item {
@@ -4335,7 +4335,7 @@
                                 <div
                                     style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
                                     DESIGN JIG</div>
-                                <h1>✅ 공정별 체크리스트</h1>
+                                <h1 style="font-size:13px;">✅ 공정별<br>체크리스트</h1>
                                 <div class="subtitle">Process Checklist</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
