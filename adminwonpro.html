@@ -9646,7 +9646,6 @@
             if (!silent) setAppBusy(true, '클라우드 동기화 중...');
 
             try {
-                if (!silent) logStep1('🔄 클라우드 데이터 가져오는 중...');
                 // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',

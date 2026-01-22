@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 스케줄 API 응답 테스트</title>
+    <style>
+        body {
+            font-family: system-ui;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #34c759;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #2fb34a;
+        }
+        #result {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #34c759;
+            font-weight: bold;
+        }
+        .error {
+            color: #ff3b30;
+            font-weight: bold;
+        }
+        .info {
+            color: #007aff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 스케줄 템플릿 API 응답 디버깅</h1>
+    <p>Google Apps Script에서 반환되는 실제 데이터를 확인합니다.</p>
+
+    <button onclick="testAPI()">API 테스트 실행</button>
+    <button onclick="clearResult()" style="background:#ff3b30;">초기화</button>
+
+    <div id="result">여기에 결과가 표시됩니다...</div>
+
+    <script src="admin_config.js"></script>
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            let output = '';
+
+            output += '=' .repeat(80) + '\n';
+            output += '📡 API 요청 시작...\n';
+            output += '=' .repeat(80) + '\n\n';
+
+            try {
+                // 1. URL 확인
+                output += `🔗 API URL: ${CUSTOMER_SYNC_URL}\n\n`;
+
+                // 2. 요청 파라미터
+                const params = new URLSearchParams({
+                    sheet: '공사 스케줄 관리',
+                    t: Date.now()
+                });
+                const fullURL = `${CUSTOMER_SYNC_URL}?${params}`;
+                output += `📋 전체 요청 URL:\n${fullURL}\n\n`;
+
+                // 3. 요청 전송
+                output += '⏳ 요청 전송 중...\n';
+                resultDiv.textContent = output;
+
+                const startTime = Date.now();
+                const response = await fetch(fullURL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const endTime = Date.now();
+
+                output += `✅ 응답 받음 (${endTime - startTime}ms)\n`;
+                output += `📊 HTTP Status: ${response.status} ${response.statusText}\n\n`;
+
+                // 4. 응답 데이터 파싱
+                const data = await response.json();
+
+                output += '=' .repeat(80) + '\n';
+                output += '📦 응답 데이터 분석\n';
+                output += '=' .repeat(80) + '\n\n';
+
+                // 5. 데이터 타입 확인
+                output += `🔍 데이터 타입: ${Array.isArray(data) ? 'Array' : typeof data}\n`;
+
+                if (Array.isArray(data)) {
+                    output += `📊 배열 길이: ${data.length}개 항목\n\n`;
+
+                    if (data.length > 0) {
+                        output += '🔑 첫 번째 항목의 필드:\n';
+                        const firstItem = data[0];
+                        const fields = Object.keys(firstItem);
+                        fields.forEach((field, idx) => {
+                            output += `  ${idx + 1}. ${field}: ${JSON.stringify(firstItem[field])}\n`;
+                        });
+                        output += '\n';
+
+                        // 6. 스케줄 템플릿 데이터인지 확인
+                        const hasCategory = firstItem.hasOwnProperty('category');
+                        const hasName = firstItem.hasOwnProperty('name');
+                        const hasCheckPoint = firstItem.hasOwnProperty('checkPoint');
+
+                        output += '=' .repeat(80) + '\n';
+                        output += '✅ 필수 필드 검증\n';
+                        output += '=' .repeat(80) + '\n\n';
+                        output += `  category 필드: ${hasCategory ? '✅ 있음' : '❌ 없음'}\n`;
+                        output += `  name 필드: ${hasName ? '✅ 있음' : '❌ 없음'}\n`;
+                        output += `  checkPoint 필드: ${hasCheckPoint ? '✅ 있음' : '❌ 없음'}\n\n`;
+
+                        if (hasCategory && hasName) {
+                            output += '✅ 스케줄 템플릿 데이터 형식 확인!\n\n';
+
+                            // 7. 카테고리 분석
+                            const categories = [...new Set(data.map(item => item.category).filter(Boolean))];
+                            output += `📁 카테고리 개수: ${categories.length}개\n`;
+                            output += '📋 카테고리 목록:\n';
+                            categories.forEach((cat, idx) => {
+                                const count = data.filter(item => item.category === cat).length;
+                                output += `  ${idx + 1}. ${cat} (${count}개 공정)\n`;
+                            });
+                            output += '\n';
+
+                            // 8. 전체 데이터 샘플 (처음 5개)
+                            output += '=' .repeat(80) + '\n';
+                            output += '📋 데이터 샘플 (처음 5개 항목)\n';
+                            output += '=' .repeat(80) + '\n\n';
+                            data.slice(0, 5).forEach((item, idx) => {
+                                output += `${idx + 1}. 카테고리: ${item.category || 'N/A'}\n`;
+                                output += `   공정명: ${item.name || 'N/A'}\n`;
+                                output += `   체크포인트: ${item.checkPoint || 'N/A'}\n`;
+                                output += `   담당자: ${item.inCharge || 'N/A'}\n`;
+                                output += '\n';
+                            });
+
+                        } else {
+                            output += '❌ 경고: 스케줄 템플릿 형식이 아닙니다!\n';
+                            output += '현재 데이터는 다른 시트의 데이터인 것 같습니다.\n\n';
+
+                            output += '🔍 실제 받은 데이터 구조:\n';
+                            output += JSON.stringify(firstItem, null, 2) + '\n\n';
+                        }
+
+                    } else {
+                        output += '⚠️ 배열이 비어있습니다.\n\n';
+                    }
+
+                } else {
+                    output += '❌ 응답이 배열이 아닙니다.\n';
+                    output += '🔍 실제 응답:\n';
+                    output += JSON.stringify(data, null, 2) + '\n\n';
+                }
+
+                // 9. 전체 JSON 출력
+                output += '=' .repeat(80) + '\n';
+                output += '📄 전체 응답 데이터 (JSON)\n';
+                output += '=' .repeat(80) + '\n\n';
+                output += JSON.stringify(data, null, 2);
+
+                resultDiv.textContent = output;
+
+            } catch (error) {
+                output += '\n\n';
+                output += '=' .repeat(80) + '\n';
+                output += '❌ 오류 발생\n';
+                output += '=' .repeat(80) + '\n\n';
+                output += `오류 메시지: ${error.message}\n`;
+                output += `오류 스택:\n${error.stack}\n`;
+
+                resultDiv.textContent = output;
+                console.error('❌ API 테스트 오류:', error);
+            }
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = '여기에 결과가 표시됩니다...';
+        }
+    </script>
+</body>
+</html>

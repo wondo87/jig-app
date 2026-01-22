@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>API 테스트</title>
+</head>
+<body>
+    <h1>Google Apps Script API 테스트</h1>
+    <button onclick="testCustomerSync()">고객 데이터 동기화 테스트</button>
+    <button onclick="testScheduleGuidelines()">스케줄 유의사항 테스트</button>
+    <button onclick="testASGuidelines()">A/S 유의사항 테스트</button>
+    <pre id="result" style="background:#f0f0f0; padding:20px; margin-top:20px;"></pre>
+
+    <script src="admin_config.js"></script>
+    <script>
+        const resultEl = document.getElementById('result');
+
+        async function testCustomerSync() {
+            resultEl.textContent = '테스트 중...';
+            try {
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: new Date().getTime()
+                });
+                const url = `${CUSTOMER_SYNC_URL}?${params}`;
+                console.log('요청 URL:', url);
+
+                const response = await fetch(url, { method: 'GET' });
+                console.log('응답 상태:', response.status, response.statusText);
+
+                const data = await response.json();
+                console.log('응답 데이터:', data);
+
+                resultEl.textContent = '✅ 성공!\n\n' +
+                    '상태: ' + response.status + '\n' +
+                    '데이터 개수: ' + (Array.isArray(data) ? data.length : 'N/A') + '\n\n' +
+                    JSON.stringify(data, null, 2).substring(0, 1000);
+            } catch (error) {
+                console.error('오류:', error);
+                resultEl.textContent = '❌ 실패!\n\n' + error.toString();
+            }
+        }
+
+        async function testScheduleGuidelines() {
+            resultEl.textContent = '테스트 중...';
+            try {
+                const params = new URLSearchParams({
+                    sheet: '공사스케줄관리',
+                    action: 'getGuidelines'
+                });
+                const url = `${CUSTOMER_SYNC_URL}?${params}`;
+                console.log('요청 URL:', url);
+
+                const response = await fetch(url);
+                console.log('응답 상태:', response.status, response.statusText);
+
+                const data = await response.json();
+                console.log('응답 데이터:', data);
+
+                resultEl.textContent = '✅ 성공!\n\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('오류:', error);
+                resultEl.textContent = '❌ 실패!\n\n' + error.toString();
+            }
+        }
+
+        async function testASGuidelines() {
+            resultEl.textContent = '테스트 중...';
+            try {
+                const params = new URLSearchParams({
+                    sheet: 'AS관리리스트',
+                    action: 'getGuidelines'
+                });
+                const url = `${CUSTOMER_SYNC_URL}?${params}`;
+                console.log('요청 URL:', url);
+
+                const response = await fetch(url);
+                console.log('응답 상태:', response.status, response.statusText);
+
+                const data = await response.json();
+                console.log('응답 데이터:', data);
+
+                resultEl.textContent = '✅ 성공!\n\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('오류:', error);
+                resultEl.textContent = '❌ 실패!\n\n' + error.toString();
+            }
+        }
+
+        // 페이지 로드 시 URL 표시
+        window.addEventListener('DOMContentLoaded', () => {
+            resultEl.textContent = 'API URL: ' + CUSTOMER_SYNC_URL + '\n\n버튼을 클릭해서 테스트하세요.';
+        });
+    </script>
+</body>
+</html>

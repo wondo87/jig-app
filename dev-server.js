@@ -1,9 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-const { Client } = require("@notionhq/client");
+import express from 'express';
+import cors from 'cors';
+import { Client } from "@notionhq/client";
+import path from 'path';
 
 const app = express();
 const port = 3001;
+
+// Serve static files from the current directory
+app.use(express.static('.'));
 
 // Provided by user
 const NOTION_API_KEY = "ntn_Z60962876671RUe2pR1vOcv1kPb3HretjAhTDWnwkHC7CZ";
@@ -90,6 +94,6 @@ app.post('/api/sync-schedule', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Local Dev Server running at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Local Dev Server running at http://0.0.0.0:${port}`);
 });
