@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>디자인지그 모바일 (최신 버전)</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icons/icon-192.png?v=black">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png?v=black">
-    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png?v=black">
-    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png?v=black">
-    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png?v=black">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=black">
+    <link rel="icon" type="image/png" href="icons/icon-192.png?v=black_v2">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png?v=black_v2">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png?v=black_v2">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png?v=black_v2">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png?v=black_v2">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=black_v2">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
@@ -6634,6 +6634,7 @@
         // ==========================================
         const DEVICE_TRUST_KEY = 'DJ_device_trust';
         const DEVICE_TRUST_DAYS = 30;
+        const AUTO_LOGIN_DAYS = 7; // 자동 로그인 유효 기간 (7일)
 
         // 기기 신뢰 정보 확인
         function checkDeviceTrust() {
@@ -6724,6 +6725,10 @@
                 name: trust.adminName
             };
 
+            // 마지막 로그인 시간 갱신 (자동 로그인용)
+            trust.lastLoginTime = Date.now();
+            localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trust));
+
             document.getElementById('loginOverlay').style.display = 'none';
             activateAdminMode();
             showToast(`${trust.adminName || trust.adminId}님 환영합니다`, 'success');
@@ -6756,7 +6761,8 @@
                 pinHash: pinHash,
                 fingerprint: getDeviceFingerprint(),
                 expiry: expiry,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                lastLoginTime: Date.now() // 자동 로그인용 마지막 로그인 시간
             };
 
             localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trustData));
@@ -6780,11 +6786,36 @@
             showToast('기기 신뢰가 해제되었습니다', 'info');
         }
 
-        // 페이지 로드 시 기기 신뢰 확인
+        // 페이지 로드 시 기기 신뢰 확인 및 자동 로그인
         function initLoginScreen() {
             const trust = checkDeviceTrust();
             if (trust) {
-                // 기기 신뢰 있음 → PIN 로그인 화면
+                // 자동 로그인 체크 (일주일 이내 마지막 로그인)
+                const now = Date.now();
+                const lastLogin = trust.lastLoginTime || 0;
+                const autoLoginExpiry = lastLogin + (AUTO_LOGIN_DAYS * 24 * 60 * 60 * 1000);
+
+                if (now < autoLoginExpiry) {
+                    // 자동 로그인 실행
+                    console.log('자동 로그인 실행 (마지막 로그인:', new Date(lastLogin).toLocaleString(), ')');
+                    currentAdmin = {
+                        id: trust.adminId,
+                        role: trust.adminRole,
+                        name: trust.adminName
+                    };
+
+                    // 로그인 시간 갱신
+                    trust.lastLoginTime = now;
+                    localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trust));
+
+                    // 로그인 오버레이 숨기고 관리자 모드 활성화
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    activateAdminMode();
+                    showToast(`${trust.adminName || trust.adminId}님 자동 로그인`, 'success');
+                    return;
+                }
+
+                // 자동 로그인 기간 만료 → PIN 로그인 화면
                 document.getElementById('trustedUserName').textContent = trust.adminName || trust.adminId;
                 showLoginView('pin');
             } else {
@@ -11400,7 +11431,7 @@
 
                 // [DEBUG] 상태별 고객 수 확인
                 const statusCounts = {};
-                cloudCustomers.forEach(c => {
+                cloudCustomers.forE ach(c => {
                     const status = c.status || 'undefined';
                     statusCounts[status] = (statusCounts[status] || 0) + 1;
                 });
@@ -14686,9 +14717,9 @@
                         action: 'exportToNotion',
                         type: 'schedule',
                         customerId: currentData.customerId,
-                        data: JSON.stringify({
+                    data: JSON.stringify({
                             project: currentData.clientName,
-                            schedules: scheduleRows // scheduleRows 전역 변수
+                schedules: scheduleRows // scheduleRows 전역 변수
                         })
                     };
 
@@ -15483,9 +15514,9 @@
             // 필터된 항목 중 체크된 것만 카운트
             const completed = filteredData.filter(item => customerChecklistData[item.번호] === true).length;
             const inProgress = total - completed;
-            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const        tota         ath.round((compl         tal) * 100) : 0;
 
-            document.getElementById('checklistTotalCount').textContent = total;
+            document.getElementById('checkl         ount').textContent = total;
             document.getElementById('checklistCompletedCount').textContent = completed;
             document.getElementById('checklistInProgressCount').textContent = inProgress;
             document.getElementById('checklistProgressRate').textContent = rate + '%';
@@ -17031,7 +17062,7 @@
                 }
             } catch (err) {
                 console.error('운영비 불러오기 오류:', err);
-                showToast('불러오기 실패: ' + err.message, 'error');
+                showToast('불러오기 실패: ' rrror');
                 return false;
             } finally {
                 if (btn) {
@@ -17059,8 +17090,7 @@
             // 뷰 전환
             document.querySelectorAll('.stats-view-content').forEach(view => view.style.display = 'none');
             const targetView = document.getElementById('view-stats-' + tabName);
-            if (targetView) {
-                targetView.style.display = 'block';
+            if getV           targetView.style.display = 'block';
             }
 
             // 차트 크기 강제 재조정
@@ -17101,15 +17131,14 @@
     <script>
 
 
-        // [Task 3] Stability Logic
-        let isAppBusy = false;
+        // [Task 3] i       let isAppBusy = false;
         function setAppBusy(busy, message = '데이터 처리 중...') {
             isAppBusy = busy;
             let overlay = document.getElementById('globalLoadingOverlay');
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.id = 'globalLoadingOverlay';
-                overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:column; justify-content:center; align-items:center;';
+                overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:columustify-content:centems:center;';
                 overlay.innerHTML = '<div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:15px;"></div><div id="loadingMessage" style="font-size:18px; font-weight:600; color:#333;">데이터 처리 중...</div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
                 document.body.appendChild(overlay);
             }
@@ -17118,11 +17147,11 @@
             overlay.style.display = busy ? 'flex' : 'none';
             document.body.style.pointerEvents = busy ? 'none' : 'auto';
             if (overlay) overlay.style.pointerEvents = 'auto';
-        }
+     
     </script>
     <script>
         // PWA Service Worker 등록
-        if ('serviceWorker' in navigator) {
+        if ('r' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
                     .then(registration => {
@@ -17434,7 +17463,7 @@
                 return;
             }
             if (isMobile()) {
-                showCustomerTab('schedule');
+   wCustomerTab('schedule');
                 mobileGoToPanel('panel-schedule');
             } else {
                 showCustomerTab('schedule');
@@ -17586,7 +17615,7 @@
 
         // 3. Toast UI Enhancement (Faster Disappear)
         // Overwrite existing showToast to ensure timing behavior
-        window.showToast = function (message, type = 'info') {
+    winwToast = function (message, type = 'info') {
             const toast = document.getElementById('toast');
             if (!toast) return;
 
