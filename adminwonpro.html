@@ -527,6 +527,7 @@
 
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
+
                 /* 공사 스케줄: 불필요한 요소 숨김 */
                 #scheduleNoticeBlock {
                     display: none !important;
@@ -547,12 +548,14 @@
                 /* 공사 스케줄: 필수 컬럼만 표시 */
                 #panel-schedule .data-table th:nth-child(1),
                 #panel-schedule .data-table td:nth-child(1) {
-                    display: none !important; /* 카테고리 숨김 */
+                    display: none !important;
+                    /* 카테고리 숨김 */
                 }
 
                 #panel-schedule .data-table th:nth-child(3),
                 #panel-schedule .data-table td:nth-child(3) {
-                    display: none !important; /* 체크포인트 숨김 */
+                    display: none !important;
+                    /* 체크포인트 숨김 */
                 }
 
                 /* 공사 스케줄: 체크리스트 바로가기 버튼 표시 */
@@ -566,6 +569,13 @@
 
                 #headerMobileTitle {
                     display: block !important;
+                }
+
+                /* [Critical Fix] Ensure header layout is flex to put title on right */
+                #headerMobileInfo {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
                 }
 
                 #panel-schedule .data-table thead,
@@ -621,9 +631,14 @@
                     display: none !important;
                 }
 
-                /* Hide redundant page title inside the card on mobile */
-                #panel-checklist .doc-header h1 {
+                /* [New] Hide the entire Info Card header on mobile (Blue card + buttons) */
+                #panel-checklist .doc-header {
                     display: none !important;
+                }
+
+                /* Adjust content padding to prevent large whitespace */
+                #panel-checklist .doc-content {
+                    padding: 10px !important;
                 }
 
                 /* Ensure the mobile header title (right side) is visible and larger */
@@ -5431,9 +5446,8 @@
                                 <h1>📅 공사 스케줄 관리</h1>
                                 <div class="subtitle">Construction Schedule Manager</div>
                                 <!-- 모바일: 체크리스트 바로가기 -->
-                                <button class="mobile-schedule-to-checklist"
-                                        onclick="showCustomerTab('checklist')"
-                                        style="display:none; margin-top:8px; padding:8px 12px; background:#007aff; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+                                <button class="mobile-schedule-to-checklist" onclick="showCustomerTab('checklist')"
+                                    style="display:none; margin-top:8px; padding:8px 12px; background:#007aff; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
                                     ✅ 공정별 체크리스트 보기
                                 </button>
                             </div>
@@ -16615,11 +16629,35 @@
             menu.classList.remove('show');
         }
 
+        // [Mobile Navigation Helper]
+        function updateMobileHeaderTitle(panelId) {
+            const headerTitleEl = document.getElementById('headerMobileTitle');
+            if (!headerTitleEl) return;
+
+            let titleText = '';
+            // Map panel IDs to titles
+            if (panelId === 'panel-checklist') titleText = '공정별 체크리스트';
+            else if (panelId === 'panel-schedule') titleText = '공사 스케줄';
+            else if (panelId === 'panel-info') titleText = '고객 정보';
+            else if (panelId === 'panel-stats') titleText = '현황 및 통계';
+            else if (panelId === 'panel-expenses') titleText = '비용 관리';
+            else if (panelId === 'panel-files') titleText = '파일함';
+            else if (panelId === 'panel-estimate') titleText = '견적서';
+            else if (panelId === 'panel-cost') titleText = '원가 관리';
+            else if (panelId === 'panel-as-list') titleText = 'A/S 관리';
+
+            headerTitleEl.innerText = titleText;
+            headerTitleEl.style.display = titleText ? 'block' : 'none';
+        }
+
         function mobileGoToPanel(panelId) {
             // 모든 패널 숨기고 선택된 패널만 표시
             document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
             const target = document.getElementById(panelId);
             if (target) target.style.display = 'block';
+
+            // 헤더 제목 업데이트
+            updateMobileHeaderTitle(panelId);
 
             // 체크리스트 외 패널은 읽기 전용 알림
             if (panelId !== 'panel-checklist') {
@@ -16707,7 +16745,7 @@
                         if (customer) {
                             const mobInfo = document.getElementById('headerMobileInfo');
                             if (mobInfo) {
-                                mobInfo.style.display = 'block';
+                                mobInfo.style.display = 'flex'; // [Fix] Use Flex to prevent stacking
                                 document.getElementById('headerSiteAddress').innerText = customer.siteAddress || '-';
                                 document.getElementById('headerClientPhone').innerText = customer.clientPhone || '-';
                                 document.getElementById('headerPeriod').innerText = (customer.startDate && customer.endDate) ? `${customer.startDate} ~ ${customer.endDate}` : '-';
