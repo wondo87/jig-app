@@ -631,12 +631,22 @@
                     display: none !important;
                 }
 
-                /* [New] Hide the entire Info Card header on mobile (Blue card + buttons) */
+                /* [Strict Hide] Stats Box */
+                #panel-checklist .checklist-stats,
+                .checklist-stats {
+                    display: none !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                }
+
+                /* [Strict Hide] Info Card (Blue Header) */
                 #panel-checklist .doc-header {
                     display: none !important;
                 }
 
-                /* Adjust content padding to prevent large whitespace */
+                /* [Optimize] Reduce padding for content to start immediately */
                 #panel-checklist .doc-content {
                     padding: 10px !important;
                 }
@@ -647,7 +657,6 @@
                     font-size: 16px !important;
                     font-weight: 700 !important;
                     margin-left: auto;
-                    /* Push to right if container is flex */
                 }
 
                 #headerMobileTitle {
