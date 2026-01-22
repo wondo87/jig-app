@@ -479,6 +479,135 @@
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
 
+                .schedule-info-table,
+                .schedule-table-container,
+                .desktop-only,
+                .notion-export-btn,
+                #scheduleTable,
+                #scheduleTable+button {
+                    display: none !important;
+                }
+
+                #scheduleMobileContainer {
+                    display: block !important;
+                }
+
+                /* Mobile Card System */
+                .mobile-card {
+                    background: white;
+                    border-radius: 16px;
+                    padding: 16px;
+                    margin: 0 16px 12px 16px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    border: 1px solid #f0f0f0;
+                }
+
+                .mobile-card-row {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+
+                .mobile-chip {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                }
+
+                .chip-green {
+                    background: #e8f5e9;
+                    color: #2e7d32;
+                }
+
+                /* 완료 */
+                .chip-gray {
+                    background: #f5f5f7;
+                    color: #86868b;
+                }
+
+                /* 미완료/대기 */
+                .chip-category {
+                    background: #f0f0f0;
+                    color: #666;
+                    font-size: 10px;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                }
+
+                .mobile-card-title {
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: #1d1d1f;
+                    flex: 1;
+                    line-height: 1.4;
+                }
+
+                .mobile-date-text {
+                    font-size: 12px;
+                    color: #1d1d1f;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    margin-left: auto;
+                }
+
+                .mobile-edit-field {
+                    width: 100%;
+                    border: none;
+                    background: transparent;
+                    font-size: 13px;
+                    color: #333;
+                    padding: 4px 0;
+                    outline: none;
+                }
+
+                .mobile-edit-label {
+                    font-size: 11px;
+                    color: #86868b;
+                    min-width: 30px;
+                    display: inline-block;
+                }
+
+                .mobile-filter-bar {
+                    display: flex;
+                    overflow-x: auto;
+                    gap: 8px;
+                    padding: 12px 16px;
+                    background: #f5f5f7;
+                    position: sticky;
+                    top: calc(54px + env(safe-area-inset-top));
+                    /* Header height adjusted */
+                    z-index: 900;
+                    margin: 0 -16px 12px -16px;
+                    border-bottom: 1px solid #e5e5ea;
+                }
+
+                .mobile-filter-chip {
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    background: white;
+                    border: 1px solid #d2d2d7;
+                    font-size: 12px;
+                    color: #666;
+                    white-space: nowrap;
+                }
+
+                .mobile-filter-chip.active {
+                    background: #1d1d1f;
+                    color: white;
+                    border-color: #1d1d1f;
+                    font-weight: 600;
+                }
+
+
                 /* 1. Safe Area & Header Fix - Consolidated above at line 295 */
             }
 
@@ -4999,11 +5128,7 @@
                         style="width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
                         <div class="doc-header">
                             <div>
-                                <div
-                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
-                                    DESIGN JIG</div>
-                                <h1>✅ 공정별 체크리스트</h1>
-                                <div class="subtitle">Process Checklist</div>
+                                <h1>공정별 체크리스트</h1>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <!-- [추가] DB 불러오기/저장 버튼 -->
@@ -5076,7 +5201,7 @@
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
-                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">분류
+                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">카테고리
                                         필터</label>
                                     <select id="checklistCategoryFilter" style="display:none;"></select>
                                     <!-- 호환성 유지용 hidden -->
@@ -5131,7 +5256,7 @@
                                                 진행단계</th>
                                             <th
                                                 style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">
-                                                분류</th>
+                                                카테고리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="checklistTableBody">
@@ -5308,6 +5433,8 @@
                                         <th style="padding:12px; border:1px solid #d2d2d7; text-align:center;">비고</th>
                                     </tr>
                                 </thead>
+                                <!-- [Mobile] Schedule Container -->
+                                <div id="scheduleMobileContainer" style="display:none; padding-bottom: 100px;"></div>
                                 <tbody id="scheduleTableBody">
                                     <!-- Dynamic Rows-->
                                 </tbody>
@@ -7868,10 +7995,100 @@
             syncAllFields();
         }
 
+        // [Mobile Helper] Date Formatter
+        function formatMobileDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const now = new Date();
+            const isToday = d.toDateString() === now.toDateString();
+
+            const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+            const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+
+            const isYesterday = d.toDateString() === yesterday.toDateString();
+            const isTomorrow = d.toDateString() === tomorrow.toDateString();
+
+            if (isToday) return '오늘';
+            if (isYesterday) return '어제';
+            if (isTomorrow) return '내일';
+
+            return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatMobileDateRange(start, end) {
+            if (!start) return '';
+            const s = formatMobileDate(start);
+            if (!end) return s;
+            const e = formatMobileDate(end);
+
+            if (s === e) return s;
+            return `${s} ~ ${e}`;
+        }
+
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
             const empty = document.getElementById('scheduleEmptyState');
             if (!tbody) return;
+
+            // [Mobile Rendering]
+            if (window.innerWidth <= 768) {
+                const mobContainer = document.getElementById('scheduleMobileContainer');
+                if (mobContainer) {
+                    mobContainer.style.display = 'block';
+
+                    if (scheduleRows.length === 0) {
+                        mobContainer.innerHTML = '<div style="text-align:center; padding:40px; color:#86868b;">등록된 스케줄이 없습니다.</div>';
+                    } else {
+                        mobContainer.innerHTML = scheduleRows.map(row => {
+                            const dateStr = formatMobileDateRange(row.start, row.end);
+
+                            // Status Logic: Complete if Today > End Date
+                            const now = new Date(); now.setHours(0, 0, 0, 0);
+                            let isComplete = false;
+                            if (row.end) {
+                                let eDate = new Date(row.end); eDate.setHours(0, 0, 0, 0);
+                                if (now > eDate) isComplete = true; // Ends in the past
+                            }
+
+                            // "State kinds: ✅ Complete". If not complete, show nothing (default incomplete)
+                            const statusBadge = isComplete ? `<div class="mobile-chip chip-green">✅ 완료</div>` : ``;
+
+                            return `
+                            <div class="mobile-card">
+                                <div class="mobile-card-row" style="margin-bottom: 2px;">
+                                    <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
+                                        ${statusBadge}
+                                        <div class="mobile-card-title">${row.name || '공정명 없음'}</div>
+                                    </div>
+                                    <div class="mobile-date-text">${dateStr}</div>
+                                </div>
+                                
+                                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 6px;">
+                                    <div class="mobile-chip chip-category">${row.category || '미분류'}</div>
+                                    ${row.inCharge ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#333;">👤 ${row.inCharge}</div>` : ''}
+                                </div>
+                                
+                                ${row.checkPoint ? `
+                                <div style="font-size:13px; color:#333; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    ${row.checkPoint}
+                                </div>
+                                ` : ''}
+
+                                ${row.memo ? `
+                                <div style="font-size:12px; color:#86868b; display:flex; align-items:center; gap:4px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    ✏️ ${row.memo}
+                                </div>
+                                ` : ''}
+                            </div>`;
+                        }).join('');
+                    }
+                }
+                return; // Stop desktop rendering
+            } else {
+                // Desktop: Ensure mobile container is hidden
+                const mobContainer = document.getElementById('scheduleMobileContainer');
+                if (mobContainer) mobContainer.style.display = 'none';
+            }
 
             if (scheduleRows.length === 0) {
                 tbody.innerHTML = '';
@@ -13901,7 +14118,7 @@
                     checklistMasterData = items.map(item => ({
                         ...item,
                         '진행단계': String(item['진행단계'] || '').trim(),
-                        '분류': String(item['분류'] || '').trim()
+                        '카테고리': String(item['카테고리'] || item['분류'] || '').trim()
                     }));
 
                     // Phase 2: 업무 데이터 로컬 저장 금지
@@ -13964,7 +14181,7 @@
                 }
             });
 
-            // 필터 종속성 업데이트 (진행단계 -> 분류)
+            // 필터 종속성 업데이트 (진행단계 -> 카테고리)
             if (typeof updateCategoryOptionsBasedOnStage === 'function') {
                 updateCategoryOptionsBasedOnStage();
             }
@@ -13981,12 +14198,19 @@
             const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))].sort();
             initMultiSelect('checklistStageFilter', stages);
 
-            // 분류 옵션
-            const categories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))].sort();
+            // 카테고리 옵션
+            const categories = [...new Set(checklistMasterData.map(item => item.카테고리).filter(Boolean))].sort();
             initMultiSelect('checklistCategoryFilter', categories);
         }
 
         // 체크리스트 아이템 렌더링
+        let mobileChecklistStatusFilter = 'all';
+
+        function setMobileChecklistFilter(status) {
+            mobileChecklistStatusFilter = status;
+            renderChecklistItems();
+        }
+
         function renderChecklistItems() {
             if (!checklistMasterData || checklistMasterData.length === 0) {
                 document.getElementById('checklistTableBody').innerHTML = `
@@ -14017,9 +14241,9 @@
                 if (!stageFilter.includes('all')) {
                     if (!stageFilter.includes(item.진행단계 || '')) return false;
                 }
-                // 분류 필터
+                // 카테고리 필터
                 if (!categoryFilter.includes('all')) {
-                    if (!categoryFilter.includes(item.분류 || '')) return false;
+                    if (!categoryFilter.includes(item.카테고리 || '')) return false;
                 }
 
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
@@ -14029,7 +14253,7 @@
             // 테이블 렌더링
             const tbody = document.getElementById('checklistTableBody');
 
-            // 분류별 노션 색상 매핑
+            // 카테고리별 노션 색상 매핑
             function getCategoryColor(category) {
                 if (!category) return { bg: '#F1F1EF', text: '#37352F' }; // 기본
 
@@ -14059,7 +14283,7 @@
                 if (c.includes('가구') || c.includes('싱크') || c.includes('주방')) return palette[6]; // Purple
                 if (c.includes('공통') || c.includes('가설') || c.includes('준공') || c.includes('마감')) return palette[0]; // Gray
 
-                // 그 외: 문자열 해시로 자동 색상 선택 (모든 분류에 색상 적용 보장)
+                // 그 외: 문자열 해시로 자동 색상 선택 (모든 카테고리에 색상 적용 보장)
                 let hash = 0;
                 for (let i = 0; i < c.length; i++) {
                     hash = c.charCodeAt(i) + ((hash << 5) - hash);
@@ -14072,101 +14296,103 @@
             const tableContainer = document.getElementById('checklistTableContainer');
             const mobileContainer = document.getElementById('checklistMobileContainer');
 
+            const tableElement = tbody ? tbody.closest('table') : null;
+
             if (window.innerWidth <= 768) {
-                // Mobile: Hide table, Show card list
                 if (tableContainer) tableContainer.style.display = 'none';
+                if (tableElement) tableElement.style.display = 'none';
+
                 if (mobileContainer) {
                     mobileContainer.style.display = 'block';
 
-                    // [New] Sticky simplified filter bar
-                    const currentSearchTerm = document.getElementById('checklistSearchInput').value;
-                    let filterBarHtml = `
-                    <div style="position: sticky; top: calc(72px + env(safe-area-inset-top)); z-index: 800; background: #f2f2f7; padding: 10px 16px; border-bottom: 1px solid #e5e5ea; width: 100vw; margin-left: -16px; margin-right: -16px; box-sizing: border-box;">
-                        <input type="text" id="chkSearchMob" placeholder="공정 항목 검색..." 
-                            value="${currentSearchTerm}"
-                            oninput="document.getElementById('checklistSearchInput').value=this.value; renderChecklistItems();"
-                            style="width: 100%; padding: 10px 14px; border: 1px solid #d2d2d7; border-radius: 10px; font-size: 14px; -webkit-appearance: none; box-sizing: border-box; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    // Apply Mobile Status Filter
+                    let mobileFilteredData = filteredData;
+                    if (mobileChecklistStatusFilter !== 'all') {
+                        mobileFilteredData = mobileFilteredData.filter(item => {
+                            const state = customerChecklistData[item.번호] || {};
+                            const isChecked = state.checked || false;
+                            if (mobileChecklistStatusFilter === 'completed') return isChecked;
+                            if (mobileChecklistStatusFilter === 'incomplete') return !isChecked;
+                            return true;
+                        });
+                    }
+
+                    // Filter Bar
+                    const filterBar = `
+                    <div class="mobile-filter-bar no-print">
+                        <button class="mobile-filter-chip ${mobileChecklistStatusFilter === 'all' ? 'active' : ''}" onclick="setMobileChecklistFilter('all')">전체${mobileChecklistStatusFilter === 'all' ? ` (${mobileFilteredData.length})` : ''}</button>
+                        <button class="mobile-filter-chip ${mobileChecklistStatusFilter === 'completed' ? 'active' : ''}" onclick="setMobileChecklistFilter('completed')">완료</button>
+                        <button class="mobile-filter-chip ${mobileChecklistStatusFilter === 'incomplete' ? 'active' : ''}" onclick="setMobileChecklistFilter('incomplete')">미완료</button>
                     </div>`;
 
-                    mobileContainer.innerHTML = filterBarHtml + filteredData.map(item => {
-                        // Current customer's specific data for this item (can be boolean or object)
-                        const cData = customerChecklistData[item.번호];
-                        const isChecked = (typeof cData === 'boolean') ? cData : (cData?.checked || false);
-                        const userContent = (cData && typeof cData === 'object') ? cData.content : '';
-                        const userRemarks = (cData && typeof cData === 'object') ? cData.remarks : '';
+                    if (mobileFilteredData.length === 0) {
+                        mobileContainer.innerHTML = filterBar + '<div style="text-align:center; padding:40px; color:#86868b;">데이터가 없습니다.</div>';
+                    } else {
+                        mobileContainer.innerHTML = filterBar + mobileFilteredData.map(item => {
+                            const state = customerChecklistData[item.번호] || {};
+                            const isChecked = state.checked || false;
+                            const userContent = state.content;
+                            const userRemarks = state.remarks;
 
-                        const categoryColor = getCategoryColor(item.분류);
+                            // Date Logic from Schedule (Linked by Name)
+                            const relatedSchedule = (typeof scheduleRows !== 'undefined') ? scheduleRows.find(s => s.name === item.항목) : null;
+                            const dateStr = relatedSchedule ? formatMobileDateRange(relatedSchedule.start, relatedSchedule.end) : '';
+                            const catColor = getCategoryColor(item.카테고리);
 
-                        return `
-                        <div class="checklist-card">
-                            <!-- Top Row: Check + Title + Badges -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 16px 8px 16px;">
-                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                    <div onclick="toggleChecklistItem(${item.번호})" style="cursor: pointer; display: flex; align-items: center; padding: 4px;"> 
-                                        <input type="checkbox" ${isChecked ? 'checked' : ''} style="width: 22px; height: 22px; margin: 0; pointer-events: none; accent-color: #0071e3;">
+                            return `
+                            <div class="mobile-card">
+                                <div class="mobile-card-row" style="margin-bottom:2px;">
+                                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                         ${isChecked ? `<div class="mobile-chip chip-green" onclick="toggleChecklistItem('${item.번호}')">✅ 완료</div>` : `<input type="checkbox" onchange="toggleChecklistItem('${item.번호}')" style="width:20px; height:20px; border-radius:6px; flex-shrink:0;">`}
+                                        <div class="mobile-card-title">${item.항목}</div>
                                     </div>
-                                    <div style="font-size: 14px; font-weight: 600; color: #1d1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        ${item.항목}
-                                    </div>
+                                    <div class="mobile-date-text">${dateStr}</div>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                                    <span class="meta-badge" style="background: ${(item.진행단계 === '인테리어 시작 전') ? '#fff3e0' : '#e8f5e9'}; color: ${(item.진행단계 === '인테리어 시작 전') ? '#ff9500' : '#34c759'};">${item.진행단계 || ''}</span>
-                                    <span class="meta-badge" style="background: ${categoryColor.bg}; color: ${categoryColor.text};">${item.분류 || ''}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Bottom Row: Multi-column Inputs (Compact) -->
-                            <div style="display: flex; gap: 8px; padding: 0 16px;">
-                                <div style="flex: 2; position: relative;">
-                                    <span style="position: absolute; left: 8px; top: 6px; font-size: 8px; color: #86868b; text-transform: uppercase;">내용</span>
-                                    <input onchange="updateChecklistField(${item.번호}, 'content', this.value)" 
-                                           placeholder="내용 입력..."
-                                           value="${userContent || item.내용 || ''}" 
-                                           style="width: 100%; border: 1px solid #e5e5ea; border-radius: 8px; padding: 14px 8px 4px 8px; font-size: 12px; height: 38px; -webkit-appearance: none; box-sizing: border-box; background: #f5f5f7; color: #1d1d1f;">
-                                </div>
-                                <div style="flex: 1; position: relative;">
-                                    <span style="position: absolute; left: 8px; top: 6px; font-size: 8px; color: #86868b; text-transform: uppercase;">비고</span>
-                                    <input onchange="updateChecklistField(${item.번호}, 'remarks', this.value)" 
-                                           placeholder="비고..."
-                                           value="${userRemarks || item.비고 || ''}" 
-                                           style="width: 100%; border: 1px solid #e5e5ea; border-radius: 8px; padding: 14px 8px 4px 8px; font-size: 12px; height: 38px; -webkit-appearance: none; box-sizing: border-box; background: #f5f5f7; color: #1d1d1f;">
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('');
-                }
 
-                // Finished rendering for mobile
-                updateChecklistStats();
+                                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                                    <div class="mobile-chip chip-category" style="background:${catColor.bg}; color:${catColor.text};">${item.카테고리 || '미분류'}</div>
+                                    ${item.진행단계 ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#86868b;">${item.진행단계}</div>` : ''}
+                                </div>
+                                
+                                <div style="margin-top:4px;">
+                                    <input type="text" class="mobile-edit-field" value="${userContent || item.내용 || ''}" 
+                                           placeholder="내용 입력..." onchange="updateChecklistField('${item.번호}', 'content', this.value)"
+                                           style="font-weight:400; color:#333;">
+                                </div>
+                                
+                                <div style="border-top:1px dashed #f0f0f0; padding-top:4px; margin-top:4px; display:flex; align-items:center;">
+                                    <span style="font-size:11px; color:#bdbdbd; margin-right:6px;">비고</span>
+                                    <input type="text" class="mobile-edit-field" value="${userRemarks || item.비고 || ''}" 
+                                           placeholder="비고 입력" onchange="updateChecklistField('${item.번호}', 'remarks', this.value)"
+                                           style="color:#666;">
+                                    <div style="color:#d2d2d7; font-size:12px;">✏️</div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    }
 
-                // [Fix] Restore mobile toolbar & add padding
-                if (mobileContainer) mobileContainer.style.paddingBottom = '100px';
-                const mtb = document.getElementById('mobileToolbar');
-                if (mtb) {
-                    mtb.style.display = 'flex';
-                    mtb.style.zIndex = '10000'; // Force top
-                }
+                    updateChecklistStats();
+                    if (mobileContainer) mobileContainer.style.paddingBottom = '100px';
+                    const mtb = document.getElementById('mobileToolbar');
+                    if (mtb) mtb.style.display = 'flex';
 
-                // [Fix] Restore focus for mobile search bar after re-render
-                if (isMobile() && document.activeElement && document.activeElement.id === 'chkSearchMob') {
-                    const chkInp = document.getElementById('chkSearchMob');
-                    if (chkInp) {
-                        chkInp.focus();
-                        chkInp.setSelectionRange(chkInp.value.length, chkInp.value.length);
+                    // Restore focus if needed
+                    if (document.activeElement && document.activeElement.id === 'chkSearchMob') {
+                        document.getElementById('chkSearchMob')?.focus();
                     }
                 }
-
                 return;
             } else {
-                // Desktop: Show table, Hide card list
-                if (tableContainer) tableContainer.style.display = 'block';
                 if (mobileContainer) mobileContainer.style.display = 'none';
+                if (tableContainer) tableContainer.style.display = 'block';
+                if (tableElement) tableElement.style.display = '';
             }
+
 
             // Desktop Render Logic
             tbody.innerHTML = filteredData.map((item, index) => {
                 const isChecked = customerChecklistData[item.번호] || false;
-                const categoryColor = getCategoryColor(item.분류);
+                const categoryColor = getCategoryColor(item.카테고리);
                 return `
                     <tr draggable="true" 
                         ondragstart="handleChecklistDragStart(event, ${index})" 
@@ -14200,7 +14426,7 @@
                         </td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
                             <span style="background: ${categoryColor.bg}; color: ${categoryColor.text}; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                                ${item.분류 || ''}
+                                ${item.카테고리 || ''}
                             </span>
                         </td>
                     </tr>
@@ -14330,7 +14556,7 @@
 
             checklistFilteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.분류 || '')) return false;
+                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.카테고리 || '')) return false;
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
@@ -14399,7 +14625,7 @@
 
             const filteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.분류 || '')) return false;
+                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.카테고리 || '')) return false;
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
@@ -14617,7 +14843,7 @@
                                     항목: item.항목 || '',
                                     내용: item.내용 || '',
                                     진행단계: item.진행단계 || '',
-                                    분류: item.분류 || '',
+                                    카테고리: item.카테고리 || '',
                                     비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
                                     isChecked: isChecked
                                 };
@@ -14681,9 +14907,9 @@
                         if (!stageFilter.includes('all')) {
                             if (!stageFilter.includes(item.진행단계 || '')) return false;
                         }
-                        // 분류 필터
+                        // 카테고리 필터
                         if (!categoryFilter.includes('all')) {
-                            if (!categoryFilter.includes(item.분류 || '')) return false;
+                            if (!categoryFilter.includes(item.카테고리 || '')) return false;
                         }
                         // 검색 필터
                         if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
@@ -14703,7 +14929,7 @@
                                 항목: item.항목 || '',
                                 내용: item.내용 || '',
                                 진행단계: item.진행단계 || '',
-                                분류: item.분류 || '',
+                                카테고리: item.카테고리 || '',
                                 // 체크된 항목은 비고 앞에 [완료] 표시
                                 비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
                                 isChecked: isChecked
@@ -15264,7 +15490,7 @@
 
             updateMultiSelectLabel(elementId);
 
-            // [추가] 진행단계 필터가 변경되면 분류 필터 옵션을 갱신 (Dependent Dropdown)
+            // [추가] 진행단계 필터가 변경되면 카테고리 필터 옵션을 갱신 (Dependent Dropdown)
             if (elementId === 'checklistStageFilter') {
                 updateCategoryOptionsBasedOnStage();
             }
@@ -15272,7 +15498,7 @@
             renderChecklistItems();
         }
 
-        // [추가] 진행단계 선택에 따른 분류 필터 옵션 갱신
+        // [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
         function updateCategoryOptionsBasedOnStage() {
             const selectedStages = multiSelectState['checklistStageFilter'];
             console.log('[Filter Logic] Selected Stages:', selectedStages);
@@ -15285,10 +15511,10 @@
             let validCategories = [];
 
             if (selectedStages.includes('all') || selectedStages.length === 0) {
-                // 전체 선택 시 -> 모든 분류 표시
-                validCategories = [...new Set(checklistMasterData.map(item => (item.분류 || '').trim()).filter(Boolean))].sort();
+                // 전체 선택 시 -> 모든 카테고리 표시
+                validCategories = [...new Set(checklistMasterData.map(item => (item.카테고리 || '').trim()).filter(Boolean))].sort();
             } else {
-                // 특정 단계 선택 시 -> 해당 단계에 포함된 분류만 추출
+                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
                 const filteredItems = checklistMasterData.filter(item => {
                     const itemStage = (item.진행단계 || '').trim();
                     // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
@@ -15296,12 +15522,12 @@
                     // But here we just used item.진행단계 to build options, so it should match.
                     return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
                 });
-                validCategories = [...new Set(filteredItems.map(item => (item.분류 || '').trim()).filter(Boolean))].sort();
+                validCategories = [...new Set(filteredItems.map(item => (item.카테고리 || '').trim()).filter(Boolean))].sort();
             }
 
             console.log('[Filter Logic] Valid Categories:', validCategories);
 
-            // 기존 선택된 분류 중 유효하지 않은 것은 제거 (UX 개선)
+            // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
             const currentCategoryState = multiSelectState['checklistCategoryFilter'];
 
             if (!currentCategoryState.includes('all')) {
@@ -15313,7 +15539,7 @@
                 // 'all' is always valid if validCategories has items.
             }
 
-            // 분류 필터 옵션 재생성
+            // 카테고리 필터 옵션 재생성
             initMultiSelect('checklistCategoryFilter', validCategories);
         }
 
