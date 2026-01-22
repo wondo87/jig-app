@@ -838,8 +838,8 @@
 
             /* 3. Push Content Down */
             #panel-checklist .doc-content {
-                padding-top: 140px !important;
-                /* 54 + 84 + gap */
+                padding-top: 135px !important;
+                /* 54 + 약 81px(헤더) = 135px */
                 padding-left: 10px !important;
                 padding-right: 10px !important;
                 padding-bottom: 80px !important;
@@ -17225,17 +17225,17 @@
                             '';
 
                         const headerHtml = `
-                            <div class="mobile-header-left" style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; color: #fff;">
-                                <div style="font-size:12px; font-weight:700; margin-bottom:2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${customer.projectName || '현장명 없음'} <span style="font-weight:400; opacity:0.8;">| ${period}</span>
+                            <div style="width: 100%; display: flex; flex-direction: column; gap: 3px; color: #fff;">
+                                <div style="font-size: 11px; font-weight: 700; line-height: 1.2; margin-bottom: 2px;">공정별 체크리스트</div>
+                                <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
+                                    ${customer.projectName || '현장명 없음'} | ${period}
                                 </div>
-                                <div style="font-size:12px; margin-bottom:1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    ${customer.clientName || '이름 없음'} | ${phoneLink}
+                                <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
+                                    ${customer.siteAddress || ''}
                                 </div>
-                                ${spouseRow}
-                            </div>
-                            <div class="mobile-header-right" style="flex-shrink: 0; margin-left: 12px; display: flex; align-items: center;">
-                                <span style="font-size: 14px; font-weight: 700; white-space: nowrap; color: #fff;">공정별 체크리스트</span>
+                                <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
+                                    ${customer.clientName || '이름 없음'} | ${phoneLink}${customer.spouseInfo || ''}
+                                </div>
                             </div>
                         `;
 
