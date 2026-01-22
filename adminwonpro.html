@@ -549,7 +549,7 @@
         /* 메인 레이아웃 */
         .main-layout {
             display: flex;
-            align-items: flex-start;
+            min-height: calc(100vh - 56px);
         }
 
         /* 사이드바 */
@@ -557,10 +557,11 @@
             width: 300px;
             background: #fff;
             border-right: 1px solid #e8e8ed;
-            flex-shrink: 0;
-            overflow: visible !important;
-            height: auto !important;
-            max-height: none !important;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 56px;
+            height: calc(100vh - 56px);
         }
 
         .sidebar-header {
@@ -647,10 +648,8 @@
         }
 
         .customer-list {
-            display: block !important;
-            overflow: visible !important;
-            height: auto !important;
-            max-height: none !important;
+            flex: 1;
+            overflow-y: auto;
         }
 
         .customer-item {
