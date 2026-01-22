@@ -456,15 +456,64 @@
             }
 
             .checklist-table input[type="checkbox"] {
+                -webkit-appearance: none;
+                appearance: none;
                 width: 20px !important;
                 height: 20px !important;
                 margin: 0 auto;
                 display: block;
+                border: 2px solid #007aff;
+                border-radius: 4px;
+                background-color: #fff;
+                cursor: pointer;
+                position: relative;
+            }
+
+            .checklist-table input[type="checkbox"]:checked {
+                background-color: #007aff;
+                border-color: #007aff;
+            }
+
+            .checklist-table input[type="checkbox"]:checked::after {
+                content: '';
+                position: absolute;
+                left: 5px;
+                top: 1px;
+                width: 5px;
+                height: 10px;
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
             }
 
             .checklist-category-header {
                 font-size: 14px !important;
                 padding: 10px !important;
+            }
+
+            /* 모바일 체크리스트 상단 고객 정보 */
+            .mobile-checklist-customer-info {
+                display: block !important;
+                margin-top: 12px;
+                padding: 12px;
+                background: #f5f5f7;
+                border-radius: 8px;
+            }
+
+            .mobile-checklist-customer-info .info-line {
+                font-size: 13px;
+                color: #1d1d1f;
+                line-height: 1.6;
+                margin-bottom: 4px;
+            }
+
+            .mobile-checklist-customer-info .info-line:last-child {
+                margin-bottom: 0;
+            }
+
+            .mobile-checklist-customer-info a {
+                color: #007aff;
+                text-decoration: none;
             }
 
 
@@ -478,12 +527,37 @@
 
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
+                /* 공사 스케줄: 불필요한 요소 숨김 */
                 #scheduleNoticeBlock {
                     display: none !important;
                 }
 
                 #btnAddScheduleRow {
                     display: none !important;
+                }
+
+                #panel-schedule .schedule-info-table {
+                    display: none !important;
+                }
+
+                #panel-schedule .subtitle {
+                    display: none !important;
+                }
+
+                /* 공사 스케줄: 필수 컬럼만 표시 */
+                #panel-schedule .data-table th:nth-child(1),
+                #panel-schedule .data-table td:nth-child(1) {
+                    display: none !important; /* 카테고리 숨김 */
+                }
+
+                #panel-schedule .data-table th:nth-child(3),
+                #panel-schedule .data-table td:nth-child(3) {
+                    display: none !important; /* 체크포인트 숨김 */
+                }
+
+                /* 공사 스케줄: 체크리스트 바로가기 버튼 표시 */
+                .mobile-schedule-to-checklist {
+                    display: block !important;
                 }
 
                 #headerMobileInfo {
@@ -5196,6 +5270,12 @@
                         <div class="doc-header">
                             <div>
                                 <h1>공정별 체크리스트</h1>
+                                <!-- 모바일 고객 정보 (상단 3줄) -->
+                                <div class="mobile-checklist-customer-info" style="display:none;">
+                                    <div class="info-line" id="mobileChecklistInfo1"></div>
+                                    <div class="info-line" id="mobileChecklistInfo2"></div>
+                                    <div class="info-line" id="mobileChecklistInfo3"></div>
+                                </div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <!-- [추가] DB 불러오기/저장 버튼 -->
@@ -5350,6 +5430,12 @@
                                     DESIGN JIG</div>
                                 <h1>📅 공사 스케줄 관리</h1>
                                 <div class="subtitle">Construction Schedule Manager</div>
+                                <!-- 모바일: 체크리스트 바로가기 -->
+                                <button class="mobile-schedule-to-checklist"
+                                        onclick="showCustomerTab('checklist')"
+                                        style="display:none; margin-top:8px; padding:8px 12px; background:#007aff; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+                                    ✅ 공정별 체크리스트 보기
+                                </button>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <button class="notion-export-btn" onclick="exportToNotion('schedule', event)"
@@ -7906,6 +7992,40 @@
             }
             if (tabId === 'stats') {
                 if (typeof renderAuditLog === 'function') renderAuditLog(currentCustomerId ? currentCustomerId : null);
+            }
+            if (tabId === 'checklist') {
+                updateMobileChecklistCustomerInfo();
+            }
+        }
+
+        // 모바일 체크리스트 상단 고객 정보 업데이트
+        function updateMobileChecklistCustomerInfo() {
+            if (window.innerWidth > 768) return; // PC에서는 실행 안함
+
+            const customer = customers.find(c => c.customerId === currentCustomerId);
+            if (!customer) return;
+
+            const info1 = document.getElementById('mobileChecklistInfo1');
+            const info2 = document.getElementById('mobileChecklistInfo2');
+            const info3 = document.getElementById('mobileChecklistInfo3');
+
+            if (info1 && info2 && info3) {
+                // 1줄: 현장명 | 공사기간
+                const siteName = customer.siteAddress || customer.projectName || '현장명 없음';
+                const period = customer.constructionPeriod || '-';
+                info1.innerHTML = `<strong>${siteName}</strong> | ${period}`;
+
+                // 2줄: 고객명 | 전화번호 (클릭시 전화)
+                const clientName = customer.clientName || '-';
+                const clientPhone = customer.clientPhone || '';
+                const phoneLink = clientPhone ? `<a href="tel:${clientPhone}">${clientPhone}</a>` : '-';
+                info2.innerHTML = `${clientName} | ${phoneLink}`;
+
+                // 3줄: 배우자명 | 전화번호 (클릭시 전화)
+                const spouseName = customer.spouseName || '-';
+                const spousePhone = customer.spousePhone || '';
+                const spousePhoneLink = spousePhone ? `<a href="tel:${spousePhone}">${spousePhone}</a>` : '-';
+                info3.innerHTML = `${spouseName} | ${spousePhoneLink}`;
             }
         }
 
@@ -16740,7 +16860,7 @@
             // Clear Previous Timeout
             if (window.toastTimer) clearTimeout(window.toastTimer);
 
-            // Hide after 1500ms (Faster than default)
+            // Hide after 1200ms (Faster than default)
             window.toastTimer = setTimeout(() => {
                 toast.classList.remove('show');
             }, 1500);
