@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>스케줄 템플릿 데이터 확인</title>
+    <style>
+        body {
+            font-family: system-ui;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #34c759;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #2fb34a;
+        }
+        #result {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .category {
+            color: #007aff;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 스케줄 템플릿 데이터 확인</h1>
+    <button onclick="loadTemplate()">템플릿 데이터 불러오기</button>
+    <div id="result"></div>
+
+    <script src="admin_config.js"></script>
+    <script>
+        async function loadTemplate() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '로딩 중...';
+
+            try {
+                const params = new URLSearchParams({
+                    sheet: 'schedule_template',
+                    t: Date.now()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+                const data = await response.json();
+
+                console.log('응답 데이터:', data);
+
+                if (Array.isArray(data) && data.length > 0) {
+                    // 카테고리별로 그룹화
+                    const categories = {};
+                    data.forEach(item => {
+                        const cat = item.category || '카테고리 없음';
+                        if (!categories[cat]) {
+                            categories[cat] = [];
+                        }
+                        categories[cat].push(item);
+                    });
+
+                    // 결과 출력
+                    let output = `✅ 총 ${data.length}개 항목 로드\n`;
+                    output += `📊 카테고리 개수: ${Object.keys(categories).length}개\n\n`;
+                    output += '=' .repeat(60) + '\n\n';
+
+                    Object.keys(categories).forEach((cat, idx) => {
+                        output += `${idx + 1}. 📁 카테고리: ${cat}\n`;
+                        output += `   공정 개수: ${categories[cat].length}개\n`;
+                        categories[cat].forEach((item, i) => {
+                            output += `   ${i + 1}) ${item.name || 'N/A'}`;
+                            if (item.checkPoint) output += ` - ${item.checkPoint}`;
+                            if (item.inCharge) output += ` [${item.inCharge}]`;
+                            output += '\n';
+                        });
+                        output += '\n';
+                    });
+
+                    output += '=' .repeat(60) + '\n\n';
+                    output += '📋 전체 데이터 (JSON):\n';
+                    output += JSON.stringify(data, null, 2);
+
+                    resultDiv.textContent = output;
+                } else {
+                    resultDiv.textContent = '❌ 데이터가 비어있거나 배열이 아닙니다.\n\n' + JSON.stringify(data, null, 2);
+                }
+
+            } catch (error) {
+                console.error('오류:', error);
+                resultDiv.textContent = '❌ 오류 발생:\n' + error.message + '\n\n' + error.stack;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>최종 동기화 테스트</title>
+    <style>
+        body {
+            font-family: system-ui;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        button {
+            padding: 20px 40px;
+            font-size: 18px;
+            background: #34c759;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #2fb34a;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>☁️ 클라우드 동기화 테스트</h1>
+    <p>아래 버튼을 클릭하면 adminwonpro.html과 동일한 동기화 로직이 실행됩니다.</p>
+
+    <button onclick="testSync()">클라우드 동기화 실행</button>
+
+    <div id="result"></div>
+
+    <script src="admin_config.js"></script>
+    <script>
+        async function testSync() {
+            try {
+                console.log('🚀 동기화 시작...');
+
+                // Google Apps Script GET 요청
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: new Date().getTime()
+                });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
+                    method: 'GET'
+                });
+
+                console.log('📥 응답 받음:', response.status);
+
+                if (!response.ok) {
+                    alert('❌ 클라우드 동기화 실패\n\nHTTP 오류: ' + response.status);
+                    return;
+                }
+
+                let cloudCustomers = await response.json();
+                console.log('📦 데이터:', cloudCustomers);
+
+                if (!Array.isArray(cloudCustomers)) {
+                    if (cloudCustomers.error) {
+                        throw new Error(cloudCustomers.error);
+                    }
+                    throw new Error('잘못된 응답 형식');
+                }
+
+                if (cloudCustomers.length === 0) {
+                    alert('⚠️ 클라우드에 저장된 고객 데이터가 없습니다.');
+                    return;
+                }
+
+                // 성공 메시지
+                console.log('✅ 동기화 완료!');
+                alert(`✅ 클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`);
+
+                // 결과 표시
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <h2>✅ 동기화 완료!</h2>
+                    <p><strong>총 고객 수:</strong> ${cloudCustomers.length}명</p>
+                    <p><strong>첫 번째 고객:</strong> ${cloudCustomers[0]?.clientName || 'N/A'}</p>
+                    <pre>${JSON.stringify(cloudCustomers[0], null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                console.error('❌ 오류:', error);
+                alert('❌ 클라우드 동기화 실패\n\n' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

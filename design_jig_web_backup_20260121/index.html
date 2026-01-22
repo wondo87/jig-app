@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디자인지그 - 오래 살수록, 더 좋아지는 집</title>
+    <meta name="description" content="오래 살수록, 더 좋아지는 집. 디자인지그가 만듭니다.">
+
+    <!-- Open Graph (Facebook, KakaoTalk, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.designjig.com/">
+    <meta property="og:title" content="디자인지그 - 오래 살수록, 더 좋아지는 집">
+    <meta property="og:description" content="오래 살수록, 더 좋아지는 집. 디자인지그가 만듭니다.">
+    <meta property="og:image"
+        content="https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="디자인 지그">
+    <meta property="og:locale" content="ko_KR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="디자인 지그 - 깔끔하고 시대를 초월한 인테리어 경험">
+    <meta name="twitter:description" content="디자인 지그는 아름답고 기능적인 공간을 만듭니다.">
+    <meta name="twitter:image"
+        content="https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png">
+
+    <!-- 폰트 최적화: preconnect + preload -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+            rel="stylesheet">
+    </noscript>
+
+    <script src="js/protection.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.5rem 3rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-list {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-link:hover {
+            color: #B4956F;
+        }
+
+        .nav-link-cta {
+            color: #B4956F;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #1a1a1a;
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+
+        /* Hero Slider */
+        .hero-slider {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide-1 {
+            background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+        }
+
+        .slide-2 {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        }
+
+        .slide-3 {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+        }
+
+        .slide-content {
+            text-align: center;
+            padding: 2rem;
+            max-width: 900px;
+        }
+
+        .slide-subtitle {
+            font-size: 1rem;
+            letter-spacing: 0.3em;
+            color: #B4956F;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .slide-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        .slide-description {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2.5rem;
+            line-height: 1.8;
+            word-break: keep-all;
+        }
+
+        .slide-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Slider Navigation */
+        .slider-nav {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 0;
+        }
+
+        .slider-dot.active {
+            background: #B4956F;
+            width: 32px;
+            border-radius: 6px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: 2px solid #2563eb;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+
+        .btn-secondary:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* Feature Sections */
+        .feature-section {
+            padding: 6rem 2rem;
+        }
+
+        .feature-section.bg-light {
+            background: #fafafa;
+        }
+
+        .feature-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .feature-container.reverse .feature-image {
+            order: 2;
+        }
+
+        .feature-container.reverse .feature-content {
+            order: 1;
+        }
+
+        .feature-image {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            background: #e0e0e0;
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .feature-image-placeholder {
+            color: #999;
+            font-size: 1rem;
+        }
+
+        .feature-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #B4956F;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .feature-label svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .feature-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+            color: #1a1a1a;
+        }
+
+        .feature-description {
+            font-size: 1.1rem;
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: #444;
+        }
+
+        .feature-list li svg {
+            width: 20px;
+            height: 20px;
+            color: #B4956F;
+            flex-shrink: 0;
+        }
+
+        .btn-feature {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #B4956F;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-feature:hover {
+            background: #9a7d5a;
+            transform: translateY(-2px);
+        }
+
+        /* Column Section */
+        .column-section {
+            padding: 4rem 2rem;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+
+        .column-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .column-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .column-more {
+            color: #B4956F;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .column-more:hover {
+            text-decoration: underline;
+        }
+
+        .column-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .column-card {
+            background: #fafafa;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .column-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .column-card-image {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: #e0e0e0;
+            object-fit: cover;
+        }
+
+        .column-card-content {
+            padding: 1.5rem;
+        }
+
+        .column-card-category {
+            font-size: 0.75rem;
+            color: #B4956F;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .column-card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .column-card-excerpt {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        /* Footer */
+        .footer {
+            background: #f8f8f8;
+            color: #333;
+            padding: 30px 2rem;
+            text-align: center;
+        }
+
+        .footer-brand {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            color: #1a1a1a;
+        }
+
+        .footer-tagline {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .footer-info {
+            margin-bottom: 1rem;
+        }
+
+        .footer-info p {
+            color: #666;
+            font-size: 0.7rem;
+            margin: 0.2rem 0;
+        }
+
+        .footer-info a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .footer-info a:hover {
+            color: #B4956F;
+        }
+
+        .footer-sns {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .footer-sns a {
+            color: #666;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .footer-sns a:hover {
+            color: #B4956F;
+            transform: translateY(-2px);
+        }
+
+        .footer-sns svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .footer-copyright {
+            color: #999;
+            font-size: 0.65rem;
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+            display: inline-block;
+        }
+
+        /* Guide Modal */
+        .guide-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .guide-modal-overlay.show {
+            display: block;
+        }
+
+        .guide-modal-content {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .guide-modal-header {
+            position: relative;
+        }
+
+        .guide-modal-header img {
+            width: 100%;
+            height: auto;
+            /* 높이를 자동으로 조절하여 원래 비율 유지 */
+            max-height: 600px;
+            /* 너무 커지지 않도록 최대 높이 제한 */
+            object-fit: contain;
+            /* 이미지가 잘리지 않고 다 보이도록 설정 */
+            background: #f8f8f8;
+        }
+
+        .guide-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .guide-modal-body {
+            padding: 40px;
+        }
+
+        .guide-modal-body h1 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .guide-modal-body .meta {
+            color: #888;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Legacy styles removed to use Notion Styles below */
+
+        .guide-modal-body .content h2 {
+            margin: 2em 0 1em;
+            font-size: 1.4rem;
+        }
+
+        .guide-modal-body .content img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1.5em 0;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #B4956F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(255, 255, 255, 0.98);
+                z-index: 999;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav.active {
+                display: flex;
+            }
+
+            .nav.active .nav-list {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2rem;
+            }
+
+            .nav.active .nav-link {
+                font-size: 1.5rem;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                z-index: 1001;
+            }
+
+            .mobile-menu-btn.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+
+            .mobile-menu-btn.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .mobile-menu-btn.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -5px);
+            }
+
+            .feature-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .feature-container.reverse .feature-image,
+            .feature-container .feature-image {
+                order: 2;
+            }
+
+            .feature-container.reverse .feature-content,
+            .feature-container .feature-content {
+                order: 1;
+            }
+
+            .feature-title {
+                font-size: 1.75rem;
+            }
+
+            .column-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* 모바일에서도 강제로 4:3 비율 및 꽉 차게(Cover) 적용 */
+            .feature-image {
+                aspect-ratio: 4/3;
+                height: auto;
+            }
+
+            .feature-image img {
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        /* Responsive Line Breaks */
+        .br-mo {
+            display: block;
+        }
+
+        .br-pc {
+            display: none;
+        }
+
+        @media (min-width: 769px) {
+            .br-mo {
+                display: none;
+            }
+
+            .br-mo {
+                display: none;
+            }
+
+            .br-pc {
+                display: block;
+            }
+        }
+
+        /* Notion Styles (High Fidelity) */
+        /* Notion Styles (High Fidelity) */
+        .modal-body .content,
+        .guide-modal-body .content {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 16px;
+            line-height: 1.75;
+            color: #37352f;
+            word-break: break-word;
+        }
+
+        .notion-h1 {
+            font-size: 1.875em;
+            font-weight: 700;
+            line-height: 1.3;
+            margin: 1.4em 0 0.5em 0;
+            color: #37352f;
+        }
+
+        .notion-h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            line-height: 1.3;
+            margin: 1.4em 0 0.3em 0;
+            color: #37352f;
+        }
+
+        .notion-h3 {
+            font-size: 1.25em;
+            font-weight: 600;
+            line-height: 1.3;
+            margin: 1em 0 0.2em 0;
+            color: #37352f;
+        }
+
+        .modal-body .content p,
+        .guide-modal-body .content p {
+            margin: 0 0 2px 0;
+            /* 글줄 간격은 좁게 */
+            min-height: 1.5em;
+            /* 빈 줄 최소 높이 */
+            letter-spacing: -0.01em;
+            padding: 0;
+        }
+
+        .modal-body .content ul,
+        .modal-body .content ol,
+        .guide-modal-body .content ul,
+        .guide-modal-body .content ol {
+            margin: 4px 0 12px 24px;
+            /* 리스트 하단 여백 12px */
+            padding: 0;
+        }
+
+        .modal-body .content li,
+        .guide-modal-body .content li {
+            margin: 2px 0;
+            padding-left: 2px;
+        }
+
+        /* 빈 문단(Spacer) 스타일: 엔터 두 번 친 효과 (한 줄 높이 확보) */
+        .modal-body .content p.notion-spacer,
+        .guide-modal-body .content p.notion-spacer {
+            height: 28px;
+            /* 일반 줄 높이(약 1.75em)와 비슷하게 설정하여 확실한 공백 제공 */
+            min-height: 28px;
+            display: block;
+            margin: 0;
+        }
+
+        .notion-color-gray {
+            color: #9B9A97;
+        }
+
+        .notion-color-brown {
+            color: #64473A;
+        }
+
+        .notion-color-orange {
+            color: #D9730D;
+        }
+
+        .notion-color-yellow {
+            color: #DFAB01;
+        }
+
+        .notion-color-green {
+            color: #0F7B6C;
+        }
+
+        .notion-color-blue {
+            color: #0B6E99;
+        }
+
+        .notion-color-purple {
+            color: #6940A5;
+        }
+
+        .notion-color-pink {
+            color: #AD1A72;
+        }
+
+        .notion-color-red {
+            color: #E03E3E;
+        }
+
+        .notion-color-gray_background {
+            background: #EBECED;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-brown_background {
+            background: #E9E5E3;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-orange_background {
+            background: #FAEBDD;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-yellow_background {
+            background: #FBF3DB;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-green_background {
+            background: #DDEDEA;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-blue_background {
+            background: #DDEBF1;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-purple_background {
+            background: #EAE4F2;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-pink_background {
+            background: #F4DFEB;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-red_background {
+            background: #FBE4E4;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-quote {
+            border-left: 3px solid #37352f;
+            padding-left: 14px;
+            margin: 4px 0;
+            color: #37352f;
+        }
+
+        .notion-callout {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 16px 16px 12px;
+            border-radius: 4px;
+            margin: 4px 0;
+            background: #F1F1EF;
+        }
+
+        .notion-callout .callout-icon {
+            font-size: 1.5em;
+            margin-right: 12px;
+            line-height: 1.1;
+            user-select: none;
+        }
+
+        /* Notion Default Background Colors for Callouts */
+        .notion-callout-gray_background {
+            background: #F1F1EF;
+        }
+
+        .notion-callout-brown_background {
+            background: #F4EEEE;
+        }
+
+        .notion-callout-orange_background {
+            background: #FBECDD;
+        }
+
+        .notion-callout-yellow_background {
+            background: #FBF3DB;
+        }
+
+        .notion-callout-green_background {
+            background: #EDF3EC;
+        }
+
+        .notion-callout-blue_background {
+            background: #E7F3F8;
+        }
+
+        .notion-callout-purple_background {
+            background: #F4F0F7;
+        }
+
+        .notion-callout-pink_background {
+            background: #F9F2F5;
+        }
+
+        .notion-callout-red_background {
+            background: #FDEBEC;
+        }
+
+        .notion-divider {
+            border: none;
+            border-top: 1px solid #E1E1E1;
+            margin: 6px 0;
+        }
+
+        .notion-toggle {
+            margin: 2px 0;
+        }
+
+        .notion-toggle summary {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .notion-toggle .toggle-content {
+            padding-left: 1.2em;
+            margin-top: 2px;
+        }
+
+        .notion-list {
+            margin: 2px 0;
+            padding-left: 24px;
+        }
+
+        .notion-list li {
+            margin: 2px 0;
+            padding-left: 2px;
+        }
+
+        .notion-todo-list {
+            list-style: none;
+            padding-left: 2px;
+            margin: 4px 0;
+        }
+
+        .notion-todo-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 2px 0;
+        }
+
+        .notion-todo-checked {
+            text-decoration: line-through;
+            color: #9B9A97;
+        }
+
+        .notion-image {
+            margin: 4px 0;
+        }
+
+        .notion-image img {
+            max-width: 100%;
+            border-radius: 1px;
+        }
+
+        .notion-image figcaption {
+            text-align: left;
+            color: #9B9A97;
+            font-size: 0.9em;
+            margin-top: 6px;
+        }
+
+        .notion-video {
+            margin: 4px 0;
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+
+        .notion-video iframe,
+        .notion-video video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 1px;
+        }
+
+        .notion-link-preview {
+            margin: 4px 0;
+            padding: 0.5em;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+        }
+
+        .notion-link-preview a {
+            color: #37352f;
+            text-decoration: none;
+            word-break: break-all;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .notion-code {
+            background: #F7F6F3;
+            padding: 32px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.85em;
+            margin: 4px 0;
+        }
+
+        code {
+            background: rgba(135, 131, 120, 0.15);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            color: #EB5757;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Table Styles */
+        .notion-table-wrapper {
+            overflow-x: auto;
+            margin: 4px 0;
+        }
+
+        .notion-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .notion-table td,
+        .notion-table th {
+            border: 1px solid #e0e0e0;
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        .notion-table th {
+            background: #f7f6f3;
+            font-weight: 600;
+        }
+
+        /* TOC */
+        .notion-toc {
+            padding: 12px;
+            background: #f7f6f3;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-container">
+            <a href="/" class="logo">DESIGN JIG</a>
+            <nav class="nav" id="nav">
+                <ul class="nav-list">
+                    <li><a href="/columns" class="nav-link">COLUMNS</a></li>
+                    <li><a href="/portfolio" class="nav-link">PORTFOLIO</a></li>
+                    <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Slider -->
+        <section class="hero-slider">
+            <!-- Slide 1 -->
+            <div class="slide slide-1 active">
+                <div class="slide-content">
+                    <p class="slide-subtitle">Your Sanctuary</p>
+                    <h1 class="slide-title">매일, 가장 빨리<br>돌아가고 싶은 곳</h1>
+                    <p class="slide-description">
+                        유지보수 걱정 없이, 오래 살수록 편안한 집.<br>
+                        당신의 취향과 삶을 담아<br class="br-mo"> 진짜 쉼이 있는 공간을 만듭니다.
+                    </p>
+                    <div class="slide-cta">
+                        <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
+                        <a href="/quote" class="btn btn-secondary">견적 문의</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide slide-2">
+                <div class="slide-content">
+                    <p class="slide-subtitle">Quality First</p>
+                    <h1 class="slide-title">보이지 않는 곳부터<br>다릅니다</h1>
+                    <p class="slide-description">
+                        설비, 방수, 단열 — 마감 뒤에 숨은 기본기.<br>
+                        이 기본이 무너지면 삶의 질도 무너집니다.<br>
+                        디자인지그는 보이지 않는 곳부터<br class="br-mo"> 제대로 잡습니다.
+                    </p>
+                    <div class="slide-cta">
+                        <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
+                        <a href="/quote" class="btn btn-secondary">견적 문의</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="slide slide-3">
+                <div class="slide-content">
+                    <p class="slide-subtitle">Timeless Design</p>
+                    <h1 class="slide-title">튼튼한 기본 위에<br>그리는 아름다움</h1>
+                    <p class="slide-description">
+                        기본이 탄탄해야 아름다움도 오래갑니다.<br class="br-mo">
+                        디자인지그가 인테리어를 대하는 생각,<br class="br-mo">
+                        하자없는 시공의 디테일, 현실적인 가이드까지.<br class="br-mo">
+                        현장에서 쌓은 이야기를 나눕니다.
+                    </p>
+                    <div class="slide-cta">
+                        <a href="/portfolio" class="btn btn-primary">포트폴리오 보기</a>
+                        <a href="/quote" class="btn btn-secondary">견적 문의</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Navigation Dots -->
+            <div class="slider-nav">
+                <button class="slider-dot active" data-slide="0"></button>
+                <button class="slider-dot" data-slide="1"></button>
+                <button class="slider-dot" data-slide="2"></button>
+            </div>
+        </section>
+
+        <!-- Feature Section 1: 좌측 텍스트 + 우측 이미지 (주거공간 전문) -->
+        <section class="feature-section">
+            <div class="feature-container reverse">
+                <div class="feature-content">
+                    <div class="feature-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        맞춤형 공간 설계
+                    </div>
+                    <h2 class="feature-title">당신만의 안식처를<br>완성합니다</h2>
+                    <p class="feature-description">
+                        좋은 집은 화려하지 않아도 됩니다. 문을 열고 들어서는 순간 '집에 왔다'는 안도감,
+                        소파에 앉아 하루를 내려놓을 수 있는 편안함. 디자인지그는 그런 공간을 만듭니다.
+                    </p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            생활 동선을 고려한 맞춤 설계
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            실용성과 내구성을 갖춘 자재 선택
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            10년 뒤에도 튼튼한 시공 품질
+                        </li>
+                    </ul>
+                    <a href="/portfolio" class="btn-feature">시공 사례 보기</a>
+                </div>
+                <div class="feature-image" id="featureImage1">
+                    <img src="" alt="맞춤형 공간 설계" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span class="feature-image-placeholder">로딩 중...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Section 2: 좌측 이미지 + 우측 텍스트 (시공 품질 보증) -->
+        <section class="feature-section bg-light">
+            <div class="feature-container">
+                <div class="feature-image" id="featureImage2">
+                    <img src="" alt="시공 품질 보증" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span class="feature-image-placeholder">로딩 중...</span>
+                </div>
+                <div class="feature-content">
+                    <div class="feature-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        시공 품질 보증
+                    </div>
+                    <h2 class="feature-title">기본에 충실한<br>시공 품질</h2>
+                    <p class="feature-description">
+                        화려한 마감재 뒤에 숨은 설비, 방수, 단열 등 보이지 않는 곳일수록 더 꼼꼼해야 합니다.
+                        10년 이상 현장을 경험한 소장이 직접 관리하며 끝까지 책임집니다.
+                    </p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            현장 경력 10년+ 전문가
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            투명한 공정 관리
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            시공 후 A/S 보장
+                        </li>
+                    </ul>
+                    <a href="/quote" class="btn-feature">견적 문의하기</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Section 3: 좌측 텍스트 + 우측 이미지 (맞춤형 솔루션) -->
+        <section class="feature-section">
+            <div class="feature-container reverse">
+                <div class="feature-content">
+                    <div class="feature-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                        </svg>
+                        맞춤형 솔루션
+                    </div>
+                    <h2 class="feature-title">고객의 자산을<br>더 빛나게</h2>
+                    <p class="feature-description">
+                        집은 단순한 공간이 아니라 소중한 자산입니다. 디자인지그는 예산과 라이프스타일에 맞는
+                        제안으로 그 가치를 더 높여드립니다. 상담부터 시공, 사후관리까지 한 팀이 끝까지 함께합니다.
+                    </p>
+                    <ul class="feature-list">
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            합리적인 견적 시스템
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            과잉 시공 없는 정직한 제안
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            원스톱 프로젝트 관리
+                        </li>
+                    </ul>
+                    <a href="/quote" class="btn-feature">상담 신청하기</a>
+                </div>
+                <div class="feature-image" id="featureImage3">
+                    <img src="" alt="맞춤형 솔루션" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span class="feature-image-placeholder">로딩 중...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column Section: 인테리어 가이드 -->
+        <section class="column-section">
+            <div class="column-container">
+                <div class="column-header">
+                    <h3 class="column-title">인테리어 가이드</h3>
+                    <a href="/columns" class="column-more">더보기 →</a>
+                </div>
+                <div class="column-grid" id="guideGrid">
+                    <!-- Notion에서 가이드 카테고리 글을 불러옵니다 -->
+                    <div class="loading-placeholder">로딩 중...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Guide Modal -->
+    <div class="guide-modal-overlay" id="guideModal">
+        <div class="guide-modal-content">
+            <div class="guide-modal-header">
+                <img id="guideModalImage" src="" alt="">
+                <button class="guide-modal-close" onclick="closeGuideModal()">×</button>
+            </div>
+            <div class="guide-modal-body">
+                <h1 id="guideModalTitle"></h1>
+                <div class="meta" id="guideModalMeta"></div>
+                <div class="content" id="guideModalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <h2 class="footer-brand">디자인지그</h2>
+        <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
+        <div class="footer-info">
+            <p>경기도 용인시</p>
+            <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+            <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
+        </div>
+        <div class="footer-sns">
+            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                </svg>
+            </a>
+            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                    <path d="M2 20h20v2H2z" />
+                </svg>
+            </a>
+            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </a>
+            <a href="https://www.youtube.com/@DESIGN_JIG" target="_blank" title="유튜브" aria-label="유튜브">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
+    </footer>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
+        // Slider functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.slider-dot');
+        const totalSlides = slides.length;
+        let autoplayInterval;
+
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+
+            currentSlide = (index + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Auto play
+        function startAutoplay() {
+            autoplayInterval = setInterval(nextSlide, 8000);
+        }
+
+        function stopAutoplay() {
+            clearInterval(autoplayInterval);
+        }
+
+        // Event listeners for dots
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                showSlide(index);
+                stopAutoplay();
+                startAutoplay();
+            });
+        });
+
+        // Start autoplay
+        startAutoplay();
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+            document.getElementById('nav').classList.toggle('active');
+            this.classList.toggle('active');
+        });
+    </script>
+    <script>
+        // 피처 섹션 이미지 로드 (Notion 카테고리에서 이미지 가져오기)
+        async function loadFeatureImages() {
+            const featureCategories = [
+                { id: 'featureImage1', category: '맞춤형 공간 설계' },
+                { id: 'featureImage2', category: '시공 품질 보증' },
+                { id: 'featureImage3', category: '맞춤형 솔루션' }
+            ];
+
+            for (const feature of featureCategories) {
+                try {
+                    const response = await fetch(`/api/mainpage?category=${encodeURIComponent(feature.category)}&t=${Date.now()}`);
+                    if (!response.ok) continue;
+
+                    const articles = await response.json();
+                    if (articles.length === 0) continue;
+
+                    const article = articles[0];
+                    const props = article.properties;
+
+                    // 커버 이미지 URL 가져오기 (커버 > 썸네일 > 아이콘 순)
+                    const coverUrl = article.cover?.external?.url ||
+                        article.cover?.file?.url ||
+                        props.썸네일?.files?.[0]?.external?.url ||
+                        props.썸네일?.files?.[0]?.file?.url ||
+                        props.Thumbnail?.files?.[0]?.external?.url ||
+                        props.Thumbnail?.files?.[0]?.file?.url ||
+                        (article.icon?.type === 'external' ? article.icon.external.url : null) ||
+                        (article.icon?.type === 'file' ? article.icon.file.url : null);
+
+                    if (coverUrl) {
+                        const container = document.getElementById(feature.id);
+                        const img = container.querySelector('img');
+                        const placeholder = container.querySelector('.feature-image-placeholder');
+
+                        img.onload = function () {
+                            img.style.display = 'block';
+                            if (placeholder) placeholder.style.display = 'none';
+                        };
+                        img.onerror = function () {
+                            if (placeholder) placeholder.textContent = '이미지를 불러올 수 없습니다';
+                        };
+
+                        // src 할당은 이벤트 핸들러 등록 후에 수행
+                        img.src = coverUrl;
+                    }
+                } catch (error) {
+                    console.error(`피처 이미지 로드 오류 (${feature.category}):`, error);
+                }
+            }
+        }
+
+        // 페이지 로드 시 피처 이미지 불러오기
+        loadFeatureImages();
+    </script>
+    <script>
+        // 가이드 데이터 저장
+        let GUIDE_DATA = [];
+
+        // 인테리어 가이드 로드 (Notion에서 '가이드' 카테고리 글 가져오기)
+        async function loadGuides() {
+            const guideGrid = document.getElementById('guideGrid');
+
+            try {
+                const response = await fetch('/api/columns?category=가이드&limit=3');
+                if (!response.ok) throw new Error('API 오류');
+
+                const articles = await response.json();
+                GUIDE_DATA = articles;
+
+                if (articles.length === 0) {
+                    guideGrid.innerHTML = '<p style="color:#666; text-align:center; grid-column:1/-1;">등록된 가이드가 없습니다.</p>';
+                    return;
+                }
+
+                guideGrid.innerHTML = articles.map((article, index) => {
+                    const props = article.properties;
+                    const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
+                    const category = props['카테고리']?.select?.name || '가이드';
+
+                    // 썸네일 우선순위: 1.커버 2.속성(썸네일) 3.아이콘 4.기본이미지
+                    const coverUrl = article.cover?.external?.url ||
+                        article.cover?.file?.url ||
+                        props.썸네일?.files?.[0]?.external?.url ||
+                        props.썸네일?.files?.[0]?.file?.url ||
+                        props.Thumbnail?.files?.[0]?.external?.url ||
+                        props.Thumbnail?.files?.[0]?.file?.url ||
+                        (article.icon?.type === 'external' ? article.icon.external.url : null) ||
+                        (article.icon?.type === 'file' ? article.icon.file.url : null) ||
+                        'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+                    return `
+                        <article class="column-card" onclick="openGuideModal(${index})">
+                            <img class="column-card-image" src="${coverUrl}" alt="${title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600'">
+                            <div class="column-card-content">
+                                <span class="column-card-category">${category}</span>
+                                <h4 class="column-card-title">${title}</h4>
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('가이드 로드 오류:', error);
+                guideGrid.innerHTML = '<p style="color:#999; text-align:center; grid-column:1/-1;">가이드를 불러올 수 없습니다.</p>';
+            }
+        }
+
+        // 가이드 모달 열기
+        async function openGuideModal(index) {
+            const article = GUIDE_DATA[index];
+            if (!article) return;
+
+            const props = article.properties;
+            const title = props['제목']?.title?.[0]?.plain_text || '제목 없음';
+            const date = props['작성일']?.date?.start || '';
+            const category = props['카테고리']?.select?.name || '가이드';
+
+            const coverUrl = article.cover?.external?.url ||
+                article.cover?.file?.url ||
+                props.썸네일?.files?.[0]?.external?.url ||
+                props.썸네일?.files?.[0]?.file?.url ||
+                (article.icon?.type === 'external' ? article.icon.external.url : null) ||
+                (article.icon?.type === 'file' ? article.icon.file.url : null) ||
+                'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+            document.getElementById('guideModalImage').src = coverUrl;
+            document.getElementById('guideModalTitle').textContent = title;
+            document.getElementById('guideModalMeta').textContent = formatGuideDate(date) + ' · ' + category;
+
+            const contentDiv = document.getElementById('guideModalContent');
+            contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
+
+            document.getElementById('guideModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // 내용 불러오기
+            try {
+                const res = await fetch(`/api/content?id=${article.id}`);
+                if (!res.ok) throw new Error('Failed to fetch content');
+                const blocks = await res.json();
+                contentDiv.innerHTML = renderNotionBlocks(blocks);
+            } catch (e) {
+                console.error('Content Load Error:', e);
+                contentDiv.innerHTML = '<p>내용을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
+            }
+        }
+
+        function formatGuideDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
+
+        function renderNotionBlocks(blocks) {
+            if (!blocks || blocks.length === 0) return '<p>내용이 없습니다.</p>';
+
+            // 연속된 리스트 아이템 그룹화
+            let result = '';
+            let i = 0;
+
+            while (i < blocks.length) {
+                const block = blocks[i];
+                const type = block.type;
+                const value = block[type];
+
+                // 글머리 기호 리스트 그룹화
+                if (type === 'bulleted_list_item') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'bulleted_list_item') {
+                        const listBlock = blocks[i];
+                        const listText = renderRichText(listBlock.bulleted_list_item.rich_text);
+                        const listChildren = listBlock.children ? renderNotionBlocks(listBlock.children) : '';
+                        items += `<li>${listText}${listChildren}</li>`;
+                        i++;
+                    }
+                    result += `<ul class="notion-list">${items}</ul>`;
+                    continue;
+                }
+
+                // 번호 리스트 그룹화
+                if (type === 'numbered_list_item') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'numbered_list_item') {
+                        const listBlock = blocks[i];
+                        const listText = renderRichText(listBlock.numbered_list_item.rich_text);
+                        const listChildren = listBlock.children ? renderNotionBlocks(listBlock.children) : '';
+                        items += `<li>${listText}${listChildren}</li>`;
+                        i++;
+                    }
+                    result += `<ol class="notion-list">${items}</ol>`;
+                    continue;
+                }
+
+                // 체크리스트 그룹화
+                if (type === 'to_do') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'to_do') {
+                        const todo = blocks[i].to_do;
+                        const checked = todo.checked ? 'checked' : '';
+                        const checkedClass = todo.checked ? 'notion-todo-checked' : '';
+                        items += `<li class="${checkedClass}"><input type="checkbox" ${checked} disabled> ${renderRichText(todo.rich_text)}</li>`;
+                        i++;
+                    }
+                    result += `<ul class="notion-todo-list">${items}</ul>`;
+                    continue;
+                }
+
+                result += renderSingleBlock(block);
+                i++;
+            }
+
+            return result;
+        }
+
+        function renderSingleBlock(block) {
+            const type = block.type;
+            const value = block[type];
+
+            switch (type) {
+                case 'paragraph':
+                    const pText = renderRichText(value.rich_text);
+                    return pText ? `<p>${pText}</p>` : '<p class="notion-spacer"></p>';
+
+                case 'heading_1':
+                    return `<h2>${renderRichText(value.rich_text)}</h2>`;
+                case 'heading_2':
+                    return `<h3>${renderRichText(value.rich_text)}</h3>`;
+                case 'heading_3':
+                    return `<h4>${renderRichText(value.rich_text)}</h4>`;
+
+                case 'quote':
+                    const quoteText = renderRichText(value.rich_text);
+                    const quoteChildren = block.children ? renderNotionBlocks(block.children) : '';
+                    return `<blockquote class="notion-quote">${quoteText}${quoteChildren}</blockquote>`;
+
+                case 'callout':
+                    let calloutIcon = '';
+                    if (value.icon) {
+                        if (value.icon.type === 'emoji') {
+                            calloutIcon = `<span class="callout-icon">${value.icon.emoji}</span>`;
+                        } else if (value.icon.type === 'external' || value.icon.type === 'file') {
+                            const iconUrl = value.icon.type === 'external' ? value.icon.external.url : value.icon.file.url;
+                            calloutIcon = `<span class="callout-icon"><img src="${iconUrl}" style="width:1.5em;height:1.5em;object-fit:contain;"></span>`;
+                        }
+                    }
+
+                    const calloutBgColor = value.color || 'gray_background';
+                    const calloutText = renderRichText(value.rich_text);
+                    const calloutChildren = block.children ? renderNotionBlocks(block.children) : '';
+                    return `<div class="notion-callout notion-callout-${calloutBgColor}">${calloutIcon}<div>${calloutText}${calloutChildren}</div></div>`;
+
+                case 'divider':
+                    return `<hr class="notion-divider">`;
+
+                case 'toggle':
+                    const toggleText = renderRichText(value.rich_text);
+                    const toggleChildren = block.children ? renderNotionBlocks(block.children) : '';
+                    return `<details class="notion-toggle"><summary>${toggleText}</summary><div class="toggle-content">${toggleChildren}</div></details>`;
+
+                case 'image':
+                    const imgCaptionText = value.caption ? renderRichText(value.caption) : '';
+                    const imgAltText = value.caption?.[0]?.plain_text || '';
+                    const imageUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return imageUrl ? `<figure class="notion-image"><img src="${imageUrl}" alt="${imgAltText}" loading="lazy"><figcaption>${imgCaptionText}</figcaption></figure>` : '';
+
+                case 'video':
+                    const videoUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const videoCaption = value.caption ? renderRichText(value.caption) : '';
+                    if (videoUrl && videoUrl.includes('youtube')) {
+                        const videoId = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1];
+                        return videoId ? `<figure class="notion-video"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>${videoCaption ? `<figcaption>${videoCaption}</figcaption>` : ''}</figure>` : '';
+                    }
+                    return videoUrl ? `<figure class="notion-video"><video controls src="${videoUrl}"></video>${videoCaption ? `<figcaption>${videoCaption}</figcaption>` : ''}</figure>` : '';
+
+                case 'audio':
+                    const audioUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return audioUrl ? `<figure class="notion-audio"><audio controls src="${audioUrl}"></audio></figure>` : '';
+
+                case 'file':
+                    const fileUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const fileName = value.name || value.caption?.[0]?.plain_text || '파일 다운로드';
+                    return fileUrl ? `<div class="notion-file"><a href="${fileUrl}" target="_blank" download>📎 ${fileName}</a></div>` : '';
+
+                case 'pdf':
+                    const pdfUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return pdfUrl ? `<div class="notion-pdf"><iframe src="${pdfUrl}" frameborder="0"></iframe></div>` : '';
+
+                case 'bookmark':
+                    const bookmarkUrl = value.url;
+                    const bookmarkCaption = value.caption ? renderRichText(value.caption) : '';
+                    const bookmarkDisplay = bookmarkCaption || bookmarkUrl;
+                    return `<div class="notion-bookmark"><a href="${bookmarkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${bookmarkDisplay}</a></div>`;
+
+                case 'embed':
+                    const embedUrl = value.url;
+                    return embedUrl ? `<div class="notion-embed"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : '';
+
+                case 'link_preview':
+                    const linkUrl = value.url;
+                    return `<div class="notion-link-preview"><a href="${linkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${linkUrl}</a></div>`;
+
+                case 'equation':
+                    const expression = value.expression;
+                    return `<div class="notion-equation"><code>${expression}</code></div>`;
+
+                case 'code':
+                    const codeContent = value.rich_text?.map(t => t.plain_text).join('') || '';
+                    const language = value.language || 'text';
+                    const escapedCode = codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<pre class="notion-code"><code class="language-${language}">${escapedCode}</code></pre>`;
+
+                case 'table':
+                    return `<div class="notion-table-wrapper"><table class="notion-table"><tbody><!-- 테이블 내용 --></tbody></table></div>`;
+
+                case 'column_list':
+                    return `<div class="notion-columns"><!-- 컬럼 레이아웃 --></div>`;
+
+                default:
+                    // console.log('Unsupported block type:', type);
+                    return '';
+            }
+        }
+
+        function renderRichText(richText) {
+            if (!richText || richText.length === 0) return '';
+            return richText.map(text => {
+                let content = text.plain_text.replace(/\n/g, '<br>');
+                const ann = text.annotations;
+
+                // 텍스트 색상 처리
+                if (ann.color && ann.color !== 'default') {
+                    content = `<span class="notion-color-${ann.color}">${content}</span>`;
+                }
+
+                if (ann.bold) content = `<strong>${content}</strong>`;
+                if (ann.italic) content = `<em>${content}</em>`;
+                if (ann.strikethrough) content = `<del>${content}</del>`;
+                if (ann.underline) content = `<u>${content}</u>`;
+                if (ann.code) content = `<code>${content}</code>`;
+                if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
+                return content;
+            }).join('');
+        }
+
+        function closeGuideModal() {
+            document.getElementById('guideModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // 모달 외부 클릭시 닫기
+        document.getElementById('guideModal').addEventListener('click', function (e) {
+            if (e.target === this) closeGuideModal();
+        });
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeGuideModal();
+        });
+
+        // 페이지 로드 시 가이드 불러오기
+        loadGuides();
+    </script>
+</body>
+
+</html>
+```

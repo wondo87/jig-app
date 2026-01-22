@@ -1,0 +1,22 @@
+{
+    "posts": [
+        {
+            "id": 1,
+            "title": "아파트 인테리어 비용, 얼마가 적당할까?",
+            "date": "2024-12-20",
+            "thumbnail": "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/칼럼1_썸네일.jpg",
+            "summary": "32평 아파트 기준 실제 견적 사례와 함께 적정 예산을 알려드립니다.",
+            "tag": "비용안내",
+            "content": "<p>본문 내용을 HTML 형식으로 작성합니다.</p><h2>소제목</h2><p>내용...</p>"
+        },
+        {
+            "id": 2,
+            "title": "주방 리모델링 전 꼭 알아야 할 5가지",
+            "date": "2024-12-18",
+            "thumbnail": "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/칼럼2_썸네일.jpg",
+            "summary": "주방 공사 전 반드시 체크해야 할 사항들을 정리했습니다.",
+            "tag": "시공가이드",
+            "content": "<p>본문 내용...</p>"
+        }
+    ]
+}

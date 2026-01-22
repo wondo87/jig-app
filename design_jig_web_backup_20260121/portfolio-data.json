@@ -1,0 +1,35 @@
+{
+    "projects": [
+        {
+            "id": 1,
+            "title": "수지 래미안 32평",
+            "category": "apartment",
+            "location": "용인시 수지구",
+            "size": "32평",
+            "duration": "6주",
+            "year": "2024",
+            "description": "화이트 톤과 우드 포인트로 따뜻하면서도 모던한 분위기를 연출했습니다.",
+            "thumbnail": "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_800/프로젝트1_메인.jpg",
+            "images": [
+                "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_1200/프로젝트1_거실.jpg",
+                "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_1200/프로젝트1_주방.jpg",
+                "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_1200/프로젝트1_침실.jpg"
+            ]
+        },
+        {
+            "id": 2,
+            "title": "분당 정자동 45평",
+            "category": "apartment",
+            "location": "성남시 분당구",
+            "size": "45평",
+            "duration": "8주",
+            "year": "2024",
+            "description": "그레이 컬러를 베이스로 고급스러운 분위기를 연출했습니다.",
+            "thumbnail": "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_800/프로젝트2_메인.jpg",
+            "images": [
+                "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_1200/프로젝트2_거실.jpg",
+                "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/w_1200/프로젝트2_주방.jpg"
+            ]
+        }
+    ]
+}
