@@ -17228,13 +17228,13 @@
                             <div style="width: 100%; display: flex; flex-direction: column; gap: 3px; color: #fff;">
                                 <div style="font-size: 11px; font-weight: 700; line-height: 1.2; margin-bottom: 2px;">공정별 체크리스트</div>
                                 <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
-                                    ${customer.projectName || '현장명 없음'} | ${period}
+                                    ${customer.projectName || '현장명 없음'} | 공사기간 ${period}
                                 </div>
                                 <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
-                                    ${customer.siteAddress || ''}
+                                    ${customer.siteAddress || '현장주소 없음'}
                                 </div>
                                 <div style="font-size:11px; line-height:1.5; white-space: normal; word-wrap: break-word;">
-                                    ${customer.clientName || '이름 없음'} | ${phoneLink}${customer.spouseInfo || ''}
+                                    ${customer.clientName || '성명 없음'} | ${phoneLink || '연락처 없음'}
                                 </div>
                             </div>
                         `;
