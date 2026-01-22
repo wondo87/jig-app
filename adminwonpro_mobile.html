@@ -3,11 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>디자인지그 통합 관리 시스템</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>디자인지그 모바일 관리</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/png" href="dj_icon_v4.png">
+    <link rel="apple-touch-icon" href="dj_icon_v4.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
@@ -326,6 +326,302 @@
                 right: 20px;
                 width: auto;
                 justify-content: center;
+            }
+
+            /* ===== MOBILE WEB APP UX ===== */
+
+            /* 데스크톱 헤더 액션 숨김 */
+            .header-actions {
+                display: none !important;
+            }
+
+            /* 사이드바: 모바일 메인 화면 (고객 목록) */
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                display: flex !important;
+                width: 100% !important;
+                height: calc(100vh - 56px - env(safe-area-inset-top));
+                border-right: none;
+                z-index: 10;
+            }
+
+            /* 상세 내용: 초기에는 숨김 */
+            .main-content {
+                display: none;
+                width: 100%;
+            }
+
+            /* 고객 선택 시: 사이드바 숨기고 상세 내용 표시 */
+            body.mobile-customer-selected .sidebar {
+                display: none !important;
+            }
+
+            body.mobile-customer-selected .main-content {
+                display: block !important;
+            }
+
+            /* ===== 모바일 헤더 아이콘들 ===== */
+            .mobile-header-icons {
+                display: flex !important;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .mobile-icon-btn {
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.15);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                color: #fff;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .mobile-icon-btn:active {
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(0.95);
+            }
+
+            .mobile-icon-btn svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            /* 햄버거 메뉴 버튼 (SVG 사용으로 단순화) */
+            .mobile-hamburger {
+                z-index: 1010;
+            }
+
+            /* 이전 span 기반 햄버거는 더 이상 사용 안함 - SVG 사용 */
+
+            /* ===== 모바일 필터 드롭다운 ===== */
+            .mobile-filter-dropdown {
+                display: none;
+                position: fixed;
+                top: calc(56px + env(safe-area-inset-top));
+                left: 0;
+                right: 0;
+                background: #fff;
+                z-index: 999;
+                padding: 16px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+
+            .mobile-filter-dropdown.show {
+                display: block;
+            }
+
+            .mobile-filter-search {
+                width: 100%;
+                padding: 12px 16px;
+                border: 1px solid #e8e8ed;
+                border-radius: 10px;
+                font-size: 16px;
+                margin-bottom: 12px;
+                -webkit-appearance: none;
+                appearance: none;
+            }
+
+            .mobile-filter-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .mobile-filter-chip {
+                padding: 8px 14px;
+                border-radius: 20px;
+                border: 1px solid #e8e8ed;
+                background: #fff;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .mobile-filter-chip.active {
+                background: #0071e3;
+                color: #fff;
+                border-color: #0071e3;
+            }
+
+            .mobile-filter-chip:active {
+                transform: scale(0.95);
+            }
+
+            /* 모바일 툴바 (고객 선택 시 JS로 display: flex) */
+            .mobile-toolbar {
+                display: none;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #1d1d1f;
+                padding: 12px 16px;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
+                gap: 8px;
+                z-index: 1000;
+                justify-content: space-around;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            .mobile-toolbar button {
+                flex: 1;
+                height: 50px;
+                padding: 0;
+                border: none;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 500;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                color: #b0b0b5;
+                transition: all 0.2s;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .mobile-toolbar button:active {
+                transform: scale(0.96);
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .mobile-toolbar button.active,
+            .mobile-toolbar button:hover {
+                color: #fff;
+            }
+
+            .mobile-toolbar button.primary {
+                background: #0071e3;
+                color: #fff;
+            }
+
+            .mobile-toolbar button.primary:active {
+                background: #0077ed;
+            }
+
+            .mobile-toolbar button.success {
+                background: #34c759;
+                color: #fff;
+            }
+
+            .mobile-toolbar button.success:active {
+                background: #3ac15c;
+            }
+
+            .mobile-toolbar button svg {
+                width: 20px;
+                height: 20px;
+                stroke-width: 2px;
+            }
+
+            /* 모바일 슬라이드 메뉴 */
+            .mobile-menu-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1005;
+            }
+
+            .mobile-menu-overlay.show {
+                display: block;
+            }
+
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                right: -280px;
+                width: 280px;
+                height: 100%;
+                background: #fff;
+                z-index: 1006;
+                transition: right 0.3s ease;
+                padding: calc(env(safe-area-inset-top) + 60px) 20px 20px;
+                overflow-y: auto;
+            }
+
+            .mobile-menu.show {
+                right: 0;
+            }
+
+            .mobile-menu h3 {
+                font-size: 14px;
+                color: #86868b;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #e8e8ed;
+            }
+
+            .mobile-menu-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                border-radius: 10px;
+                margin-bottom: 4px;
+                cursor: pointer;
+                transition: background 0.2s;
+                font-size: 14px;
+                font-weight: 500;
+                color: #1d1d1f;
+            }
+
+            .mobile-menu-item:hover {
+                background: #f5f5f7;
+            }
+
+            .mobile-menu-item.readonly {
+                color: #86868b;
+            }
+
+            .mobile-menu-item.readonly::after {
+                content: '읽기전용';
+                font-size: 10px;
+                background: #e8e8ed;
+                padding: 2px 6px;
+                border-radius: 4px;
+                margin-left: auto;
+            }
+
+            /* 고객 선택 전: 고객 목록만 표시 */
+            .customer-list-mobile {
+                display: block !important;
+            }
+
+            /* 고객 선택 후: 체크리스트 패널 표시 */
+            body.mobile-customer-selected .customer-list-mobile {
+                display: none !important;
+            }
+
+            body.mobile-customer-selected #customerView {
+                display: block !important;
+            }
+
+            body.mobile-customer-selected .mobile-toolbar {
+                display: flex !important;
+            }
+
+            /* 모바일에서 body 하단 여백 (툴바 공간) */
+            body.mobile-customer-selected {
+                padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
             }
         }
 
@@ -3185,6 +3481,171 @@
             background-color: #ffe5e5;
             color: #ff3b30;
         }
+
+        /* ========================================
+           모바일 전용 스타일
+           ======================================== */
+
+        /* Safe Area 대응 */
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top));
+            padding-bottom: calc(60px + env(safe-area-inset-bottom));
+        }
+
+        /* 헤더 고정 */
+        .main-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding-top: env(safe-area-inset-top);
+            z-index: 10000;
+        }
+
+        /* 데스크톱 헤더 액션 숨김 */
+        .header-actions {
+            display: none;
+        }
+
+        /* 컨테이너 세로 배치 */
+        .container {
+            flex-direction: column;
+            padding: 0;
+        }
+
+        /* 사이드바: 전체 화면 고객 목록 */
+        .sidebar {
+            width: 100%;
+            height: auto;
+            min-height: calc(100vh - 60px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+            border-right: none;
+        }
+
+        /* 고객 목록 카드 스타일 */
+        .customer-item {
+            padding: 16px;
+            margin: 0;
+            border-radius: 0;
+            border-bottom: 1px solid #f0f0f0;
+            background: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .customer-item:active {
+            background: #f5f5f7;
+        }
+
+        .customer-item.selected {
+            background: #007aff;
+            color: white;
+        }
+
+        .customer-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .customer-address {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        /* 메인 콘텐츠: 초기 숨김 */
+        .main-content {
+            display: none;
+            width: 100%;
+        }
+
+        /* 고객 선택 시: 목록 숨기고 상세 표시 */
+        body.mobile-customer-selected .sidebar {
+            display: none;
+        }
+
+        body.mobile-customer-selected .main-content {
+            display: block;
+        }
+
+        /* 뒤로가기 버튼 */
+        .mobile-back-btn {
+            position: fixed;
+            top: calc(10px + env(safe-area-inset-top));
+            left: 10px;
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* 하단 고정 툴바 */
+        .mobile-toolbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            padding: 8px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: space-around;
+            z-index: 10000;
+        }
+
+        .mobile-toolbar button {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .mobile-toolbar button:active {
+            background: #f5f5f7;
+        }
+
+        .mobile-toolbar button span {
+            font-size: 20px;
+        }
+
+        /* 터치 영역 최소 44px */
+        button, a, .clickable {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* 테이블 스크롤 */
+        .tab-content {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            min-width: 100%;
+        }
+
+        /* 통계/운영비 섹션 숨김 */
+        .stats-row,
+        .utility-row,
+        .cost-summary-section {
+            display: none;
+        }
     </style>
 </head>
 
@@ -3252,6 +3713,37 @@
             <button class="header-btn secondary" onclick="exportAllData()">📊 Excel 내보내기</button>
             <button class="header-btn secondary" onclick="importData()">📥 불러오기</button>
             <button class="header-btn secondary" onclick="exportCurrentCustomerData()">💾 고객저장(JSON)</button>
+        </div>
+        <!-- 모바일 헤더 아이콘들 (CSS에서 display 제어) -->
+        <div class="mobile-header-icons" id="mobileHeaderIcons" style="display:none;">
+            <!-- Icon #1: 다시 연결 (Reconnect) -->
+            <button class="mobile-icon-btn" id="mobileReconnectBtn" onclick="mobileReconnect()" title="다시 연결">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                    <path d="M8 16H3v5" />
+                </svg>
+            </button>
+            <!-- Icon #2: 검색/필터 (Search + Filter) -->
+            <button class="mobile-icon-btn" id="mobileFilterBtn" onclick="toggleMobileFilter()" title="검색/필터">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+            </button>
+            <!-- Icon #3: 햄버거 메뉴 (표준 3줄) -->
+            <button class="mobile-icon-btn mobile-hamburger" id="mobileHamburger" onclick="toggleMobileMenu()"
+                title="메뉴">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="18" x2="20" y2="18" />
+                </svg>
+            </button>
         </div>
     </header>
 
@@ -9646,40 +10138,107 @@
             // [Task 3] Stabilization: Block UI during sync
             if (!silent) setAppBusy(true, '클라우드 동기화 중...');
 
+            // Error classification helper (enhanced for iOS debugging)
+            function classifyError(error, response, responseText = '') {
+                if (!navigator.onLine) return { type: 'network', message: '네트워크 연결을 확인해주세요.' };
+                if (error && error.name === 'TypeError' && error.message.includes('fetch')) {
+                    return { type: 'network', message: '서버 연결 실패. 인터넷 상태를 확인하세요.' };
+                }
+                if (response && !response.ok) {
+                    return { type: 'http', message: `서버 오류 (HTTP ${response.status}: ${response.statusText})` };
+                }
+                if (error && (error.message.includes('JSON') || error.name === 'SyntaxError')) {
+                    // Include response preview for debugging
+                    const preview = responseText ? responseText.substring(0, 100) : '';
+                    return { type: 'json', message: `응답 파싱 오류${preview ? ': ' + preview + '...' : ''}` };
+                }
+                return { type: 'unknown', message: error?.message || '알 수 없는 오류' };
+            }
+
+            // Request URL for logging
+            const requestUrl = `${CUSTOMER_SYNC_URL}?sheet=고객관리_견적서&t=${Date.now()}`;
+
+            let response = null;
+            let responseText = ''; // For debugging
             try {
-                if (!silent) logStep1('🔄 클라우드 데이터 가져오는 중...');
-                // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
+                if (!silent) console.log('🔄 클라우드 데이터 가져오는 중...');
+
+                // [DEBUG] Log request URL
+                console.log('📡 [iOS Debug] Request URL:', requestUrl);
+
+                // Google Apps Script GET 요청 (iOS Safari 호환 옵션 포함)
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',
-                    t: new Date().getTime()
-                });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
-                    method: 'GET'
+                    t: Date.now() // Cache busting
                 });
 
+                // iOS Safari requires explicit cache and credentials handling
+                response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
+                    method: 'GET',
+                    mode: 'cors',                // Explicit CORS mode
+                    redirect: 'follow',          // Follow Google Apps Script redirects
+                    cache: 'no-store',           // iOS cache issue fix
+                    credentials: 'omit',         // Avoid CORS preflight
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                // [DEBUG] Log response status
+                console.log('📡 [iOS Debug] Response Status:', response.status, response.statusText);
+                console.log('📡 [iOS Debug] Response URL (after redirect):', response.url);
+
                 if (!response.ok) {
-                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\nHTTP 오류: ${response.status}`, 'error');
+                    const errInfo = classifyError(null, response);
+                    console.error('❌ [iOS Debug] HTTP Error:', response.status, response.statusText);
+                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n[${errInfo.type.toUpperCase()}] ${errInfo.message}`, 'error');
+                    if (!silent) setAppBusy(false);
                     return false;
                 }
 
-                let cloudCustomers = await response.json();
+                // Get response text first for debugging
+                responseText = await response.text();
+                console.log('📡 [iOS Debug] Response Preview (first 200 chars):', responseText.substring(0, 200));
+
+                let cloudCustomers;
+                try {
+                    cloudCustomers = JSON.parse(responseText);
+                } catch (jsonErr) {
+                    console.error('❌ [iOS Debug] JSON Parse Error:', jsonErr.message);
+                    console.error('❌ [iOS Debug] Raw Response:', responseText.substring(0, 500));
+                    const errInfo = classifyError(jsonErr, null, responseText);
+                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n[${errInfo.type.toUpperCase()}] ${errInfo.message}`, 'error');
+                    if (!silent) setAppBusy(false);
+                    return false;
+                }
+
                 console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
 
-                if (!Array.isArray(cloudCustomers)) {
-                    if (cloudCustomers.error) {
-                        throw new Error(cloudCustomers.error);
+                // Handle server-side errors (result.ok === false or result.error)
+                if (cloudCustomers && typeof cloudCustomers === 'object' && !Array.isArray(cloudCustomers)) {
+                    if (cloudCustomers.ok === false || cloudCustomers.error) {
+                        const serverMsg = cloudCustomers.message || cloudCustomers.error || '서버에서 오류가 발생했습니다.';
+                        console.error('❌ [iOS Debug] Server Error:', serverMsg);
+                        if (!silent) showPersistentAlert(`[SERVER] ${serverMsg}`, 'error');
+                        if (!silent) setAppBusy(false);
+                        return false;
                     }
+                }
+
+                // Handle various response formats
+                if (!Array.isArray(cloudCustomers)) {
+                    console.error('❌ [iOS Debug] Invalid response format (not array):', typeof cloudCustomers);
                     throw new Error('잘못된 응답 형식');
                 }
 
+                // [iOS FIX] Empty array is a valid SUCCESS case
                 if (cloudCustomers.length === 0) {
-                    if (!silent && confirm('클라우드에 저장된 고객 데이터가 없습니다.\n\n로컬 대상을 초기화할까요?')) {
-                        customers = [];
-                        updateCustomerList();
-                        initYearFilter();
-                        showToast('고객 데이터가 없습니다.', 'info');
-                    }
-                    return true;
+                    customers = [];
+                    updateCustomerList();
+                    initYearFilter();
+                    if (!silent) showToast('클라우드에 고객 데이터가 없습니다.', 'info');
+                    if (!silent) setAppBusy(false);
+                    return true; // SUCCESS, not failure
                 }
 
                 // [Phase 2] Cloud is the absolute Source of Truth. No local comparison needed.
@@ -9687,13 +10246,11 @@
                 // 중복 제거 로직 (customerId 기준)
                 const uniqueCloudMap = new Map();
                 cloudCustomers.forEach(c => {
-                    // 나중에 나온 데이터가 덮어쓰도록 함 (최신 데이터 우선 가정)
                     uniqueCloudMap.set(c.customerId, c);
                 });
-                // 중복이 제거된 배열로 재할당
                 cloudCustomers = Array.from(uniqueCloudMap.values());
 
-                // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단) 
+                // [Phase 2] 클라우드 데이터로 완전 교체
 
                 // UI 업데이트
                 customers = cloudCustomers;
@@ -9712,7 +10269,13 @@
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
+                const errInfo = classifyError(error, response);
+                if (!silent) {
+                    showPersistentAlert(
+                        `클라우드 동기화 실패\n\n[${errInfo.type.toUpperCase()}] ${errInfo.message}\n\n"다시 연결" 버튼을 눌러 재시도하세요.`,
+                        'error'
+                    );
+                }
                 return false; // 실패 반환
             } finally {
                 // Always release busy state
@@ -15153,6 +15716,244 @@
                     });
             });
         }
+    </script>
+
+    <!-- ===== MOBILE WEB APP UI COMPONENTS ===== -->
+    <!-- 모바일 필터 드롭다운 -->
+    <div class="mobile-filter-dropdown" id="mobileFilterDropdown">
+        <input type="text" class="mobile-filter-search" id="mobileSearchInput" placeholder="고객명, 현장명 검색..."
+            oninput="applyMobileFilter()">
+        <div style="font-size: 12px; color: #86868b; margin-bottom: 8px;">상태 필터</div>
+        <div class="mobile-filter-chips" id="mobileFilterChips">
+            <div class="mobile-filter-chip active" data-status="construction"
+                onclick="setMobileStatusFilter('construction')">공사중</div>
+            <div class="mobile-filter-chip" data-status="contracted" onclick="setMobileStatusFilter('contracted')">계약완료
+            </div>
+            <div class="mobile-filter-chip" data-status="as" onclick="setMobileStatusFilter('as')">A/S</div>
+            <div class="mobile-filter-chip" data-status="all" onclick="setMobileStatusFilter('all')">전체</div>
+        </div>
+    </div>
+
+    <script>
+        // 모바일 초기화: 기본 필터를 '공사중'으로 설정
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth <= 768) {
+                // 약간의 지연 후 실행 (데이터 로드 시점 고려)
+                setTimeout(() => {
+                    if (typeof setMobileStatusFilter === 'function') {
+                        setMobileStatusFilter('construction');
+
+                        // UI상으로도 construction 칩 활성화
+                        const chips = document.querySelectorAll('.mobile-filter-chip');
+                        chips.forEach(chip => {
+                            chip.classList.toggle('active', chip.dataset.status === 'construction');
+                        });
+
+                        // Toast 알림은 굳이 안 띄워도 됨 (자동 적용이므로)
+                    }
+                }, 800);
+            }
+        });
+    </script>
+
+    <!-- 모바일 메뉴 오버레이 -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- 모바일 슬라이드 메뉴 -->
+    <div class="mobile-menu" id="mobileMenu">
+        <h3>📋 모듈 선택</h3>
+        <div class="mobile-menu-item" onclick="mobileGoToPanel('panel-checklist'); closeMobileMenu();">
+            ✅ 공정별 체크리스트
+        </div>
+        <div class="mobile-menu-item readonly" onclick="mobileGoToPanel('panel-info'); closeMobileMenu();">
+            👤 고객 정보
+        </div>
+        <div class="mobile-menu-item readonly" onclick="mobileGoToPanel('panel-schedule'); closeMobileMenu();">
+            📅 공사 스케줄
+        </div>
+        <div class="mobile-menu-item readonly" onclick="mobileGoToPanel('panel-contract'); closeMobileMenu();">
+            📝 계약/견적
+        </div>
+        <div class="mobile-menu-item readonly" onclick="mobileGoToPanel('panel-as'); closeMobileMenu();">
+            🔧 A/S 관리
+        </div>
+        <hr style="margin: 16px 0; border: none; border-top: 1px solid #e8e8ed;">
+        <div class="mobile-menu-item" onclick="showAdminModal(); closeMobileMenu();">
+            🔐 관리자 로그인
+        </div>
+    </div>
+
+    <!-- 모바일 하단 툴바 (고객 선택 후 표시) -->
+    <div class="mobile-toolbar" id="mobileToolbar" style="display:none;">
+        <button onclick="mobileGoBack()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>뒤로</span>
+        </button>
+        <button class="primary" onclick="mobileReconnect()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+            </svg>
+            <span>재연결</span>
+        </button>
+        <button class="success" onclick="if(typeof syncChecklistToCloud==='function')syncChecklistToCloud();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+            </svg>
+            <span>저장</span>
+        </button>
+        <button onclick="if(typeof exportToNotion==='function')exportToNotion('checklist',event);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.602-1.43l-4.44-4.342A2 2 0 0 0 13.56 2H6a2 2 0 0 0-2 2z" />
+                <path d="M9 13h6" />
+                <path d="M12 10v6" />
+            </svg>
+            <span>노션</span>
+        </button>
+    </div>
+
+    <script>
+        // ===== MOBILE WEB APP HANDLERS =====
+        const isMobile = () => window.innerWidth <= 768;
+
+        function toggleMobileMenu() {
+            const hamburger = document.getElementById('mobileHamburger');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menu = document.getElementById('mobileMenu');
+
+            hamburger.classList.toggle('active');
+            overlay.classList.toggle('show');
+            menu.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            const hamburger = document.getElementById('mobileHamburger');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menu = document.getElementById('mobileMenu');
+
+            hamburger.classList.remove('active');
+            overlay.classList.remove('show');
+            menu.classList.remove('show');
+        }
+
+        function mobileGoToPanel(panelId) {
+            // 모든 패널 숨기고 선택된 패널만 표시
+            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            const target = document.getElementById(panelId);
+            if (target) target.style.display = 'block';
+
+            // 체크리스트 외 패널은 읽기 전용 알림
+            if (panelId !== 'panel-checklist') {
+                showToast('읽기 전용 모드입니다.', 'info');
+            }
+        }
+
+        function mobileGoBack() {
+            // 고객 선택 해제, 고객 목록으로 복귀
+            document.body.classList.remove('mobile-customer-selected');
+            document.getElementById('customerView').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            currentCustomerId = null;
+            currentData = null;
+        }
+
+        // ===== 모바일 필터 함수들 =====
+        let mobileStatusFilter = 'all';
+
+        function toggleMobileFilter() {
+            const dropdown = document.getElementById('mobileFilterDropdown');
+            dropdown.classList.toggle('show');
+            // 필터 열릴 때 검색 입력에 포커스
+            if (dropdown.classList.contains('show')) {
+                document.getElementById('mobileSearchInput').focus();
+            }
+        }
+
+        function closeMobileFilter() {
+            document.getElementById('mobileFilterDropdown').classList.remove('show');
+        }
+
+        function setMobileStatusFilter(status) {
+            mobileStatusFilter = status;
+            // 칩 UI 업데이트
+            document.querySelectorAll('.mobile-filter-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.status === status);
+            });
+            applyMobileFilter();
+        }
+
+        function applyMobileFilter() {
+            const searchText = (document.getElementById('mobileSearchInput')?.value || '').toLowerCase().trim();
+
+            // 기존 데스크톱 필터 함수 활용
+            if (typeof updateCustomerList === 'function') {
+                // 데스크톱의 statusFilter와 searchInput 동기화
+                const desktopStatusFilter = document.getElementById('statusFilter');
+                const desktopSearchInput = document.getElementById('searchInput');
+
+                if (desktopStatusFilter) desktopStatusFilter.value = mobileStatusFilter;
+                if (desktopSearchInput) desktopSearchInput.value = searchText;
+
+                // 고객 목록 업데이트
+                updateCustomerList(true);
+            }
+        }
+
+        function mobileReconnect() {
+            // 필터 드롭다운 닫기
+            closeMobileFilter();
+            // 클라우드에서 고객 데이터 다시 불러오기 (READ-ONLY)
+            if (typeof syncFromCloud === 'function') {
+                syncFromCloud(false);
+            } else {
+                showToast('동기화 함수를 찾을 수 없습니다.', 'error');
+            }
+        }
+
+        // 모바일에서 고객 선택 시 UI 전환
+        const originalSelectCustomer = (typeof selectCustomer === 'function') ? selectCustomer : null;
+        window.selectCustomerOriginal = originalSelectCustomer;
+
+        // selectCustomer를 오버라이드하여 모바일 UX 적용
+        (function () {
+            const _origSelect = window.selectCustomer;
+            if (_origSelect) {
+                window.selectCustomer = function (customerId) {
+                    _origSelect(customerId);
+                    if (isMobile()) {
+                        document.body.classList.add('mobile-customer-selected');
+                        // 체크리스트 패널을 기본으로 표시
+                        mobileGoToPanel('panel-checklist');
+                        // 모바일 툴바 표시
+                        const toolbar = document.getElementById('mobileToolbar');
+                        if (toolbar) toolbar.style.display = 'flex';
+                    }
+                };
+            }
+        })();
+
+        // 페이지 로드 시 모바일 체크
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isMobile()) {
+                // 모바일에서는 toolbar 초기 숨김 (고객 선택 전)
+                document.getElementById('mobileToolbar').style.display = 'none';
+            }
+        });
+
+        // 화면 크기 변경 감지
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                closeMobileMenu();
+                document.body.classList.remove('mobile-customer-selected');
+            }
+        });
     </script>
 </body>
 
