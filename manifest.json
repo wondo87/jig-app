@@ -1,7 +1,7 @@
 {
   "name": "Design Jig 모바일",
   "short_name": "DZ Mobile",
-  "start_url": "./adminwonpro_mobile.html",
+  "start_url": "./adminwonpro.mobile.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#1d1d1f",
