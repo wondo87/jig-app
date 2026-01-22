@@ -7,12 +7,14 @@ const MAIN_ADMINS = [
     {
         id: 'sweet00700',
         passwordHash: '671076167de6f4ed03c9f267f0c42620b10801dd3ee47c79e59090755ba43acc', // SHA-256 해시 (원본 비밀번호 노출 안됨)
+        testPassword: 'test1234', // 로컬 테스트용 (HTTP+LAN 환경, 운영 시 삭제)
         role: 'main',
         name: '메인관리자1'
     },
     {
         id: 'someing2407',
         passwordHash: 'd6c567f779dfc2736802e154d9cab8dfa03d56ab519b7c2da966f3af227e5a12', // SHA-256 해시 (원본 비밀번호 노출 안됨)
+        testPassword: 'test1234', // 로컬 테스트용 (HTTP+LAN 환경, 운영 시 삭제)
         role: 'main',
         name: '메인관리자2'
     }
@@ -23,10 +25,11 @@ const MAIN_ADMIN = MAIN_ADMINS[0];
 
 // 일반관리자 삭제/잠금해제 승인 비밀번호 (SHA-256 해시)
 const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e852604566cbb848';
+const DELETE_TEST_PASSWORD = 'delete1234'; // 로컬 테스트용 (HTTP+LAN 환경, 운영 시 삭제)
 
 // [통합] 고객관리/상담관리/원가관리 등 모든 데이터 동기화를 위한 Apps Script Web App URL (배포 후 생성된 URL)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzqpdA7nLatkC_Zp03Jux61X2wWz2kkkJZ0cxx81Yx4jNxEH6AUpJHtoG-0oejX2OKSOQ/exec'; // 구글 시트 연동용
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzqpdA7nLatkC_Zp03Jux61X2wWz2kkkJZ0cxx81Yx4jNxEH6AUpJHtoG-0oejX2OKSOQ/exec'; // 데이터 동기화용
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbw8IWKLEquATyGlmq7AfIa3fV7LZyqag4jU6O0KS0Z84fSzSeVD9W_DibLLGFDbxxxHVA/exec'; // 구글 시트 연동용
+const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbw8IWKLEquATyGlmq7AfIa3fV7LZyqag4jU6O0KS0Z84fSzSeVD9W_DibLLGFDbxxxHVA/exec'; // 데이터 동기화용
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
