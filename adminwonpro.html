@@ -4348,8 +4348,8 @@
 
                                 <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
                                     style="background: #8e8e93; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
-                                    title="마지막 필터 상태 복원">
-                                    <span>↩ 필터복원</span>
+                                    title="마지막 저장 내용 복원">
+                                    <span>↩ 저장내용불러오기</span>
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
@@ -6917,9 +6917,19 @@
                 ]);
 
                 // 필수 데이터 성공 여부 확인
-                const allSuccess = results.every(r => r.status === 'fulfilled' && r.value === true);
+                // 필수 데이터 성공 여부 확인 (고객, 관리자만 필수로 변경 - 체크리스트 공백 허용)
+                const criticalSuccess = (results[0].status === 'fulfilled' && results[0].value === true) &&
+                    (results[4].status === 'fulfilled' && results[4].value === true);
 
-                if (allSuccess) {
+                if (criticalSuccess) {
+                    // 비필수 데이터 실패 로깅
+                    const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
+                    results.forEach((r, i) => {
+                        if (r.status !== 'fulfilled' || r.value !== true) {
+                            console.warn(`⚠️ [Non-Critical Sync Warning] ${labels[i]} 데이터 동기화 실패 (앱 실행 계속)`);
+                        }
+                    });
+
                     // 동기화 성공 시 클린업 실행
                     runPhase2Cleanup();
 
@@ -6928,11 +6938,11 @@
                     setTimeout(() => overlay.style.display = 'none', 500);
                     console.log('✅ 전역 데이터 동기화 및 클린업 완료');
                 } else {
-                    // 어떤 데이터가 실패했는지 로깅
-                    const failedIndices = results.map((r, i) => (r.status !== 'fulfilled' || r.value !== true) ? i : -1).filter(i => i !== -1);
-                    const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
-                    const failedLabels = failedIndices.map(i => labels[i]).join(', ');
-                    throw new Error(`${failedLabels} 데이터 동기화에 실패했습니다.`);
+                    // 필수 데이터 실패 시 에러 처리
+                    const failedLabels = [];
+                    if (results[0].status !== 'fulfilled' || results[0].value !== true) failedLabels.push('고객');
+                    if (results[4].status !== 'fulfilled' || results[4].value !== true) failedLabels.push('관리자');
+                    throw new Error(`${failedLabels.join(', ')} 필수 데이터 동기화에 실패했습니다.`);
                 }
 
                 // 부가 로직
@@ -13119,7 +13129,8 @@
             console.log('[Checklist Load] Request started...');
 
             try {
-                const params = new URLSearchParams({ sheet: '공정별체크리스트' });
+                // [Fix] 시트 이름을 'checklist'로 변경 (서버 호환성 명확화) 및 에러 핸들링 강화
+                const params = new URLSearchParams({ sheet: 'checklist' });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
@@ -13135,7 +13146,10 @@
                     if (!items || items.length === 0) {
                         console.warn('⚠️ [Checklist Load] 체크리스트 데이터가 비어있습니다. (0건)');
                         checklistMasterData = [];
-                        return true; // Empty is valid, sync succeeded
+
+                        // 빈 데이터라도 렌더링 갱신 필요
+                        renderChecklistItems();
+                        return true;
                     }
 
                     // [Fix] 데이터 공백 제거 (필터링 정확도 향상)
@@ -13162,6 +13176,16 @@
                 }
             } catch (error) {
                 console.error('❌ [Checklist Load Error]', error);
+
+                // [Fix] 시트가 없거나 찾을 수 없는 경우, 에러 대신 빈 상태로 초기화하여 앱 중단 방지
+                if (error.message && (error.message.includes('시트를 찾을 수 없습니다') || error.message.includes('Sheet not found'))) {
+                    console.warn('⚠️ [Safeguard] 체크리스트 시트 미발견 -> 빈 목록으로 초기화합니다.');
+                    checklistMasterData = [];
+                    renderChecklistItems();
+                    showToast('체크리스트 데이터가 없습니다. (시트 미발견)', 'info');
+                    return true; // 성공으로 간주하여 초기 로딩 흐름 유지
+                }
+
                 showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
                 return false;
             } finally {
@@ -13216,15 +13240,63 @@
 
         // 필터 옵션 업데이트 (멀티 셀렉트 초기화)
         function updateChecklistFilters() {
-            if (!checklistMasterData || checklistMasterData.length === 0) return;
+            // [Fix] 데이터가 없어도 필터 초기화 (빈 상태라도 '전체' 옵션 표시)
+            const data = checklistMasterData || [];
 
             // 진행단계 옵션
-            const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))].sort();
+            const stages = [...new Set(data.map(item => item.진행단계).filter(Boolean))].sort();
             initMultiSelect('checklistStageFilter', stages);
 
             // 카테고리 옵션
-            const categories = [...new Set(checklistMasterData.map(item => item.category).filter(Boolean))].sort();
+            const categories = [...new Set(data.map(item => item.category).filter(Boolean))].sort();
             initMultiSelect('checklistCategoryFilter', categories);
+        }
+
+        // [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
+        function updateCategoryOptionsBasedOnStage() {
+            const selectedStages = multiSelectState['checklistStageFilter'];
+            console.log('[Filter Logic] Selected Stages:', selectedStages);
+
+            // [Fix] 데이터가 없어도 진행 (빈 상태라도 필터 리셋을 위해)
+            const data = checklistMasterData || [];
+
+            if (data.length === 0) {
+                console.warn('[Filter Logic] No master data available for filtering (Proceeding with empty)');
+            }
+
+            let validCategories = [];
+
+            if (selectedStages.includes('all') || selectedStages.length === 0) {
+                // 전체 선택 시 -> 모든 카테고리 표시
+                validCategories = [...new Set(data.map(item => (item.category || '').trim()).filter(Boolean))].sort();
+            } else {
+                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
+                const filteredItems = data.filter(item => {
+                    const itemStage = (item.진행단계 || '').trim();
+                    // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
+                    // To be safe, we rely on exact values from options. 
+                    // But here we just used item.진행단계 to build options, so it should match.
+                    return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
+                });
+                validCategories = [...new Set(filteredItems.map(item => (item.category || '').trim()).filter(Boolean))].sort();
+            }
+
+            console.log('[Filter Logic] Valid Categories:', validCategories);
+
+            // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
+            const currentCategoryState = multiSelectState['checklistCategoryFilter'];
+
+            if (!currentCategoryState.includes('all')) {
+                const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
+                // 하나도 없으면 'all'로 리셋
+                multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
+            } else {
+                // If it was 'all', keep it 'all' unless validCategories is empty? 
+                // 'all' is always valid if validCategories has items.
+            }
+
+            // 카테고리 필터 옵션 재생성
+            initMultiSelect('checklistCategoryFilter', validCategories);
         }
 
         // 체크리스트 아이템 렌더링
@@ -14443,7 +14515,10 @@
         }
 
         // 드롭다운 토글
-        function toggleMultiSelect(elementId) {
+        function toggleMultiSelect(elementId, event) {
+            // [Fix] 드롭다운 내부 클릭 시 닫히지 않도록 이벤트 전파 방지
+            if (event && event.target.closest('.multi-select-dropdown')) return;
+
             const dropdown = document.getElementById(elementId + 'Dropdown');
             if (!dropdown) return;
 
@@ -14455,6 +14530,9 @@
             });
 
             dropdown.style.display = isVisible ? 'none' : 'block';
+
+            // [Fix] 이벤트 버블링 방지 (필요 시)
+            if (event) event.stopPropagation();
         }
 
         function getMultiSelectValues(elementId) {

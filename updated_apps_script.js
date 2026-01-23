@@ -166,6 +166,12 @@ function doGet(e) {
             return handleValidateSession(e);
         }
 
+        // 2.7. [신규] 공정 체크리스트 데이터 요청 (checklist)
+        // '공정별체크리스트'는 레거시 호환용, '공정 체크리스트'는 정식 명칭
+        if (sheetParam === 'checklist' || sheetParam === '공정 체크리스트' || sheetParam === '공정별체크리스트') {
+            return handleChecklistGet(e);
+        }
+
         // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
         return handleConsultingGet(e);
 
@@ -2604,3 +2610,71 @@ function recordNotionExportTime(customerId, exportedAt) {
     }
 }
 
+
+/**
+ * [신규] 공정 체크리스트 데이터 반환
+ */
+function handleChecklistGet(e) {
+    try {
+        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        // 시트 이름 우선순위: 공정 체크리스트 (정식) -> 공정별체크리스트 (구)
+        var sheet = spreadsheet.getSheetByName('공정 체크리스트');
+        if (!sheet) {
+            sheet = spreadsheet.getSheetByName('공정별체크리스트');
+        }
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: false,
+                message: '공정 체크리스트 시트를 찾을 수 없습니다.',
+                data: []
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var lastRow = sheet.getLastRow();
+        if (lastRow < 2) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: true,
+                data: []
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var headers = data[0];
+        var rows = data.slice(1);
+
+        // 헤더 매핑 (이름으로 인덱스 찾기)
+        var idxMap = {
+            no: headers.indexOf('NO') > -1 ? headers.indexOf('NO') : headers.indexOf('No') > -1 ? headers.indexOf('No') : 0,
+            category: headers.indexOf('카테고리') > -1 ? headers.indexOf('카테고리') : 1,
+            process: headers.indexOf('세부공정') > -1 ? headers.indexOf('세부공정') : headers.indexOf('공정명') > -1 ? headers.indexOf('공정명') : 2, // 혹시 몰라 추가
+            item: headers.indexOf('항목') > -1 ? headers.indexOf('항목') : 3,
+            content: headers.indexOf('내용') > -1 ? headers.indexOf('내용') : 4,
+            note: headers.indexOf('비고') > -1 ? headers.indexOf('비고') : 5,
+            stage: headers.indexOf('진행단계') > -1 ? headers.indexOf('진행단계') : 6
+        };
+
+        // UI에서 기대하는 키 값으로 변환 ('번호', 'category', '진행단계', '항목', '내용', '비고')
+        var result = rows.map(function (row) {
+            return {
+                '번호': row[idxMap.no],
+                'category': row[idxMap.category],
+                '진행단계': row[idxMap.stage], // 여기가 중요 (필터링에 사용)
+                '항목': row[idxMap.item],
+                '내용': row[idxMap.content],
+                '비고': row[idxMap.note]
+            };
+        });
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            data: result
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: err.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}

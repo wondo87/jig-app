@@ -679,6 +679,12 @@
                     box-shadow: none !important;
                 }
 
+                /* Add margin-top to tab-panel to account for fixed headers */
+                .tab-panel {
+                    margin-top: 94px !important;
+                    /* 54px (black header) + 40px (blue header) = 94px */
+                }
+
                 /* Mobile Filter Bar - Full Width */
                 /* Duplicate .mobile-filter-bar removed */
 
@@ -708,8 +714,8 @@
 
                 /* Content Padding Adjustments */
                 #panel-checklist .doc-content {
-                    padding-top: 115px !important;
-                    /* 54 + 약 61px(헤더) = 115px */
+                    padding-top: 0 !important;
+                    /* No padding - content starts immediately after fixed header */
                     padding-bottom: 100px !important;
                     padding-left: 0 !important;
                     padding-right: 0 !important;
@@ -809,8 +815,8 @@
             #panel-checklist .doc-content,
             #panel-schedule .doc-content,
             #panel-customer-info .doc-content {
-                padding-top: 100px !important;
-                /* 검정 헤더(54px) + 파란 헤더(40px) + 여유(6px) */
+                padding-top: 0 !important;
+                /* No padding - content starts immediately after fixed header */
             }
 
             /* [New] Mobile Filter Bar Wrapper (Sticky) */
@@ -851,8 +857,8 @@
 
             /* 3. Push Content Down */
             #panel-checklist .doc-content {
-                padding-top: 135px !important;
-                /* 54 + 약 81px(헤더) = 135px */
+                padding-top: 0 !important;
+                /* No padding - content starts immediately after fixed header */
                 padding-left: 10px !important;
                 padding-right: 10px !important;
                 padding-bottom: 80px !important;
