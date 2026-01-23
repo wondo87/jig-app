@@ -277,6 +277,11 @@ function doGet(e) {
             return handleChecklistGet(e);
         }
 
+        // [추가] 모바일 최적화: 마스터 + 특정 고객 체크리스트 번들 로드
+        if (actionParam === 'loadChecklistBundle') {
+            return handleChecklistBundleGet(e);
+        }
+
 
 
         // [추가] 정산 관리 대장 옵션 마스터 조회
@@ -2978,25 +2983,43 @@ function getTargetSpreadsheet(id) {
     return SpreadsheetApp.openById(id);
 }
 
-// -------------------------------------------------------------
-// [추가] 공정별 체크리스트 데이터 불러오기
-// -------------------------------------------------------------
+/**
+ * [최적화] 체크리스트 마스터 데이터만 추출 (공통 로직)
+ */
+function getChecklistMasterData() {
+    var spreadsheet = getTargetSpreadsheet(CUSTOMER_SHEET_ID);
+    var sheet = spreadsheet.getSheetByName('공정 체크리스트');
+    if (!sheet) sheet = spreadsheet.getSheetByName('공정체크리스트');
+    if (!sheet) sheet = spreadsheet.getSheetByName('공정별 체크리스트');
+    if (!sheet) sheet = spreadsheet.getSheetByName('checklist');
+
+    if (!sheet) return null;
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) return [];
+
+    var headers = data[0];
+    var rows = data.slice(1);
+
+    return rows.map(function (row) {
+        var item = {};
+        headers.forEach(function (header, index) {
+            item[header] = row[index] || '';
+        });
+        return item;
+    }).filter(function (item) {
+        return item['번호'];
+    });
+}
+
+/**
+ * [기존] 체크리스트 마스터 조회
+ */
 function handleChecklistGet(e) {
     try {
-        var spreadsheet = getTargetSpreadsheet(CUSTOMER_SHEET_ID);
-
-        // 1. [메인] 유저가 지정한 이름: '공정 체크리스트'
-        var sheet = spreadsheet.getSheetByName('공정 체크리스트');
-
-        // 2. [Fallback] 띄어쓰기 없음
-        if (!sheet) sheet = spreadsheet.getSheetByName('공정체크리스트');
-
-        // 3. [Fallback] 기존/영문 이름
-        if (!sheet) sheet = spreadsheet.getSheetByName('공정별 체크리스트');
-        if (!sheet) sheet = spreadsheet.getSheetByName('checklist');
-
-        if (!sheet) {
-            // [디버깅] 현재 시트 목록 로깅
+        var masterData = getChecklistMasterData();
+        if (masterData === null) {
+            var spreadsheet = getTargetSpreadsheet(CUSTOMER_SHEET_ID);
             var allSheets = spreadsheet.getSheets().map(function (s) { return s.getName(); });
             return ContentService.createTextOutput(JSON.stringify({
                 success: false,
@@ -3004,41 +3027,61 @@ function handleChecklistGet(e) {
             })).setMimeType(ContentService.MimeType.JSON);
         }
 
-        var data = sheet.getDataRange().getValues();
-        if (data.length < 2) {
-            return ContentService.createTextOutput(JSON.stringify({
-                success: true,
-                data: [],
-                count: 0
-            })).setMimeType(ContentService.MimeType.JSON);
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            data: masterData,
+            count: masterData.length
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * [모바일 최적화] 마스터 항목 + 특정 고객의 체크 상태 번들 로드
+ * GET ?action=loadChecklistBundle&customerId=xxx (customerId는 선택 사항)
+ */
+function handleChecklistBundleGet(e) {
+    try {
+        var customerId = e.parameter.customerId;
+
+        // 1. 마스터 체크리스트 로드 (필수)
+        var masterData = getChecklistMasterData() || [];
+
+        // 2. 고객 개별 데이터 로드 (선택)
+        var customerStatus = {};
+        if (customerId && customerId !== 'undefined' && customerId !== 'null') {
+            var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+            var sheet = spreadsheet.getSheetByName('고객관리_견적서');
+
+            if (sheet) {
+                var data = sheet.getDataRange().getValues();
+                for (var i = 1; i < data.length; i++) {
+                    if (data[i][0] === customerId) {
+                        var jsonData = data[i][17]; // 18번째 열 (JSON데이터)
+                        if (jsonData) {
+                            try {
+                                var parsed = JSON.parse(jsonData);
+                                customerStatus = parsed.checklistData || {};
+                            } catch (ex) { }
+                        }
+                        break;
+                    }
+                }
+            }
         }
-
-        var headers = data[0];
-        var rows = data.slice(1);
-
-        var checklistItems = rows.map(function (row) {
-            var item = {};
-            headers.forEach(function (header, index) {
-                // 시트 헤더 이름을 그대로 키값으로 사용 ('번호', '항목', '내용', '진행단계', '분류', '비고')
-                item[header] = row[index] || '';
-            });
-            return item;
-        }).filter(function (item) {
-            // 번호가 있는 행만 유효한 것으로 간주
-            return item['번호'];
-        });
 
         return ContentService.createTextOutput(JSON.stringify({
             success: true,
-            data: checklistItems,
-            count: checklistItems.length
+            master: masterData,
+            customerStatus: customerStatus
         })).setMimeType(ContentService.MimeType.JSON);
 
-    } catch (error) {
-        return ContentService.createTextOutput(JSON.stringify({
-            success: false,
-            message: '체크리스트 데이터 로드 실패: ' + error.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+            .setMimeType(ContentService.MimeType.JSON);
     }
 }
 
