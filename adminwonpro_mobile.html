@@ -6,12 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>디자인지그 모바일 (최신 버전)</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icons/icon-192.png?v=final_orig_file">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png?v=final_orig_file">
-    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png?v=final_orig_file">
-    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png?v=final_orig_file">
-    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png?v=final_orig_file">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=final_orig_file">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=final_orig_file">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
@@ -8304,74 +8301,101 @@
         }
 
         document.addEventListener('DOMContentLoaded', async function () {
-            // UI 초기화
-            initLoginScreen();
-            loadFontSize();
-            createCostCategories();
-            createEstimateCategories();
-            createCoverTable();
-            initYearFilter();
-
-            // 모바일에서는 기본 필터를 "공사중"으로 설정
-            if (window.innerWidth <= 768) {
-                currentStatusFilter = 'in_progress';
-                // 필터 버튼 UI 업데이트
-                document.querySelectorAll('.filter-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.status === 'in_progress');
-                });
-            }
-
-            updateCustomerList();
-
-            const statusEl = document.getElementById('initialSyncStatus');
-            const overlay = document.getElementById('initialSyncOverlay');
-
             try {
-                statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
+                // [DEBUG] Check Critical Configuration
+                if (typeof CUSTOMER_SYNC_URL === 'undefined') {
+                    throw new Error('CONFIG ERROR: CUSTOMER_SYNC_URL is not defined. admin_config.js loading failed?');
+                }
+                console.log('✅ [Init] Configuration Check Passed. URL:', CUSTOMER_SYNC_URL);
 
-                // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
-                const results = await Promise.allSettled([
-                    syncFromCloud(true),      // 고객
-                    syncCostFromCloud(),      // 원가
-                    syncChecklistFromCloud(), // 체크리스트
-                    syncExpensesFromCloud(),  // 운영비
-                    syncAdminsFromCloud()     // 관리자
-                ]);
+                // UI 초기화
+                initLoginScreen();
+                loadFontSize();
+                createCostCategories();
+                createEstimateCategories();
+                createCoverTable();
+                initYearFilter();
 
-                // 필수 데이터 성공 여부 확인
-                const allSuccess = results.every(r => r.status === 'fulfilled' && r.value === true);
-
-                if (allSuccess) {
-                    // 동기화 성공 시 클린업 실행
-                    runPhase2Cleanup();
-
-                    // 오버레이 제거
-                    overlay.style.opacity = '0';
-                    setTimeout(() => overlay.style.display = 'none', 500);
-                    console.log('✅ 전역 데이터 동기화 및 클린업 완료');
-                } else {
-                    // 어떤 데이터가 실패했는지 로깅
-                    const failedIndices = results.map((r, i) => (r.status !== 'fulfilled' || r.value !== true) ? i : -1).filter(i => i !== -1);
-                    const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
-                    const failedLabels = failedIndices.map(i => labels[i]).join(', ');
-                    throw new Error(`${failedLabels} 데이터 동기화에 실패했습니다.`);
+                // 모바일에서는 기본 필터를 "공사중"으로 설정
+                if (window.innerWidth <= 768) {
+                    currentStatusFilter = 'in_progress';
+                    // 필터 버튼 UI 업데이트
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.status === 'in_progress');
+                    });
                 }
 
-                // 부가 로직
-                fetchScheduleTemplate();
-                fetchSettlementMaster();
+                updateCustomerList();
 
-                if (typeof renderChecklistItems === 'function') {
-                    renderChecklistItems();
-                    if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
+                const statusEl = document.getElementById('initialSyncStatus');
+                const overlay = document.getElementById('initialSyncOverlay');
+
+                try {
+                    statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
+                    console.log('🚀 [Init] Starting initial sync...');
+
+                    // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
+                    const results = await Promise.allSettled([
+                        syncFromCloud(true),      // 고객
+                        syncCostFromCloud(),      // 원가
+                        syncChecklistFromCloud(), // 체크리스트
+                        syncExpensesFromCloud(),  // 운영비
+                        syncAdminsFromCloud()     // 관리자
+                    ]);
+
+                    // 필수 데이터 성공 여부 확인
+                    const allSuccess = results.every(r => r.status === 'fulfilled' && r.value === true);
+
+                    if (allSuccess) {
+                        // 동기화 성공 시 클린업 실행
+                        runPhase2Cleanup();
+
+                        // 오버레이 제거
+                        overlay.style.opacity = '0';
+                        setTimeout(() => overlay.style.display = 'none', 500);
+                        console.log('✅ 전역 데이터 동기화 및 클린업 완료');
+                    } else {
+                        // 어떤 데이터가 실패했는지 로깅
+                        const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
+                        const failedDetails = results.map((r, i) => {
+                            if (r.status !== 'fulfilled' || r.value !== true) {
+                                return `${labels[i]} (${r.reason || 'False returned'})`;
+                            }
+                            return null;
+                        }).filter(Boolean);
+
+                        const failedMsg = failedDetails.join(', ');
+                        console.error('❌ [Init] Sync Failed for:', failedMsg);
+                        throw new Error(`${failedMsg} 데이터 동기화에 실패했습니다.`);
+                    }
+
+                    // 부가 로직
+                    fetchScheduleTemplate();
+                    fetchSettlementMaster();
+
+                    if (typeof renderChecklistItems === 'function') {
+                        renderChecklistItems();
+                        if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
+                    }
+
+                } catch (err) {
+                    console.error('❌ 초기 동기화 트랜잭션 실패:', err);
+                    throw err; // Re-throw to outer catch
                 }
-
             } catch (err) {
-                console.error('❌ 초기 동기화 실패:', err);
-                // 에러 화면 표시
-                document.querySelector('.sync-loader').style.display = 'none';
-                document.getElementById('syncErrorContent').style.display = 'block';
-                document.getElementById('syncErrorMessage').textContent = err.message + ' 네트워크 연결 확인 후 다시 시도해 주세요.';
+                console.error('❌ [CRITICAL] 초기화 중 치명적 오류:', err);
+                const overlay = document.getElementById('initialSyncOverlay');
+                if (overlay) {
+                    const loader = overlay.querySelector('.sync-loader');
+                    const errorContent = document.getElementById('syncErrorContent');
+                    const errorMessage = document.getElementById('syncErrorMessage');
+
+                    if (loader) loader.style.display = 'none';
+                    if (errorContent) errorContent.style.display = 'block';
+                    if (errorMessage) errorMessage.textContent = (err.message || '알 수 없는 오류') + ' (네트워크를 확인하세요)';
+                } else {
+                    alert('초기화 실패: ' + err.message);
+                }
             }
         });
 
@@ -11333,10 +11357,17 @@
             }
 
             // Request URL for logging
+            if (typeof CUSTOMER_SYNC_URL === 'undefined') {
+                console.error('❌ CUSTOMER_SYNC_URL 미정의');
+                return false;
+            }
             const requestUrl = `${CUSTOMER_SYNC_URL}?sheet=고객관리_견적서&t=${Date.now()}`;
 
             let response = null;
             let responseText = ''; // For debugging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
+
             try {
                 if (!silent) console.log('🔄 클라우드 데이터 가져오는 중...');
 
@@ -11352,6 +11383,7 @@
                 // iOS Safari requires explicit cache and credentials handling
                 response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET',
+                    signal: controller.signal,   // 타임아웃 신호
                     mode: 'cors',                // Explicit CORS mode
                     redirect: 'follow',          // Follow Google Apps Script redirects
                     cache: 'no-store',           // iOS cache issue fix
@@ -11360,6 +11392,7 @@
                         'Accept': 'application/json'
                     }
                 });
+                clearTimeout(timeoutId);
 
                 // [DEBUG] Log response status
                 console.log('📡 [iOS Debug] Response Status:', response.status, response.statusText);
@@ -11431,7 +11464,7 @@
 
                 // [DEBUG] 상태별 고객 수 확인
                 const statusCounts = {};
-                cloudCustomers.forE ach(c => {
+                cloudCustomers.forEach(c => {
                     const status = c.status || 'undefined';
                     statusCounts[status] = (statusCounts[status] || 0) + 1;
                 });
@@ -15514,7 +15547,7 @@
             // 필터된 항목 중 체크된 것만 카운트
             const completed = filteredData.filter(item => customerChecklistData[item.번호] === true).length;
             const inProgress = total - completed;
-            const tota         ath.round((compl         tal) * 100) : 0;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
             document.getElementById('checkl         ount').textContent = total;
             document.getElementById('checklistCompletedCount').textContent = completed;
@@ -17062,7 +17095,7 @@
                 }
             } catch (err) {
                 console.error('운영비 불러오기 오류:', err);
-                showToast('불러오기 실패: ' rrror');
+                showToast('불러오기 실패: ' + err.message, 'error');
                 return false;
             } finally {
                 if (btn) {
@@ -17090,7 +17123,7 @@
             // 뷰 전환
             document.querySelectorAll('.stats-view-content').forEach(view => view.style.display = 'none');
             const targetView = document.getElementById('view-stats-' + tabName);
-            if getV           targetView.style.display = 'block';
+            if (targetView) targetView.style.display = 'block';
         }
 
         // 차트 크기 강제 재조정
@@ -17099,7 +17132,7 @@
                 if (chart && typeof chart.resize === 'function') chart.resize();
             });
         }
-        }
+
 
     </script>
     <script>
@@ -17131,14 +17164,14 @@
     <script>
 
 
-        // [Task 3] i       let isAppBusy = false;
+        let isAppBusy = false;
         function setAppBusy(busy, message = '데이터 처리 중...') {
             isAppBusy = busy;
             let overlay = document.getElementById('globalLoadingOverlay');
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.id = 'globalLoadingOverlay';
-                overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:columustify-content:centems:center;';
+                overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:column; justify-content:center; align-items:center;';
                 overlay.innerHTML = '<div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:15px;"></div><div id="loadingMessage" style="font-size:18px; font-weight:600; color:#333;">데이터 처리 중...</div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
                 document.body.appendChild(overlay);
             }
@@ -17147,21 +17180,22 @@
             overlay.style.display = busy ? 'flex' : 'none';
             document.body.style.pointerEvents = busy ? 'none' : 'auto';
             if (overlay) overlay.style.pointerEvents = 'auto';
+        }
 
     </script>
     <script>
-            // PWA Service Worker 등록
-            if ('r' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./service-worker.js')
-                        .then(registration => {
-                            console.log('ServiceWorker registration successful');
-                        })
-                        .catch(err => {
-                            console.log('ServiceWorker registration failed: ', err);
-                        });
-                });
-            }
+        // PWA Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
     </script>
 
     <!-- ===== MOBILE WEB APP UI COMPONENTS ===== -->
@@ -17181,25 +17215,25 @@
     </div>
 
     <script>
-            // 모바일 초기화: 기본 필터를 '공사중'으로 설정
-            document.addEventListener('DOMContentLoaded', () => {
-                if (window.innerWidth <= 768) {
-                    // 약간의 지연 후 실행 (데이터 로드 시점 고려)
-                    setTimeout(() => {
-                        if (typeof setMobileStatusFilter === 'function') {
-                            setMobileStatusFilter('construction');
+        // 모바일 초기화: 기본 필터를 '공사중'으로 설정
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth <= 768) {
+                // 약간의 지연 후 실행 (데이터 로드 시점 고려)
+                setTimeout(() => {
+                    if (typeof setMobileStatusFilter === 'function') {
+                        setMobileStatusFilter('construction');
 
-                            // UI상으로도 construction 칩 활성화
-                            const chips = document.querySelectorAll('.mobile-filter-chip');
-                            chips.forEach(chip => {
-                                chip.classList.toggle('active', chip.dataset.status === 'construction');
-                            });
+                        // UI상으로도 construction 칩 활성화
+                        const chips = document.querySelectorAll('.mobile-filter-chip');
+                        chips.forEach(chip => {
+                            chip.classList.toggle('active', chip.dataset.status === 'construction');
+                        });
 
-                            // Toast 알림은 굳이 안 띄워도 됨 (자동 적용이므로)
-                        }
-                    }, 800);
-                }
-            });
+                        // Toast 알림은 굳이 안 띄워도 됨 (자동 적용이므로)
+                    }
+                }, 800);
+            }
+        });
     </script>
 
     <!-- 모바일 메뉴 오버레이 -->
@@ -17266,284 +17300,284 @@
     </div>
 
     <script>
-            // ===== MOBILE WEB APP HANDLERS =====
-            const isMobile = () => window.innerWidth <= 768;
+        // ===== MOBILE WEB APP HANDLERS =====
+        const isMobile = () => window.innerWidth <= 768;
 
-            function toggleMobileMenu() {
-                const hamburger = document.getElementById('mobileHamburger');
-                const overlay = document.getElementById('mobileMenuOverlay');
-                const menu = document.getElementById('mobileMenu');
+        function toggleMobileMenu() {
+            const hamburger = document.getElementById('mobileHamburger');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menu = document.getElementById('mobileMenu');
 
-                hamburger.classList.toggle('active');
-                overlay.classList.toggle('show');
-                menu.classList.toggle('show');
+            hamburger.classList.toggle('active');
+            overlay.classList.toggle('show');
+            menu.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            const hamburger = document.getElementById('mobileHamburger');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menu = document.getElementById('mobileMenu');
+
+            if (hamburger) hamburger.classList.remove('active');
+            if (overlay) overlay.classList.remove('show');
+            if (menu) menu.classList.remove('show');
+        }
+
+        // [Mobile Navigation Helper]
+        function updateMobileHeaderTitle(panelId) {
+            const headerTitleEl = document.getElementById('headerMobileTitle');
+            if (!headerTitleEl) return;
+
+            let titleText = '';
+            // Map panel IDs to titles
+            if (panelId === 'panel-checklist') titleText = '공정별 체크리스트';
+            else if (panelId === 'panel-schedule') titleText = '공사 스케줄';
+            else if (panelId === 'panel-info') titleText = '고객 정보';
+            else if (panelId === 'panel-stats') titleText = '현황 및 통계';
+            else if (panelId === 'panel-expenses') titleText = '비용 관리';
+            else if (panelId === 'panel-files') titleText = '파일함';
+            else if (panelId === 'panel-estimate') titleText = '견적서';
+            else if (panelId === 'panel-cost') titleText = '원가 관리';
+            else if (panelId === 'panel-as-list') titleText = 'A/S 관리';
+
+            headerTitleEl.innerText = titleText;
+            headerTitleEl.style.display = titleText ? 'block' : 'none';
+        }
+
+        function mobileGoToPanel(panelId) {
+            // 모든 패널 숨기고 선택된 패널만 표시
+            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            const target = document.getElementById(panelId);
+            if (target) target.style.display = 'block';
+
+            // 헤더 제목 업데이트
+            updateMobileHeaderTitle(panelId);
+
+            // 체크리스트 외 패널은 읽기 전용 알림
+            if (panelId !== 'panel-checklist') {
+                showToast('읽기 전용 모드입니다.', 'info');
+            }
+        }
+
+        function mobileGoBack() {
+            // 고객 선택 해제, 고객 목록으로 복귀
+            document.body.classList.remove('mobile-customer-selected');
+            document.getElementById('customerView').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            currentCustomerId = null;
+            currentData = null;
+        }
+
+        // ===== 모바일 필터 함수들 =====
+        let mobileStatusFilter = 'all';
+
+        function toggleMobileFilter() {
+            const dropdown = document.getElementById('mobileFilterDropdown');
+            dropdown.classList.toggle('show');
+            // 필터 열릴 때 검색 입력에 포커스
+            if (dropdown.classList.contains('show')) {
+                document.getElementById('mobileSearchInput').focus();
+            }
+        }
+
+        function closeMobileFilter() {
+            document.getElementById('mobileFilterDropdown').classList.remove('show');
+        }
+
+        function setMobileStatusFilter(status) {
+            mobileStatusFilter = status;
+            // 칩 UI 업데이트
+            document.querySelectorAll('.mobile-filter-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.status === status);
+            });
+            applyMobileFilter();
+        }
+
+        function applyMobileFilter() {
+            const searchText = (document.getElementById('mobileSearchInput')?.value || '').toLowerCase().trim();
+
+            // 기존 데스크톱 필터 함수 활용
+            if (typeof updateCustomerList === 'function') {
+                // 데스크톱의 statusFilter와 searchInput 동기화
+                const desktopStatusFilter = document.getElementById('statusFilter');
+                const desktopSearchInput = document.getElementById('searchInput');
+
+                if (desktopStatusFilter) desktopStatusFilter.value = mobileStatusFilter;
+                if (desktopSearchInput) desktopSearchInput.value = searchText;
+
+                // 고객 목록 업데이트
+                updateCustomerList(true);
+            }
+        }
+
+        function mobileReconnect() {
+            // 필터 드롭다운 닫기
+            closeMobileFilter();
+            // 클라우드에서 고객 데이터 다시 불러오기 (READ-ONLY)
+            if (typeof syncFromCloud === 'function') {
+                syncFromCloud(false);
+            } else {
+                showToast('동기화 함수를 찾을 수 없습니다.', 'error');
+            }
+        }
+
+        // 모바일에서 고객 선택 시 UI 전환
+        const originalSelectCustomer = (typeof selectCustomer === 'function') ? selectCustomer : null;
+        window.selectCustomerOriginal = originalSelectCustomer;
+
+        // selectCustomer를 오버라이드하여 모바일 UX 적용
+        // selectCustomer를 오버라이드하여 모바일 UX 적용 (Revised)
+        (function () {
+            // 원본 함수 백업 (이미 백업된 경우 사용)
+            if (!window.selectCustomerOriginal) {
+                window.selectCustomerOriginal = window.selectCustomer;
             }
 
-            function closeMobileMenu() {
-                const hamburger = document.getElementById('mobileHamburger');
-                const overlay = document.getElementById('mobileMenuOverlay');
-                const menu = document.getElementById('mobileMenu');
+            window.selectCustomer = function (customerId) {
+                console.log('[Mobile] selectCustomer called for:', customerId);
 
-                if (hamburger) hamburger.classList.remove('active');
-                if (overlay) overlay.classList.remove('show');
-                if (menu) menu.classList.remove('show');
-            }
-
-            // [Mobile Navigation Helper]
-            function updateMobileHeaderTitle(panelId) {
-                const headerTitleEl = document.getElementById('headerMobileTitle');
-                if (!headerTitleEl) return;
-
-                let titleText = '';
-                // Map panel IDs to titles
-                if (panelId === 'panel-checklist') titleText = '공정별 체크리스트';
-                else if (panelId === 'panel-schedule') titleText = '공사 스케줄';
-                else if (panelId === 'panel-info') titleText = '고객 정보';
-                else if (panelId === 'panel-stats') titleText = '현황 및 통계';
-                else if (panelId === 'panel-expenses') titleText = '비용 관리';
-                else if (panelId === 'panel-files') titleText = '파일함';
-                else if (panelId === 'panel-estimate') titleText = '견적서';
-                else if (panelId === 'panel-cost') titleText = '원가 관리';
-                else if (panelId === 'panel-as-list') titleText = 'A/S 관리';
-
-                headerTitleEl.innerText = titleText;
-                headerTitleEl.style.display = titleText ? 'block' : 'none';
-            }
-
-            function mobileGoToPanel(panelId) {
-                // 모든 패널 숨기고 선택된 패널만 표시
-                document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
-                const target = document.getElementById(panelId);
-                if (target) target.style.display = 'block';
-
-                // 헤더 제목 업데이트
-                updateMobileHeaderTitle(panelId);
-
-                // 체크리스트 외 패널은 읽기 전용 알림
-                if (panelId !== 'panel-checklist') {
-                    showToast('읽기 전용 모드입니다.', 'info');
-                }
-            }
-
-            function mobileGoBack() {
-                // 고객 선택 해제, 고객 목록으로 복귀
-                document.body.classList.remove('mobile-customer-selected');
-                document.getElementById('customerView').style.display = 'none';
-                document.getElementById('emptyState').style.display = 'block';
-                currentCustomerId = null;
-                currentData = null;
-            }
-
-            // ===== 모바일 필터 함수들 =====
-            let mobileStatusFilter = 'all';
-
-            function toggleMobileFilter() {
-                const dropdown = document.getElementById('mobileFilterDropdown');
-                dropdown.classList.toggle('show');
-                // 필터 열릴 때 검색 입력에 포커스
-                if (dropdown.classList.contains('show')) {
-                    document.getElementById('mobileSearchInput').focus();
-                }
-            }
-
-            function closeMobileFilter() {
-                document.getElementById('mobileFilterDropdown').classList.remove('show');
-            }
-
-            function setMobileStatusFilter(status) {
-                mobileStatusFilter = status;
-                // 칩 UI 업데이트
-                document.querySelectorAll('.mobile-filter-chip').forEach(chip => {
-                    chip.classList.toggle('active', chip.dataset.status === status);
-                });
-                applyMobileFilter();
-            }
-
-            function applyMobileFilter() {
-                const searchText = (document.getElementById('mobileSearchInput')?.value || '').toLowerCase().trim();
-
-                // 기존 데스크톱 필터 함수 활용
-                if (typeof updateCustomerList === 'function') {
-                    // 데스크톱의 statusFilter와 searchInput 동기화
-                    const desktopStatusFilter = document.getElementById('statusFilter');
-                    const desktopSearchInput = document.getElementById('searchInput');
-
-                    if (desktopStatusFilter) desktopStatusFilter.value = mobileStatusFilter;
-                    if (desktopSearchInput) desktopSearchInput.value = searchText;
-
-                    // 고객 목록 업데이트
-                    updateCustomerList(true);
-                }
-            }
-
-            function mobileReconnect() {
-                // 필터 드롭다운 닫기
-                closeMobileFilter();
-                // 클라우드에서 고객 데이터 다시 불러오기 (READ-ONLY)
-                if (typeof syncFromCloud === 'function') {
-                    syncFromCloud(false);
-                } else {
-                    showToast('동기화 함수를 찾을 수 없습니다.', 'error');
-                }
-            }
-
-            // 모바일에서 고객 선택 시 UI 전환
-            const originalSelectCustomer = (typeof selectCustomer === 'function') ? selectCustomer : null;
-            window.selectCustomerOriginal = originalSelectCustomer;
-
-            // selectCustomer를 오버라이드하여 모바일 UX 적용
-            // selectCustomer를 오버라이드하여 모바일 UX 적용 (Revised)
-            (function () {
-                // 원본 함수 백업 (이미 백업된 경우 사용)
-                if (!window.selectCustomerOriginal) {
-                    window.selectCustomerOriginal = window.selectCustomer;
-                }
-
-                window.selectCustomer = function (customerId) {
-                    console.log('[Mobile] selectCustomer called for:', customerId);
-
-                    try {
-                        // 원본 함수 실행
-                        if (typeof window.selectCustomerOriginal === 'function') {
-                            window.selectCustomerOriginal(customerId);
-                        } else {
-                            throw new Error('Original selectCustomer function not found');
-                        }
-
-                        if (isMobile()) {
-                            console.log('[Mobile] Switching to mobile view');
-                            document.body.classList.add('mobile-customer-selected');
-
-                            // [New] Strict 3-Line Header Logic
-                            const customer = customers.find(c => c.id === customerId) || {};
-                            const period = customer.constructionPeriod || customer.field4 || '-';
-                            const phone = customer.clientPhone || customer.phone || '';
-                            const phoneLink = phone ? `<a href="tel:${phone}" style="color:#fff; text-decoration:underline;">${phone}</a>` : '';
-
-                            // Spouse Info
-                            const spouseName = customer.spouseName || customer.field5 || '';
-                            const spousePhone = customer.spousePhone || customer.field6 || '';
-                            const spouseLink = spousePhone ? `<a href="tel:${spousePhone}" style="color:#fff; text-decoration:underline;">${spousePhone}</a>` : '';
-
-                            const spouseRow = (spouseName || spousePhone) ?
-                                `<div style="font-size:12px; opacity:0.9; margin-top:2px;">${spouseName} | ${spouseLink}</div>` :
-                                '';
-
-                            // 검정색 상단 헤더는 고객 정보 표시하지 않음
-                            const mobInfo = document.getElementById('headerMobileInfo');
-                            if (mobInfo) {
-                                mobInfo.innerHTML = '';
-                                mobInfo.style.display = 'none';
-                            }
-
-                            // 모바일 툴바 표시
-                            const toolbar = document.getElementById('mobileToolbar');
-                            if (toolbar) toolbar.style.display = 'flex';
-
-                            // 고객 정보 패널 업데이트
-                            updateMobileCustomerInfo(customer);
-
-                            // 체크리스트 패널 이동
-                            setTimeout(() => mobileGoToPanel('panel-checklist'), 10);
-
-                            // 성공 토스트 (필요시)
-                            // showToast('고객 정보 로드됨', 'success');
-                        }
-                    } catch (err) {
-                        console.error('[Mobile] selectCustomer error:', err);
-                        showToast('고객 선택 실패: ' + err.message, 'error');
+                try {
+                    // 원본 함수 실행
+                    if (typeof window.selectCustomerOriginal === 'function') {
+                        window.selectCustomerOriginal(customerId);
+                    } else {
+                        throw new Error('Original selectCustomer function not found');
                     }
-                };
-            })();
 
-            // [New] Navigate to Schedule shortcut
-            function navigateToSchedule() {
-                if (!currentCustomerId) {
-                    showToast('고객을 먼저 선택해주세요', 'warning');
-                    return;
+                    if (isMobile()) {
+                        console.log('[Mobile] Switching to mobile view');
+                        document.body.classList.add('mobile-customer-selected');
+
+                        // [New] Strict 3-Line Header Logic
+                        const customer = customers.find(c => c.id === customerId) || {};
+                        const period = customer.constructionPeriod || customer.field4 || '-';
+                        const phone = customer.clientPhone || customer.phone || '';
+                        const phoneLink = phone ? `<a href="tel:${phone}" style="color:#fff; text-decoration:underline;">${phone}</a>` : '';
+
+                        // Spouse Info
+                        const spouseName = customer.spouseName || customer.field5 || '';
+                        const spousePhone = customer.spousePhone || customer.field6 || '';
+                        const spouseLink = spousePhone ? `<a href="tel:${spousePhone}" style="color:#fff; text-decoration:underline;">${spousePhone}</a>` : '';
+
+                        const spouseRow = (spouseName || spousePhone) ?
+                            `<div style="font-size:12px; opacity:0.9; margin-top:2px;">${spouseName} | ${spouseLink}</div>` :
+                            '';
+
+                        // 검정색 상단 헤더는 고객 정보 표시하지 않음
+                        const mobInfo = document.getElementById('headerMobileInfo');
+                        if (mobInfo) {
+                            mobInfo.innerHTML = '';
+                            mobInfo.style.display = 'none';
+                        }
+
+                        // 모바일 툴바 표시
+                        const toolbar = document.getElementById('mobileToolbar');
+                        if (toolbar) toolbar.style.display = 'flex';
+
+                        // 고객 정보 패널 업데이트
+                        updateMobileCustomerInfo(customer);
+
+                        // 체크리스트 패널 이동
+                        setTimeout(() => mobileGoToPanel('panel-checklist'), 10);
+
+                        // 성공 토스트 (필요시)
+                        // showToast('고객 정보 로드됨', 'success');
+                    }
+                } catch (err) {
+                    console.error('[Mobile] selectCustomer error:', err);
+                    showToast('고객 선택 실패: ' + err.message, 'error');
                 }
-                if (isMobile()) {
-                    wCustomerTab('schedule');
-                    mobileGoToPanel('panel-schedule');
-                } else {
-                    showCustomerTab('schedule');
-                }
+            };
+        })();
+
+        // [New] Navigate to Schedule shortcut
+        function navigateToSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
+            }
+            if (isMobile()) {
+                wCustomerTab('schedule');
+                mobileGoToPanel('panel-schedule');
+            } else {
+                showCustomerTab('schedule');
+            }
+        }
+
+        // 페이지 로드 시 모바일 체크
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isMobile()) {
+                // 모바일에서는 toolbar 초기 숨김 (고객 선택 전)
+                document.getElementById('mobileToolbar').style.display = 'none';
+            }
+        });
+
+        // 화면 크기 변경 감지
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                closeMobileMenu();
+                document.body.classList.remove('mobile-customer-selected');
             }
 
-            // 페이지 로드 시 모바일 체크
-            document.addEventListener('DOMContentLoaded', () => {
-                if (isMobile()) {
-                    // 모바일에서는 toolbar 초기 숨김 (고객 선택 전)
-                    document.getElementById('mobileToolbar').style.display = 'none';
-                }
-            });
+            // 화면 크기 변경 시 현재 선택된 고객 데이터 다시 적용
+            if (currentCustomerId && currentData) {
+                console.log('🔄 [Resize] 화면 크기 변경, 고객 데이터 재적용:', currentCustomerId);
 
-            // 화면 크기 변경 감지
-            window.addEventListener('resize', () => {
-                if (!isMobile()) {
-                    closeMobileMenu();
-                    document.body.classList.remove('mobile-customer-selected');
-                }
+                document.querySelectorAll('.customer-field').forEach(f => {
+                    const fieldName = f.dataset.field;
+                    const fieldValue = currentData[fieldName] || '';
 
-                // 화면 크기 변경 시 현재 선택된 고객 데이터 다시 적용
-                if (currentCustomerId && currentData) {
-                    console.log('🔄 [Resize] 화면 크기 변경, 고객 데이터 재적용:', currentCustomerId);
-
-                    document.querySelectorAll('.customer-field').forEach(f => {
-                        const fieldName = f.dataset.field;
-                        const fieldValue = currentData[fieldName] || '';
-
-                        if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
-                            f.value = fieldValue;
-                        } else {
-                            f.textContent = fieldValue || '-';
-                        }
-                    });
-                }
-            });
+                    if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
+                        f.value = fieldValue;
+                    } else {
+                        f.textContent = fieldValue || '-';
+                    }
+                });
+            }
+        });
     </script>
     <script>
-            // [New] Mobile Header Refinement Logic
+        // [New] Mobile Header Refinement Logic
 
-            // 1. Header Rendering Function
-            function updateMobileHeaderActions() {
-                const container = document.getElementById('mobileHeaderIcons');
-                if (!container) return;
+        // 1. Header Rendering Function
+        function updateMobileHeaderActions() {
+            const container = document.getElementById('mobileHeaderIcons');
+            if (!container) return;
 
-                // Define Buttons (Order: Customer List -> Checklist -> Schedule -> Customer Info -> Hamburger)
-                const buttons = [
-                    {
-                        id: 'btn-customer-list',
-                        title: '공사중 고객',
-                        // User/List Icon
-                        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
-                        action: 'navigateToInProgressCustomers()'
-                    },
-                    {
-                        id: 'btn-checklist',
-                        title: '공정별 체크리스트',
-                        // Checklist Icon
-                        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
-                        action: 'navigateToChecklist()'
-                    },
-                    {
-                        id: 'btn-schedule',
-                        title: '공사 스케줄',
-                        // Calendar Icon
-                        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
-                        action: 'navigateToSchedule()'
-                    },
-                    {
-                        id: 'btn-customer-info',
-                        title: '고객 정보',
-                        // Info Icon
-                        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
-                        action: 'navigateToCustomerInfo()'
-                    }
-                ];
+            // Define Buttons (Order: Customer List -> Checklist -> Schedule -> Customer Info -> Hamburger)
+            const buttons = [
+                {
+                    id: 'btn-customer-list',
+                    title: '공사중 고객',
+                    // User/List Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+                    action: 'navigateToInProgressCustomers()'
+                },
+                {
+                    id: 'btn-checklist',
+                    title: '공정별 체크리스트',
+                    // Checklist Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
+                    action: 'navigateToChecklist()'
+                },
+                {
+                    id: 'btn-schedule',
+                    title: '공사 스케줄',
+                    // Calendar Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+                    action: 'navigateToSchedule()'
+                },
+                {
+                    id: 'btn-customer-info',
+                    title: '고객 정보',
+                    // Info Icon
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+                    action: 'navigateToCustomerInfo()'
+                }
+            ];
 
-                // Render buttons
-                container.innerHTML = buttons.map(btn => `
+            // Render buttons
+            container.innerHTML = buttons.map(btn => `
                 <button class="mobile-icon-btn ${btn.extraClass || ''}" 
                         id="${btn.id}" 
                         onclick="${btn.action}" 
@@ -17551,105 +17585,105 @@
                     ${btn.icon}
                 </button>
             `).join('');
+        }
+
+        // 2. Navigation Actions
+        function navigateToInProgressCustomers() {
+            // Return to customer list (clears selection)
+            if (typeof mobileGoBack === 'function') mobileGoBack();
+
+            // Set filter to 'construction' (In Progress) and apply
+            if (typeof setMobileStatusFilter === 'function') {
+                setMobileStatusFilter('construction');
+            } else {
+                console.warn('setMobileStatusFilter function not found');
             }
+        }
 
-            // 2. Navigation Actions
-            function navigateToInProgressCustomers() {
-                // Return to customer list (clears selection)
-                if (typeof mobileGoBack === 'function') mobileGoBack();
-
-                // Set filter to 'construction' (In Progress) and apply
-                if (typeof setMobileStatusFilter === 'function') {
-                    setMobileStatusFilter('construction');
-                } else {
-                    console.warn('setMobileStatusFilter function not found');
-                }
+        function navigateToChecklist() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
             }
-
-            function navigateToChecklist() {
-                if (!currentCustomerId) {
-                    showToast('고객을 먼저 선택해주세요', 'warning');
-                    return;
-                }
-                showCustomerTab('checklist');
-                if (typeof mobileGoToPanel === 'function') {
-                    mobileGoToPanel('panel-checklist');
-                }
+            showCustomerTab('checklist');
+            if (typeof mobileGoToPanel === 'function') {
+                mobileGoToPanel('panel-checklist');
             }
+        }
 
-            function navigateToCustomerInfo() {
-                if (!currentCustomerId) {
-                    showToast('고객을 먼저 선택해주세요', 'warning');
-                    return;
-                }
-                if (typeof mobileGoToPanel === 'function') {
-                    mobileGoToPanel('panel-customer-info');
-                }
+        function navigateToCustomerInfo() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
             }
+            if (typeof mobileGoToPanel === 'function') {
+                mobileGoToPanel('panel-customer-info');
+            }
+        }
 
-            function updateMobileCustomerInfo(customer) {
-                if (!customer) return;
+        function updateMobileCustomerInfo(customer) {
+            if (!customer) return;
 
-                console.log('[Mobile] Updating customer info:', customer);
+            console.log('[Mobile] Updating customer info:', customer);
 
-                // 모든 customer-field 요소를 업데이트
-                const fields = document.querySelectorAll('#panel-customer-info .customer-field[data-field]');
-                fields.forEach(field => {
-                    const fieldName = field.getAttribute('data-field');
-                    let value = customer[fieldName] || '-';
+            // 모든 customer-field 요소를 업데이트
+            const fields = document.querySelectorAll('#panel-customer-info .customer-field[data-field]');
+            fields.forEach(field => {
+                const fieldName = field.getAttribute('data-field');
+                let value = customer[fieldName] || '-';
 
-                    // 전화번호는 tel: 링크로 표시
-                    if (fieldName === 'clientPhone' || fieldName === 'spousePhone') {
-                        if (value && value !== '-') {
-                            field.innerHTML = `<a href="tel:${value}" style="color:#0071e3; text-decoration:none;">${value}</a>`;
-                        } else {
-                            field.textContent = '-';
-                        }
+                // 전화번호는 tel: 링크로 표시
+                if (fieldName === 'clientPhone' || fieldName === 'spousePhone') {
+                    if (value && value !== '-') {
+                        field.innerHTML = `<a href="tel:${value}" style="color:#0071e3; text-decoration:none;">${value}</a>`;
                     } else {
-                        field.textContent = value;
+                        field.textContent = '-';
                     }
-                });
+                } else {
+                    field.textContent = value;
+                }
+            });
 
-                console.log('[Mobile] Customer info updated successfully');
+            console.log('[Mobile] Customer info updated successfully');
+        }
+
+        // 3. Toast UI Enhancement (Faster Disappear)
+        // Overwrite existing showToast to ensure timing behavior
+        window.showToast = function (message, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+
+            // Icon Logic
+            const icon = document.getElementById('toastIcon');
+            if (icon) {
+                if (type === 'success') icon.innerText = '✓';
+                else if (type === 'error') icon.innerText = '✕';
+                else if (type === 'warning') icon.innerText = '!';
+                else icon.innerText = 'ℹ';
             }
 
-            // 3. Toast UI Enhancement (Faster Disappear)
-            // Overwrite existing showToast to ensure timing behavior
-            winwToast = function (message, type = 'info') {
-                const toast = document.getElementById('toast');
-                if (!toast) return;
+            document.getElementById('toastMessage').innerText = message;
 
-                // Icon Logic
-                const icon = document.getElementById('toastIcon');
-                if (icon) {
-                    if (type === 'success') icon.innerText = '✓';
-                    else if (type === 'error') icon.innerText = '✕';
-                    else if (type === 'warning') icon.innerText = '!';
-                    else icon.innerText = 'ℹ';
-                }
+            // Apply Colors
+            if (type === 'success') toast.style.backgroundColor = '#34c759';
+            else if (type === 'error') toast.style.backgroundColor = '#ff3b30';
+            else if (type === 'warning') toast.style.backgroundColor = '#ff9500';
+            else toast.style.backgroundColor = '#333';
 
-                document.getElementById('toastMessage').innerText = message;
+            // Show
+            toast.classList.add('show');
 
-                // Apply Colors
-                if (type === 'success') toast.style.backgroundColor = '#34c759';
-                else if (type === 'error') toast.style.backgroundColor = '#ff3b30';
-                else if (type === 'warning') toast.style.backgroundColor = '#ff9500';
-                else toast.style.backgroundColor = '#333';
+            // Clear Previous Timeout
+            if (window.toastTimer) clearTimeout(window.toastTimer);
 
-                // Show
-                toast.classList.add('show');
+            // Hide after 1200ms (Faster than default)
+            window.toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 1500);
+        };
 
-                // Clear Previous Timeout
-                if (window.toastTimer) clearTimeout(window.toastTimer);
-
-                // Hide after 1200ms (Faster than default)
-                window.toastTimer = setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 1500);
-            };
-
-            // Initialize Header
-            document.addEventListener('DOMContentLoaded', updateMobileHeaderActions);
+        // Initialize Header
+        document.addEventListener('DOMContentLoaded', updateMobileHeaderActions);
     </script>
 </body>
 
