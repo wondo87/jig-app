@@ -2960,6 +2960,8 @@ function handleChecklistGet(e) {
 
         // 띄어쓰기 유연성 제공
         if (!sheet) sheet = spreadsheet.getSheetByName('공정별체크리스트');
+        // 영문 이름 지원 [Admin Sync]
+        if (!sheet) sheet = spreadsheet.getSheetByName('checklist');
 
         if (!sheet) {
             return ContentService.createTextOutput(JSON.stringify({
