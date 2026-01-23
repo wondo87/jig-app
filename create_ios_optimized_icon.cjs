@@ -17,15 +17,62 @@ function createIOSOptimizedIcon(size, filename) {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, size, size);
 
-    // 흰색 DJ 텍스트
-    ctx.fillStyle = '#FFFFFF';
-    // 폰트 크기: 잘리지 않으면서 꽉 차게 (85% 정도가 안전하지만, 임팩트를 위해 85% 설정)
-    ctx.font = `900 ${size * 0.85}px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial Black', Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    // 폰트 렌더링이 불안정하므로 Path(선)로 직접 그리기 방식 사용
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = size * 0.08; // 두꺼운 선 (8%)
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    // 텍스트 중앙 정렬 (약간의 시각적 보정)
-    ctx.fillText('DJ', size / 2, size / 2 + size * 0.02);
+    const padding = size * 0.2; // 여백
+    const contentWidth = size - (padding * 2);
+    const contentHeight = size * 0.5; // 글자 높이
+    const charWidth = contentWidth * 0.45; // 글자 폭
+
+    const startY = (size - contentHeight) / 2;
+    const startX = padding;
+
+    // Draw 'D' (Bauhaus Style: Vertical bar + Right Semi-Circle)
+    const letterWidth = charWidth;
+    const strokeW = size * 0.12; // Thick geometric stroke
+    ctx.lineWidth = strokeW;
+
+    // Adjust start positions to account for stroke width
+    const dX = startX + strokeW / 2;
+    const dH = contentHeight;
+
+    ctx.beginPath();
+    // Vertical Bar
+    ctx.moveTo(dX, startY);
+    ctx.lineTo(dX, startY + dH);
+    // Top Horizontal
+    ctx.moveTo(dX, startY);
+    ctx.lineTo(dX + letterWidth / 2, startY);
+    // Bottom Horizontal
+    ctx.moveTo(dX, startY + dH);
+    ctx.lineTo(dX + letterWidth / 2, startY + dH);
+    // Right Curve (Semi-circle connecting top and bottom horizontal ends)
+    // Center of arc is at (dX + letterWidth/2, startY + dH/2)
+    // Radius is dH/2
+    ctx.moveTo(dX + letterWidth / 2, startY);
+    ctx.arc(dX + letterWidth / 2, startY + dH / 2, dH / 2, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+
+    // Draw 'J' (Bauhaus Style: Long vertical descending + Left Curve)
+    const jX = startX + contentWidth - letterWidth / 2; // Align to right side
+
+    ctx.beginPath();
+    // Start from top
+    ctx.moveTo(jX, startY);
+    // Go down to where curve starts
+    const curveRadius = letterWidth / 2;
+    const straightHeight = dH - curveRadius;
+    ctx.lineTo(jX, startY + straightHeight);
+    // Curve to left
+    // Center is (jX - curveRadius, startY + straightHeight)
+    ctx.arc(jX - curveRadius, startY + straightHeight, curveRadius, 0, Math.PI / 2);
+    ctx.stroke();
+
+    console.log(`[${size}px] Drew DJ using vector paths (guaranteed visibility)`);
 
     const buffer = canvas.toBuffer('image/png');
     const filepath = path.join(iconsDir, filename);
