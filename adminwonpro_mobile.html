@@ -14916,7 +14916,7 @@
             console.log('[Checklist Load] Request started...');
 
             try {
-                const params = new URLSearchParams({ sheet: '공정별체크리스트' });
+                const params = new URLSearchParams({ sheet: 'checklist' });
                 const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
                 const result = await response.json();
 
