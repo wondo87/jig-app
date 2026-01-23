@@ -1,6 +1,10 @@
 const { createCanvas, loadImage } = require('canvas');
-
-// Image-based icon generation (using specific source file per user request)
+const fs = require('fs');
+const path = require('path');
+const iconsDir = path.join(__dirname, 'icons');
+if (!fs.existsSync(iconsDir)) {
+    fs.mkdirSync(iconsDir, { recursive: true });
+}
 async function createIOSOptimizedIcon(size, filename) {
     const canvas = createCanvas(size, size);
     const ctx = canvas.getContext('2d');
