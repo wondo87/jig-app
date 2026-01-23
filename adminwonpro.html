@@ -3671,7 +3671,7 @@
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
                         공사 스케줄</button>
                     <button class="customer-tab" onclick="showCustomerTab('checklist')" data-tab="checklist">✅
-                        공정별 체크리스트</button>
+                        공정 체크리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('as_list')" data-tab="as_list">🛠️
                         A/S 관리 리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('settlement')" data-tab="settlement">💰
@@ -4324,7 +4324,7 @@
                     </div>
                 </div>
 
-                <!-- 공정별 체크리스트 패널 -->
+                <!-- 공정 체크리스트 패널 -->
                 <div class="tab-panel" id="panel-checklist">
                     <div class="document-wrapper"
                         style="width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
@@ -4333,7 +4333,7 @@
                                 <div
                                     style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
                                     DESIGN JIG</div>
-                                <h1 style="font-size:13px;">✅ 공정별<br>체크리스트</h1>
+                                <h1>✅ 공정 체크리스트</h1>
                                 <div class="subtitle">Process Checklist</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
@@ -4407,7 +4407,7 @@
                                 </div>
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
-                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">분류
+                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">카테고리
                                         필터</label>
                                     <select id="checklistCategoryFilter" style="display:none;"></select>
                                     <!-- 호환성 유지용 hidden -->
@@ -4457,7 +4457,7 @@
                                                 진행단계</th>
                                             <th
                                                 style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 120px;">
-                                                분류</th>
+                                                카테고리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="checklistTableBody">
@@ -13142,7 +13142,7 @@
                     checklistMasterData = items.map(item => ({
                         ...item,
                         '진행단계': String(item['진행단계'] || '').trim(),
-                        '분류': String(item['분류'] || '').trim()
+                        'category': String(item['category'] || '').trim()
                     }));
 
                     // Phase 2: 업무 데이터 로컬 저장 금지
@@ -13205,7 +13205,7 @@
                 }
             });
 
-            // 필터 종속성 업데이트 (진행단계 -> 분류)
+            // 필터 종속성 업데이트 (진행단계 -> 카테고리)
             if (typeof updateCategoryOptionsBasedOnStage === 'function') {
                 updateCategoryOptionsBasedOnStage();
             }
@@ -13222,8 +13222,8 @@
             const stages = [...new Set(checklistMasterData.map(item => item.진행단계).filter(Boolean))].sort();
             initMultiSelect('checklistStageFilter', stages);
 
-            // 분류 옵션
-            const categories = [...new Set(checklistMasterData.map(item => item.분류).filter(Boolean))].sort();
+            // 카테고리 옵션
+            const categories = [...new Set(checklistMasterData.map(item => item.category).filter(Boolean))].sort();
             initMultiSelect('checklistCategoryFilter', categories);
         }
 
@@ -13258,9 +13258,9 @@
                 if (!stageFilter.includes('all')) {
                     if (!stageFilter.includes(item.진행단계 || '')) return false;
                 }
-                // 분류 필터
+                // 카테고리 필터
                 if (!categoryFilter.includes('all')) {
-                    if (!categoryFilter.includes(item.분류 || '')) return false;
+                    if (!categoryFilter.includes(item.category || '')) return false;
                 }
 
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
@@ -13270,7 +13270,7 @@
             // 테이블 렌더링
             const tbody = document.getElementById('checklistTableBody');
 
-            // 분류별 노션 색상 매핑
+            // 카테고리별 노션 색상 매핑
             function getCategoryColor(category) {
                 if (!category) return { bg: '#F1F1EF', text: '#37352F' }; // 기본
 
@@ -13300,7 +13300,7 @@
                 if (c.includes('가구') || c.includes('싱크') || c.includes('주방')) return palette[6]; // Purple
                 if (c.includes('공통') || c.includes('가설') || c.includes('준공') || c.includes('마감')) return palette[0]; // Gray
 
-                // 그 외: 문자열 해시로 자동 색상 선택 (모든 분류에 색상 적용 보장)
+                // 그 외: 문자열 해시로 자동 색상 선택 (모든 카테고리에 색상 적용 보장)
                 let hash = 0;
                 for (let i = 0; i < c.length; i++) {
                     hash = c.charCodeAt(i) + ((hash << 5) - hash);
@@ -13311,7 +13311,7 @@
 
             tbody.innerHTML = filteredData.map((item, index) => {
                 const isChecked = customerChecklistData[item.번호] || false;
-                const categoryColor = getCategoryColor(item.분류);
+                const categoryColor = getCategoryColor(item.category);
                 return `
                     <tr draggable="true" 
                         ondragstart="handleChecklistDragStart(event, ${index})" 
@@ -13345,7 +13345,7 @@
                         </td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
                             <span style="background: ${categoryColor.bg}; color: ${categoryColor.text}; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                                ${item.분류 || ''}
+                                ${item.category || ''}
                             </span>
                         </td>
                     </tr>
@@ -13441,7 +13441,7 @@
 
             checklistFilteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.분류 || '')) return false;
+                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
@@ -13510,7 +13510,7 @@
 
             const filteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.분류 || '')) return false;
+                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
@@ -13720,7 +13720,7 @@
                                     항목: item.항목 || '',
                                     내용: item.내용 || '',
                                     진행단계: item.진행단계 || '',
-                                    분류: item.분류 || '',
+                                    카테고리: item.category || '',
                                     비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
                                     isChecked: isChecked
                                 };
@@ -13784,9 +13784,9 @@
                         if (!stageFilter.includes('all')) {
                             if (!stageFilter.includes(item.진행단계 || '')) return false;
                         }
-                        // 분류 필터
+                        // 카테고리 필터
                         if (!categoryFilter.includes('all')) {
-                            if (!categoryFilter.includes(item.분류 || '')) return false;
+                            if (!categoryFilter.includes(item.category || '')) return false;
                         }
                         // 검색 필터
                         if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
@@ -13806,7 +13806,7 @@
                                 항목: item.항목 || '',
                                 내용: item.내용 || '',
                                 진행단계: item.진행단계 || '',
-                                분류: item.분류 || '',
+                                카테고리: item.category || '',
                                 // 체크된 항목은 비고 앞에 [완료] 표시
                                 비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
                                 isChecked: isChecked
@@ -14367,7 +14367,7 @@
 
             updateMultiSelectLabel(elementId);
 
-            // [추가] 진행단계 필터가 변경되면 분류 필터 옵션을 갱신 (Dependent Dropdown)
+            // [추가] 진행단계 필터가 변경되면 카테고리 필터 옵션을 갱신 (Dependent Dropdown)
             if (elementId === 'checklistStageFilter') {
                 updateCategoryOptionsBasedOnStage();
             }
@@ -14375,7 +14375,7 @@
             renderChecklistItems();
         }
 
-        // [추가] 진행단계 선택에 따른 분류 필터 옵션 갱신
+        // [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
         function updateCategoryOptionsBasedOnStage() {
             const selectedStages = multiSelectState['checklistStageFilter'];
             console.log('[Filter Logic] Selected Stages:', selectedStages);
@@ -14388,10 +14388,10 @@
             let validCategories = [];
 
             if (selectedStages.includes('all') || selectedStages.length === 0) {
-                // 전체 선택 시 -> 모든 분류 표시
-                validCategories = [...new Set(checklistMasterData.map(item => (item.분류 || '').trim()).filter(Boolean))].sort();
+                // 전체 선택 시 -> 모든 카테고리 표시
+                validCategories = [...new Set(checklistMasterData.map(item => (item.category || '').trim()).filter(Boolean))].sort();
             } else {
-                // 특정 단계 선택 시 -> 해당 단계에 포함된 분류만 추출
+                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
                 const filteredItems = checklistMasterData.filter(item => {
                     const itemStage = (item.진행단계 || '').trim();
                     // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
@@ -14399,12 +14399,12 @@
                     // But here we just used item.진행단계 to build options, so it should match.
                     return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
                 });
-                validCategories = [...new Set(filteredItems.map(item => (item.분류 || '').trim()).filter(Boolean))].sort();
+                validCategories = [...new Set(filteredItems.map(item => (item.category || '').trim()).filter(Boolean))].sort();
             }
 
             console.log('[Filter Logic] Valid Categories:', validCategories);
 
-            // 기존 선택된 분류 중 유효하지 않은 것은 제거 (UX 개선)
+            // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
             const currentCategoryState = multiSelectState['checklistCategoryFilter'];
 
             if (!currentCategoryState.includes('all')) {
@@ -14416,7 +14416,7 @@
                 // 'all' is always valid if validCategories has items.
             }
 
-            // 분류 필터 옵션 재생성
+            // 카테고리 필터 옵션 재생성
             initMultiSelect('checklistCategoryFilter', validCategories);
         }
 
