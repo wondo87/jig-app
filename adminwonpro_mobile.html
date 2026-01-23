@@ -15549,10 +15549,16 @@
             const inProgress = total - completed;
             const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-            document.getElementById('checkl         ount').textContent = total;
-            document.getElementById('checklistCompletedCount').textContent = completed;
-            document.getElementById('checklistInProgressCount').textContent = inProgress;
-            document.getElementById('checklistProgressRate').textContent = rate + '%';
+            const totalEl = document.getElementById('checklistTotalCount');
+            if (totalEl) totalEl.textContent = total;
+            const completedEl = document.getElementById('checklistCompletedCount');
+            if (completedEl) completedEl.textContent = completed;
+
+            const inProgressEl = document.getElementById('checklistInProgressCount');
+            if (inProgressEl) inProgressEl.textContent = inProgress;
+
+            const rateEl = document.getElementById('checklistProgressRate');
+            if (rateEl) rateEl.textContent = rate + '%';
         }
 
         // 체크리스트 인쇄
