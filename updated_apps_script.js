@@ -276,7 +276,7 @@ function doGet(e) {
         }
 
         // [추가] 공정별 체크리스트 요청
-        if (sheetParam === '공정별체크리스트' || sheetParam === '공정별_체크리스트' || sheetParam === '공정별 체크리스트') {
+        if (sheetParam === '공정별체크리스트' || sheetParam === '공정별_체크리스트' || sheetParam === '공정별 체크리스트' || sheetParam === 'checklist') {
             return handleChecklistGet(e);
         }
 
