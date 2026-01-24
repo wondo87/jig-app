@@ -227,7 +227,6 @@
             color: #fff;
             font-size: 16px;
             font-weight: 600;
-            white-space: nowrap;
         }
 
         .logo-text span {
@@ -318,11 +317,6 @@
         .admin-login-btn:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* 데스크톱: 모바일 버튼 숨김 */
-        .mobile-status-filter-buttons {
-            display: none;
         }
 
         /* 모바일 PWA 최적화 */
@@ -546,15 +540,6 @@
             /* ===== MOBILE UI OVERRIDES (Priority) ===== */
             @media (max-width: 768px) {
 
-                /* 체크리스트: 모바일 버튼 표시, 데스크톱 필터 숨김 */
-                .mobile-status-filter-buttons {
-                    display: block !important;
-                }
-
-                .desktop-checklist-filters {
-                    display: none !important;
-                }
-
                 /* 공사 스케줄: 불필요한 요소 숨김 */
                 #scheduleNoticeBlock {
                     display: none !important;
@@ -590,71 +575,19 @@
                     display: block !important;
                 }
 
-
+                #headerMobileInfo {
+                    display: flex !important;
+                }
 
                 #headerMobileTitle {
                     display: block !important;
                 }
 
-                /* [Critical Fix] Header below global header */
+                /* [Critical Fix] Ensure header layout is flex to put title on right */
                 #headerMobileInfo {
-                    display: none !important;
-                    /* Hidden by default */
-                    align-items: flex-end !important;
-                    /* Bottom alignment */
+                    display: flex !important;
+                    align-items: center !important;
                     justify-content: space-between !important;
-                    height: 54px !important;
-                    padding: 0 16px 10px 16px !important;
-                    /* Bottom padding for baseline align */
-                    background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
-                    width: 100% !important;
-                    position: fixed;
-                    top: 54px;
-                    left: 0;
-                    z-index: 10002;
-                    /* Higher than other elements */
-                    box-sizing: border-box;
-                    flex-wrap: nowrap !important;
-                    /* Prevent wrapping */
-                }
-
-                .header-left-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                    justify-content: flex-end;
-                }
-
-                .header-text {
-                    font-size: 10px !important;
-                    font-weight: 400 !important;
-                    color: #fff;
-                    line-height: 1.2;
-                }
-
-                .header-right-label,
-                #headerMobileTitle {
-                    font-size: 10px !important;
-                    font-weight: 400 !important;
-                    color: #fff;
-                    line-height: 1.2;
-                    /* Aligns with the bottom line of the left group */
-                }
-
-                /* Hide Panel Headers (Consolidated into Main Header) */
-                #panel-checklist .doc-header,
-                #panel-schedule .doc-header,
-                #panel-info .doc-header {
-                    display: none !important;
-                }
-
-                /* Adjust Content Padding (Header is 54px) */
-                #panel-checklist .doc-content,
-                #panel-schedule .doc-content,
-                #panel-info .doc-content {
-                    padding-top: 10px !important;
-                    /* Slight gap */
-                    margin-top: 54px !important;
                 }
 
                 #panel-schedule .data-table thead,
@@ -752,24 +685,6 @@
                     /* 54px (black header) + 40px (blue header) = 94px */
                 }
 
-                /* 체크리스트 패널만 여백 최소화 - 10px만 */
-                #panel-checklist {
-                    margin-top: 10px !important;
-                    padding-top: 0 !important;
-                }
-
-                /* 공사 스케줄 패널도 여백 최소화 - 10px만 */
-                #panel-schedule {
-                    margin-top: 10px !important;
-                    padding-top: 0 !important;
-                }
-
-                /* 고객정보 탭도 여백 최소화 - 10px만 */
-                #panel-info {
-                    margin-top: 10px !important;
-                    padding-top: 0 !important;
-                }
-
                 /* Mobile Filter Bar - Full Width */
                 /* Duplicate .mobile-filter-bar removed */
 
@@ -801,20 +716,6 @@
                 #panel-checklist .doc-content {
                     padding-top: 0 !important;
                     /* No padding - content starts immediately after fixed header */
-                    padding-bottom: 100px !important;
-                    padding-left: 0 !important;
-                    padding-right: 0 !important;
-                }
-
-                #panel-schedule .doc-content {
-                    padding-top: 0 !important;
-                    padding-bottom: 100px !important;
-                    padding-left: 0 !important;
-                    padding-right: 0 !important;
-                }
-
-                #panel-info .doc-content {
-                    padding-top: 0 !important;
                     padding-bottom: 100px !important;
                     padding-left: 0 !important;
                     padding-right: 0 !important;
@@ -853,48 +754,20 @@
                 display: none !important;
             }
 
-            /* [Strict Hide] Stats Box - Mobile Only */
+            /* [Strict Hide] Stats Box */
             #panel-checklist .checklist-stats,
-            .checklist-stats,
-            div.checklist-stats {
+            .checklist-stats {
                 display: none !important;
                 height: 0 !important;
-                max-height: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-            }
-
-            /* [모바일] 체크리스트 document-wrapper 배경 제거 */
-            #panel-checklist .document-wrapper {
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            /* [모바일] 고객정보 document-wrapper 배경 제거 */
-            #panel-info .document-wrapper {
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            /* [모바일] 공사 스케줄 document-wrapper 배경 제거 */
-            #panel-schedule .document-wrapper {
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
             }
 
             /* [모바일] 모든 패널 헤더 검정색 상단 바로 아래 고정 */
             #panel-checklist .doc-header,
             #panel-schedule .doc-header,
-            #panel-info .doc-header {
+            #panel-customer-info .doc-header {
                 display: block !important;
                 position: fixed !important;
                 top: 54px !important;
@@ -918,7 +791,7 @@
             /* 모바일 헤더 내부 텍스트 크기 통일 */
             #panel-checklist .doc-header h1,
             #panel-schedule .doc-header h1,
-            #panel-info .doc-header h1 {
+            #panel-customer-info .doc-header h1 {
                 font-size: 15px !important;
                 margin: 0 !important;
                 line-height: 1 !important;
@@ -928,20 +801,20 @@
             /* 헤더 내 모든 불필요한 요소 숨김 */
             #panel-checklist .doc-header button,
             #panel-schedule .doc-header button,
-            #panel-info .doc-header button,
+            #panel-customer-info .doc-header button,
             #panel-checklist .doc-header .subtitle,
             #panel-schedule .doc-header .subtitle,
-            #panel-info .doc-header .subtitle,
+            #panel-customer-info .doc-header .subtitle,
             #panel-checklist .doc-header div[style*="DESIGN JIG"],
             #panel-schedule .doc-header div[style*="DESIGN JIG"],
-            #panel-info .doc-header div[style*="DESIGN JIG"] {
+            #panel-customer-info .doc-header div[style*="DESIGN JIG"] {
                 display: none !important;
             }
 
             /* 헤더 고정으로 인한 컨텐츠 영역 padding 추가 */
             #panel-checklist .doc-content,
             #panel-schedule .doc-content,
-            #panel-info .doc-content {
+            #panel-customer-info .doc-content {
                 padding-top: 0 !important;
                 /* No padding - content starts immediately after fixed header */
             }
@@ -983,11 +856,11 @@
             }
 
             /* 3. Push Content Down */
-            #panel-checklist .doc-content,
-            #checklistDocContent {
-                padding: 10px !important;
-                padding-top: 10px !important;
-                /* Minimal padding - content starts close to header */
+            #panel-checklist .doc-content {
+                padding-top: 0 !important;
+                /* No padding - content starts immediately after fixed header */
+                padding-left: 10px !important;
+                padding-right: 10px !important;
                 padding-bottom: 80px !important;
             }
 
@@ -998,11 +871,9 @@
                 width: 100%;
             }
 
-            /* Show Mobile Dropdowns */
+            /* Hide Static Dropdowns */
             .mobile-checklist-controls {
-                display: flex !important;
-                gap: 8px !important;
-                margin-bottom: 8px !important;
+                display: none !important;
             }
 
             /* Ensure the mobile header title (right side) is visible and larger */
@@ -1125,22 +996,6 @@
                 border-radius: 4px;
             }
 
-            /* 어제/오늘/내일 색상 */
-            .mobile-card.is-yesterday {
-                background: #f5f5f7;
-                border-left: 4px solid #86868b;
-            }
-
-            .mobile-card.is-today {
-                background: #fff5e6;
-                border-left: 4px solid #ff9500;
-            }
-
-            .mobile-card.is-tomorrow {
-                background: #e8f4fd;
-                border-left: 4px solid #007aff;
-            }
-
             .mobile-card-title {
                 font-size: 15px;
                 font-weight: 700;
@@ -1231,7 +1086,9 @@
             padding: 0;
         }
 
-
+        #headerMobileInfo {
+            display: block !important;
+        }
 
         /* 2. Hide Redundant Detail Card */
         .customer-header-card {
@@ -1434,17 +1291,6 @@
         .mobile-icon-btn:active {
             background: rgba(255, 255, 255, 0.3);
             transform: scale(0.95);
-        }
-
-        /* [New] Active Toolbar Button */
-        .mobile-icon-btn.active {
-            color: #0071e3 !important;
-            font-weight: 700;
-            background: rgba(0, 113, 227, 0.1);
-        }
-
-        .mobile-icon-btn.active svg {
-            stroke-width: 2.5px;
         }
 
         .mobile-icon-btn svg {
@@ -1676,22 +1522,9 @@
             display: flex !important;
         }
 
-        /* 모바일에서 body 하단 여백 (툴바 공간) + 상단 여백 (헤더 2개) */
+        /* 모바일에서 body 하단 여백 (툴바 공간) */
         body.mobile-customer-selected {
             padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
-            padding-top: 118px !important;
-            /* 54px(Black) + 54px(Blue) + 10px(Gap) */
-        }
-
-        /* [New] Login Mode: Hide Headers */
-        body.login-active .main-header,
-        body.login-active #headerMobileInfo,
-        body.login-active .customer-header-bar {
-            display: none !important;
-        }
-
-        body.login-active {
-            padding-top: 0 !important;
         }
 
         /* 관리자 모달 */
@@ -4595,8 +4428,8 @@
         <div class="logo">
             <a href="javascript:void(0)" onclick="location.reload();"
                 style="display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;">
-                <img src="source_icon.png" alt="DJ" style="width:40px;height:40px;border-radius:8px;">
-                <div class="logo-text">DESIGN JIG</div>
+                <div class="logo-icon">DJ</div>
+                <div class="logo-text">디자인지그 <span>통합 관리 시스템</span></div>
             </a>
         </div>
         <div class="header-actions">
@@ -4622,9 +4455,6 @@
             <!-- Icons will be rendered by updateMobileHeaderActions() -->
         </div>
     </header>
-
-    <!-- [New] Mobile Blue Header (Overlay) -->
-    <div id="headerMobileInfo" style="display:none;"></div>
 
     <!-- 관리자 로그인 모달 -->
     <div class="admin-modal" id="adminModal">
@@ -4737,8 +4567,6 @@
                     <!-- 휴지통 (메인 관리자용) - 상단 이동 -->
                     <button class="btn btn-sm" id="trashBtnHeader" onclick="showTrashModal()" title="휴지통"
                         style="background:#ff3b30; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">🗑️</button>
-                    <button class="btn btn-sm" onclick="saveCustomers();" title="클라우드에 저장하기"
-                        style="background:#007aff; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">☁️↑</button>
                     <button class="btn btn-sm" onclick="syncFromCloud();" title="클라우드에서 불러오기"
                         style="background:#34c759; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">☁️↓</button>
                     <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 신규</button>
@@ -5006,7 +4834,20 @@
                                 class="lock-toggle-btn unlocked">🔓 열림</button>
                             <span id="headerCreatedBy" style="font-size:10px;color:#86868b;">📝 -</span>
                         </div>
-
+                        <!-- [New] Mobile-only info block -->
+                        <div id="headerMobileInfo"
+                            style="display:none; margin-top:4px; opacity: 1.0; align-items: center; justify-content: space-between;">
+                            <div
+                                style="font-size:11px; color:#ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                                📍 <span id="headerSiteAddress">현장주소</span> | 📞 <span id="headerClientPhone">연락처</span>
+                                |
+                                📅 <span id="headerPeriod">공사기간</span>
+                            </div>
+                            <!-- [New] Page Title (Right) -->
+                            <div id="headerMobileTitle"
+                                style="font-weight:700; font-size:12px; color:#fff; margin-left:8px; white-space:nowrap; display:none;">
+                            </div>
+                        </div>
                     </div>
                     <div class="customer-header-right">
                         <select id="customerStatus" onchange="updateStatus()">
@@ -5724,15 +5565,6 @@
                                     🔄 DB 불러오기
                                 </button>
 
-                                <button class="btn btn-secondary btn-sm no-print" onclick="showAddChecklistItemModal()"
-                                    style="background: rgba(52,199,89,0.9); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
-                                    ➕ 항목 추가
-                                </button>
-
-                                <button class="btn btn-primary btn-sm no-print" onclick="saveCustomers()"
-                                    style="background: rgba(0,122,255,0.9); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
-                                    ☁️ 저장
-                                </button>
 
                                 <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
@@ -5749,29 +5581,29 @@
                                     인쇄/PDF</button>
                             </div>
                         </div>
-                        <div class="doc-content" style="padding:30px;" id="checklistDocContent">
+                        <div class="doc-content" style="padding:30px;">
                             <!-- [New] Mobile Checklist Controls (Status | Category | Search) -->
-                            <div class="mobile-checklist-controls" style="display:none; margin-bottom: 0;">
+                            <div class="mobile-checklist-controls" style="display:none;">
                                 <select id="mobileStageFilter" class="mobile-filter-select"
-                                    onchange="renderChecklistItems()"
-                                    style="flex: 1; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 15px; background: #fff; color: #1d1d1f;">
+                                    onchange="renderChecklistItems()">
                                     <option value="all">전체 단계</option>
                                     <!-- 실제 진행단계 옵션은 동적으로 추가됨 -->
                                 </select>
+                                <div style="width:1px; height:16px; background:#d2d2d7;"></div>
                                 <select id="mobileCategoryFilter" class="mobile-filter-select"
-                                    onchange="renderChecklistItems()"
-                                    style="flex: 1; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 15px; background: #fff; color: #1d1d1f;">
+                                    onchange="renderChecklistItems()">
                                     <option value="">카테고리 ▾</option>
                                     <option value="디자인 상담 및 설계">디자인 상담 및 설계</option>
                                     <!-- Will be populated dynamically -->
                                 </select>
-                                <button id="mobileSearchToggle" class="mobile-search-btn" onclick="toggleMobileSearch()"
-                                    style="padding: 12px 20px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 18px; background: #fff; cursor: pointer;">🔍</button>
+                                <div style="width:1px; height:16px; background:#d2d2d7;"></div>
+                                <button id="mobileSearchToggle" class="mobile-search-btn"
+                                    onclick="toggleMobileSearch()">🔍</button>
                             </div>
                             <!-- Mobile Search Input Overlay -->
-                            <div id="mobileSearchInputWrapper" style="display:none; margin-bottom:0;">
+                            <div id="mobileSearchInputWrapper" style="display:none; margin-bottom:12px;">
                                 <input type="text" id="mobileSearchInput" placeholder="항목, 내용, 비고로 검색..."
-                                    style="width:100%; padding:12px; border:1px solid #e5e5ea; border-radius:12px; font-size:15px;"
+                                    style="width:100%; padding:10px; border:1px solid #d2d2d7; border-radius:8px; font-size:14px;"
                                     oninput="renderChecklistItems()">
                             </div>
 
@@ -5801,29 +5633,8 @@
                                 </div>
                             </div>
 
-                            <!-- [모바일 전용] 완료/미완료 필터 버튼 -->
-                            <div class="mobile-status-filter-buttons" style="margin-top: 0; margin-bottom: 16px;">
-                                <div style="display: flex; gap: 10px;">
-                                    <button onclick="setMobileChecklistFilter('all')" id="btnMobileStatusAll"
-                                        style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #1d1d1f; background: #1d1d1f; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                                        전체
-                                    </button>
-                                    <button onclick="setMobileChecklistFilter('completed')"
-                                        id="btnMobileStatusCompleted"
-                                        style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #e5e5ea; background: #fff; color: #86868b; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                                        완료
-                                    </button>
-                                    <button onclick="setMobileChecklistFilter('incomplete')"
-                                        id="btnMobileStatusIncomplete"
-                                        style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #e5e5ea; background: #fff; color: #86868b; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                                        미완료
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- 체크리스트 필터 (데스크톱 전용) -->
-                            <div class="desktop-checklist-filters"
-                                style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <!-- 체크리스트 필터 -->
+                            <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
                                         style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계
@@ -6093,7 +5904,12 @@
                 <div class="tab-panel" id="panel-customer-info">
                     <div class="document-wrapper"
                         style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
-                        <!-- Internal Header Removed for Global Blue Header Integration -->
+                        <div class="doc-header"
+                            style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: white;">
+                            <div>
+                                <h1 style="margin: 0; font-size: 15px; font-weight: 600; color: white;">고객 정보</h1>
+                            </div>
+                        </div>
 
                         <!-- 모바일 고객 정보 (블럭 형태) -->
                         <div class="doc-content" style="padding: 16px; background: #f5f5f7;">
@@ -8657,9 +8473,9 @@
             const headerTitleEl = document.getElementById('headerMobileTitle');
             if (headerTitleEl) {
                 let titleText = '';
-                if (tabId === 'checklist') titleText = 'Checklist';
-                else if (tabId === 'schedule') titleText = 'Schedule';
-                else if (tabId === 'customer') titleText = 'Customer Information';
+                if (tabId === 'checklist') titleText = '공정별 체크리스트';
+                else if (tabId === 'schedule') titleText = '공사 스케줄';
+                else if (tabId === 'customer') titleText = '고객 정보';
                 else if (tabId === 'stats') titleText = '현황 및 통계';
                 else if (tabId === 'expenses') titleText = '비용 관리';
                 else if (tabId === 'files') titleText = '파일함';
@@ -8825,14 +8641,12 @@
             // [Guard] Async Race Protection
             if (targetId && targetId !== currentCustomerId) return;
 
-            // [데이터 로드] currentData.schedules 사용
-            // Apps Script 연동은 고객 데이터 로드 시 함께 로드됨
-            if (currentData && currentData.schedules && currentData.schedules.length > 0) {
-                console.log('[Schedule Load] Loading from currentData.schedules:', currentData.schedules.length, 'items');
+            // Notion 통합 제거됨
+
+            if (currentData.schedules && currentData.schedules.length > 0) {
                 scheduleRows = [...currentData.schedules];
             } else {
                 // [수정] 신규 고객은 빈 스케줄로 시작 (템플릿 자동 로드 X)
-                console.log('[Schedule Load] No schedules found');
                 scheduleRows = [];
             }
 
@@ -8976,32 +8790,8 @@
                             // "State kinds: ✅ Complete". If not complete, show nothing (default incomplete)
                             const statusBadge = isComplete ? `<div class="mobile-chip chip-green">✅ 완료</div>` : ``;
 
-                            // 어제/오늘/내일 판정 로직
-                            let dateClass = '';
-                            if (row.start) {
-                                const startDate = new Date(row.start); startDate.setHours(0, 0, 0, 0);
-                                const endDate = row.end ? new Date(row.end) : null;
-                                if (endDate) endDate.setHours(0, 0, 0, 0);
-
-                                const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-                                const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
-
-                                // 기간일정: 오늘이 포함되는지 확인
-                                if (endDate && startDate <= now && now <= endDate) {
-                                    dateClass = 'is-today';
-                                }
-                                // 단일일정 또는 기간의 시작일 기준
-                                else if (startDate.getTime() === now.getTime()) {
-                                    dateClass = 'is-today';
-                                } else if (startDate.getTime() === yesterday.getTime()) {
-                                    dateClass = 'is-yesterday';
-                                } else if (startDate.getTime() === tomorrow.getTime()) {
-                                    dateClass = 'is-tomorrow';
-                                }
-                            }
-
                             return `
-                            <div class="mobile-card ${dateClass}">
+                            <div class="mobile-card">
                                 <div class="mobile-card-row" style="margin-bottom: 2px;">
                                     <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
                                         ${statusBadge}
@@ -9009,7 +8799,7 @@
                                     </div>
                                     <div class="mobile-date-text">${dateStr}</div>
                                 </div>
-
+                                
                                 <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
                                     ${row.inCharge ? `<div style="font-size:12px; color:#555;">👤 ${row.inCharge}</div>` : ''}
                                     ${row.memo ? `<div style="font-size:12px; color:#86868b; overflow:hidden; text-overflow:ellipsis;">✏️ ${row.memo}</div>` : ''}
@@ -10775,51 +10565,8 @@
             }
         }
 
-        async function saveCustomers() {
-            // Phase 2: 클라우드로 저장 (Source of Truth: Google Sheets)
-            if (!currentData || !currentData.customerId) {
-                console.log('[Save] No customer selected, skipping save');
-                showToast('고객을 먼저 선택해주세요', 'warning');
-                return;
-            }
-
-            console.log('[Save] Starting save for customer:', currentData.customerId);
-            console.log('[Save] checklistData keys:', Object.keys(currentData.checklistData || {}));
-
-            try {
-                const payload = {
-                    action: 'update_customer',
-                    ...currentData
-                };
-
-                console.log('[Save] Sending payload...');
-
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                const res = await response.json();
-                console.log('[Save] Response:', res);
-
-                if (res.result === 'success') {
-                    console.log('[Save] Customer data saved successfully');
-                    showToast('저장되었습니다', 'success');
-
-                    // 로컬 customers 배열 업데이트
-                    const idx = customers.findIndex(c => c.customerId === currentData.customerId);
-                    if (idx !== -1) {
-                        customers[idx] = { ...currentData };
-                    }
-                } else {
-                    console.error('[Save] Failed:', res.message);
-                    showToast('저장 실패: ' + (res.message || 'Unknown error'), 'error');
-                }
-            } catch (error) {
-                console.error('[Save] Error:', error);
-                showToast('저장 오류: ' + error.message, 'error');
-            }
+        function saveCustomers() {
+            // Phase 2: 업무 데이터(고객) 로컬스토리지 저장 중단 (Source of Truth: Google Sheets)
         }
 
         async function newCustomer() {
@@ -11411,7 +11158,6 @@
 
         // 고객 목록 아이템 렌더링 (공통)
         function renderCustomerItems(container, items) {
-            // 2026-01-24 10:30 - Force Vercel redeploy
             console.log(`🎨 [Mobile] renderCustomerItems: 렌더링할 아이템 수 = ${items.length}`);
             if (items.length === 0) {
                 container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
@@ -15202,131 +14948,66 @@
         let checklistMasterData = [];
         // Phase 2: 업무 데이터 로컬 저장 금지
 
-        // 체크리스트 데이터 불러오기 (현재 고객의 저장된 데이터만)
+        // 체크리스트 마스터 데이터 불러오기 (Google Sheet)
         async function syncChecklistFromCloud() {
+            // Phase 2: 초기 동기화 게이트를 위해 로그인 체크 생략 (GET 전용)
+            // if (!isLoggedIn()) { ... }
+
             const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
-            const originalHTML = btn ? btn.innerHTML : '🔄 불러오기';
+            const originalHTML = btn ? btn.innerHTML : '🔄 DB 불러오기';
 
             if (btn) {
                 btn.innerHTML = '<span class="loading-spinner"></span> 불러오는 중...';
                 btn.disabled = true;
             }
 
-            const hasCustomer = currentData && currentData.customerId;
-            console.log('[Checklist Load] Loading data, customer:', hasCustomer ? currentData.customerId : 'none (initial sync)');
+            console.log('[Checklist Load] Request started...');
 
             try {
-                // Step 1: 마스터 체크리스트 데이터 로드 (전체 DB 항목)
-                console.log('[Checklist Load] Step 1: Loading master checklist data...');
-                const masterParams = new URLSearchParams({ sheet: 'checklist' });
-                const masterResponse = await fetch(`${CUSTOMER_SYNC_URL}?${masterParams}`);
-                const masterResult = await masterResponse.json();
+                const params = new URLSearchParams({ sheet: 'checklist' });
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+                const result = await response.json();
 
-                if (masterResult.success === true || masterResult.result === 'success' || Array.isArray(masterResult) || (masterResult.data && Array.isArray(masterResult.data))) {
+                console.log('[Checklist Load] Response:', result);
+
+                if (result.success === true || result.result === 'success' || Array.isArray(result) || (result.data && Array.isArray(result.data))) {
                     let items = [];
-                    if (Array.isArray(masterResult)) items = masterResult;
-                    else if (masterResult.data) items = masterResult.data;
-                    else if (masterResult.items) items = masterResult.items;
+                    if (Array.isArray(result)) items = result;
+                    else if (result.data) items = result.data;
+                    else if (result.items) items = result.items;
 
+                    // [Fix] Empty checklist is a valid state, not an error
+                    if (!items || items.length === 0) {
+                        console.warn('⚠️ [Checklist Load] 체크리스트 데이터가 비어있습니다. (0건)');
+                        checklistMasterData = [];
+                        return true; // Empty is valid, sync succeeded
+                    }
+
+                    // [Fix] 데이터 공백 제거 (필터링 정확도 향상)
                     checklistMasterData = items.map(item => ({
                         ...item,
                         '진행단계': String(item['진행단계'] || '').trim(),
                         '카테고리': String(item['카테고리'] || item['분류'] || '').trim()
                     }));
 
-                    console.log(`✅ [Checklist Load] Loaded ${items.length} master items.`);
+                    // Phase 2: 업무 데이터 로컬 저장 금지
+
+                    console.log(`✅ [Checklist Load] Loaded ${items.length} items.`);
+
+                    // 필터 옵션 업데이트
+                    updateChecklistFilters();
+
+                    // 테이블 렌더링
+                    renderChecklistItems();
+
+                    showToast(`체크리스트 불러오기 완료 (${items.length}건)`, 'success');
+                    return true;
                 } else {
-                    console.warn('⚠️ [Checklist Load] Master data not found, using empty array');
-                    checklistMasterData = [];
+                    throw new Error(result.message || '데이터를 불러올 수 없습니다');
                 }
-
-                // Step 2: 고객이 선택된 경우에만 고객의 저장된 체크리스트 상태 로드
-                if (hasCustomer) {
-                    console.log('[Checklist Load] Step 2: Loading customer saved state...');
-                    const customerId = currentData.customerId;
-                    const customerParams = new URLSearchParams({
-                        action: 'loadCustomer',
-                        customerId: customerId
-                    });
-                    const customerResponse = await fetch(`${CUSTOMER_SYNC_URL}?${customerParams}`);
-                    const customerResult = await customerResponse.json();
-
-                    console.log('[Checklist Load] Customer response:', customerResult);
-
-                    if (customerResult.success && customerResult.customer) {
-                        const customerData = customerResult.customer;
-                        console.log('[DEBUG] Raw customerData type:', typeof customerData);
-
-                        // Parse JSON data if it's a string
-                        let parsedData = customerData;
-                        if (typeof customerData === 'string') {
-                            try {
-                                parsedData = JSON.parse(customerData);
-                                console.log('[DEBUG] After JSON.parse, checklistData keys:', parsedData.checklistData ? Object.keys(parsedData.checklistData) : 'none');
-                            } catch (e) {
-                                console.error('❌ [Checklist Load] JSON 파싱 실패:', e);
-                                throw new Error('고객 데이터 형식이 올바르지 않습니다');
-                            }
-                        }
-
-                        // Update current customer's checklist data (저장된 체크리스트 상태)
-                        if (parsedData.checklistData) {
-                            console.log('[DEBUG] BEFORE copy - parsedData.checklistData[10]:', parsedData.checklistData['10']);
-                            currentData.checklistData = parsedData.checklistData;
-                            console.log('[DEBUG] AFTER copy - currentData.checklistData[10]:', currentData.checklistData['10']);
-                            const itemNumbers = Object.keys(currentData.checklistData);
-                            console.log('[Checklist Load] Loaded customer checklist data:', itemNumbers.length, 'items');
-                            console.log('[Checklist Load] Item numbers:', itemNumbers);
-                            console.log('[Checklist Load] Full checklistData:', JSON.stringify(currentData.checklistData, null, 2));
-
-                            // 10번 항목 특별 확인
-                            console.log('[DEBUG] 웹 원본 checklistData에 10번 있나?', '10' in parsedData.checklistData);
-                            console.log('[DEBUG] 모바일 currentData에 10번 있나?', '10' in currentData.checklistData);
-                            console.log('[DEBUG] 10번 값:', currentData.checklistData['10']);
-                        } else {
-                            // 저장된 체크리스트가 없는 경우 빈 객체로 초기화
-                            currentData.checklistData = {};
-                            console.log('[Checklist Load] No saved checklist data, initialized empty');
-                        }
-
-                        // 필터 상태도 복원
-                        if (parsedData.checklistFilters) {
-                            currentData.checklistFilters = parsedData.checklistFilters;
-                            console.log('[Checklist Load] Loaded saved filter state');
-                        }
-                    } else {
-                        // 고객 데이터가 없어도 마스터 데이터는 표시
-                        currentData.checklistData = {};
-                        console.log('[Checklist Load] No customer data found, initialized empty checklist state');
-                    }
-                } else {
-                    console.log('[Checklist Load] Step 2: Skipped (no customer selected - initial sync)');
-                }
-
-                // Step 3: UI 업데이트
-                // 필터 옵션 업데이트 (마스터 데이터 기준)
-                updateChecklistFilters();
-
-                // 테이블 렌더링 (고객의 저장된 상태 반영)
-                renderChecklistItems();
-
-                const masterCount = checklistMasterData.length;
-                const savedCount = hasCustomer ? Object.keys(currentData.checklistData || {}).length : 0;
-
-                if (hasCustomer) {
-                    showToast(`체크리스트 불러오기 완료 (전체: ${masterCount}개, 저장된 항목: ${savedCount}개)`, 'success');
-                } else {
-                    // 초기 동기화 시에는 toast 표시 안함 (조용히 성공)
-                    console.log(`✅ [Checklist Load] Initial sync complete (${masterCount} master items)`);
-                }
-
-                return true;
-
             } catch (error) {
                 console.error('❌ [Checklist Load Error]', error);
-                if (hasCustomer) {
-                    showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
-                }
+                showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
                 return false;
             } finally {
                 if (btn) {
@@ -15334,19 +15015,6 @@
                     btn.disabled = false;
                 }
             }
-        }
-
-        // 체크리스트 데이터를 클라우드에 저장
-        async function syncChecklistToCloud() {
-            if (!currentData || !currentData.customerId) {
-                showToast('고객을 먼저 선택해주세요', 'warning');
-                return false;
-            }
-
-            console.log('[Checklist Save] Saving checklist for customer:', currentData.customerId);
-
-            // saveCustomers()를 호출하여 전체 고객 데이터 저장 (checklistData 포함)
-            await saveCustomers();
         }
 
 
@@ -15411,12 +15079,8 @@
                 });
             }
 
-            // 카테고리 옵션 (DB 순서 유지 - 정렬 제거)
-            const categoriesSet = new Set();
-            checklistMasterData.forEach(item => {
-                if (item.카테고리) categoriesSet.add(item.카테고리);
-            });
-            const categories = [...categoriesSet];
+            // 카테고리 옵션
+            const categories = [...new Set(checklistMasterData.map(item => item.카테고리).filter(Boolean))].sort();
             initMultiSelect('checklistCategoryFilter', categories);
 
             // [Mobile] Populate Category Filter
@@ -15449,36 +15113,6 @@
 
         function setMobileChecklistFilter(status) {
             mobileChecklistStatusFilter = status;
-
-            // 버튼 스타일 업데이트
-            const btnAll = document.getElementById('btnMobileStatusAll');
-            const btnCompleted = document.getElementById('btnMobileStatusCompleted');
-            const btnIncomplete = document.getElementById('btnMobileStatusIncomplete');
-
-            // 모든 버튼 초기화 (비활성 스타일)
-            [btnAll, btnCompleted, btnIncomplete].forEach(btn => {
-                if (btn) {
-                    btn.style.background = '#fff';
-                    btn.style.color = '#86868b';
-                    btn.style.borderColor = '#e5e5ea';
-                }
-            });
-
-            // 선택된 버튼 활성화 스타일
-            if (status === 'all' && btnAll) {
-                btnAll.style.background = '#1d1d1f';
-                btnAll.style.color = '#fff';
-                btnAll.style.borderColor = '#1d1d1f';
-            } else if (status === 'completed' && btnCompleted) {
-                btnCompleted.style.background = '#34c759';
-                btnCompleted.style.color = '#fff';
-                btnCompleted.style.borderColor = '#34c759';
-            } else if (status === 'incomplete' && btnIncomplete) {
-                btnIncomplete.style.background = '#ff3b30';
-                btnIncomplete.style.color = '#fff';
-                btnIncomplete.style.borderColor = '#ff3b30';
-            }
-
             renderChecklistItems();
         }
 
@@ -15495,24 +15129,6 @@
 
             // 현재 고객의 체크 상태 가져오기
             const customerChecklistData = getCurrentCustomerChecklistData();
-
-            // [중요] 고객이 저장한 항목만 필터링
-            // customerChecklistData에 있는 번호만 표시
-            const savedItemNumbers = Object.keys(customerChecklistData || {});
-            console.log('[Render] Customer saved items:', savedItemNumbers.length, 'items');
-
-            // 고객이 저장한 항목이 있으면 그것만, 없으면 빈 배열
-            let baseData = checklistMasterData;
-            if (savedItemNumbers.length > 0) {
-                baseData = checklistMasterData.filter(item =>
-                    savedItemNumbers.includes(String(item.번호))
-                );
-                console.log('[Render] Filtered to saved items:', baseData.length, 'items');
-            } else {
-                // 저장된 항목이 없으면 빈 배열 (아무것도 표시하지 않음)
-                baseData = [];
-                console.log('[Render] No saved items, showing empty list');
-            }
 
             let stageFilter = ['all'];
             let categoryFilter = ['all'];
@@ -15539,7 +15155,7 @@
                 searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
             }
 
-            let filteredData = baseData.filter((item, index) => {
+            let filteredData = checklistMasterData.filter((item, index) => {
                 // 진행단계 필터 (모바일/데스크톱 공통)
                 if (!stageFilter.includes('all')) {
                     if (!stageFilter.includes(item.진행단계 || '')) return false;
@@ -15633,20 +15249,10 @@
                         mobileContainer.innerHTML = filterBar + '<div style="text-align:center; padding:40px; color:#86868b;">데이터가 없습니다.</div>';
                     } else {
                         mobileContainer.innerHTML = mobileFilteredData.map(item => {
-                            const rawData = customerChecklistData[item.번호];
-
-                            // boolean 또는 object 처리
-                            let isChecked, userContent, userRemarks;
-                            if (typeof rawData === 'object' && rawData !== null) {
-                                isChecked = rawData.checked || false;
-                                userContent = rawData.content;
-                                userRemarks = rawData.remarks;
-                            } else {
-                                // boolean 또는 undefined
-                                isChecked = !!rawData;
-                                userContent = undefined;
-                                userRemarks = undefined;
-                            }
+                            const state = customerChecklistData[item.번호] || {};
+                            const isChecked = state.checked || false;
+                            const userContent = state.content;
+                            const userRemarks = state.remarks;
 
                             // Date Logic from Schedule (Linked by Name)
                             const relatedSchedule = (typeof scheduleRows !== 'undefined') ? scheduleRows.find(s => s.name === item.항목) : null;
@@ -15663,13 +15269,8 @@
                             const titleCheck = isChecked ? `<span id="mobile-title-check-${item.번호}" style="color:#34c759; margin-right:4px; font-size:14px;">✔</span>` : `<span id="mobile-title-check-${item.번호}" style="display:none;"></span>`;
 
                             return `
-                            <div id="mobile-card-${item.번호}" class="${cardClass}" style="position:relative;">
-                                <button onclick="deleteChecklistItem(${item.번호})"
-                                    style="position:absolute; top:8px; right:8px; border:none; background:transparent; color:#ff3b30; cursor:pointer; font-size:16px; padding:4px; z-index:10;"
-                                    title="삭제">
-                                    🗑️
-                                </button>
-                                <div class="mobile-card-row" style="margin-bottom:2px; padding-right:32px;">
+                            <div id="mobile-card-${item.번호}" class="${cardClass}">
+                                <div class="mobile-card-row" style="margin-bottom:2px;">
                                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
                                         ${checkBtn}
                                         <div class="mobile-card-title">${titleCheck}${item.항목}</div>
@@ -15681,13 +15282,20 @@
                                     <div class="mobile-chip chip-category" style="background:${catColor.bg}; color:${catColor.text};">${item.카테고리 || '미분류'}</div>
                                     ${item.진행단계 ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#86868b;">${item.진행단계}</div>` : ''}
                                 </div>
-
-                                ${item.내용 ? `<div style="margin-top:4px; margin-left: 34px; font-size:13px; color:#333;">${item.내용}</div>` : ''}
-
-                                ${item.비고 ? `<div style="border-top:1px dashed #e5e5ea; padding-top:6px; margin-top:6px; margin-left: 34px;">
-                                    <span style="font-size:11px; color:#bdbdbd; margin-right:6px;">비고:</span>
-                                    <span style="font-size:12px; color:#666;">${item.비고}</span>
-                                </div>` : ''}
+                                
+                                <div style="margin-top:4px; margin-left: 34px;">
+                                    <input type="text" class="mobile-edit-field" value="${userContent || item.내용 || ''}" 
+                                        placeholder="내용 입력..." onchange="updateChecklistField('${item.번호}', 'content', this.value)"
+                                        style="font-weight:400; color:#333; width:100%;">
+                                </div>
+                                
+                                <div style="border-top:1px dashed #e5e5ea; padding-top:6px; margin-top:6px; display:flex; align-items:center; margin-left: 34px;">
+                                    <span style="font-size:11px; color:#bdbdbd; margin-right:6px;">비고</span>
+                                    <input type="text" class="mobile-edit-field" value="${userRemarks || item.비고 || ''}" 
+                                        placeholder="비고 입력" onchange="updateChecklistField('${item.번호}', 'remarks', this.value)"
+                                        style="color:#666; width:100%;">
+                                    <div style="color:#d2d2d7; font-size:12px; margin-left:4px;">✏️</div>
+                                </div>
                             </div>`;
                         }).join('');
                     }
@@ -15783,17 +15391,22 @@
                 customers[customerIndex].checklistData = {};
             }
 
-            // 현재 체크 상태 (boolean으로 통일)
-            const currentState = customers[customerIndex].checklistData[itemNumber] || false;
-            const newState = !currentState;
+            let itemData = customers[customerIndex].checklistData[itemNumber];
+            let isNowChecked;
 
-            customers[customerIndex].checklistData[itemNumber] = newState;
+            if (typeof itemData === 'object') {
+                itemData.checked = !itemData.checked;
+                isNowChecked = itemData.checked;
+            } else {
+                isNowChecked = !itemData;
+                itemData = { checked: isNowChecked, content: '', remarks: '' };
+            }
+
+            customers[customerIndex].checklistData[itemNumber] = itemData;
 
             // [FIX] currentData에도 즉시 반영
             if (!currentData.checklistData) currentData.checklistData = {};
-            currentData.checklistData[itemNumber] = newState;
-
-            const isNowChecked = newState;
+            currentData.checklistData[itemNumber] = itemData;
 
             // [New] Immediate Visual Update (Mobile)
             if (window.innerWidth <= 768) {
@@ -15841,153 +15454,55 @@
             showToast(isNowChecked ? '체크되었습니다' : '체크 해제되었습니다', 'success');
         }
 
-        // [Removed] 체크리스트 필드 업데이트 기능 제거 (웹과 데이터 형식 통일)
-        // 웹은 boolean만 저장하므로 content/remarks 필드는 사용하지 않음
+        // [New] 체크리스트 특정 필드(내용/비고) 업데이트
         function updateChecklistField(itemNumber, field, value) {
-            // 더 이상 사용하지 않음
-            console.warn('[Deprecated] updateChecklistField is no longer supported');
+            if (!currentCustomerId) return;
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex === -1) return;
+
+            if (!customers[customerIndex].checklistData) customers[customerIndex].checklistData = {};
+
+            // 데이터가 boolean이면 object로 변환
+            let itemData = customers[customerIndex].checklistData[itemNumber];
+            if (typeof itemData !== 'object') {
+                itemData = { checked: !!itemData, content: '', remarks: '' };
+            }
+
+            itemData[field] = value;
+            customers[customerIndex].checklistData[itemNumber] = itemData;
+
+            // currentData 연동
+            if (!currentData.checklistData) currentData.checklistData = {};
+            currentData.checklistData[itemNumber] = itemData;
+
+            // 저장 (백그라운드)
+            saveCustomers();
         }
 
         // [추가] 체크리스트 아이템 삭제 (알림창 없이 즉시 삭제)
         function deleteChecklistItem(itemNumber) {
-            // [중요] 마스터 데이터는 건드리지 않음 (Read-Only)
-            // 고객의 체크리스트 선택 항목에서만 제거
+            // 마스터 데이터에서 제거
+            checklistMasterData = checklistMasterData.filter(item => item.번호 !== itemNumber);
 
-            if (!currentData || !currentData.checklistData) {
-                showToast('고객 데이터가 없습니다.', 'warning');
-                return;
-            }
+            // 로컬 스토리지 업데이트 (Phase 2: 금지)
 
-            // 현재 고객의 체크리스트 데이터에서 삭제
-            if (currentData.checklistData[itemNumber]) {
-                delete currentData.checklistData[itemNumber];
-                console.log('[Checklist Delete] Removed item', itemNumber, 'from customer checklist');
 
-                // 로컬 customers 배열에도 반영 (Phase 2에서는 클라우드 저장 시에만 반영됨)
-                if (currentCustomerId) {
-                    const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-                    if (customerIndex !== -1 && customers[customerIndex].checklistData) {
-                        delete customers[customerIndex].checklistData[itemNumber];
-                    }
-                }
-
-                // UI 갱신
-                updateChecklistFilters();
-                renderChecklistItems();
-
-                showToast('항목이 삭제되었습니다. (저장 버튼을 눌러 클라우드에 반영하세요)', 'info');
-            } else {
-                showToast('이미 삭제된 항목입니다.', 'warning');
-            }
-        }
-
-        // [추가] 체크리스트 항목 추가 모달
-        function showAddChecklistItemModal() {
-            if (!currentData || !currentData.checklistData) {
-                showToast('고객을 먼저 선택해주세요.', 'warning');
-                return;
-            }
-
-            if (!checklistMasterData || checklistMasterData.length === 0) {
-                showToast('마스터 체크리스트를 먼저 불러오세요. (🔄 DB 불러오기)', 'warning');
-                return;
-            }
-
-            // 현재 고객이 이미 선택한 항목 번호
-            const selectedItemNumbers = Object.keys(currentData.checklistData);
-
-            // 선택 가능한 항목 (아직 선택하지 않은 항목)
-            const availableItems = checklistMasterData.filter(item =>
-                !selectedItemNumbers.includes(String(item.번호))
-            );
-
-            if (availableItems.length === 0) {
-                showToast('추가할 수 있는 항목이 없습니다. (모든 항목이 이미 선택됨)', 'info');
-                return;
-            }
-
-            // 모달 HTML 생성
-            const modalHTML = `
-                <div id="addChecklistModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center; padding:20px;">
-                    <div style="background:white; border-radius:16px; max-width:600px; width:100%; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="padding:20px; border-bottom:1px solid #e5e5ea;">
-                            <h3 style="margin:0; font-size:18px; font-weight:700;">체크리스트 항목 추가</h3>
-                            <p style="margin:8px 0 0 0; font-size:13px; color:#86868b;">추가할 항목을 선택하세요 (${availableItems.length}개 가능)</p>
-                        </div>
-                        <div style="flex:1; overflow-y:auto; padding:16px;">
-                            ${availableItems.map(item => `
-                                <div style="border:1px solid #e5e5ea; border-radius:12px; padding:12px; margin-bottom:12px; cursor:pointer; transition:all 0.2s;"
-                                     onmouseover="this.style.borderColor='#007aff'; this.style.background='#f5f5f7';"
-                                     onmouseout="this.style.borderColor='#e5e5ea'; this.style.background='white';"
-                                     onclick="addChecklistItemToCustomer(${item.번호})">
-                                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-                                        <span style="background:#007aff; color:white; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;">NO.${item.번호}</span>
-                                        <span style="font-weight:700; font-size:14px;">${item.항목 || ''}</span>
-                                    </div>
-                                    <div style="font-size:12px; color:#666; margin-bottom:4px;">${item.내용 || ''}</div>
-                                    <div style="display:flex; gap:6px;">
-                                        ${item.카테고리 ? `<span style="background:#f5f5f7; color:#666; padding:2px 8px; border-radius:6px; font-size:11px;">${item.카테고리}</span>` : ''}
-                                        ${item.진행단계 ? `<span style="background:#f5f5f7; color:#666; padding:2px 8px; border-radius:6px; font-size:11px;">${item.진행단계}</span>` : ''}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div style="padding:16px; border-top:1px solid #e5e5ea;">
-                            <button onclick="closeAddChecklistModal()"
-                                style="width:100%; background:#86868b; color:white; border:none; padding:14px; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer;">
-                                닫기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // 모달 추가
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        }
-
-        function closeAddChecklistModal() {
-            const modal = document.getElementById('addChecklistModal');
-            if (modal) modal.remove();
-        }
-
-        function addChecklistItemToCustomer(itemNumber) {
-            if (!currentData || !currentData.checklistData) {
-                showToast('고객 데이터가 없습니다.', 'warning');
-                return;
-            }
-
-            // 마스터 데이터에서 해당 항목 찾기
-            const item = checklistMasterData.find(i => i.번호 === itemNumber);
-            if (!item) {
-                showToast('항목을 찾을 수 없습니다.', 'error');
-                return;
-            }
-
-            // 고객의 체크리스트에 추가 (기본값: 체크 안됨, boolean 저장)
-            currentData.checklistData[itemNumber] = false;
-
-            // 로컬 customers 배열에도 반영
+            // 체크 상태 데이터도 정리
             if (currentCustomerId) {
                 const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-                if (customerIndex !== -1) {
-                    if (!customers[customerIndex].checklistData) {
-                        customers[customerIndex].checklistData = {};
-                    }
-                    customers[customerIndex].checklistData[itemNumber] = false;
+                if (customerIndex !== -1 && customers[customerIndex].checklistData) {
+                    delete customers[customerIndex].checklistData[itemNumber];
+                    // currentData에도 반영
+                    if (currentData.checklistData) delete currentData.checklistData[itemNumber];
+                    saveCustomers();
                 }
             }
-
-            console.log('[Checklist Add] Added item', itemNumber, 'to customer checklist');
 
             // UI 갱신
             updateChecklistFilters();
             renderChecklistItems();
 
-            // 모달 닫기
-            closeAddChecklistModal();
-
-            showToast(`"${item.항목}" 항목이 추가되었습니다. (저장 버튼을 눌러 클라우드에 반영하세요)`, 'success');
+            showToast('항목이 삭제되었습니다.', 'info');
         }
 
         // [추가] 체크리스트 드래그 앤 드롭 기능
@@ -17079,28 +16594,18 @@
             let validCategories = [];
 
             if (selectedStages.includes('all') || selectedStages.length === 0) {
-                // 전체 선택 시 -> 모든 카테고리 표시 (DB 순서 유지)
-                const catSet = new Set();
-                checklistMasterData.forEach(item => {
-                    const cat = (item.카테고리 || '').trim();
-                    if (cat) catSet.add(cat);
-                });
-                validCategories = [...catSet];
+                // 전체 선택 시 -> 모든 카테고리 표시
+                validCategories = [...new Set(checklistMasterData.map(item => (item.카테고리 || '').trim()).filter(Boolean))].sort();
             } else {
-                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출 (DB 순서 유지)
+                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
                 const filteredItems = checklistMasterData.filter(item => {
                     const itemStage = (item.진행단계 || '').trim();
                     // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
-                    // To be safe, we rely on exact values from options.
+                    // To be safe, we rely on exact values from options. 
                     // But here we just used item.진행단계 to build options, so it should match.
                     return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
                 });
-                const catSet = new Set();
-                filteredItems.forEach(item => {
-                    const cat = (item.카테고리 || '').trim();
-                    if (cat) catSet.add(cat);
-                });
-                validCategories = [...catSet];
+                validCategories = [...new Set(filteredItems.map(item => (item.카테고리 || '').trim()).filter(Boolean))].sort();
             }
 
             console.log('[Filter Logic] Valid Categories:', validCategories);
@@ -17945,7 +17450,7 @@
                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
                 <path d="M8 16H3v5" />
             </svg>
-            <span>불러오기</span>
+            <span>재연결</span>
         </button>
         <button class="success" onclick="if(typeof syncChecklistToCloud==='function')syncChecklistToCloud();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -17997,9 +17502,9 @@
 
             let titleText = '';
             // Map panel IDs to titles
-            if (panelId === 'panel-checklist') titleText = 'Checklist';
-            else if (panelId === 'panel-schedule') titleText = 'Schedule';
-            else if (panelId === 'panel-customer-info') titleText = 'Customer Information'; // [Fix]
+            if (panelId === 'panel-checklist') titleText = '공정별 체크리스트';
+            else if (panelId === 'panel-schedule') titleText = '공사 스케줄';
+            else if (panelId === 'panel-info') titleText = '고객 정보';
             else if (panelId === 'panel-stats') titleText = '현황 및 통계';
             else if (panelId === 'panel-expenses') titleText = '비용 관리';
             else if (panelId === 'panel-files') titleText = '파일함';
@@ -18020,29 +17525,9 @@
             // 헤더 제목 업데이트
             updateMobileHeaderTitle(panelId);
 
-            // [New] Active Tab Highlight Logic
-            document.querySelectorAll('.mobile-icon-btn').forEach(btn => btn.classList.remove('active'));
-
-            // Map panelId to button ID
-            let btnId = '';
-            if (panelId === 'panel-checklist') btnId = 'btn-checklist';
-            else if (panelId === 'panel-schedule') btnId = 'btn-schedule';
-            else if (panelId === 'panel-customer-info') btnId = 'btn-customer-info'; // [Fix]
-
-            if (btnId) {
-                const activeBtn = document.getElementById(btnId);
-                if (activeBtn) activeBtn.classList.add('active');
-            }
-
-
             // 체크리스트 외 패널은 읽기 전용 알림
-            if (panelId !== 'panel-checklist' && panelId !== 'panel-customer-info') {
+            if (panelId !== 'panel-checklist') {
                 showToast('읽기 전용 모드입니다.', 'info');
-            }
-
-            // [New] Ensure Header Sync when switching to Info
-            if (panelId === 'panel-customer-info' && typeof syncHeaderDataFromPanel === 'function') {
-                syncHeaderDataFromPanel();
             }
         }
 
@@ -18051,27 +17536,8 @@
             document.body.classList.remove('mobile-customer-selected');
             document.getElementById('customerView').style.display = 'none';
             document.getElementById('emptyState').style.display = 'block';
-
-            // [Fix] Hide Blue Header on Back
-            const mobInfo = document.getElementById('headerMobileInfo');
-            if (mobInfo) {
-                mobInfo.style.cssText = ''; // Clear all inline styles first
-                mobInfo.style.setProperty('display', 'none', 'important');
-            }
-
-            // [Fix] Reset toolbar
-            const toolbar = document.getElementById('mobileToolbar');
-            if (toolbar) toolbar.style.display = 'none';
-            // Clear active state
-            document.querySelectorAll('.mobile-icon-btn').forEach(btn => btn.classList.remove('active'));
-
             currentCustomerId = null;
             currentData = null;
-
-            // [Fix] Refresh header icons (hides customer tabs)
-            if (typeof updateMobileHeaderActions === 'function') {
-                updateMobileHeaderActions();
-            }
         }
 
         // ===== 모바일 필터 함수들 =====
@@ -18169,42 +17635,11 @@
                             `<div style="font-size:12px; opacity:0.9; margin-top:2px;">${spouseName} | ${spouseLink}</div>` :
                             '';
 
-                        // [New] Blue Header Logic (Consolidated)
+                        // 검정색 상단 헤더는 고객 정보 표시하지 않음
                         const mobInfo = document.getElementById('headerMobileInfo');
-                        if (mobInfo && isMobile()) {
-                            // [Critical] Force Flex Row Layout via Inline Style
-                            mobInfo.style.cssText = `
-                                display: flex !important;
-                                flex-direction: row !important;
-                                align-items: flex-end !important;
-                                justify-content: space-between !important;
-                                flex-wrap: nowrap !important;
-                                width: 100% !important;
-                                height: 54px !important;
-                                background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
-                                padding: 0 16px 10px 16px !important;
-                                position: fixed !important;
-                                top: 54px !important; /* Below Global Header (54px) */
-                                left: 0 !important;
-                                z-index: 10002 !important;
-                                box-sizing: border-box !important;
-                            `;
-
-                            // 2-Line Left Layout: Site Address (Top), Name | Phone | Period (Bottom)
-                            const displayAddress = customer.siteAddress || (customer.field4 ? customer.field4 : '현장주소 없음');
-                            const displayPeriod = customer.constructionPeriod || '공사기간 미정';
-                            const displayName = customer.clientName || '고객명 없음';
-                            const displayPhone = customer.clientPhone || '연락처 없음';
-
-                            mobInfo.innerHTML = `
-                                <div class="header-left-group" style="flex: 1; min-width: 0;">
-                                    <div class="header-text" id="headerSiteAddress">${displayAddress}</div>
-                                    <div class="header-text" style="font-size: 13px; opacity: 0.8; margin-top: 2px;">
-                                         <span id="headerClientName">${displayName}</span> ㅣ <span id="headerClientPhone">${displayPhone}</span> ㅣ <span id="headerConstructionPeriod">${displayPeriod}</span>
-                                    </div>
-                                </div>
-                                <div class="header-right-label" id="headerMobileTitle" style="font-size: 10px !important; font-weight: 400 !important; white-space: nowrap; flex-shrink: 0;">Checklist</div>
-                            `;
+                        if (mobInfo) {
+                            mobInfo.innerHTML = '';
+                            mobInfo.style.display = 'none';
                         }
 
                         // 모바일 툴바 표시
@@ -18219,11 +17654,6 @@
 
                         // 성공 토스트 (필요시)
                         // showToast('고객 정보 로드됨', 'success');
-
-                        // [Fix] Refresh header icons (shows customer tabs)
-                        if (typeof updateMobileHeaderActions === 'function') {
-                            updateMobileHeaderActions();
-                        }
                     }
                 } catch (err) {
                     console.error('[Mobile] selectCustomer error:', err);
@@ -18239,7 +17669,7 @@
                 return;
             }
             if (isMobile()) {
-                showCustomerTab('schedule');
+                wCustomerTab('schedule');
                 mobileGoToPanel('panel-schedule');
             } else {
                 showCustomerTab('schedule');
@@ -18248,27 +17678,6 @@
 
         // 페이지 로드 시 모바일 체크
         document.addEventListener('DOMContentLoaded', () => {
-            // [New] Login Mode Logic - Check if Login Overlay is visible
-            const loginOverlay = document.getElementById('loginOverlay');
-            if (loginOverlay && window.getComputedStyle(loginOverlay).display !== 'none') {
-                document.body.classList.add('login-active');
-            }
-
-            // Observer to watch for login overlay changes (to remove class on login success)
-            if (loginOverlay) {
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                            if (loginOverlay.style.display === 'none') {
-                                document.body.classList.remove('login-active');
-                            } else {
-                                document.body.classList.add('login-active');
-                            }
-                        }
-                    });
-                });
-                observer.observe(loginOverlay, { attributes: true });
-            }
             if (isMobile()) {
                 // 모바일에서는 toolbar 초기 숨김 (고객 선택 전)
                 document.getElementById('mobileToolbar').style.display = 'none';
@@ -18340,15 +17749,7 @@
             ];
 
             // Render buttons
-            // [Fix] Only show Customer Context buttons if a customer is selected
-            const buttonsToRender = buttons.filter(btn => {
-                if (btn.id === 'btn-checklist' || btn.id === 'btn-schedule' || btn.id === 'btn-customer-info') {
-                    return !!currentCustomerId;
-                }
-                return true;
-            });
-
-            container.innerHTML = buttonsToRender.map(btn => `
+            container.innerHTML = buttons.map(btn => `
                 <button class="mobile-icon-btn ${btn.extraClass || ''}" 
                         id="${btn.id}" 
                         onclick="${btn.action}" 
@@ -18376,32 +17777,9 @@
                 showToast('고객을 먼저 선택해주세요', 'warning');
                 return;
             }
-
-            // [Fix] Update Header Title
-            const titleEl = document.getElementById('headerMobileTitle');
-            if (titleEl) titleEl.textContent = 'Checklist';
-
             showCustomerTab('checklist');
             if (typeof mobileGoToPanel === 'function') {
                 mobileGoToPanel('panel-checklist');
-            }
-        }
-
-        function navigateToSchedule() {
-            if (!currentCustomerId) {
-                showToast('고객을 먼저 선택해주세요', 'warning');
-                return;
-            }
-
-            // [Fix] Update Header Title
-            const titleEl = document.getElementById('headerMobileTitle');
-            if (titleEl) titleEl.textContent = 'Schedule';
-
-            if (isMobile()) {
-                showCustomerTab('schedule');
-                mobileGoToPanel('panel-schedule');
-            } else {
-                showCustomerTab('schedule');
             }
         }
 
@@ -18410,15 +17788,8 @@
                 showToast('고객을 먼저 선택해주세요', 'warning');
                 return;
             }
-
-            // [Fix] Update Header Title
-            const titleEl = document.getElementById('headerMobileTitle');
-            if (titleEl) titleEl.textContent = 'Customer Information';
-
             if (typeof mobileGoToPanel === 'function') {
                 mobileGoToPanel('panel-customer-info');
-                // Ensure sync happens after panel switch
-                if (typeof syncHeaderDataFromPanel === 'function') syncHeaderDataFromPanel();
             }
         }
 
@@ -18427,18 +17798,11 @@
 
             console.log('[Mobile] Updating customer info:', customer);
 
-            // 1. Update Panel Fields (Target Mobile Read-Only Panel)
+            // 모든 customer-field 요소를 업데이트
             const fields = document.querySelectorAll('#panel-customer-info .customer-field[data-field]');
             fields.forEach(field => {
                 const fieldName = field.getAttribute('data-field');
-                let value = customer[fieldName];
-
-                // [Fix] Fallback for Address if clientAddress is missing/empty but siteAddress exists
-                if ((!value || value === '-') && fieldName === 'clientAddress') {
-                    value = customer.siteAddress || customer.field4;
-                }
-
-                value = value || '-';
+                let value = customer[fieldName] || '-';
 
                 // 전화번호는 tel: 링크로 표시
                 if (fieldName === 'clientPhone' || fieldName === 'spousePhone') {
@@ -18452,49 +17816,7 @@
                 }
             });
 
-            // 2. [New] Update Blue Header Data (Syncs with Info Tab)
-            // Instead of using data directly, we sync from the panel to ensure consistency
-            if (typeof syncHeaderDataFromPanel === 'function') {
-                syncHeaderDataFromPanel();
-            } else {
-                // Fallback inline sync
-                const headerSiteAddress = document.getElementById('headerSiteAddress');
-                const headerClientName = document.getElementById('headerClientName');
-                const headerClientPhone = document.getElementById('headerClientPhone');
-                const headerPeriod = document.getElementById('headerConstructionPeriod');
-
-                // Panel sources
-                const panelSiteAddress = document.querySelector('#panel-customer-info .customer-field[data-field="siteAddress"]');
-                const panelName = document.querySelector('#panel-customer-info .customer-field[data-field="clientName"]');
-                const panelPhone = document.querySelector('#panel-customer-info .customer-field[data-field="clientPhone"]');
-                const panelPeriod = document.querySelector('#panel-customer-info .customer-field[data-field="constructionPeriod"]');
-
-                if (headerSiteAddress && panelSiteAddress) headerSiteAddress.innerText = panelSiteAddress.innerText;
-                if (headerClientName && panelName) headerClientName.innerText = panelName.innerText;
-                if (headerClientPhone && panelPhone) headerClientPhone.innerText = panelPhone.innerText;
-                if (headerPeriod && panelPeriod) headerPeriod.innerText = panelPeriod.innerText;
-            }
-
-            console.log('[Mobile] Customer info and Header updated successfully');
-        }
-
-        // [New] Helper to Copy Panel Data to Header (Source of Truth: DOM)
-        function syncHeaderDataFromPanel() {
-            const headerSiteAddress = document.getElementById('headerSiteAddress');
-            const headerClientName = document.getElementById('headerClientName');
-            const headerClientPhone = document.getElementById('headerClientPhone');
-            const headerPeriod = document.getElementById('headerConstructionPeriod');
-
-            // Sources in Panel
-            const panelSiteAddress = document.querySelector('#panel-customer-info .customer-field[data-field="siteAddress"]');
-            const panelName = document.querySelector('#panel-customer-info .customer-field[data-field="clientName"]');
-            const panelPhone = document.querySelector('#panel-customer-info .customer-field[data-field="clientPhone"]');
-            const panelPeriod = document.querySelector('#panel-customer-info .customer-field[data-field="constructionPeriod"]');
-
-            if (headerSiteAddress && panelSiteAddress) headerSiteAddress.innerText = panelSiteAddress.innerText;
-            if (headerClientName && panelName) headerClientName.innerText = panelName.innerText;
-            if (headerClientPhone && panelPhone) headerClientPhone.innerText = panelPhone.innerText;
-            if (headerPeriod && panelPeriod) headerPeriod.innerText = panelPeriod.innerText;
+            console.log('[Mobile] Customer info updated successfully');
         }
 
         // 3. Toast UI Enhancement (Faster Disappear)
