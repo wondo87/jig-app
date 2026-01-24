@@ -5,6 +5,10 @@
             "destination": "/adminwonpro.html"
         },
         {
+            "source": "/adminwonpro_mobile",
+            "destination": "/adminwonpro_mobile.html"
+        },
+        {
             "source": "/columns",
             "destination": "/columns.html"
         },
