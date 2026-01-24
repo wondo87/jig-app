@@ -1,7 +1,7 @@
 {
   "name": "Design Jig 모바일",
   "short_name": "DZ Mobile",
-  "start_url": "./adminwonpro_mobile.html",
+  "start_url": "https://designjigweb-git-nervous-lewin-designjig.vercel.app/adminwonpro_mobile.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
