@@ -1,5 +1,5 @@
 // Service Worker for Design Jig Admin PWA
-const CACHE_VERSION = 'designjig-admin-v17';
+const CACHE_VERSION = 'designjig-admin-v18';
 const CACHE_FILES = [
     './adminwonpro.html',
     './admin_config.js',
@@ -71,7 +71,7 @@ self.addEventListener('fetch', (event) => {
                                     });
                             }
                         })
-                        .catch(() => {});
+                        .catch(() => { });
                     return cachedResponse;
                 }
 
