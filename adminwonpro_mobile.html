@@ -18164,10 +18164,41 @@
                         document.body.classList.add('mobile-customer-selected');
 
                         // [New] Strict 3-Line Header Logic
-                        const customer = customers.find(c => c.id === customerId) || {};
+                        const customer = customers.find(c => c.customerId === customerId) || {};
                         const period = customer.constructionPeriod || customer.field4 || '-';
                         const phone = customer.clientPhone || customer.phone || '';
                         const phoneLink = phone ? `<a href="tel:${phone}" style="color:#fff; text-decoration:underline;">${phone}</a>` : '';
+
+                        // Populate Header
+                        const mobInfo = document.getElementById('headerMobileInfo');
+                        if (mobInfo) {
+                            mobInfo.innerHTML = `
+                                <div style="display:flex; flex-direction:column; width:100%;">
+                                    <div style="font-size:16px; font-weight:700; color:#fff; margin-bottom:4px;">${customer.siteAddress || customer.field3 || '현장명 없음'}</div>
+                                    <div style="font-size:13px; color:rgba(255,255,255,0.9); display:flex; gap:8px;">
+                                        <span>${customer.clientName || '고객명 없음'}</span>
+                                        <span>|</span>
+                                        ${phoneLink ? `<span>${phoneLink}</span>` : ''}
+                                    </div>
+                                    <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">
+                                        ${period}
+                                    </div>
+                                </div>
+                            `;
+                            mobInfo.style.display = 'flex';
+                        }
+
+                        // [Fix] Update All Fields Globally (Synced with Resize Logic)
+                        document.querySelectorAll('.customer-field').forEach(f => {
+                            const fieldName = f.dataset.field;
+                            if (!fieldName) return;
+                            const fieldValue = customer[fieldName] || '';
+                            if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
+                                f.value = fieldValue;
+                            } else {
+                                f.textContent = fieldValue || '-';
+                            }
+                        });
 
                         // Spouse Info
                         const spouseName = customer.spouseName || customer.field5 || '';
@@ -18179,7 +18210,7 @@
                             '';
 
                         // [New] Blue Header Logic (Consolidated)
-                        const mobInfo = document.getElementById('headerMobileInfo');
+                        // mobInfo is already defined above
                         if (mobInfo && isMobile()) {
                             // [Critical] Force Flex Row Layout via Inline Style
                             mobInfo.style.cssText = `
