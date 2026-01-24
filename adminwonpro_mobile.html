@@ -18052,12 +18052,8 @@
             document.getElementById('customerView').style.display = 'none';
             document.getElementById('emptyState').style.display = 'block';
 
-            // [Fix] Hide Blue Header on Back
-            const mobInfo = document.getElementById('headerMobileInfo');
-            if (mobInfo) {
-                mobInfo.style.cssText = ''; // Clear all inline styles first
-                mobInfo.style.setProperty('display', 'none', 'important');
-            }
+            // [Fix] Header visibility logic removed to prevent persistence issue
+            // Header visibility is managed by view transitions now
 
             // [Fix] Reset toolbar
             const toolbar = document.getElementById('mobileToolbar');
