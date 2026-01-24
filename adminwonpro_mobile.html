@@ -18040,6 +18040,20 @@
             if (panelId === 'panel-customer-info' && typeof syncHeaderDataFromPanel === 'function') {
                 syncHeaderDataFromPanel();
             }
+
+            // [Critical Logic] Toggle Checklist Controls Visibility
+            // Show Controls ONLY on Checklist Panel
+            const controls = document.querySelectorAll('.mobile-checklist-controls');
+            const tabs = document.querySelectorAll('.mobile-status-filter-buttons');
+
+            if (panelId === 'panel-checklist') {
+                controls.forEach(el => el.style.display = 'flex');
+                tabs.forEach(el => el.style.display = 'flex');
+            } else {
+                controls.forEach(el => el.style.display = 'none');
+                tabs.forEach(el => el.style.display = 'none');
+            }
+            // syncHeaderDataFromPanel removed (logic handled above)
         }
 
         function mobileGoBack() {
