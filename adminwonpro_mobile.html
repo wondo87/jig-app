@@ -705,6 +705,18 @@
                     padding-top: 0 !important;
                 }
 
+                /* 공사 스케줄 패널도 여백 최소화 - 10px만 */
+                #panel-schedule {
+                    margin-top: 10px !important;
+                    padding-top: 0 !important;
+                }
+
+                /* 고객정보 탭도 여백 최소화 - 10px만 */
+                #panel-info {
+                    margin-top: 10px !important;
+                    padding-top: 0 !important;
+                }
+
                 /* Mobile Filter Bar - Full Width */
                 /* Duplicate .mobile-filter-bar removed */
 
@@ -796,10 +808,26 @@
                 margin: 0 !important;
             }
 
+            /* [모바일] 고객정보 document-wrapper 배경 제거 */
+            #panel-info .document-wrapper {
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* [모바일] 공사 스케줄 document-wrapper 배경 제거 */
+            #panel-schedule .document-wrapper {
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
             /* [모바일] 모든 패널 헤더 검정색 상단 바로 아래 고정 */
             #panel-checklist .doc-header,
             #panel-schedule .doc-header,
-            #panel-customer-info .doc-header {
+            #panel-info .doc-header {
                 display: block !important;
                 position: fixed !important;
                 top: 54px !important;
@@ -823,7 +851,7 @@
             /* 모바일 헤더 내부 텍스트 크기 통일 */
             #panel-checklist .doc-header h1,
             #panel-schedule .doc-header h1,
-            #panel-customer-info .doc-header h1 {
+            #panel-info .doc-header h1 {
                 font-size: 15px !important;
                 margin: 0 !important;
                 line-height: 1 !important;
@@ -833,20 +861,20 @@
             /* 헤더 내 모든 불필요한 요소 숨김 */
             #panel-checklist .doc-header button,
             #panel-schedule .doc-header button,
-            #panel-customer-info .doc-header button,
+            #panel-info .doc-header button,
             #panel-checklist .doc-header .subtitle,
             #panel-schedule .doc-header .subtitle,
-            #panel-customer-info .doc-header .subtitle,
+            #panel-info .doc-header .subtitle,
             #panel-checklist .doc-header div[style*="DESIGN JIG"],
             #panel-schedule .doc-header div[style*="DESIGN JIG"],
-            #panel-customer-info .doc-header div[style*="DESIGN JIG"] {
+            #panel-info .doc-header div[style*="DESIGN JIG"] {
                 display: none !important;
             }
 
             /* 헤더 고정으로 인한 컨텐츠 영역 padding 추가 */
             #panel-checklist .doc-content,
             #panel-schedule .doc-content,
-            #panel-customer-info .doc-content {
+            #panel-info .doc-content {
                 padding-top: 0 !important;
                 /* No padding - content starts immediately after fixed header */
             }
@@ -1028,6 +1056,22 @@
                 font-size: 10px;
                 padding: 2px 6px;
                 border-radius: 4px;
+            }
+
+            /* 어제/오늘/내일 색상 */
+            .mobile-card.is-yesterday {
+                background: #f5f5f7;
+                border-left: 4px solid #86868b;
+            }
+
+            .mobile-card.is-today {
+                background: #fff5e6;
+                border-left: 4px solid #ff9500;
+            }
+
+            .mobile-card.is-tomorrow {
+                background: #e8f4fd;
+                border-left: 4px solid #007aff;
             }
 
             .mobile-card-title {
@@ -8705,12 +8749,14 @@
             // [Guard] Async Race Protection
             if (targetId && targetId !== currentCustomerId) return;
 
-            // Notion 통합 제거됨
-
-            if (currentData.schedules && currentData.schedules.length > 0) {
+            // [데이터 로드] currentData.schedules 사용
+            // Apps Script 연동은 고객 데이터 로드 시 함께 로드됨
+            if (currentData && currentData.schedules && currentData.schedules.length > 0) {
+                console.log('[Schedule Load] Loading from currentData.schedules:', currentData.schedules.length, 'items');
                 scheduleRows = [...currentData.schedules];
             } else {
                 // [수정] 신규 고객은 빈 스케줄로 시작 (템플릿 자동 로드 X)
+                console.log('[Schedule Load] No schedules found');
                 scheduleRows = [];
             }
 
@@ -8854,8 +8900,32 @@
                             // "State kinds: ✅ Complete". If not complete, show nothing (default incomplete)
                             const statusBadge = isComplete ? `<div class="mobile-chip chip-green">✅ 완료</div>` : ``;
 
+                            // 어제/오늘/내일 판정 로직
+                            let dateClass = '';
+                            if (row.start) {
+                                const startDate = new Date(row.start); startDate.setHours(0, 0, 0, 0);
+                                const endDate = row.end ? new Date(row.end) : null;
+                                if (endDate) endDate.setHours(0, 0, 0, 0);
+
+                                const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+                                const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+
+                                // 기간일정: 오늘이 포함되는지 확인
+                                if (endDate && startDate <= now && now <= endDate) {
+                                    dateClass = 'is-today';
+                                }
+                                // 단일일정 또는 기간의 시작일 기준
+                                else if (startDate.getTime() === now.getTime()) {
+                                    dateClass = 'is-today';
+                                } else if (startDate.getTime() === yesterday.getTime()) {
+                                    dateClass = 'is-yesterday';
+                                } else if (startDate.getTime() === tomorrow.getTime()) {
+                                    dateClass = 'is-tomorrow';
+                                }
+                            }
+
                             return `
-                            <div class="mobile-card">
+                            <div class="mobile-card ${dateClass}">
                                 <div class="mobile-card-row" style="margin-bottom: 2px;">
                                     <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
                                         ${statusBadge}
@@ -8863,7 +8933,7 @@
                                     </div>
                                     <div class="mobile-date-text">${dateStr}</div>
                                 </div>
-                                
+
                                 <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
                                     ${row.inCharge ? `<div style="font-size:12px; color:#555;">👤 ${row.inCharge}</div>` : ''}
                                     ${row.memo ? `<div style="font-size:12px; color:#86868b; overflow:hidden; text-overflow:ellipsis;">✏️ ${row.memo}</div>` : ''}
@@ -18018,7 +18088,7 @@
                 return;
             }
             if (isMobile()) {
-                wCustomerTab('schedule');
+                showCustomerTab('schedule');
                 mobileGoToPanel('panel-schedule');
             } else {
                 showCustomerTab('schedule');
@@ -18148,7 +18218,7 @@
             console.log('[Mobile] Updating customer info:', customer);
 
             // 모든 customer-field 요소를 업데이트
-            const fields = document.querySelectorAll('#panel-customer-info .customer-field[data-field]');
+            const fields = document.querySelectorAll('#panel-info .customer-field[data-field]');
             fields.forEach(field => {
                 const fieldName = field.getAttribute('data-field');
                 let value = customer[fieldName] || '-';
