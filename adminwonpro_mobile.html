@@ -483,7 +483,7 @@
 
             /* [수정] 헤더 안전 영역 확보 (화면 잘림 방지) - 제거됨 (상단 통합) */
 
-            /* [수정] 공정 체크리스트 모바일 최적화 */
+            /* [수정] 공정별 체크리스트 모바일 최적화 */
             .checklist-table th,
             .checklist-table td {
                 padding: 8px 4px !important;
@@ -4926,7 +4926,7 @@
                     <button class="customer-tab" onclick="showCustomerTab('schedule')" data-tab="schedule">📅
                         공사 스케줄</button>
                     <button class="customer-tab" onclick="showCustomerTab('checklist')" data-tab="checklist">✅
-                        공정 체크리스트</button>
+                        공정별 체크리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('as_list')" data-tab="as_list">🛠️
                         A/S 관리 리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('settlement')" data-tab="settlement">💰
@@ -5578,7 +5578,7 @@
                     </div>
                 </div>
 
-                <!-- 공정 체크리스트 패널 -->
+                <!-- 공정별 체크리스트 패널 -->
                 <div class="tab-panel" id="panel-checklist">
                     <div class="document-wrapper"
                         style="width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
@@ -8537,7 +8537,7 @@
             const headerTitleEl = document.getElementById('headerMobileTitle');
             if (headerTitleEl) {
                 let titleText = '';
-                if (tabId === 'checklist') titleText = '공정 체크리스트';
+                if (tabId === 'checklist') titleText = '공정별 체크리스트';
                 else if (tabId === 'schedule') titleText = '공사 스케줄';
                 else if (tabId === 'customer') titleText = '고객 정보';
                 else if (tabId === 'stats') titleText = '현황 및 통계';
@@ -10916,7 +10916,7 @@
 
             updateCustomerList(false); // Do not reset page
 
-            // [모바일 UX] 고객 선택 시 기본으로 '공정 체크리스트' 탭 열기
+            // [모바일 UX] 고객 선택 시 기본으로 '공정별 체크리스트' 탭 열기
             if (window.innerWidth <= 768) {
                 setTimeout(() => {
                     const checklistTab = document.querySelector('button[onclick*="showCustomerTab(\'checklist\')"]');
@@ -15048,7 +15048,7 @@
 
     <script>
         // ============================
-        // 공정 체크리스트 기능
+        // 공정별 체크리스트 기능
         // ============================
         // 체크리스트는 CUSTOMER_SYNC_URL 사용
         // [Fix] 체크리스트 데이터 로컬 스토리지 연동 (초기화 방지)
@@ -17763,7 +17763,7 @@
     <div class="mobile-menu" id="mobileMenu">
         <h3>📋 모듈 선택</h3>
         <div class="mobile-menu-item" onclick="mobileGoToPanel('panel-checklist'); closeMobileMenu();">
-            ✅ 공정 체크리스트
+            ✅ 공정별 체크리스트
         </div>
         <div class="mobile-menu-item readonly" onclick="mobileGoToPanel('panel-info'); closeMobileMenu();">
             👤 고객 정보
@@ -17850,7 +17850,7 @@
 
             let titleText = '';
             // Map panel IDs to titles
-            if (panelId === 'panel-checklist') titleText = '공정 체크리스트';
+            if (panelId === 'panel-checklist') titleText = '공정별 체크리스트';
             else if (panelId === 'panel-schedule') titleText = '공사 스케줄';
             else if (panelId === 'panel-info') titleText = '고객 정보';
             else if (panelId === 'panel-stats') titleText = '현황 및 통계';
@@ -18075,7 +18075,7 @@
                 },
                 {
                     id: 'btn-checklist',
-                    title: '공정 체크리스트',
+                    title: '공정별 체크리스트',
                     // Checklist Icon
                     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
                     action: 'navigateToChecklist()'
