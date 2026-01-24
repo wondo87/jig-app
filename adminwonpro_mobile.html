@@ -7922,7 +7922,7 @@
         let currentCustomerId = null;
         let currentData = {};
         let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
-        let currentStatusFilter = 'all';
+        let currentStatusFilter = 'in_progress'; // Default: Show Active Projects Only
         let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
         // 페이징 관련 변수
@@ -10986,6 +10986,16 @@
                 document.getElementById('accessDeniedOverlay').style.display = isLocked ? 'flex' : 'none';
                 if (isLocked) {
                     document.getElementById('lockedPasswordInput').value = '';
+                }
+            }
+
+            // [Mobile Fix] Sync Data to Mobile UI Elements
+            if (window.innerWidth <= 768 && typeof updateMobileCustomerInfo === 'function') {
+                console.log('📱 [Mobile] Updating Mobile UI for customer:', customer.clientName);
+                updateMobileCustomerInfo(customer);
+
+                // Show Checklist Panel by default on Mobile
+                if (typeof mobileGoToPanel === 'function') {
                 }
             }
 
