@@ -22,6 +22,14 @@
     <!-- 페이지 접근 및 다중 관리자 시스템 -->
     <script>
         (function () {
+            // Mobile Redirect Logic
+            if (window.innerWidth <= 768) {
+                // Prevent redirect loop if already on mobile page (though filenames differ)
+                if (!window.location.href.includes('adminwonpro_mobile')) {
+                    window.location.href = 'adminwonpro_mobile.html';
+                }
+            }
+
             // 페이지는 열람 모드로 볼 수 있음
             // 관리자 로그인은 헤더의 로그인 버튼 통해 진행
             sessionStorage.setItem('DJ_admin_page_auth', 'true');
