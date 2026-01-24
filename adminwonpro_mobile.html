@@ -748,25 +748,24 @@
 
                 /* Add margin-top to tab-panel to account for fixed headers */
                 .tab-panel {
-                    margin-top: 94px !important;
-                    /* 54px (black header) + 40px (blue header) = 94px */
+                    margin-top: 118px !important;
+                    /* 54px (Black) + 54px (Blue) + 10px (Gap) = 118px */
+                    padding-top: 0 !important;
                 }
 
-                /* 체크리스트 패널만 여백 최소화 - 10px만 */
+                /* Ensure specific panels follow this rule */
                 #panel-checklist {
-                    margin-top: 10px !important;
+                    margin-top: 118px !important;
                     padding-top: 0 !important;
                 }
 
-                /* 공사 스케줄 패널도 여백 최소화 - 10px만 */
                 #panel-schedule {
-                    margin-top: 10px !important;
+                    margin-top: 118px !important;
                     padding-top: 0 !important;
                 }
 
-                /* 고객정보 탭도 여백 최소화 - 10px만 */
                 #panel-info {
-                    margin-top: 10px !important;
+                    margin-top: 118px !important;
                     padding-top: 0 !important;
                 }
 
@@ -5734,29 +5733,29 @@
                                     인쇄/PDF</button>
                             </div>
                         </div>
-                        <div class="doc-content" style="padding:30px;" id="checklistDocContent">
+                        <div class="doc-content" style="padding:10px; padding-top:10px;" id="checklistDocContent">
                             <!-- [New] Mobile Checklist Controls (Status | Category | Search) -->
                             <div class="mobile-checklist-controls" style="display:none; margin-bottom: 0;">
                                 <select id="mobileStageFilter" class="mobile-filter-select"
                                     onchange="renderChecklistItems()"
-                                    style="flex: 1; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 15px; background: #fff; color: #1d1d1f;">
+                                    style="flex: 1; min-width: 0; padding: 0 8px; height: 40px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 13px; background: #fff; color: #1d1d1f; text-overflow: ellipsis;">
                                     <option value="all">전체 단계</option>
                                     <!-- 실제 진행단계 옵션은 동적으로 추가됨 -->
                                 </select>
                                 <select id="mobileCategoryFilter" class="mobile-filter-select"
                                     onchange="renderChecklistItems()"
-                                    style="flex: 1; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 15px; background: #fff; color: #1d1d1f;">
+                                    style="flex: 1; min-width: 0; padding: 0 8px; height: 40px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 13px; background: #fff; color: #1d1d1f; text-overflow: ellipsis;">
                                     <option value="">카테고리 ▾</option>
                                     <option value="디자인 상담 및 설계">디자인 상담 및 설계</option>
                                     <!-- Will be populated dynamically -->
                                 </select>
                                 <button id="mobileSearchToggle" class="mobile-search-btn" onclick="toggleMobileSearch()"
-                                    style="padding: 12px 20px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 18px; background: #fff; cursor: pointer;">🔍</button>
+                                    style="flex: 0 0 36px; height: 40px; padding: 0; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 16px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">🔍</button>
                             </div>
                             <!-- Mobile Search Input Overlay -->
                             <div id="mobileSearchInputWrapper" style="display:none; margin-bottom:0;">
                                 <input type="text" id="mobileSearchInput" placeholder="항목, 내용, 비고로 검색..."
-                                    style="width:100%; padding:12px; border:1px solid #e5e5ea; border-radius:12px; font-size:15px;"
+                                    style="width:100%; padding:10px; height: 40px; border:1px solid #e5e5ea; border-radius:8px; font-size:14px;"
                                     oninput="renderChecklistItems()">
                             </div>
 
