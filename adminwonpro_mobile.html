@@ -18452,30 +18452,23 @@
                 }
             });
 
-            // 2. [New] Update Blue Header Data (Syncs with Info Tab)
-            // Instead of using data directly, we sync from the panel to ensure consistency
-            if (typeof syncHeaderDataFromPanel === 'function') {
-                syncHeaderDataFromPanel();
-            } else {
-                // Fallback inline sync
-                const headerSiteAddress = document.getElementById('headerSiteAddress');
-                const headerClientName = document.getElementById('headerClientName');
-                const headerClientPhone = document.getElementById('headerClientPhone');
-                const headerPeriod = document.getElementById('headerConstructionPeriod');
+            // 2. [Reliable Fix] Update Blue Header Data DIRECTLY from Data (Bypass DOM Sync)
+            const headerSiteAddress = document.getElementById('headerSiteAddress');
+            const headerClientName = document.getElementById('headerClientName');
+            const headerClientPhone = document.getElementById('headerClientPhone');
+            const headerPeriod = document.getElementById('headerConstructionPeriod');
 
-                // Panel sources
-                const panelSiteAddress = document.querySelector('#panel-customer-info .customer-field[data-field="siteAddress"]');
-                const panelName = document.querySelector('#panel-customer-info .customer-field[data-field="clientName"]');
-                const panelPhone = document.querySelector('#panel-customer-info .customer-field[data-field="clientPhone"]');
-                const panelPeriod = document.querySelector('#panel-customer-info .customer-field[data-field="constructionPeriod"]');
+            const address = customer.siteAddress || (customer.field4 ? customer.field4 : '현장주소 없음');
+            const name = customer.clientName || '고객명 없음';
+            const phone = customer.clientPhone || '연락처 없음';
+            const period = customer.constructionPeriod || '공사기간 미정';
 
-                if (headerSiteAddress && panelSiteAddress) headerSiteAddress.innerText = panelSiteAddress.innerText;
-                if (headerClientName && panelName) headerClientName.innerText = panelName.innerText;
-                if (headerClientPhone && panelPhone) headerClientPhone.innerText = panelPhone.innerText;
-                if (headerPeriod && panelPeriod) headerPeriod.innerText = panelPeriod.innerText;
-            }
+            if (headerSiteAddress) headerSiteAddress.innerText = address;
+            if (headerClientName) headerClientName.innerText = name;
+            if (headerClientPhone) headerClientPhone.innerText = phone;
+            if (headerPeriod) headerPeriod.innerText = period;
 
-            console.log('[Mobile] Customer info and Header updated successfully');
+            console.log('[Mobile] Customer info and Header updated successfully (Direct Data Binding)');
         }
 
         // [New] Helper to Copy Panel Data to Header (Source of Truth: DOM)
