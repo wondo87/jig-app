@@ -11265,6 +11265,7 @@
 
         // 고객 목록 아이템 렌더링 (공통)
         function renderCustomerItems(container, items) {
+            // 2026-01-24 10:30 - Force Vercel redeploy
             console.log(`🎨 [Mobile] renderCustomerItems: 렌더링할 아이템 수 = ${items.length}`);
             if (items.length === 0) {
                 container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
