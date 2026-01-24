@@ -598,7 +598,7 @@
 
                 /* [Critical Fix] Header below global header */
                 #headerMobileInfo {
-                    display: flex !important;
+                    display: none !important;
                     /* Hidden by default */
                     align-items: flex-end !important;
                     /* Bottom alignment */
@@ -18050,7 +18050,11 @@
             // 고객 선택 해제, 고객 목록으로 복귀
             document.body.classList.remove('mobile-customer-selected');
             document.getElementById('customerView').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'block';
+            // [Fix] Hide Blue Header on Back
+            const mobInfo = document.getElementById('headerMobileInfo');
+            if (mobInfo) {
+                mobInfo.style.display = 'none';
+            }
 
             // [Fix] Header visibility logic removed to prevent persistence issue
             // Header visibility is managed by view transitions now
