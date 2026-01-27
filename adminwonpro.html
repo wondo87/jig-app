@@ -14325,25 +14325,18 @@
                     if (checklistMasterData && checklistMasterData.length > 0) {
                         const customerChecklistData = getCurrentCustomerChecklistData();
 
-                        // [통합 내보내기] 현재 필터링된 항목만 내보내기 (standalone 로직과 동일하게 적용)
-                        let stageFilter = ['all'];
-                        let categoryFilter = ['all'];
-                        if (typeof getMultiSelectValues === 'function') {
-                            stageFilter = getMultiSelectValues('checklistStageFilter');
-                            categoryFilter = getMultiSelectValues('checklistCategoryFilter');
-                        }
+                        // 고객이 선택한 항목 번호
+                        const selectedItemNumbers = Object.keys(customerChecklistData);
 
-                        // 필터링 적용
-                        const filteredExportItems = checklistMasterData.filter(item => {
-                            if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                            if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
-                            return true;
-                        });
+                        // 고객이 선택한 항목만 필터링
+                        const customerItems = checklistMasterData.filter(item =>
+                            selectedItemNumbers.includes(String(item.번호))
+                        );
 
                         checklistData = {
                             '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
-                            '전체항목수': checklistMasterData.length,
-                            '체크리스트': filteredExportItems.map(item => { // 변경: filteredExportItems 사용
+                            '전체항목수': customerItems.length,
+                            '체크리스트': customerItems.map(item => {
                                 const isChecked = !!customerChecklistData[item.번호];
                                 return {
                                     번호: item.번호,
@@ -14398,35 +14391,21 @@
                 } else if (type === 'checklist') {
                     const customerChecklistData = getCurrentCustomerChecklistData();
 
-                    // [변경] 현재 필터링된 항목만 내보내기Logic
-                    let stageFilter = ['all'];
-                    let categoryFilter = ['all'];
+                    // 고객이 선택한 항목 번호
+                    const selectedItemNumbers = Object.keys(customerChecklistData);
 
-                    if (typeof getMultiSelectValues === 'function') {
-                        stageFilter = getMultiSelectValues('checklistStageFilter');
-                        categoryFilter = getMultiSelectValues('checklistCategoryFilter');
-                    }
+                    // 고객이 선택한 항목만 필터링
+                    const customerItems = checklistMasterData.filter(item =>
+                        selectedItemNumbers.includes(String(item.번호))
+                    );
 
-                    // 필터링 적용
-                    const filteredItems = checklistMasterData.filter(item => {
-                        // 진행단계 필터
-                        if (!stageFilter.includes('all')) {
-                            if (!stageFilter.includes(item.진행단계 || '')) return false;
-                        }
-                        // 카테고리 필터
-                        if (!categoryFilter.includes('all')) {
-                            if (!categoryFilter.includes(item.category || '')) return false;
-                        }
-                        return true;
-                    });
-
-                    // [변경] 현재 필터링된 모든 항목 전송 (체크 여부 포함)
+                    // [변경] 고객이 선택한 항목만 내보내기 (체크 여부 포함)
                     requestData.data = {
                         '성명': targetData.clientName || '',
                         '현장주소': targetData.siteAddress || '',
                         '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
-                        '전체항목수': checklistMasterData.length,
-                        '체크리스트': filteredItems.map(item => {
+                        '전체항목수': customerItems.length,
+                        '체크리스트': customerItems.map(item => {
                             const isChecked = !!customerChecklistData[item.번호];
                             return {
                                 번호: item.번호,
