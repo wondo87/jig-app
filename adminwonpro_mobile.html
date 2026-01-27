@@ -16028,9 +16028,6 @@
                 return;
             }
 
-            // [Confirmation] 삭제 전 확인 (실수로 누르는 경우 방지)
-            if (!confirm('정말 삭제하시겠습니까?')) return;
-
             // 현재 고객의 체크리스트 데이터에서 삭제
             if (currentData.checklistData[itemNumber] !== undefined) { // 존재 여부 확인 강화
                 delete currentData.checklistData[itemNumber];
@@ -16059,7 +16056,7 @@
         }
 
         // [추가] 체크리스트 항목 추가 모달
-        function showAddChecklistItemModal() {
+        async function showAddChecklistItemModal() {
             if (!currentData || !currentData.checklistData) {
                 showToast('고객을 먼저 선택해주세요.', 'warning');
                 return;
@@ -16070,65 +16067,80 @@
                 return;
             }
 
+            // 현재 필터 상태 가져오기
+            let stageFilter = ['all'];
+            let categoryFilter = ['all'];
+
+            if (typeof getMultiSelectValues === 'function') {
+                stageFilter = getMultiSelectValues('checklistStageFilter');
+                categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+            }
+
             // 현재 고객이 이미 선택한 항목 번호
             const selectedItemNumbers = Object.keys(currentData.checklistData);
 
-            // 선택 가능한 항목 (아직 선택하지 않은 항목)
-            const availableItems = checklistMasterData.filter(item =>
-                !selectedItemNumbers.includes(String(item.번호))
-            );
+            // 필터링된 항목 중 아직 선택하지 않은 항목
+            const availableItems = checklistMasterData.filter(item => {
+                // 이미 선택한 항목 제외
+                if (selectedItemNumbers.includes(String(item.번호))) return false;
+
+                // 진행단계 필터
+                if (!stageFilter.includes('all')) {
+                    if (!stageFilter.includes(item.진행단계 || '')) return false;
+                }
+
+                // 카테고리 필터
+                if (!categoryFilter.includes('all')) {
+                    if (!categoryFilter.includes(item.category || '')) return false;
+                }
+
+                return true;
+            });
 
             if (availableItems.length === 0) {
-                showToast('추가할 수 있는 항목이 없습니다. (모든 항목이 이미 선택됨)', 'info');
+                showToast('현재 필터 조건에 추가할 항목이 없습니다.', 'info');
                 return;
             }
 
-            // 모달 HTML 생성
-            const modalHTML = `
-                <div id="addChecklistModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center; padding:20px;">
-                    <div style="background:white; border-radius:16px; max-width:600px; width:100%; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
-                        <div style="padding:20px; border-bottom:1px solid #e5e5ea;">
-                            <h3 style="margin:0; font-size:18px; font-weight:700;">체크리스트 항목 추가</h3>
-                            <p style="margin:8px 0 0 0; font-size:13px; color:#86868b;">추가할 항목을 선택하세요 (${availableItems.length}개 가능)</p>
-                        </div>
-                        <div style="flex:1; overflow-y:auto; padding:16px;">
-                            ${availableItems.map(item => `
-                                <div style="border:1px solid #e5e5ea; border-radius:12px; padding:12px; margin-bottom:12px; cursor:pointer; transition:all 0.2s;"
-                                     onmouseover="this.style.borderColor='#007aff'; this.style.background='#f5f5f7';"
-                                     onmouseout="this.style.borderColor='#e5e5ea'; this.style.background='white';"
-                                     onclick="addChecklistItemToCustomer(${item.번호})">
-                                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-                                        <span style="background:#007aff; color:white; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;">NO.${item.번호}</span>
-                                        <span style="font-weight:700; font-size:14px;">${item.항목 || ''}</span>
-                                    </div>
-                                    <div style="font-size:12px; color:#666; margin-bottom:4px;">${item.내용 || ''}</div>
-                                    <div style="display:flex; gap:6px;">
-                                        ${item.카테고리 ? `<span style="background:#f5f5f7; color:#666; padding:2px 8px; border-radius:6px; font-size:11px;">${item.카테고리}</span>` : ''}
-                                        ${item.진행단계 ? `<span style="background:#f5f5f7; color:#666; padding:2px 8px; border-radius:6px; font-size:11px;">${item.진행단계}</span>` : ''}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div style="padding:16px; border-top:1px solid #e5e5ea;">
-                            <button onclick="closeAddChecklistModal()"
-                                style="width:100%; background:#86868b; color:white; border:none; padding:14px; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer;">
-                                닫기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
+            // 일괄 추가 (모달 없이)
+            let addedCount = 0;
+            availableItems.forEach(item => {
+                if (!currentData.checklistData[item.번호]) {
+                    currentData.checklistData[item.번호] = false;
+                    addedCount++;
+                }
+            });
 
-            // 모달 추가
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            // 로컬 customers 배열에도 반영
+            if (currentCustomerId) {
+                const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+                if (customerIndex !== -1) {
+                    if (!customers[customerIndex].checklistData) {
+                        customers[customerIndex].checklistData = {};
+                    }
+                    availableItems.forEach(item => {
+                        if (!customers[customerIndex].checklistData[item.번호]) {
+                            customers[customerIndex].checklistData[item.번호] = false;
+                        }
+                    });
+                }
+            }
+
+            console.log('[Mobile] Added', addedCount, 'items to customer checklist');
+
+            // 저장
+            await saveCustomers();
+
+            // UI 갱신
+            updateChecklistFilters();
+            renderChecklistItems();
+
+            showToast(`${addedCount}개 항목이 추가되었습니다.`, 'success');
         }
 
-        function closeAddChecklistModal() {
-            const modal = document.getElementById('addChecklistModal');
-            if (modal) modal.remove();
-        }
+        // [제거됨] closeAddChecklistModal, addChecklistItemToCustomer - 더 이상 사용 안 함
 
-        function addChecklistItemToCustomer(itemNumber) {
+        function addChecklistItemToCustomer_DEPRECATED(itemNumber) {
             if (!currentData || !currentData.checklistData) {
                 showToast('고객 데이터가 없습니다.', 'warning');
                 return;

@@ -4340,18 +4340,7 @@
                                 </div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <!-- [추가] DB 불러오기/저장 버튼 -->
-                                <button class="btn btn-secondary btn-sm no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) selectCustomer(currentCustomerId); syncChecklistFromCloud(); })"
-                                    style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
-                                    🔄 DB 불러오기
-                                </button>
-
-                                <button class="btn btn-primary btn-sm no-print" onclick="showAddChecklistItemModal()"
-                                    style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
-                                    title="현재 필터 조건의 항목을 일괄 추가">
-                                    ➕ 필터 항목 추가
-                                </button>
-
+                                <!-- [수정] 저장내용불러오기 버튼만 유지 -->
                                 <button class="restore-btn no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
@@ -4426,12 +4415,12 @@
                                         <div class="multi-select-dropdown" id="checklistCategoryFilterDropdown"></div>
                                     </div>
                                 </div>
-                                <div style="flex: 1; min-width: 200px;">
-                                    <label
-                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">검색</label>
-                                    <input type="text" id="checklistSearchInput" oninput="renderChecklistItems()"
-                                        placeholder="항목, 내용, 비고로 검색..."
-                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
+                                <div style="flex: 1; min-width: 200px; display: flex; align-items: flex-end;">
+                                    <button class="btn btn-primary btn-sm no-print" onclick="showAddChecklistItemModal()"
+                                        style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%;"
+                                        title="현재 필터 조건의 항목을 일괄 추가">
+                                        ➕ 필터 항목 추가
+                                    </button>
                                 </div>
                             </div>
 
@@ -13624,8 +13613,6 @@
                 categoryFilter = getMultiSelectValues('checklistCategoryFilter');
             }
 
-            const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
-
             // [CRITICAL] 고객이 선택한 항목만 표시 (checklistData에 있는 항목 번호)
             const savedItemNumbers = Object.keys(customerChecklistData || {});
             console.log('📊 [Web Debug] Customer selected items:', savedItemNumbers.length, 'items');
@@ -13644,8 +13631,6 @@
                     if (!categoryFilter.includes(item.category || '')) return false;
                 }
 
-                // 4. 검색어 필터
-                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
 
@@ -13791,10 +13776,6 @@
                 return;
             }
 
-            if (!confirm('이 고객의 체크리스트에서 이 항목을 제거하시겠습니까?')) {
-                return;
-            }
-
             // 현재 고객의 checklistData에서 해당 항목 번호 제거
             const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
             if (customerIndex !== -1 && customers[customerIndex].checklistData) {
@@ -13863,18 +13844,7 @@
                 return;
             }
 
-            // 필터 조건 텍스트 생성
-            const stageText = stageFilter.includes('all') ? '전체' : stageFilter.join(', ');
-            const categoryText = categoryFilter.includes('all') ? '전체' : categoryFilter.join(', ');
-
-            // 확인 메시지
-            const confirmMessage = `현재 필터 조건의 항목 ${availableItems.length}개를 추가하시겠습니까?\n\n진행단계: ${stageText}\n카테고리: ${categoryText}`;
-
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-
-            // 일괄 추가
+            // 일괄 추가 (confirm 제거)
             let addedCount = 0;
             availableItems.forEach(item => {
                 if (!currentData.checklistData[item.번호]) {
