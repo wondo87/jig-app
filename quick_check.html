@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>빠른 확인</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        pre { background: #f5f5f5; padding: 15px; }
+    </style>
+</head>
+<body>
+    <h2>고객 데이터 로드 확인</h2>
+    <button onclick="check()">확인</button>
+    <pre id="result"></pre>
+
+    <script src="admin_config.js"></script>
+    <script>
+        async function check() {
+            const result = document.getElementById('result');
+            result.textContent = '확인 중...\n';
+
+            try {
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: Date.now()
+                });
+
+                result.textContent += `URL: ${CUSTOMER_SYNC_URL}\n\n`;
+
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+                result.textContent += `응답: ${response.status}\n\n`;
+
+                const data = await response.json();
+                result.textContent += `데이터 타입: ${Array.isArray(data) ? 'Array' : typeof data}\n`;
+                result.textContent += `고객 수: ${data.length}\n\n`;
+
+                if (data.length > 0) {
+                    result.textContent += `첫 번째 고객:\n`;
+                    result.textContent += `- ID: ${data[0].customerId}\n`;
+                    result.textContent += `- 이름: ${data[0].clientName}\n`;
+                    result.textContent += `- 전화: ${data[0].clientPhone}\n`;
+                }
+            } catch (e) {
+                result.textContent += `\n오류: ${e.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

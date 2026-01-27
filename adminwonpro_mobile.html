@@ -227,6 +227,7 @@
             color: #fff;
             font-size: 16px;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .logo-text span {
@@ -589,19 +590,62 @@
                     display: block !important;
                 }
 
-                #headerMobileInfo {
-                    display: flex !important;
-                }
+
 
                 #headerMobileTitle {
                     display: block !important;
                 }
 
-                /* [Critical Fix] Ensure header layout is flex to put title on right */
+                /* [Critical Fix] Header below global header */
                 #headerMobileInfo {
-                    display: flex !important;
-                    align-items: center !important;
+                    display: none !important;
+                    /* Hidden by default */
+                    align-items: flex-end !important;
+                    /* Bottom alignment */
                     justify-content: space-between !important;
+                    height: 54px !important;
+                    padding: 0 16px 10px 16px !important;
+                    /* Bottom padding for baseline align */
+                    background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
+                    width: 100% !important;
+                    position: fixed;
+                    top: 54px;
+                    left: 0;
+                    z-index: 10002;
+                    /* Higher than other elements */
+                    box-sizing: border-box;
+                    flex-wrap: nowrap !important;
+                    /* Prevent wrapping */
+                }
+
+                .header-left-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    justify-content: flex-end;
+                }
+
+                .header-text {
+                    font-size: 10px !important;
+                    font-weight: 400 !important;
+                    color: #fff;
+                    line-height: 1.2;
+                }
+
+                .header-right-label,
+                #headerMobileTitle {
+                    font-size: 10px !important;
+                    font-weight: 400 !important;
+                    color: #fff;
+                    line-height: 1.2;
+                    /* Aligns with the bottom line of the left group */
+                }
+
+                /* Hide Panel Headers (Consolidated into Main Header) */
+                #panel-checklist .doc-header,
+                #panel-schedule .doc-header,
+                #panel-info .doc-header {
+                    display: none !important;
                 }
 
                 #panel-schedule .data-table thead,
@@ -695,25 +739,24 @@
 
                 /* Add margin-top to tab-panel to account for fixed headers */
                 .tab-panel {
-                    margin-top: 94px !important;
-                    /* 54px (black header) + 40px (blue header) = 94px */
+                    margin-top: 0 !important;
+                    /* Body padding-top (118px) handles the gap */
+                    padding-top: 0 !important;
                 }
 
-                /* 체크리스트 패널만 여백 최소화 - 10px만 */
+                /* Ensure specific panels follow this rule */
                 #panel-checklist {
-                    margin-top: 10px !important;
+                    margin-top: 0 !important;
                     padding-top: 0 !important;
                 }
 
-                /* 공사 스케줄 패널도 여백 최소화 - 10px만 */
                 #panel-schedule {
-                    margin-top: 10px !important;
+                    margin-top: 0 !important;
                     padding-top: 0 !important;
                 }
 
-                /* 고객정보 탭도 여백 최소화 - 10px만 */
                 #panel-info {
-                    margin-top: 10px !important;
+                    margin-top: 0 !important;
                     padding-top: 0 !important;
                 }
 
@@ -753,37 +796,43 @@
                     padding-right: 0 !important;
                 }
 
-                /* Reset standard headerMobileInfo margins */
-                #headerMobileInfo {
-                    width: 100% !important;
-                    display: flex !important;
-                    align-items: center;
-                    justify-content: space-between;
+                #panel-schedule .doc-content {
+                    padding-top: 0 !important;
+                    padding-bottom: 100px !important;
+                    padding-left: 0 !important;
+                    padding-right: 0 !important;
                 }
-            }
 
-            /* Restored Mobile Styles */
-            .mobile-check-btn.active {
-                background-color: #007aff !important;
-                border-color: #007aff !important;
-                color: white;
-                transform: scale(1.05);
-            }
+                #panel-info .doc-content {
+                    padding-top: 10px !important;
+                    padding-bottom: 100px !important;
+                    padding-left: 16px !important;
+                    padding-right: 16px !important;
+                }
 
-            .mobile-card-title {
-                font-size: 14px;
-                font-weight: 600;
-                color: #1d1d1f;
-                line-height: 1.4;
-            }
+                /* Restored Mobile Styles */
+                .mobile-check-btn.active {
+                    background-color: #007aff !important;
+                    border-color: #007aff !important;
+                    color: white;
+                    transform: scale(1.05);
+                }
 
-            .mobile-card.checked .mobile-card-title {
-                color: #007aff !important;
-            }
+                .mobile-card-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #1d1d1f;
+                    line-height: 1.4;
+                }
 
-            /* Hide stats box on mobile */
-            .checklist-stats {
-                display: none !important;
+                .mobile-card.checked .mobile-card-title {
+                    color: #007aff !important;
+                }
+
+                /* Hide stats box on mobile */
+                .checklist-stats {
+                    display: none !important;
+                }
             }
 
             /* [Strict Hide] Stats Box - Mobile Only */
@@ -824,52 +873,6 @@
                 margin: 0 !important;
             }
 
-            /* [모바일] 모든 패널 헤더 검정색 상단 바로 아래 고정 */
-            #panel-checklist .doc-header,
-            #panel-schedule .doc-header,
-            #panel-info .doc-header {
-                display: block !important;
-                position: fixed !important;
-                top: 54px !important;
-                /* 검정색 헤더(54px) 바로 아래 */
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
-                z-index: 99 !important;
-                background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
-                margin: 0 !important;
-                border-radius: 0 !important;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-                padding: 10px 16px !important;
-                /* 높이 최소화: 10px 상하 패딩 */
-                height: 40px !important;
-                /* 고정 높이 */
-                display: flex !important;
-                align-items: center !important;
-            }
-
-            /* 모바일 헤더 내부 텍스트 크기 통일 */
-            #panel-checklist .doc-header h1,
-            #panel-schedule .doc-header h1,
-            #panel-info .doc-header h1 {
-                font-size: 15px !important;
-                margin: 0 !important;
-                line-height: 1 !important;
-                font-weight: 600 !important;
-            }
-
-            /* 헤더 내 모든 불필요한 요소 숨김 */
-            #panel-checklist .doc-header button,
-            #panel-schedule .doc-header button,
-            #panel-info .doc-header button,
-            #panel-checklist .doc-header .subtitle,
-            #panel-schedule .doc-header .subtitle,
-            #panel-info .doc-header .subtitle,
-            #panel-checklist .doc-header div[style*="DESIGN JIG"],
-            #panel-schedule .doc-header div[style*="DESIGN JIG"],
-            #panel-info .doc-header div[style*="DESIGN JIG"] {
-                display: none !important;
-            }
 
             /* 헤더 고정으로 인한 컨텐츠 영역 padding 추가 */
             #panel-checklist .doc-content,
@@ -915,28 +918,10 @@
                 display: none !important;
             }
 
-            /* 3. Push Content Down */
-            #panel-checklist .doc-content,
-            #checklistDocContent {
-                padding: 10px !important;
-                padding-top: 10px !important;
-                /* Minimal padding - content starts close to header */
-                padding-bottom: 80px !important;
-            }
+            /* Rogue #headerMobileInfo block removed (Line 989) */
 
-            /* Reset standard headerMobileInfo margins */
-            #headerMobileInfo {
-                margin-top: 0 !important;
-                display: flex !important;
-                width: 100%;
-            }
-
-            /* Show Mobile Dropdowns */
-            .mobile-checklist-controls {
-                display: flex !important;
-                gap: 8px !important;
-                margin-bottom: 8px !important;
-            }
+            /* Mobile Dropdowns Hidden (Tabs used instead) */
+            /* Removed conflicting display:flex rule */
 
             /* Ensure the mobile header title (right side) is visible and larger */
             #headerMobileTitle {
@@ -1164,9 +1149,7 @@
             padding: 0;
         }
 
-        #headerMobileInfo {
-            display: block !important;
-        }
+
 
         /* 2. Hide Redundant Detail Card */
         .customer-header-card {
@@ -1369,6 +1352,17 @@
         .mobile-icon-btn:active {
             background: rgba(255, 255, 255, 0.3);
             transform: scale(0.95);
+        }
+
+        /* [New] Active Toolbar Button */
+        .mobile-icon-btn.active {
+            color: #0071e3 !important;
+            font-weight: 700;
+            background: rgba(0, 113, 227, 0.1);
+        }
+
+        .mobile-icon-btn.active svg {
+            stroke-width: 2.5px;
         }
 
         .mobile-icon-btn svg {
@@ -1600,9 +1594,22 @@
             display: flex !important;
         }
 
-        /* 모바일에서 body 하단 여백 (툴바 공간) */
+        /* 모바일에서 body 하단 여백 (툴바 공간) + 상단 여백 (헤더 2개) */
         body.mobile-customer-selected {
             padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+            padding-top: 108px !important;
+            /* 54px(Black) + 54px(Blue) */
+        }
+
+        /* [New] Login Mode: Hide Headers */
+        body.login-active .main-header,
+        body.login-active #headerMobileInfo,
+        body.login-active .customer-header-bar {
+            display: none !important;
+        }
+
+        body.login-active {
+            padding-top: 0 !important;
         }
 
         /* 관리자 모달 */
@@ -4506,8 +4513,8 @@
         <div class="logo">
             <a href="javascript:void(0)" onclick="location.reload();"
                 style="display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;">
-                <div class="logo-icon">DJ</div>
-                <div class="logo-text">디자인지그 <span>통합 관리 시스템</span></div>
+                <img src="source_icon.png" alt="DJ" style="width:40px;height:40px;border-radius:8px;">
+                <div class="logo-text">DESIGN JIG</div>
             </a>
         </div>
         <div class="header-actions">
@@ -4533,6 +4540,9 @@
             <!-- Icons will be rendered by updateMobileHeaderActions() -->
         </div>
     </header>
+
+    <!-- [New] Mobile Blue Header (Overlay) -->
+    <div id="headerMobileInfo" style="display:none;"></div>
 
     <!-- 관리자 로그인 모달 -->
     <div class="admin-modal" id="adminModal">
@@ -4914,20 +4924,7 @@
                                 class="lock-toggle-btn unlocked">🔓 열림</button>
                             <span id="headerCreatedBy" style="font-size:10px;color:#86868b;">📝 -</span>
                         </div>
-                        <!-- [New] Mobile-only info block -->
-                        <div id="headerMobileInfo"
-                            style="display:none; margin-top:4px; opacity: 1.0; align-items: center; justify-content: space-between;">
-                            <div
-                                style="font-size:11px; color:#ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
-                                📍 <span id="headerSiteAddress">현장주소</span> | 📞 <span id="headerClientPhone">연락처</span>
-                                |
-                                📅 <span id="headerPeriod">공사기간</span>
-                            </div>
-                            <!-- [New] Page Title (Right) -->
-                            <div id="headerMobileTitle"
-                                style="font-weight:700; font-size:12px; color:#fff; margin-left:8px; white-space:nowrap; display:none;">
-                            </div>
-                        </div>
+
                     </div>
                     <div class="customer-header-right">
                         <select id="customerStatus" onchange="updateStatus()">
@@ -5670,30 +5667,29 @@
                                     인쇄/PDF</button>
                             </div>
                         </div>
-                        <div class="doc-content" style="padding:30px;" id="checklistDocContent">
+                        <div class="doc-content" id="checklistDocContent">
                             <!-- [New] Mobile Checklist Controls (Status | Category | Search) -->
                             <div class="mobile-checklist-controls" style="display:none; margin-bottom: 0;">
                                 <select id="mobileStageFilter" class="mobile-filter-select"
                                     onchange="renderChecklistItems()"
-                                    style="flex: 1; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 15px; background: #fff; color: #1d1d1f;">
+                                    style="flex: 1; min-width: 0; padding: 0 8px; height: 40px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 13px; background: #fff; color: #1d1d1f; text-overflow: ellipsis;">
                                     <option value="all">전체 단계</option>
                                     <!-- 실제 진행단계 옵션은 동적으로 추가됨 -->
                                 </select>
                                 <select id="mobileCategoryFilter" class="mobile-filter-select"
                                     onchange="renderChecklistItems()"
-                                    style="flex: 1; padding: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 15px; background: #fff; color: #1d1d1f;">
+                                    style="flex: 1; min-width: 0; padding: 0 8px; height: 40px; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 13px; background: #fff; color: #1d1d1f; text-overflow: ellipsis;">
                                     <option value="">카테고리 ▾</option>
                                     <option value="디자인 상담 및 설계">디자인 상담 및 설계</option>
                                     <!-- Will be populated dynamically -->
                                 </select>
-                                <button id="mobileSearchToggle" class="mobile-search-btn"
-                                    onclick="toggleMobileSearch()"
-                                    style="padding: 12px 20px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 18px; background: #fff; cursor: pointer;">🔍</button>
+                                <button id="mobileSearchToggle" class="mobile-search-btn" onclick="toggleMobileSearch()"
+                                    style="flex: 0 0 36px; height: 40px; padding: 0; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 16px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">🔍</button>
                             </div>
                             <!-- Mobile Search Input Overlay -->
                             <div id="mobileSearchInputWrapper" style="display:none; margin-bottom:0;">
                                 <input type="text" id="mobileSearchInput" placeholder="항목, 내용, 비고로 검색..."
-                                    style="width:100%; padding:12px; border:1px solid #e5e5ea; border-radius:12px; font-size:15px;"
+                                    style="width:100%; padding:10px; height: 40px; border:1px solid #e5e5ea; border-radius:8px; font-size:14px;"
                                     oninput="renderChecklistItems()">
                             </div>
 
@@ -5730,11 +5726,13 @@
                                         style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #1d1d1f; background: #1d1d1f; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                                         전체
                                     </button>
-                                    <button onclick="setMobileChecklistFilter('completed')" id="btnMobileStatusCompleted"
+                                    <button onclick="setMobileChecklistFilter('completed')"
+                                        id="btnMobileStatusCompleted"
                                         style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #e5e5ea; background: #fff; color: #86868b; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                                         완료
                                     </button>
-                                    <button onclick="setMobileChecklistFilter('incomplete')" id="btnMobileStatusIncomplete"
+                                    <button onclick="setMobileChecklistFilter('incomplete')"
+                                        id="btnMobileStatusIncomplete"
                                         style="flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #e5e5ea; background: #fff; color: #86868b; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                                         미완료
                                     </button>
@@ -5742,7 +5740,8 @@
                             </div>
 
                             <!-- 체크리스트 필터 (데스크톱 전용) -->
-                            <div class="desktop-checklist-filters" style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <div class="desktop-checklist-filters"
+                                style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 200px;">
                                     <label
                                         style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">진행단계
@@ -6012,12 +6011,7 @@
                 <div class="tab-panel" id="panel-customer-info">
                     <div class="document-wrapper"
                         style="max-width:1000px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
-                        <div class="doc-header"
-                            style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: white;">
-                            <div>
-                                <h1 style="margin: 0; font-size: 15px; font-weight: 600; color: white;">고객 정보</h1>
-                            </div>
-                        </div>
+                        <!-- Internal Header Removed for Global Blue Header Integration -->
 
                         <!-- 모바일 고객 정보 (블럭 형태) -->
                         <div class="doc-content" style="padding: 16px; background: #f5f5f7;">
@@ -7861,7 +7855,7 @@
         let currentCustomerId = null;
         let currentData = {};
         let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
-        let currentStatusFilter = 'all';
+        let currentStatusFilter = 'in_progress'; // Default: Show Active Projects Only
         let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
         // 페이징 관련 변수
@@ -8581,9 +8575,9 @@
             const headerTitleEl = document.getElementById('headerMobileTitle');
             if (headerTitleEl) {
                 let titleText = '';
-                if (tabId === 'checklist') titleText = '공정별 체크리스트';
-                else if (tabId === 'schedule') titleText = '공사 스케줄';
-                else if (tabId === 'customer') titleText = '고객 정보';
+                if (tabId === 'checklist') titleText = 'Checklist';
+                else if (tabId === 'schedule') titleText = 'Schedule';
+                else if (tabId === 'customer') titleText = 'Customer Information';
                 else if (tabId === 'stats') titleText = '현황 및 통계';
                 else if (tabId === 'expenses') titleText = '비용 관리';
                 else if (tabId === 'files') titleText = '파일함';
@@ -10925,6 +10919,16 @@
                 document.getElementById('accessDeniedOverlay').style.display = isLocked ? 'flex' : 'none';
                 if (isLocked) {
                     document.getElementById('lockedPasswordInput').value = '';
+                }
+            }
+
+            // [Mobile Fix] Sync Data to Mobile UI Elements
+            if (window.innerWidth <= 768 && typeof updateMobileCustomerInfo === 'function') {
+                console.log('📱 [Mobile] Updating Mobile UI for customer:', customer.clientName);
+                updateMobileCustomerInfo(customer);
+
+                // Show Checklist Panel by default on Mobile
+                if (typeof mobileGoToPanel === 'function') {
                 }
             }
 
@@ -15588,12 +15592,21 @@
 
                             return `
                             <div id="mobile-card-${item.번호}" class="${cardClass}" style="position:relative;">
-                                <button onclick="deleteChecklistItem(${item.번호})"
-                                    style="position:absolute; top:8px; right:8px; border:none; background:transparent; color:#ff3b30; cursor:pointer; font-size:16px; padding:4px; z-index:10;"
-                                    title="삭제">
-                                    🗑️
-                                </button>
-                                <div class="mobile-card-row" style="margin-bottom:2px; padding-right:32px;">
+                               
+                                <div style="position:absolute; top:8px; right:8px; display:flex; gap:8px; z-index:10;">
+                                     <button onclick="editChecklistItem(${item.번호})"
+                                        style="border:none; background:transparent; color:#007aff; cursor:pointer; font-size:16px; padding:4px;"
+                                        title="수정">
+                                        ✏️
+                                    </button>
+                                    <button onclick="deleteChecklistItem(${item.번호})"
+                                        style="border:none; background:transparent; color:#ff3b30; cursor:pointer; font-size:16px; padding:4px;"
+                                        title="삭제">
+                                        🗑️
+                                    </button>
+                                </div>
+
+                                <div class="mobile-card-row" style="margin-bottom:2px; padding-right:60px;"> <!-- Padding Right increased for buttons -->
                                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
                                         ${checkBtn}
                                         <div class="mobile-card-title">${titleCheck}${item.항목}</div>
@@ -15606,11 +15619,11 @@
                                     ${item.진행단계 ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#86868b;">${item.진행단계}</div>` : ''}
                                 </div>
 
-                                ${item.내용 ? `<div style="margin-top:4px; margin-left: 34px; font-size:13px; color:#333;">${item.내용}</div>` : ''}
+                                ${(userContent || item.내용) ? `<div style="margin-top:4px; margin-left: 34px; font-size:13px; color:#333;">${userContent || item.내용}</div>` : ''}
 
-                                ${item.비고 ? `<div style="border-top:1px dashed #e5e5ea; padding-top:6px; margin-top:6px; margin-left: 34px;">
+                                ${(userRemarks || item.비고) ? `<div style="border-top:1px dashed #e5e5ea; padding-top:6px; margin-top:6px; margin-left: 34px;">
                                     <span style="font-size:11px; color:#bdbdbd; margin-right:6px;">비고:</span>
-                                    <span style="font-size:12px; color:#666;">${item.비고}</span>
+                                    <span style="font-size:12px; color:#666;">${userRemarks || item.비고}</span>
                                 </div>` : ''}
                             </div>`;
                         }).join('');
@@ -15708,16 +15721,45 @@
             }
 
             // 현재 체크 상태 (boolean으로 통일)
-            const currentState = customers[customerIndex].checklistData[itemNumber] || false;
-            const newState = !currentState;
+            // 현재 체크 상태 확인
+            const currentVal = customers[customerIndex].checklistData[itemNumber];
+            let currentState = false;
+            let currentContent = undefined; // 기존 내용 보존
+            let currentRemarks = undefined; // 기존 비고 보존
 
-            customers[customerIndex].checklistData[itemNumber] = newState;
+            if (typeof currentVal === 'boolean') {
+                currentState = currentVal;
+            } else if (typeof currentVal === 'object' && currentVal !== null) {
+                currentState = currentVal.checked || false;
+                currentContent = currentVal.content;
+                currentRemarks = currentVal.remarks;
+            }
+
+            const newState = !currentState;
+            const isNowChecked = newState;
+
+            // [FIX] 객체 구조를 유지하며 저장 (Boolean 덮어쓰기 방지)
+            const newData = {
+                checked: newState,
+                content: currentContent,
+                remarks: currentRemarks
+            };
+
+            // 만약 content/remarks가 없다면 굳이 객체로 저장하지 않고 Boolean으로 저장해도 되지만, 
+            // 일관성을 위해, 혹은 'Edit' 기능이 있으므로 객체로 변환하는 것이 유리할 수 있음.
+            // 여기서는 기존 데이터가 있으면 객체 유지, 없으면 Boolean.. 보다는 
+            // *항상 Object로 저장*하거나 *기존 형식을 존重*하는 방식 선택. 
+            // -> Plan: "Check if Object, if not promote... but do NOT lose content".
+
+            // 심플하게: 내용이 있으면 객체, 없으면 그냥 Boolean? 
+            // 아니면 그냥 통일성 있게 Object로 저장하는게 추후 확장에 좋음.
+            // 기존 코드 호환성을 위해 Object로 저장.
+
+            customers[customerIndex].checklistData[itemNumber] = newData;
 
             // [FIX] currentData에도 즉시 반영
             if (!currentData.checklistData) currentData.checklistData = {};
-            currentData.checklistData[itemNumber] = newState;
-
-            const isNowChecked = newState;
+            currentData.checklistData[itemNumber] = newData;
 
             // [New] Immediate Visual Update (Mobile)
             if (window.innerWidth <= 768) {
@@ -15752,7 +15794,10 @@
                 }
             }
 
-            // 저장
+            // [FIX] 데이터 구조 보존을 위해 Object 로직으로 변경했으므로,
+            // renderChecklistItems()를 호출하여 전체 UI(특히 텍스트 내용 등)를 다시 그리는 것이 안전함.
+            // 하지만 UX상 딜레이를 줄이기 위해 위에서 DOM 조작을 했으므로,
+            // 여기서는 '저장'만 확실히 수행.
             saveCustomers();
 
             // 다시 렌더링 (약간 지연시켜 애니메이션 확보, 혹은 값 동기화)
@@ -15767,6 +15812,98 @@
 
         // [Removed] 체크리스트 필드 업데이트 기능 제거 (웹과 데이터 형식 통일)
         // 웹은 boolean만 저장하므로 content/remarks 필드는 사용하지 않음
+        // [추가] 체크리스트 항목 수정 (모바일)
+        function editChecklistItem(itemNumber) {
+
+            // 데이터 확인
+            const item = checklistMasterData.find(i => i.번호 === itemNumber);
+            if (!item) return;
+
+            // 현재 저장된 데이터 가져오기
+            let currentContent = item.내용 || '';
+            let currentRemarks = item.비고 || '';
+
+            if (currentData.checklistData && currentData.checklistData[itemNumber]) {
+                const data = currentData.checklistData[itemNumber];
+                if (typeof data === 'object') {
+                    if (data.content !== undefined) currentContent = data.content;
+                    if (data.remarks !== undefined) currentRemarks = data.remarks;
+                }
+            }
+
+            // 간단한 프롬프트 대신 커스텀 모달 사용 (여러 필드 수정 위해)
+            // 여기서는 간편하게 prompt 2번 사용하거나, 작은 오버레이 띄움.
+            // UI 통일성을 위해 showAddChecklistItemModal 스타일의 간단 수정 모달 생성
+
+            const modalHTML = `
+                <div id="editChecklistModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center; padding:20px;">
+                    <div style="background:white; border-radius:16px; max-width:400px; width:100%; overflow:hidden; display:flex; flex-direction:column;">
+                        <div style="padding:16px; border-bottom:1px solid #e5e5ea; background:#f9f9f9;">
+                            <h3 style="margin:0; font-size:16px; font-weight:700;">항목 수정 (NO.${itemNumber})</h3>
+                            <div style="font-size:12px; color:#86868b; margin-top:4px;">${item.항목}</div>
+                        </div>
+                        <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                            <div>
+                                <label style="display:block; font-size:13px; font-weight:600; color:#333; margin-bottom:6px;">내용</label>
+                                <textarea id="editContentInput" style="width:100%; padding:10px; border:1px solid #d1d1d6; border-radius:8px; font-size:14px; resize:none; font-family:inherit;" rows="3">${currentContent}</textarea>
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:13px; font-weight:600; color:#333; margin-bottom:6px;">비고</label>
+                                <input id="editRemarksInput" type="text" value="${currentRemarks}" style="width:100%; padding:10px; border:1px solid #d1d1d6; border-radius:8px; font-size:14px; font-family:inherit;">
+                            </div>
+                        </div>
+                        <div style="display:flex; border-top:1px solid #e5e5ea;">
+                            <button onclick="document.getElementById('editChecklistModal').remove()" 
+                                style="flex:1; padding:14px; background:white; color:#333; border:none; border-right:1px solid #e5e5ea; font-size:15px; font-weight:500; cursor:pointer;">취소</button>
+                            <button onclick="saveChecklistEdit(${itemNumber})" 
+                                style="flex:1; padding:14px; background:white; color:#007aff; border:none; font-size:15px; font-weight:600; cursor:pointer;">저장</button>
+                        </div>
+                    </div>
+                </div>
+             `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            // Focus
+            setTimeout(() => document.getElementById('editContentInput')?.focus(), 100);
+        }
+
+        function saveChecklistEdit(itemNumber) {
+            const contentVal = document.getElementById('editContentInput').value;
+            const remarksVal = document.getElementById('editRemarksInput').value;
+
+            if (!currentData.checklistData) currentData.checklistData = {};
+
+            // 기존 상태 유지 (checked 여부)
+            const oldData = currentData.checklistData[itemNumber];
+            let isChecked = false;
+
+            if (typeof oldData === 'boolean') isChecked = oldData;
+            else if (typeof oldData === 'object' && oldData !== null) isChecked = oldData.checked || false;
+
+            // 객체 형태로 저장
+            currentData.checklistData[itemNumber] = {
+                checked: isChecked,
+                content: contentVal,
+                remarks: remarksVal
+            };
+
+            // Local Customers Update
+            if (currentCustomerId) {
+                const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+                if (customerIndex !== -1) {
+                    if (!customers[customerIndex].checklistData) customers[customerIndex].checklistData = {};
+                    customers[customerIndex].checklistData[itemNumber] = currentData.checklistData[itemNumber];
+                }
+            }
+
+            document.getElementById('editChecklistModal').remove();
+
+            // 즉시 저장 및 갱신
+            saveCustomers();
+            renderChecklistItems();
+            showToast('수정되었습니다.', 'success');
+        }
+
         function updateChecklistField(itemNumber, field, value) {
             // 더 이상 사용하지 않음
             console.warn('[Deprecated] updateChecklistField is no longer supported');
@@ -15782,12 +15919,15 @@
                 return;
             }
 
+            // [Confirmation] 삭제 전 확인 (실수로 누르는 경우 방지)
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+
             // 현재 고객의 체크리스트 데이터에서 삭제
-            if (currentData.checklistData[itemNumber]) {
+            if (currentData.checklistData[itemNumber] !== undefined) { // 존재 여부 확인 강화
                 delete currentData.checklistData[itemNumber];
                 console.log('[Checklist Delete] Removed item', itemNumber, 'from customer checklist');
 
-                // 로컬 customers 배열에도 반영 (Phase 2에서는 클라우드 저장 시에만 반영됨)
+                // 로컬 customers 배열에도 반영
                 if (currentCustomerId) {
                     const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
                     if (customerIndex !== -1 && customers[customerIndex].checklistData) {
@@ -15795,11 +15935,15 @@
                     }
                 }
 
+                // [FIX] 삭제 후 즉시 클라우드 저장 (Sync)
+                saveCustomers();
+
                 // UI 갱신
                 updateChecklistFilters();
                 renderChecklistItems();
 
-                showToast('항목이 삭제되었습니다. (저장 버튼을 눌러 클라우드에 반영하세요)', 'info');
+                // Toast 메시지 변경
+                // showToast('항목이 삭제되었습니다. (저장 버튼을 눌러 클라우드에 반영하세요)', 'info'); -> 삭제됨 (자동저장)
             } else {
                 showToast('이미 삭제된 항목입니다.', 'warning');
             }
@@ -17921,9 +18065,9 @@
 
             let titleText = '';
             // Map panel IDs to titles
-            if (panelId === 'panel-checklist') titleText = '공정별 체크리스트';
-            else if (panelId === 'panel-schedule') titleText = '공사 스케줄';
-            else if (panelId === 'panel-info') titleText = '고객 정보';
+            if (panelId === 'panel-checklist') titleText = 'Checklist';
+            else if (panelId === 'panel-schedule') titleText = 'Schedule';
+            else if (panelId === 'panel-customer-info') titleText = 'Customer Information'; // [Fix]
             else if (panelId === 'panel-stats') titleText = '현황 및 통계';
             else if (panelId === 'panel-expenses') titleText = '비용 관리';
             else if (panelId === 'panel-files') titleText = '파일함';
@@ -17944,19 +18088,72 @@
             // 헤더 제목 업데이트
             updateMobileHeaderTitle(panelId);
 
+            // [New] Active Tab Highlight Logic
+            document.querySelectorAll('.mobile-icon-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Map panelId to button ID
+            let btnId = '';
+            if (panelId === 'panel-checklist') btnId = 'btn-checklist';
+            else if (panelId === 'panel-schedule') btnId = 'btn-schedule';
+            else if (panelId === 'panel-customer-info') btnId = 'btn-customer-info'; // [Fix]
+
+            if (btnId) {
+                const activeBtn = document.getElementById(btnId);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+
             // 체크리스트 외 패널은 읽기 전용 알림
-            if (panelId !== 'panel-checklist') {
+            if (panelId !== 'panel-checklist' && panelId !== 'panel-customer-info') {
                 showToast('읽기 전용 모드입니다.', 'info');
             }
+
+            // [New] Ensure Header Sync when switching to Info
+            if (panelId === 'panel-customer-info' && typeof syncHeaderDataFromPanel === 'function') {
+                syncHeaderDataFromPanel();
+            }
+
+            // [Critical Logic] Toggle Checklist Controls Visibility
+            // Show Controls ONLY on Checklist Panel
+            const controls = document.querySelectorAll('.mobile-checklist-controls');
+            const tabs = document.querySelectorAll('.mobile-status-filter-buttons');
+
+            if (panelId === 'panel-checklist') {
+                controls.forEach(el => el.style.display = 'flex');
+                tabs.forEach(el => el.style.display = 'flex');
+            } else {
+                controls.forEach(el => el.style.display = 'none');
+                tabs.forEach(el => el.style.display = 'none');
+            }
+            // syncHeaderDataFromPanel removed (logic handled above)
         }
 
         function mobileGoBack() {
             // 고객 선택 해제, 고객 목록으로 복귀
             document.body.classList.remove('mobile-customer-selected');
             document.getElementById('customerView').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'block';
+            // [Fix] Hide Blue Header on Back
+            const mobInfo = document.getElementById('headerMobileInfo');
+            if (mobInfo) {
+                mobInfo.style.display = 'none';
+            }
+
+            // [Fix] Header visibility logic removed to prevent persistence issue
+            // Header visibility is managed by view transitions now
+
+            // [Fix] Reset toolbar
+            const toolbar = document.getElementById('mobileToolbar');
+            if (toolbar) toolbar.style.display = 'none';
+            // Clear active state
+            document.querySelectorAll('.mobile-icon-btn').forEach(btn => btn.classList.remove('active'));
+
             currentCustomerId = null;
             currentData = null;
+
+            // [Fix] Refresh header icons (hides customer tabs)
+            if (typeof updateMobileHeaderActions === 'function') {
+                updateMobileHeaderActions();
+            }
         }
 
         // ===== 모바일 필터 함수들 =====
@@ -18040,10 +18237,41 @@
                         document.body.classList.add('mobile-customer-selected');
 
                         // [New] Strict 3-Line Header Logic
-                        const customer = customers.find(c => c.id === customerId) || {};
+                        const customer = customers.find(c => c.customerId === customerId) || {};
                         const period = customer.constructionPeriod || customer.field4 || '-';
                         const phone = customer.clientPhone || customer.phone || '';
                         const phoneLink = phone ? `<a href="tel:${phone}" style="color:#fff; text-decoration:underline;">${phone}</a>` : '';
+
+                        // Populate Header
+                        const mobInfo = document.getElementById('headerMobileInfo');
+                        if (mobInfo) {
+                            mobInfo.innerHTML = `
+                                <div style="display:flex; flex-direction:column; width:100%;">
+                                    <div style="font-size:16px; font-weight:700; color:#fff; margin-bottom:4px;">${customer.siteAddress || customer.field3 || '현장명 없음'}</div>
+                                    <div style="font-size:13px; color:rgba(255,255,255,0.9); display:flex; gap:8px;">
+                                        <span>${customer.clientName || '고객명 없음'}</span>
+                                        <span>|</span>
+                                        ${phoneLink ? `<span>${phoneLink}</span>` : ''}
+                                    </div>
+                                    <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">
+                                        ${period}
+                                    </div>
+                                </div>
+                            `;
+                            mobInfo.style.display = 'flex';
+                        }
+
+                        // [Fix] Update All Fields Globally (Synced with Resize Logic)
+                        document.querySelectorAll('.customer-field').forEach(f => {
+                            const fieldName = f.dataset.field;
+                            if (!fieldName) return;
+                            const fieldValue = customer[fieldName] || '';
+                            if (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.tagName === 'SELECT') {
+                                f.value = fieldValue;
+                            } else {
+                                f.textContent = fieldValue || '-';
+                            }
+                        });
 
                         // Spouse Info
                         const spouseName = customer.spouseName || customer.field5 || '';
@@ -18054,11 +18282,42 @@
                             `<div style="font-size:12px; opacity:0.9; margin-top:2px;">${spouseName} | ${spouseLink}</div>` :
                             '';
 
-                        // 검정색 상단 헤더는 고객 정보 표시하지 않음
-                        const mobInfo = document.getElementById('headerMobileInfo');
-                        if (mobInfo) {
-                            mobInfo.innerHTML = '';
-                            mobInfo.style.display = 'none';
+                        // [New] Blue Header Logic (Consolidated)
+                        // mobInfo is already defined above
+                        if (mobInfo && isMobile()) {
+                            // [Critical] Force Flex Row Layout via Inline Style
+                            mobInfo.style.cssText = `
+                                display: flex !important;
+                                flex-direction: row !important;
+                                align-items: flex-end !important;
+                                justify-content: space-between !important;
+                                flex-wrap: nowrap !important;
+                                width: 100% !important;
+                                height: 54px !important;
+                                background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
+                                padding: 0 16px 10px 16px !important;
+                                position: fixed !important;
+                                top: 54px !important; /* Below Global Header (54px) */
+                                left: 0 !important;
+                                z-index: 10002 !important;
+                                box-sizing: border-box !important;
+                            `;
+
+                            // 2-Line Left Layout: Site Address (Top), Name | Phone | Period (Bottom)
+                            const displayAddress = customer.siteAddress || (customer.field4 ? customer.field4 : '현장주소 없음');
+                            const displayPeriod = customer.constructionPeriod || '공사기간 미정';
+                            const displayName = customer.clientName || '고객명 없음';
+                            const displayPhone = customer.clientPhone || '연락처 없음';
+
+                            mobInfo.innerHTML = `
+                                <div class="header-left-group" style="flex: 1; min-width: 0;">
+                                    <div class="header-text" id="headerSiteAddress">${displayAddress}</div>
+                                    <div class="header-text" style="font-size: 13px; opacity: 0.8; margin-top: 2px;">
+                                         <span id="headerClientName">${displayName}</span> ㅣ <span id="headerClientPhone">${displayPhone}</span> ㅣ <span id="headerConstructionPeriod">${displayPeriod}</span>
+                                    </div>
+                                </div>
+                                <div class="header-right-label" id="headerMobileTitle" style="font-size: 10px !important; font-weight: 400 !important; white-space: nowrap; flex-shrink: 0;">Checklist</div>
+                            `;
                         }
 
                         // 모바일 툴바 표시
@@ -18073,6 +18332,11 @@
 
                         // 성공 토스트 (필요시)
                         // showToast('고객 정보 로드됨', 'success');
+
+                        // [Fix] Refresh header icons (shows customer tabs)
+                        if (typeof updateMobileHeaderActions === 'function') {
+                            updateMobileHeaderActions();
+                        }
                     }
                 } catch (err) {
                     console.error('[Mobile] selectCustomer error:', err);
@@ -18097,6 +18361,27 @@
 
         // 페이지 로드 시 모바일 체크
         document.addEventListener('DOMContentLoaded', () => {
+            // [New] Login Mode Logic - Check if Login Overlay is visible
+            const loginOverlay = document.getElementById('loginOverlay');
+            if (loginOverlay && window.getComputedStyle(loginOverlay).display !== 'none') {
+                document.body.classList.add('login-active');
+            }
+
+            // Observer to watch for login overlay changes (to remove class on login success)
+            if (loginOverlay) {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                            if (loginOverlay.style.display === 'none') {
+                                document.body.classList.remove('login-active');
+                            } else {
+                                document.body.classList.add('login-active');
+                            }
+                        }
+                    });
+                });
+                observer.observe(loginOverlay, { attributes: true });
+            }
             if (isMobile()) {
                 // 모바일에서는 toolbar 초기 숨김 (고객 선택 전)
                 document.getElementById('mobileToolbar').style.display = 'none';
@@ -18168,7 +18453,15 @@
             ];
 
             // Render buttons
-            container.innerHTML = buttons.map(btn => `
+            // [Fix] Only show Customer Context buttons if a customer is selected
+            const buttonsToRender = buttons.filter(btn => {
+                if (btn.id === 'btn-checklist' || btn.id === 'btn-schedule' || btn.id === 'btn-customer-info') {
+                    return !!currentCustomerId;
+                }
+                return true;
+            });
+
+            container.innerHTML = buttonsToRender.map(btn => `
                 <button class="mobile-icon-btn ${btn.extraClass || ''}" 
                         id="${btn.id}" 
                         onclick="${btn.action}" 
@@ -18196,9 +18489,32 @@
                 showToast('고객을 먼저 선택해주세요', 'warning');
                 return;
             }
+
+            // [Fix] Update Header Title
+            const titleEl = document.getElementById('headerMobileTitle');
+            if (titleEl) titleEl.textContent = 'Checklist';
+
             showCustomerTab('checklist');
             if (typeof mobileGoToPanel === 'function') {
                 mobileGoToPanel('panel-checklist');
+            }
+        }
+
+        function navigateToSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택해주세요', 'warning');
+                return;
+            }
+
+            // [Fix] Update Header Title
+            const titleEl = document.getElementById('headerMobileTitle');
+            if (titleEl) titleEl.textContent = 'Schedule';
+
+            if (isMobile()) {
+                showCustomerTab('schedule');
+                mobileGoToPanel('panel-schedule');
+            } else {
+                showCustomerTab('schedule');
             }
         }
 
@@ -18207,8 +18523,15 @@
                 showToast('고객을 먼저 선택해주세요', 'warning');
                 return;
             }
+
+            // [Fix] Update Header Title
+            const titleEl = document.getElementById('headerMobileTitle');
+            if (titleEl) titleEl.textContent = 'Customer Information';
+
             if (typeof mobileGoToPanel === 'function') {
                 mobileGoToPanel('panel-customer-info');
+                // Ensure sync happens after panel switch
+                if (typeof syncHeaderDataFromPanel === 'function') syncHeaderDataFromPanel();
             }
         }
 
@@ -18217,11 +18540,18 @@
 
             console.log('[Mobile] Updating customer info:', customer);
 
-            // 모든 customer-field 요소를 업데이트
-            const fields = document.querySelectorAll('#panel-info .customer-field[data-field]');
+            // 1. Update Panel Fields (Target Mobile Read-Only Panel)
+            const fields = document.querySelectorAll('#panel-customer-info .customer-field[data-field]');
             fields.forEach(field => {
                 const fieldName = field.getAttribute('data-field');
-                let value = customer[fieldName] || '-';
+                let value = customer[fieldName];
+
+                // [Fix] Fallback for Address if clientAddress is missing/empty but siteAddress exists
+                if ((!value || value === '-') && fieldName === 'clientAddress') {
+                    value = customer.siteAddress || customer.field4;
+                }
+
+                value = value || '-';
 
                 // 전화번호는 tel: 링크로 표시
                 if (fieldName === 'clientPhone' || fieldName === 'spousePhone') {
@@ -18235,7 +18565,42 @@
                 }
             });
 
-            console.log('[Mobile] Customer info updated successfully');
+            // 2. [Reliable Fix] Update Blue Header Data DIRECTLY from Data (Bypass DOM Sync)
+            const headerSiteAddress = document.getElementById('headerSiteAddress');
+            const headerClientName = document.getElementById('headerClientName');
+            const headerClientPhone = document.getElementById('headerClientPhone');
+            const headerPeriod = document.getElementById('headerConstructionPeriod');
+
+            const address = customer.siteAddress || (customer.field4 ? customer.field4 : '현장주소 없음');
+            const name = customer.clientName || '고객명 없음';
+            const phone = customer.clientPhone || '연락처 없음';
+            const period = customer.constructionPeriod || '공사기간 미정';
+
+            if (headerSiteAddress) headerSiteAddress.innerText = address;
+            if (headerClientName) headerClientName.innerText = name;
+            if (headerClientPhone) headerClientPhone.innerText = phone;
+            if (headerPeriod) headerPeriod.innerText = period;
+
+            console.log('[Mobile] Customer info and Header updated successfully (Direct Data Binding)');
+        }
+
+        // [New] Helper to Copy Panel Data to Header (Source of Truth: DOM)
+        function syncHeaderDataFromPanel() {
+            const headerSiteAddress = document.getElementById('headerSiteAddress');
+            const headerClientName = document.getElementById('headerClientName');
+            const headerClientPhone = document.getElementById('headerClientPhone');
+            const headerPeriod = document.getElementById('headerConstructionPeriod');
+
+            // Sources in Panel
+            const panelSiteAddress = document.querySelector('#panel-customer-info .customer-field[data-field="siteAddress"]');
+            const panelName = document.querySelector('#panel-customer-info .customer-field[data-field="clientName"]');
+            const panelPhone = document.querySelector('#panel-customer-info .customer-field[data-field="clientPhone"]');
+            const panelPeriod = document.querySelector('#panel-customer-info .customer-field[data-field="constructionPeriod"]');
+
+            if (headerSiteAddress && panelSiteAddress) headerSiteAddress.innerText = panelSiteAddress.innerText;
+            if (headerClientName && panelName) headerClientName.innerText = panelName.innerText;
+            if (headerClientPhone && panelPhone) headerClientPhone.innerText = panelPhone.innerText;
+            if (headerPeriod && panelPeriod) headerPeriod.innerText = panelPeriod.innerText;
         }
 
         // 3. Toast UI Enhancement (Faster Disappear)

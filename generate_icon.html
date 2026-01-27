@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ 아이콘 생성기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 20px;
+            border-radius: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0077ed;
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>DJ 아이콘 생성</h1>
+    <p>검정 바탕에 흰색 DJ 문자, 모서리 라운드</p>
+
+    <div class="preview">
+        <div>
+            <h3>120x120 (iPhone)</h3>
+            <canvas id="icon120" width="120" height="120"></canvas>
+            <br>
+            <button onclick="downloadIcon('icon120', 'apple-touch-icon-120.png')">다운로드</button>
+        </div>
+        <div>
+            <h3>152x152 (iPad)</h3>
+            <canvas id="icon152" width="152" height="152"></canvas>
+            <br>
+            <button onclick="downloadIcon('icon152', 'apple-touch-icon-152.png')">다운로드</button>
+        </div>
+        <div>
+            <h3>167x167 (iPad Pro)</h3>
+            <canvas id="icon167" width="167" height="167"></canvas>
+            <br>
+            <button onclick="downloadIcon('icon167', 'apple-touch-icon-167.png')">다운로드</button>
+        </div>
+        <div>
+            <h3>180x180 (iPhone Retina)</h3>
+            <canvas id="icon180" width="180" height="180"></canvas>
+            <br>
+            <button onclick="downloadIcon('icon180', 'apple-touch-icon-180.png')">다운로드</button>
+        </div>
+        <div>
+            <h3>192x192 (Android)</h3>
+            <canvas id="icon192" width="192" height="192"></canvas>
+            <br>
+            <button onclick="downloadIcon('icon192', 'icon-192.png')">다운로드</button>
+        </div>
+        <div>
+            <h3>512x512 (Android)</h3>
+            <canvas id="icon512" width="512" height="512"></canvas>
+            <br>
+            <button onclick="downloadIcon('icon512', 'icon-512.png')">다운로드</button>
+        </div>
+    </div>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            // 검정 배경 (라운드 사각형)
+            const cornerRadius = size * 0.1; // 10% 라운드
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, cornerRadius);
+            ctx.fill();
+
+            // 흰색 DJ 텍스트
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${size * 0.45}px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('DJ', size / 2, size / 2);
+        }
+
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // 페이지 로드 시 아이콘 생성
+        window.onload = function() {
+            createIcon('icon120', 120);
+            createIcon('icon152', 152);
+            createIcon('icon167', 167);
+            createIcon('icon180', 180);
+            createIcon('icon192', 192);
+            createIcon('icon512', 512);
+        };
+    </script>
+</body>
+</html>

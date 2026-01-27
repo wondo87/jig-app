@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모바일 동기화 디버그</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        #log {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .info { background: #d1ecf1; }
+    </style>
+</head>
+<body>
+    <h1>🔍 모바일 동기화 디버그</h1>
+
+    <button onclick="testSync()">동기화 테스트 시작</button>
+    <button onclick="clearLog()">로그 지우기</button>
+
+    <div id="log"></div>
+
+    <script src="admin_config.js"></script>
+    <script>
+        const logDiv = document.getElementById('log');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        async function testSync() {
+            clearLog();
+
+            addLog('=== 동기화 테스트 시작 ===', 'info');
+
+            // 1. 설정 확인
+            if (typeof CUSTOMER_SYNC_URL === 'undefined') {
+                addLog('❌ CUSTOMER_SYNC_URL이 정의되지 않음', 'error');
+                return;
+            }
+            addLog(`✅ CUSTOMER_SYNC_URL: ${CUSTOMER_SYNC_URL}`, 'success');
+
+            // 2. 네트워크 확인
+            if (!navigator.onLine) {
+                addLog('❌ 네트워크 연결 없음', 'error');
+                return;
+            }
+            addLog('✅ 네트워크 연결됨', 'success');
+
+            // 3. 요청 준비
+            const params = new URLSearchParams({
+                sheet: '고객관리_견적서',
+                t: Date.now()
+            });
+            const url = `${CUSTOMER_SYNC_URL}?${params}`;
+
+            addLog(`📡 요청 URL 준비`, 'info');
+            addLog(`URL 길이: ${url.length}자`, 'info');
+
+            try {
+                // 4. Fetch 요청
+                addLog('⏳ 데이터 요청 중...', 'info');
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow',
+                    cache: 'no-store',
+                    credentials: 'omit',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                addLog(`📊 응답 상태: ${response.status} ${response.statusText}`, 'info');
+                addLog(`📊 최종 URL: ${response.url.substring(0, 80)}...`, 'info');
+
+                if (!response.ok) {
+                    addLog(`❌ HTTP 오류: ${response.status}`, 'error');
+                    const text = await response.text();
+                    addLog(`응답 내용: ${text.substring(0, 200)}`, 'error');
+                    return;
+                }
+
+                // 5. JSON 파싱
+                addLog('📦 응답 데이터 파싱 중...', 'info');
+                const text = await response.text();
+                addLog(`응답 길이: ${text.length}자`, 'info');
+                addLog(`응답 미리보기: ${text.substring(0, 100)}...`, 'info');
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    addLog(`❌ JSON 파싱 실패: ${err.message}`, 'error');
+                    return;
+                }
+
+                // 6. 데이터 확인
+                if (!Array.isArray(data)) {
+                    addLog(`❌ 데이터가 배열이 아님: ${typeof data}`, 'error');
+                    return;
+                }
+
+                addLog(`✅ 동기화 성공!`, 'success');
+                addLog(`✅ 고객 수: ${data.length}명`, 'success');
+
+                if (data.length > 0) {
+                    const first = data[0];
+                    addLog(`\n첫 번째 고객:`, 'info');
+                    addLog(`- ID: ${first.customerId}`, 'info');
+                    addLog(`- 이름: ${first.clientName}`, 'info');
+                    addLog(`- 전화: ${first.clientPhone}`, 'info');
+                    addLog(`- 프로젝트: ${first.projectName}`, 'info');
+                }
+
+            } catch (error) {
+                addLog(`❌ 오류 발생: ${error.name}`, 'error');
+                addLog(`메시지: ${error.message}`, 'error');
+                addLog(`스택: ${error.stack}`, 'error');
+            }
+        }
+
+        // 페이지 로드 시 자동 테스트
+        window.addEventListener('DOMContentLoaded', () => {
+            addLog('페이지 로드 완료', 'info');
+            if (typeof CUSTOMER_SYNC_URL !== 'undefined') {
+                addLog(`CUSTOMER_SYNC_URL 확인됨`, 'success');
+            } else {
+                addLog(`CUSTOMER_SYNC_URL 없음`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

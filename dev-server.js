@@ -94,6 +94,6 @@ app.post('/api/sync-schedule', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Local Dev Server running at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Local Dev Server running at http://0.0.0.0:${port}`);
 });

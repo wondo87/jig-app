@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동기화 테스트</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Google Sheets 동기화 테스트</h1>
+
+    <div>
+        <button onclick="testSync()">고객 데이터 동기화 테스트</button>
+        <button onclick="testConfig()">설정 파일 확인</button>
+    </div>
+
+    <div id="result"></div>
+
+    <script src="admin_config.js"></script>
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        function log(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = isError ? 'error' : 'success';
+            div.textContent = message;
+            resultDiv.appendChild(div);
+        }
+
+        function testConfig() {
+            resultDiv.innerHTML = '';
+            log('=== 설정 파일 확인 ===');
+
+            if (typeof CUSTOMER_SYNC_URL !== 'undefined') {
+                log(`✅ CUSTOMER_SYNC_URL 정의됨: ${CUSTOMER_SYNC_URL}`);
+            } else {
+                log('❌ CUSTOMER_SYNC_URL이 정의되지 않음', true);
+            }
+
+            if (typeof GOOGLE_SHEET_URL !== 'undefined') {
+                log(`✅ GOOGLE_SHEET_URL 정의됨: ${GOOGLE_SHEET_URL}`);
+            } else {
+                log('❌ GOOGLE_SHEET_URL이 정의되지 않음', true);
+            }
+        }
+
+        async function testSync() {
+            resultDiv.innerHTML = '';
+            log('=== 동기화 테스트 시작 ===');
+
+            if (typeof CUSTOMER_SYNC_URL === 'undefined') {
+                log('❌ CUSTOMER_SYNC_URL이 정의되지 않음. admin_config.js 로드 실패', true);
+                return;
+            }
+
+            log(`📡 요청 URL: ${CUSTOMER_SYNC_URL}`);
+
+            try {
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    t: new Date().getTime()
+                });
+
+                const fullUrl = `${CUSTOMER_SYNC_URL}?${params}`;
+                log(`📡 전체 URL: ${fullUrl}`);
+
+                log('⏳ 데이터 요청 중...');
+                const response = await fetch(fullUrl, {
+                    method: 'GET'
+                });
+
+                log(`📊 응답 상태: ${response.status} ${response.statusText}`);
+
+                if (!response.ok) {
+                    log(`❌ HTTP 오류: ${response.status}`, true);
+                    const text = await response.text();
+                    log(`응답 내용: ${text.substring(0, 500)}`, true);
+                    return;
+                }
+
+                const data = await response.json();
+                log(`✅ 데이터 수신 성공!`);
+                log(`📦 고객 수: ${data.length}명`);
+
+                if (data.length > 0) {
+                    log(`\n첫 번째 고객 정보:`);
+                    log(JSON.stringify(data[0], null, 2));
+                }
+
+            } catch (error) {
+                log(`❌ 오류 발생: ${error.message}`, true);
+                log(`상세: ${error.stack}`, true);
+            }
+        }
+
+        // 페이지 로드 시 자동으로 설정 확인
+        window.addEventListener('DOMContentLoaded', () => {
+            testConfig();
+        });
+    </script>
+</body>
+</html>
