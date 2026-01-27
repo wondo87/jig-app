@@ -9715,22 +9715,35 @@
                 cloudCustomers = Array.from(uniqueCloudMap.values());
 
                 // [CRITICAL FIX] Parse jsonData for each customer to restore checklistData
-                console.log('🔄 [Web Debug] Parsing jsonData for customers...');
+                console.log('🔄 [Web Debug] Parsing jsonData for', cloudCustomers.length, 'customers...');
+                let parsedCount = 0;
+                let checklistFoundCount = 0;
+
                 cloudCustomers = cloudCustomers.map(customer => {
                     if (customer.jsonData && typeof customer.jsonData === 'string') {
                         try {
                             const parsedData = JSON.parse(customer.jsonData);
-                            console.log('✅ [Web Debug] Parsed jsonData for customer:', customer.customerId,
-                                       'checklistData keys:', Object.keys(parsedData.checklistData || {}));
+                            parsedCount++;
+                            const checklistKeys = Object.keys(parsedData.checklistData || {});
+                            if (checklistKeys.length > 0) {
+                                checklistFoundCount++;
+                                console.log('✅ [Web Debug] Customer:', customer.customerId,
+                                           '- checklistData:', checklistKeys.length, 'items',
+                                           '- sample keys:', checklistKeys.slice(0, 3));
+                            }
                             // Merge parsed data with customer data (parsedData takes priority)
                             return { ...customer, ...parsedData };
                         } catch (e) {
                             console.warn('⚠️ [Web Debug] Failed to parse jsonData for customer:', customer.customerId, e);
                             return customer;
                         }
+                    } else if (!customer.jsonData) {
+                        console.log('⚠️ [Web Debug] No jsonData field for customer:', customer.customerId);
                     }
                     return customer;
                 });
+
+                console.log('✅ [Web Debug] Parsing complete:', parsedCount, 'customers parsed,', checklistFoundCount, 'with checklist data');
 
                 // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단)
 
