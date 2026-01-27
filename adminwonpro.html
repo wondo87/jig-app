@@ -13609,6 +13609,10 @@
 
             // 현재 고객의 체크 상태 가져오기
             const customerChecklistData = getCurrentCustomerChecklistData();
+            console.log('🔍 [Web Render] Customer ID:', currentCustomerId);
+            console.log('🔍 [Web Render] customerChecklistData:', customerChecklistData);
+            console.log('🔍 [Web Render] customerChecklistData keys:', Object.keys(customerChecklistData));
+            console.log('🔍 [Web Render] Sample values:', Object.entries(customerChecklistData).slice(0, 3));
 
             // 필터 적용 (멀티 셀렉트 지원)
             let stageFilter = ['all'];
@@ -13688,6 +13692,9 @@
 
             tbody.innerHTML = filteredData.map((item, index) => {
                 const isChecked = customerChecklistData[item.번호] || false;
+                if (index === 0) {
+                    console.log('🔍 [Web Render] First item #' + item.번호 + ' isChecked:', isChecked, 'value:', customerChecklistData[item.번호]);
+                }
                 const categoryColor = getCategoryColor(item.category);
                 return `
                     <tr draggable="true" 
