@@ -676,8 +676,7 @@ function exportCustomerToNotion(customerId, data) {
         // 배우자가 있는 경우: 성명·배우자 성명 고객님 공사 안내문
         siteTitle = `${clientName}·${spouseName} 고객님 공사 안내문`;
     } else {
-        // 배우자가 없는 경우: 성명 · 공사 안내 페이지
-        siteTitle = `${clientName} · 공사 안내 페이지`;
+        siteTitle = `${clientName} 고객님 공사 안내문`;
     }
 
     const properties = {
@@ -750,7 +749,7 @@ function exportCustomerToNotion(customerId, data) {
         callout: {
             rich_text: [{
                 type: 'text',
-                text: { content: '공사 스케줄·공정별 체크리스트·자재목록(A/S)정보·FAQ' }
+                text: { content: '공사 스케줄·체크리스트·자재목록(A/S)·FAQ 안내' }
             }],
             icon: { emoji: '✨' },
             color: 'gray_background'
