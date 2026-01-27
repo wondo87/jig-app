@@ -74,7 +74,8 @@ const NOTION_DB_IDS = {
 };
 
 // 커버 이미지 URL (브랜딩 통일)
-const NOTION_COVER_IMAGE = 'https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png';
+// Cloudinary Transformation: 상단 로고만 크롭 (텍스트 제거)
+const NOTION_COVER_IMAGE = 'https://res.cloudinary.com/designjig/image/upload/c_crop,g_north,h_300/v1769232218/sfugtbfiuyi8ehvtkzcs.png';
 
 /**
  * [보안 설정] Notion API 키 안전 저장소
@@ -727,7 +728,7 @@ function exportCustomerToNotion(customerId, data) {
             icon: {
                 type: 'external',
                 external: {
-                    url: 'https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png'
+                    url: 'https://res.cloudinary.com/designjig/image/upload/c_crop,g_north,h_300/v1769232218/sfugtbfiuyi8ehvtkzcs.png'
                 }
             },
             cover: {

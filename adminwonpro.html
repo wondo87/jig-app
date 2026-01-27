@@ -4346,6 +4346,10 @@
                                     🔄 DB 불러오기
                                 </button>
 
+                                <button class="btn btn-primary btn-sm no-print" onclick="showAddChecklistItemModal()"
+                                    style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                    ➕ 항목 추가
+                                </button>
 
                                 <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
@@ -9716,14 +9720,30 @@
 
                 // [CRITICAL FIX] Parse jsonData for each customer to restore checklistData
                 console.log('🔄 [Web Debug] Parsing jsonData for', cloudCustomers.length, 'customers...');
+
+                let hasJsonDataCount = 0;
                 let parsedCount = 0;
                 let checklistFoundCount = 0;
+                let errorCount = 0;
 
-                cloudCustomers = cloudCustomers.map(customer => {
+                cloudCustomers = cloudCustomers.map((customer, index) => {
+                    // 첫 번째 고객은 상세 로그
+                    if (index === 0) {
+                        console.log('🔍 [Web Debug] First customer keys:', Object.keys(customer));
+                        console.log('🔍 [Web Debug] First customer jsonData exists?', !!customer.jsonData);
+                        console.log('🔍 [Web Debug] First customer jsonData type:', typeof customer.jsonData);
+                        if (customer.jsonData) {
+                            console.log('🔍 [Web Debug] First customer jsonData length:', customer.jsonData.length);
+                            console.log('🔍 [Web Debug] First customer jsonData preview:', customer.jsonData.substring(0, 200));
+                        }
+                    }
+
                     if (customer.jsonData && typeof customer.jsonData === 'string') {
+                        hasJsonDataCount++;
                         try {
                             const parsedData = JSON.parse(customer.jsonData);
                             parsedCount++;
+
                             const checklistKeys = Object.keys(parsedData.checklistData || {});
                             if (checklistKeys.length > 0) {
                                 checklistFoundCount++;
@@ -9731,19 +9751,49 @@
                                            '- checklistData:', checklistKeys.length, 'items',
                                            '- sample keys:', checklistKeys.slice(0, 3));
                             }
-                            // Merge parsed data with customer data (parsedData takes priority)
+
+                            // [FIX] Normalize checklistData structure
+                            // Some customers have malformed structure: {"1": {"checked": true}} instead of {"1": true}
+                            if (parsedData.checklistData && typeof parsedData.checklistData === 'object') {
+                                const normalized = {};
+                                Object.entries(parsedData.checklistData).forEach(([key, value]) => {
+                                    if (value && typeof value === 'object' && 'checked' in value) {
+                                        // Convert {"checked": true} to true
+                                        normalized[key] = value.checked;
+                                    } else if (typeof value === 'boolean') {
+                                        // Already correct format
+                                        normalized[key] = value;
+                                    } else {
+                                        // Invalid format, default to false
+                                        normalized[key] = false;
+                                    }
+                                });
+                                parsedData.checklistData = normalized;
+                                console.log('🔧 [Web Debug] Normalized checklistData for customer:', customer.customerId);
+                            }
+
                             return { ...customer, ...parsedData };
                         } catch (e) {
-                            console.warn('⚠️ [Web Debug] Failed to parse jsonData for customer:', customer.customerId, e);
+                            errorCount++;
+                            console.error('❌ [Web Debug] Parse error for customer:', customer.customerId, e.message);
+                            console.error('❌ [Web Debug] jsonData that failed:', customer.jsonData.substring(0, 200));
                             return customer;
                         }
                     } else if (!customer.jsonData) {
-                        console.log('⚠️ [Web Debug] No jsonData field for customer:', customer.customerId);
+                        if (index < 3) console.log('⚠️ [Web Debug] No jsonData for customer:', customer.customerId);
+                        return customer;
+                    } else {
+                        console.warn('⚠️ [Web Debug] Invalid jsonData type for customer:', customer.customerId, 'type:', typeof customer.jsonData);
+                        return customer;
                     }
-                    return customer;
                 });
 
-                console.log('✅ [Web Debug] Parsing complete:', parsedCount, 'customers parsed,', checklistFoundCount, 'with checklist data');
+                console.log('📊 [Web Debug] Parsing summary:');
+                console.log('   - Total customers:', cloudCustomers.length);
+                console.log('   - Has jsonData:', hasJsonDataCount);
+                console.log('   - Successfully parsed:', parsedCount);
+                console.log('   - With checklist data:', checklistFoundCount);
+                console.log('   - Parse errors:', errorCount);
 
                 // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단)
 
@@ -13250,6 +13300,8 @@
                     // Phase 2: 업무 데이터 로컬 저장 금지
 
                     console.log(`✅ [Checklist Load] Loaded ${items.length} items.`);
+                    console.log(`📊 [Web Debug] checklistMasterData length:`, checklistMasterData.length);
+                    console.log(`📊 [Web Debug] First 3 items:`, checklistMasterData.slice(0, 3).map(i => i['항목명'] || i.번호));
 
                     // 필터 옵션 업데이트
                     updateChecklistFilters();
@@ -13496,16 +13548,25 @@
 
             const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
+            // [CRITICAL] 고객이 선택한 항목만 표시 (checklistData에 있는 항목 번호)
+            const savedItemNumbers = Object.keys(customerChecklistData || {});
+            console.log('📊 [Web Debug] Customer selected items:', savedItemNumbers.length, 'items');
+            console.log('📊 [Web Debug] Selected item numbers:', savedItemNumbers);
+
             let filteredData = checklistMasterData.filter(item => {
-                // 진행단계 필터
+                // 1. [CRITICAL] 고객이 선택한 항목만 표시
+                if (!savedItemNumbers.includes(String(item.번호))) return false;
+
+                // 2. 진행단계 필터
                 if (!stageFilter.includes('all')) {
                     if (!stageFilter.includes(item.진행단계 || '')) return false;
                 }
-                // 카테고리 필터
+                // 3. 카테고리 필터
                 if (!categoryFilter.includes('all')) {
                     if (!categoryFilter.includes(item.category || '')) return false;
                 }
 
+                // 4. 검색어 필터
                 if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
@@ -13642,30 +13703,171 @@
             showToast(currentState ? '체크 해제되었습니다' : '체크되었습니다', 'success');
         }
 
-        // [추가] 체크리스트 아이템 삭제 (알림창 없이 즉시 삭제)
-        function deleteChecklistItem(itemNumber) {
-            // 마스터 데이터에서 제거
-            checklistMasterData = checklistMasterData.filter(item => item.번호 !== itemNumber);
+        // [수정] 체크리스트 아이템 삭제 - 현재 고객의 항목만 제거
+        async function deleteChecklistItem(itemNumber) {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
 
-            // 로컬 스토리지 업데이트 (Phase 2: 금지)
+            if (!confirm('이 고객의 체크리스트에서 이 항목을 제거하시겠습니까?')) {
+                return;
+            }
 
+            // 현재 고객의 checklistData에서 해당 항목 번호 제거
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex !== -1 && customers[customerIndex].checklistData) {
+                delete customers[customerIndex].checklistData[itemNumber];
+                console.log('🗑️ [Web] Removed item', itemNumber, 'from customer', currentCustomerId);
+            }
 
-            // 체크 상태 데이터도 정리
+            // currentData에도 반영
+            if (currentData.checklistData) {
+                delete currentData.checklistData[itemNumber];
+            }
+
+            // Google Sheets에 저장
+            await saveCustomers();
+
+            // UI 갱신
+            renderChecklistItems();
+
+            showToast('항목이 제거되었습니다.', 'success');
+        }
+
+        // [추가] 체크리스트 항목 추가 기능
+        function showAddChecklistItemModal() {
+            if (!currentData || !currentData.checklistData) {
+                showToast('고객을 먼저 선택해주세요.', 'warning');
+                return;
+            }
+
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                showToast('마스터 체크리스트를 먼저 불러오세요. (🔄 DB 불러오기)', 'warning');
+                return;
+            }
+
+            // 현재 고객이 이미 선택한 항목 번호
+            const selectedItemNumbers = Object.keys(currentData.checklistData);
+
+            // 선택 가능한 항목 (아직 선택하지 않은 항목)
+            const availableItems = checklistMasterData.filter(item =>
+                !selectedItemNumbers.includes(String(item.번호))
+            );
+
+            if (availableItems.length === 0) {
+                showToast('추가할 수 있는 항목이 없습니다. (모든 항목이 이미 선택됨)', 'info');
+                return;
+            }
+
+            // 모달 HTML 생성
+            const modalHTML = `
+                <div id="addChecklistModal" style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.5); z-index: 10000;
+                    display: flex; align-items: center; justify-content: center;
+                ">
+                    <div style="
+                        background: white; border-radius: 12px; padding: 24px;
+                        max-width: 90%; max-height: 80vh; overflow-y: auto;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                    ">
+                        <h3 style="margin: 0 0 16px; font-size: 18px; color: #333;">체크리스트 항목 추가</h3>
+                        <p style="margin: 0 0 16px; font-size: 14px; color: #666;">
+                            추가할 항목을 선택하세요. (총 ${availableItems.length}개 항목)
+                        </p>
+                        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead style="background: #f5f5f5; position: sticky; top: 0;">
+                                    <tr>
+                                        <th style="padding: 12px; text-align: left; font-size: 13px; font-weight: 600; border-bottom: 1px solid #e0e0e0;">번호</th>
+                                        <th style="padding: 12px; text-align: left; font-size: 13px; font-weight: 600; border-bottom: 1px solid #e0e0e0;">진행단계</th>
+                                        <th style="padding: 12px; text-align: left; font-size: 13px; font-weight: 600; border-bottom: 1px solid #e0e0e0;">카테고리</th>
+                                        <th style="padding: 12px; text-align: left; font-size: 13px; font-weight: 600; border-bottom: 1px solid #e0e0e0;">항목</th>
+                                        <th style="padding: 12px; text-align: center; font-size: 13px; font-weight: 600; border-bottom: 1px solid #e0e0e0;">추가</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${availableItems.map(item => `
+                                        <tr style="border-bottom: 1px solid #f0f0f0;">
+                                            <td style="padding: 10px; font-size: 13px;">${item.번호}</td>
+                                            <td style="padding: 10px; font-size: 13px;">${item.진행단계 || ''}</td>
+                                            <td style="padding: 10px; font-size: 13px;">${item.category || ''}</td>
+                                            <td style="padding: 10px; font-size: 13px;">${item.항목 || ''}</td>
+                                            <td style="padding: 10px; text-align: center;">
+                                                <button onclick="addChecklistItemToCustomer(${item.번호})" style="
+                                                    background: rgba(52, 199, 89, 0.9); color: white;
+                                                    border: none; padding: 6px 12px; border-radius: 6px;
+                                                    cursor: pointer; font-size: 12px; font-weight: 600;
+                                                ">추가</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top: 16px; text-align: right;">
+                            <button onclick="closeAddChecklistModal()" style="
+                                background: #e0e0e0; color: #333;
+                                border: none; padding: 10px 20px; border-radius: 8px;
+                                cursor: pointer; font-size: 14px; font-weight: 600;
+                            ">닫기</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 모달 추가
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeAddChecklistModal() {
+            const modal = document.getElementById('addChecklistModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function addChecklistItemToCustomer(itemNumber) {
+            if (!currentData || !currentData.checklistData) {
+                showToast('고객 데이터가 없습니다.', 'warning');
+                closeAddChecklistModal();
+                return;
+            }
+
+            // 마스터 데이터에서 해당 항목 찾기
+            const item = checklistMasterData.find(i => i.번호 === itemNumber);
+            if (!item) {
+                showToast('항목을 찾을 수 없습니다.', 'error');
+                return;
+            }
+
+            // 고객의 체크리스트에 추가 (기본값: 체크 안됨, boolean 저장)
+            currentData.checklistData[itemNumber] = false;
+
+            // 로컬 customers 배열에도 반영
             if (currentCustomerId) {
                 const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-                if (customerIndex !== -1 && customers[customerIndex].checklistData) {
-                    delete customers[customerIndex].checklistData[itemNumber];
-                    // currentData에도 반영
-                    if (currentData.checklistData) delete currentData.checklistData[itemNumber];
-                    saveCustomers();
+                if (customerIndex !== -1) {
+                    if (!customers[customerIndex].checklistData) {
+                        customers[customerIndex].checklistData = {};
+                    }
+                    customers[customerIndex].checklistData[itemNumber] = false;
                 }
             }
 
+            console.log('✅ [Web] Added item', itemNumber, 'to customer checklist');
+
+            // Google Sheets에 저장
+            await saveCustomers();
+
             // UI 갱신
-            updateChecklistFilters();
             renderChecklistItems();
 
-            showToast('항목이 삭제되었습니다.', 'info');
+            // 모달 닫기
+            closeAddChecklistModal();
+
+            showToast(`"${item.항목}" 항목이 추가되었습니다.`, 'success');
         }
 
         // [추가] 체크리스트 드래그 앤 드롭 기능

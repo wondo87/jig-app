@@ -11754,22 +11754,75 @@
                 );
 
                 // [CRITICAL FIX] Parse jsonData for each customer to restore checklistData
-                console.log('🔄 [Mobile Debug] Parsing jsonData for customers...');
-                cloudCustomers = cloudCustomers.map(customer => {
+                console.log('🔄 [Mobile Debug] Parsing jsonData for', cloudCustomers.length, 'customers...');
+
+                let hasJsonDataCount = 0;
+                let parsedCount = 0;
+                let errorCount = 0;
+
+                cloudCustomers = cloudCustomers.map((customer, index) => {
+                    // 첫 번째 고객은 상세 로그
+                    if (index === 0) {
+                        console.log('🔍 [Mobile Debug] First customer keys:', Object.keys(customer));
+                        console.log('🔍 [Mobile Debug] First customer jsonData exists?', !!customer.jsonData);
+                        console.log('🔍 [Mobile Debug] First customer jsonData type:', typeof customer.jsonData);
+                        if (customer.jsonData) {
+                            console.log('🔍 [Mobile Debug] First customer jsonData length:', customer.jsonData.length);
+                            console.log('🔍 [Mobile Debug] First customer jsonData preview:', customer.jsonData.substring(0, 200));
+                        }
+                    }
+
                     if (customer.jsonData && typeof customer.jsonData === 'string') {
+                        hasJsonDataCount++;
                         try {
                             const parsedData = JSON.parse(customer.jsonData);
-                            console.log('✅ [Mobile Debug] Parsed jsonData for customer:', customer.customerId,
-                                       'checklistData keys:', Object.keys(parsedData.checklistData || {}));
+                            parsedCount++;
+
+                            const checklistKeys = Object.keys(parsedData.checklistData || {});
+                            console.log('✅ [Mobile Debug] Parsed customer:', customer.customerId,
+                                       '- checklistData:', checklistKeys.length, 'items');
+
+                            // [FIX] Normalize checklistData structure: convert {"1": {"checked": true}} to {"1": true}
+                            if (parsedData.checklistData && typeof parsedData.checklistData === 'object') {
+                                const normalized = {};
+                                Object.entries(parsedData.checklistData).forEach(([key, value]) => {
+                                    if (value && typeof value === 'object' && 'checked' in value) {
+                                        // Convert {"checked": true} to true
+                                        normalized[key] = value.checked;
+                                    } else if (typeof value === 'boolean') {
+                                        // Already correct format
+                                        normalized[key] = value;
+                                    } else {
+                                        // Invalid format, default to false
+                                        normalized[key] = false;
+                                    }
+                                });
+                                parsedData.checklistData = normalized;
+                                console.log('🔧 [Mobile Debug] Normalized checklistData for customer:', customer.customerId);
+                            }
+
                             // Merge parsed data with customer data (parsedData takes priority)
                             return { ...customer, ...parsedData };
                         } catch (e) {
-                            console.warn('⚠️ [Mobile Debug] Failed to parse jsonData for customer:', customer.customerId, e);
+                            errorCount++;
+                            console.error('❌ [Mobile Debug] Parse error for customer:', customer.customerId, e.message);
+                            console.error('❌ [Mobile Debug] jsonData that failed:', customer.jsonData.substring(0, 200));
                             return customer;
                         }
+                    } else if (!customer.jsonData) {
+                        if (index < 3) console.log('⚠️ [Mobile Debug] No jsonData for customer:', customer.customerId);
+                        return customer;
+                    } else {
+                        console.warn('⚠️ [Mobile Debug] Invalid jsonData type for customer:', customer.customerId, 'type:', typeof customer.jsonData);
+                        return customer;
                     }
-                    return customer;
                 });
+
+                console.log('📊 [Mobile Debug] Parsing summary:');
+                console.log('   - Total customers:', cloudCustomers.length);
+                console.log('   - Has jsonData:', hasJsonDataCount);
+                console.log('   - Successfully parsed:', parsedCount);
+                console.log('   - Parse errors:', errorCount);
 
                 // UI 업데이트
                 console.log('🔄 [Mobile Debug] 고객 데이터 설정 전 customers 길이:', customers.length);
@@ -15508,23 +15561,15 @@
             // 현재 고객의 체크 상태 가져오기
             const customerChecklistData = getCurrentCustomerChecklistData();
 
-            // [중요] 고객이 저장한 항목만 필터링
-            // customerChecklistData에 있는 번호만 표시
+            // [CRITICAL] 고객이 선택한 항목만 표시 (checklistData에 있는 항목 번호)
             const savedItemNumbers = Object.keys(customerChecklistData || {});
-            console.log('[Render] Customer saved items:', savedItemNumbers.length, 'items');
+            console.log('[Mobile Render] Customer selected items:', savedItemNumbers.length, 'items');
+            console.log('[Mobile Render] Selected item numbers:', savedItemNumbers);
 
-            // 고객이 저장한 항목이 있으면 그것만, 없으면 빈 배열
-            let baseData = checklistMasterData;
-            if (savedItemNumbers.length > 0) {
-                baseData = checklistMasterData.filter(item =>
-                    savedItemNumbers.includes(String(item.번호))
-                );
-                console.log('[Render] Filtered to saved items:', baseData.length, 'items');
-            } else {
-                // 저장된 항목이 없으면 빈 배열 (아무것도 표시하지 않음)
-                baseData = [];
-                console.log('[Render] No saved items, showing empty list');
-            }
+            // 고객이 선택한 항목만 필터링
+            let baseData = checklistMasterData.filter(item =>
+                savedItemNumbers.includes(String(item.번호))
+            );
 
             let stageFilter = ['all'];
             let categoryFilter = ['all'];
@@ -15804,46 +15849,26 @@
                 customers[customerIndex].checklistData = {};
             }
 
-            // 현재 체크 상태 (boolean으로 통일)
-            // 현재 체크 상태 확인
+            // [FIX] Boolean으로 통일하여 웹과 호환성 보장
+            // 현재 체크 상태 확인 (기존 객체 구조도 지원)
             const currentVal = customers[customerIndex].checklistData[itemNumber];
             let currentState = false;
-            let currentContent = undefined; // 기존 내용 보존
-            let currentRemarks = undefined; // 기존 비고 보존
 
             if (typeof currentVal === 'boolean') {
                 currentState = currentVal;
             } else if (typeof currentVal === 'object' && currentVal !== null) {
                 currentState = currentVal.checked || false;
-                currentContent = currentVal.content;
-                currentRemarks = currentVal.remarks;
             }
 
             const newState = !currentState;
             const isNowChecked = newState;
 
-            // [FIX] 객체 구조를 유지하며 저장 (Boolean 덮어쓰기 방지)
-            const newData = {
-                checked: newState,
-                content: currentContent,
-                remarks: currentRemarks
-            };
-
-            // 만약 content/remarks가 없다면 굳이 객체로 저장하지 않고 Boolean으로 저장해도 되지만, 
-            // 일관성을 위해, 혹은 'Edit' 기능이 있으므로 객체로 변환하는 것이 유리할 수 있음.
-            // 여기서는 기존 데이터가 있으면 객체 유지, 없으면 Boolean.. 보다는 
-            // *항상 Object로 저장*하거나 *기존 형식을 존重*하는 방식 선택. 
-            // -> Plan: "Check if Object, if not promote... but do NOT lose content".
-
-            // 심플하게: 내용이 있으면 객체, 없으면 그냥 Boolean? 
-            // 아니면 그냥 통일성 있게 Object로 저장하는게 추후 확장에 좋음.
-            // 기존 코드 호환성을 위해 Object로 저장.
-
-            customers[customerIndex].checklistData[itemNumber] = newData;
+            // [FIX] 웹과 동일하게 Boolean으로 저장 (객체 구조 제거)
+            customers[customerIndex].checklistData[itemNumber] = newState;
 
             // [FIX] currentData에도 즉시 반영
             if (!currentData.checklistData) currentData.checklistData = {};
-            currentData.checklistData[itemNumber] = newData;
+            currentData.checklistData[itemNumber] = newState;
 
             // [New] Immediate Visual Update (Mobile)
             if (window.innerWidth <= 768) {
