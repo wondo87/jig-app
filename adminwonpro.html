@@ -9827,7 +9827,22 @@
                 };
 
 
-                console.log('📦 [Google Sheets Sync] Payload:', payload);
+                console.log('📦 [Web Save] Payload:', payload);
+                console.log('📦 [Web Save] Payload (full):', JSON.stringify(payload, null, 2));
+                console.log('📦 [Web Save] jsonData field length:', payload.data.jsonData.length);
+                console.log('📦 [Web Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
+
+                // Parse jsonData to verify checklistData is included
+                try {
+                    const parsedJsonData = JSON.parse(payload.data.jsonData);
+                    console.log('📦 [Web Save] Verified - checklistData in jsonData:', Object.keys(parsedJsonData.checklistData || {}).length, 'items');
+                    if (parsedJsonData.checklistData && Object.keys(parsedJsonData.checklistData).length > 0) {
+                        console.log('📦 [Web Save] Sample checklist items:', Object.entries(parsedJsonData.checklistData).slice(0, 3).map(([k, v]) => `${k}: ${v}`));
+                    }
+                } catch (e) {
+                    console.error('❌ [Web Save] Failed to verify jsonData:', e);
+                }
+
                 console.log('🌐 [Google Sheets Sync] Target URL:', CUSTOMER_SYNC_URL);
 
                 // no-cors 모드 제거하여 실제 응답 확인 가능
