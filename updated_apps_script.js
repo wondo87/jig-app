@@ -752,7 +752,7 @@ function exportCustomerToNotion(customerId, data) {
         paragraph: {
             rich_text: [{
                 type: 'text',
-                text: { content: '공사 스케줄·체크리스트·자재목록(A/S)·FAQ 안내' }
+                text: { content: '공사 스케줄·공정별 체크리스트·자재목록(A/S)정보·FAQ' }
             }]
         }
     });
