@@ -4351,9 +4351,9 @@
                                     ➕ 항목 추가
                                 </button>
 
-                                <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
+                                <button class="restore-btn no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
-                                    title="마지막 저장 내용 복원">
+                                    title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
