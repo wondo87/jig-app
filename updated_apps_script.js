@@ -745,14 +745,12 @@ function exportCustomerToNotion(customerId, data) {
     // 0. 최상단 브랜딩 블록 (SNS 공유 시 Description으로 사용됨)
     pageBlocks.push({
         object: 'block',
-        type: 'callout',
-        callout: {
+        type: 'paragraph',
+        paragraph: {
             rich_text: [{
                 type: 'text',
                 text: { content: '공사 스케줄·체크리스트·자재목록(A/S)·FAQ 안내' }
-            }],
-            icon: { emoji: '✨' },
-            color: 'gray_background'
+            }]
         }
     });
 
