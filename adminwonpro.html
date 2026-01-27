@@ -13938,7 +13938,6 @@
             // 현재 필터링된 데이터 저장
             const stageFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistStageFilter') : ['all'];
             const categoryFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistCategoryFilter') : ['all'];
-            const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
             checklistFilteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
@@ -14006,8 +14005,6 @@
                 stageFilter = getMultiSelectValues('checklistStageFilter');
                 categoryFilter = getMultiSelectValues('checklistCategoryFilter');
             }
-            const searchText = document.getElementById('checklistSearchInput') ?
-                document.getElementById('checklistSearchInput').value.toLowerCase() : '';
 
             const filteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
@@ -14328,13 +14325,11 @@
                             stageFilter = getMultiSelectValues('checklistStageFilter');
                             categoryFilter = getMultiSelectValues('checklistCategoryFilter');
                         }
-                        const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
                         // 필터링 적용
                         const filteredExportItems = checklistMasterData.filter(item => {
                             if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
                             if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
-                            if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                             return true;
                         });
 
@@ -14404,7 +14399,6 @@
                         stageFilter = getMultiSelectValues('checklistStageFilter');
                         categoryFilter = getMultiSelectValues('checklistCategoryFilter');
                     }
-                    const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
                     // 필터링 적용
                     const filteredItems = checklistMasterData.filter(item => {
@@ -14416,8 +14410,6 @@
                         if (!categoryFilter.includes('all')) {
                             if (!categoryFilter.includes(item.category || '')) return false;
                         }
-                        // 검색 필터
-                        if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                         return true;
                     });
 

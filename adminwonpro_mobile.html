@@ -5636,25 +5636,15 @@
                                 </div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <!-- [추가] DB 불러오기/저장 버튼 -->
-                                <button class="btn btn-secondary btn-sm no-print" onclick="syncChecklistFromCloud()"
-                                    style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
-                                    🔄 DB 불러오기
-                                </button>
-
-                                <button class="btn btn-secondary btn-sm no-print" onclick="showAddChecklistItemModal()"
-                                    style="background: rgba(52,199,89,0.9); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
-                                    ➕ 항목 추가
-                                </button>
-
+                                <!-- [수정] 불필요한 버튼 제거, 저장/불러오기 버튼만 유지 -->
                                 <button class="btn btn-primary btn-sm no-print" onclick="saveCustomers()"
                                     style="background: rgba(0,122,255,0.9); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
                                     ☁️ 저장
                                 </button>
 
-                                <button class="restore-btn no-print" onclick="syncChecklistFromCloud()"
+                                <button class="restore-btn no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
-                                    title="구글시트에서 최신 데이터 불러오기">
+                                    title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
@@ -5772,12 +5762,12 @@
                                         <div class="multi-select-dropdown" id="checklistCategoryFilterDropdown"></div>
                                     </div>
                                 </div>
-                                <div style="flex: 1; min-width: 200px;">
-                                    <label
-                                        style="font-size: 11px; color: #86868b; margin-bottom: 4px; display: block;">검색</label>
-                                    <input type="text" id="checklistSearchInput" oninput="renderChecklistItems()"
-                                        placeholder="항목, 내용, 비고로 검색..."
-                                        style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 12px; outline: none;">
+                                <div style="flex: 1; min-width: 200px; display: flex; align-items: flex-end;">
+                                    <button class="btn btn-primary btn-sm no-print" onclick="showAddChecklistItemModal()"
+                                        style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%;"
+                                        title="현재 필터 조건의 항목을 일괄 추가">
+                                        ➕ 필터 항목 추가
+                                    </button>
                                 </div>
                             </div>
 
@@ -15593,7 +15583,6 @@
                     stageFilter = getMultiSelectValues('checklistStageFilter');
                     categoryFilter = getMultiSelectValues('checklistCategoryFilter');
                 }
-                searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
             }
 
             let filteredData = baseData.filter((item, index) => {
@@ -16063,7 +16052,7 @@
             }
 
             if (!checklistMasterData || checklistMasterData.length === 0) {
-                showToast('마스터 체크리스트를 먼저 불러오세요. (🔄 DB 불러오기)', 'warning');
+                showToast('마스터 체크리스트를 먼저 불러오세요.', 'warning');
                 return;
             }
 
@@ -16191,7 +16180,6 @@
             // 현재 필터링된 데이터 저장
             const stageFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistStageFilter') : ['all'];
             const categoryFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistCategoryFilter') : ['all'];
-            const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
             checklistFilteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
@@ -16259,8 +16247,6 @@
                 stageFilter = getMultiSelectValues('checklistStageFilter');
                 categoryFilter = getMultiSelectValues('checklistCategoryFilter');
             }
-            const searchText = document.getElementById('checklistSearchInput') ?
-                document.getElementById('checklistSearchInput').value.toLowerCase() : '';
 
             const filteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
@@ -16656,7 +16642,6 @@
                         stageFilter = getMultiSelectValues('checklistStageFilter');
                         categoryFilter = getMultiSelectValues('checklistCategoryFilter');
                     }
-                    const searchText = document.getElementById('checklistSearchInput').value.toLowerCase();
 
                     // 필터링 적용
                     const filteredItems = checklistMasterData.filter(item => {
