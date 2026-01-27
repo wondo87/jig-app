@@ -9714,7 +9714,25 @@
                 // 중복이 제거된 배열로 재할당
                 cloudCustomers = Array.from(uniqueCloudMap.values());
 
-                // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단) 
+                // [CRITICAL FIX] Parse jsonData for each customer to restore checklistData
+                console.log('🔄 [Web Debug] Parsing jsonData for customers...');
+                cloudCustomers = cloudCustomers.map(customer => {
+                    if (customer.jsonData && typeof customer.jsonData === 'string') {
+                        try {
+                            const parsedData = JSON.parse(customer.jsonData);
+                            console.log('✅ [Web Debug] Parsed jsonData for customer:', customer.customerId,
+                                       'checklistData keys:', Object.keys(parsedData.checklistData || {}));
+                            // Merge parsed data with customer data (parsedData takes priority)
+                            return { ...customer, ...parsedData };
+                        } catch (e) {
+                            console.warn('⚠️ [Web Debug] Failed to parse jsonData for customer:', customer.customerId, e);
+                            return customer;
+                        }
+                    }
+                    return customer;
+                });
+
+                // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단)
 
                 // [DEBUG] 상태별 고객 수 확인
                 const statusCounts = {};
@@ -9730,6 +9748,7 @@
                         status: c.status
                     }))
                 );
+                console.log('🔄 [Web Debug] Sample customer checklistData:', cloudCustomers[0]?.checklistData ? Object.keys(cloudCustomers[0].checklistData).slice(0, 5) : 'none');
 
                 // UI 업데이트
                 customers = cloudCustomers;
