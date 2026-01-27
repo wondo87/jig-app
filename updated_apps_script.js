@@ -750,7 +750,7 @@ function exportCustomerToNotion(customerId, data) {
         callout: {
             rich_text: [{
                 type: 'text',
-                text: { content: '기준으로 완성하는 인테리어. 디자인지그 시공 사례와 칼럼.' }
+                text: { content: '공사 스케줄·공정별 체크리스트·자재목록(A/S)정보·FAQ' }
             }],
             icon: { emoji: '✨' },
             color: 'gray_background'
