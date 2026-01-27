@@ -5652,9 +5652,9 @@
                                     ☁️ 저장
                                 </button>
 
-                                <button class="restore-btn no-print" onclick="loadSavedChecklistState()"
+                                <button class="restore-btn no-print" onclick="syncChecklistFromCloud()"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
-                                    title="마지막 저장 내용 복원">
+                                    title="구글시트에서 최신 데이터 불러오기">
                                     <span>↩ 저장내용불러오기</span>
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
@@ -10696,48 +10696,102 @@
         async function saveCustomers() {
             // Phase 2: 클라우드로 저장 (Source of Truth: Google Sheets)
             if (!currentData || !currentData.customerId) {
-                console.log('[Save] No customer selected, skipping save');
+                console.log('❌ [Mobile Save] No customer selected, skipping save');
                 showToast('고객을 먼저 선택해주세요', 'warning');
                 return;
             }
 
-            console.log('[Save] Starting save for customer:', currentData.customerId);
-            console.log('[Save] checklistData keys:', Object.keys(currentData.checklistData || {}));
+            console.log('📤 [Mobile Save] ========== SAVE START ==========');
+            console.log('📋 [Mobile Save] Customer ID:', currentData.customerId);
+            console.log('📋 [Mobile Save] Customer Name:', currentData.clientName);
+            console.log('📋 [Mobile Save] Site Address:', currentData.siteAddress);
+            console.log('📋 [Mobile Save] Checklist Items Count:', Object.keys(currentData.checklistData || {}).length);
+            console.log('📋 [Mobile Save] Checklist Items Keys:', Object.keys(currentData.checklistData || {}));
+            console.log('📋 [Mobile Save] Sample Checklist Item (first 3):', Object.entries(currentData.checklistData || {}).slice(0, 3));
+            console.log('📋 [Mobile Save] Full currentData (stringified):', JSON.stringify(currentData).substring(0, 500) + '...');
 
             try {
+                // 웹과 동일한 포맷으로 변경
                 const payload = {
-                    action: 'update_customer',
-                    ...currentData
+                    sheetName: '고객관리_견적서',
+                    data: {
+                        customerId: currentData.customerId || '',
+                        clientName: currentData.clientName || '',
+                        clientPhone: currentData.clientPhone || '',
+                        clientEmail: currentData.clientEmail || '',
+                        status: currentData.status || '',
+                        createdAt: currentData.createdAt || new Date().toISOString(),
+                        clientAddress: currentData.clientAddress || '',
+                        projectName: currentData.projectName || '',
+                        siteAddress: currentData.siteAddress || '',
+                        constructionPeriod: currentData.constructionPeriod || '',
+                        movingDate: currentData.movingDate || '',
+                        finalPaymentDate: currentData.finalPaymentDate || '',
+                        contractDate: currentData.contractDate || '',
+                        warrantyPeriod: currentData.asEndDate || '',
+                        asEndDate: currentData.asEndDate || '',
+                        pyeong: currentData.area || '',
+                        inflowPath: currentData.clientSource || '',
+                        buildingType: currentData.buildingType || '',
+                        totalAmount: currentData.totalAmount || '',
+                        estimateProfitRate: currentData.profitRate || '15%',
+                        manager: currentData.manager || '',
+                        updatedAt: currentData.updatedAt || new Date().toISOString().split('T')[0],
+                        jsonData: JSON.stringify(currentData)
+                    }
                 };
 
-                console.log('[Save] Sending payload...');
+                console.log('📦 [Mobile Save] Payload:', JSON.stringify(payload, null, 2));
+                console.log('🌐 [Mobile Save] Target URL:', CUSTOMER_SYNC_URL);
 
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
 
-                const res = await response.json();
-                console.log('[Save] Response:', res);
+                console.log('📡 [Mobile Save] Response status:', response.status);
+                console.log('📡 [Mobile Save] Response ok:', response.ok);
 
-                if (res.result === 'success') {
-                    console.log('[Save] Customer data saved successfully');
+                const responseText = await response.text();
+                console.log('📄 [Mobile Save] Response text:', responseText);
+
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('✅ [Mobile Save] Parsed response:', result);
+                } catch (e) {
+                    console.warn('⚠️ [Mobile Save] Response is not JSON:', responseText);
+                }
+
+                if (response.ok || response.status === 200) {
+                    console.log('✅ [Mobile Save] Save completed successfully');
                     showToast('저장되었습니다', 'success');
 
                     // 로컬 customers 배열 업데이트
                     const idx = customers.findIndex(c => c.customerId === currentData.customerId);
                     if (idx !== -1) {
                         customers[idx] = { ...currentData };
+                        console.log('✅ [Mobile Save] Local customers array updated');
                     }
+
+                    // 저장 후 즉시 불러오기로 검증
+                    console.log('🔄 [Mobile Save] Verifying save by reloading...');
+                    setTimeout(() => {
+                        syncFromCloud(true);
+                    }, 1000);
                 } else {
-                    console.error('[Save] Failed:', res.message);
-                    showToast('저장 실패: ' + (res.message || 'Unknown error'), 'error');
+                    throw new Error(`HTTP ${response.status}: ${responseText}`);
                 }
             } catch (error) {
-                console.error('[Save] Error:', error);
+                console.error('❌ [Mobile Save] Error:', error);
+                console.error('❌ [Mobile Save] Error name:', error.name);
+                console.error('❌ [Mobile Save] Error message:', error.message);
+                console.error('❌ [Mobile Save] Error stack:', error.stack);
                 showToast('저장 오류: ' + error.message, 'error');
             }
+
+            console.log('📤 [Mobile Save] ========== SAVE END ==========');
         }
 
         async function newCustomer() {
