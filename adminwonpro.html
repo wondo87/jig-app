@@ -13942,7 +13942,6 @@
             checklistFilteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
                 if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
-                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
         }
@@ -14009,7 +14008,6 @@
             const filteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
                 if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
-                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
 
