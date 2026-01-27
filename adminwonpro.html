@@ -4341,7 +4341,7 @@
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <!-- [추가] DB 불러오기/저장 버튼 -->
-                                <button class="btn btn-secondary btn-sm no-print" onclick="syncChecklistFromCloud()"
+                                <button class="btn btn-secondary btn-sm no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) selectCustomer(currentCustomerId); syncChecklistFromCloud(); })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
                                     🔄 DB 불러오기
                                 </button>
