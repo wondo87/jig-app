@@ -11742,11 +11742,30 @@
                     }))
                 );
 
+                // [CRITICAL FIX] Parse jsonData for each customer to restore checklistData
+                console.log('🔄 [Mobile Debug] Parsing jsonData for customers...');
+                cloudCustomers = cloudCustomers.map(customer => {
+                    if (customer.jsonData && typeof customer.jsonData === 'string') {
+                        try {
+                            const parsedData = JSON.parse(customer.jsonData);
+                            console.log('✅ [Mobile Debug] Parsed jsonData for customer:', customer.customerId,
+                                       'checklistData keys:', Object.keys(parsedData.checklistData || {}));
+                            // Merge parsed data with customer data (parsedData takes priority)
+                            return { ...customer, ...parsedData };
+                        } catch (e) {
+                            console.warn('⚠️ [Mobile Debug] Failed to parse jsonData for customer:', customer.customerId, e);
+                            return customer;
+                        }
+                    }
+                    return customer;
+                });
+
                 // UI 업데이트
                 console.log('🔄 [Mobile Debug] 고객 데이터 설정 전 customers 길이:', customers.length);
                 customers = cloudCustomers;
                 console.log('🔄 [Mobile Debug] 고객 데이터 설정 후 customers 길이:', customers.length);
                 console.log('🔄 [Mobile Debug] 설정된 고객 목록:', customers.map(c => c.customerId));
+                console.log('🔄 [Mobile Debug] Sample customer checklistData:', customers[0]?.checklistData ? Object.keys(customers[0].checklistData).slice(0, 5) : 'none');
                 cachedCloudCount = cloudCustomers.length;
                 updateCustomerList();
                 initYearFilter();
