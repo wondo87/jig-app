@@ -8966,8 +8966,81 @@
             }
         }
 
-        function saveCustomers() {
-            // Phase 2: 업무 데이터(고객) 로컬스토리지 저장 중단 (Source of Truth: Google Sheets)
+        async function saveCustomers() {
+            // Phase 2: 클라우드로 저장 (Source of Truth: Google Sheets)
+            if (!currentData || !currentData.customerId) {
+                console.log('❌ [Web Save] No customer selected, skipping save');
+                return;
+            }
+
+            console.log('📤 [Web Save] ========== SAVE START ==========');
+            console.log('📋 [Web Save] Customer ID:', currentData.customerId);
+            console.log('📋 [Web Save] Checklist Items Count:', Object.keys(currentData.checklistData || {}).length);
+
+            try {
+                const payload = {
+                    sheetName: '고객관리_견적서',
+                    data: {
+                        customerId: currentData.customerId || '',
+                        clientName: currentData.clientName || '',
+                        clientPhone: currentData.clientPhone || '',
+                        clientEmail: currentData.clientEmail || '',
+                        status: currentData.status || '',
+                        createdAt: currentData.createdAt || new Date().toISOString(),
+                        clientAddress: currentData.clientAddress || '',
+                        projectName: currentData.projectName || '',
+                        siteAddress: currentData.siteAddress || '',
+                        constructionPeriod: currentData.constructionPeriod || '',
+                        movingDate: currentData.movingDate || '',
+                        finalPaymentDate: currentData.finalPaymentDate || '',
+                        contractDate: currentData.contractDate || '',
+                        warrantyPeriod: currentData.asEndDate || '',
+                        asEndDate: currentData.asEndDate || '',
+                        pyeong: currentData.area || '',
+                        inflowPath: currentData.clientSource || '',
+                        buildingType: currentData.buildingType || '',
+                        totalAmount: currentData.totalAmount || '',
+                        estimateProfitRate: currentData.profitRate || '15%',
+                        manager: currentData.manager || '',
+                        updatedAt: new Date().toISOString().split('T')[0],
+                        jsonData: JSON.stringify(currentData)
+                    }
+                };
+
+                console.log('📦 [Web Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
+
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('📡 [Web Save] Response status:', response.status);
+
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('✅ [Web Save] Save successful:', result);
+                } catch (e) {
+                    console.warn('⚠️ [Web Save] Response is not JSON:', responseText);
+                    result = { success: true, message: responseText };
+                }
+
+                if (result.success) {
+                    console.log('✅ [Web Save] ========== SAVE COMPLETE ==========');
+                } else {
+                    console.error('❌ [Web Save] Save failed:', result.message || 'Unknown error');
+                    showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
+                }
+
+                return result;
+
+            } catch (error) {
+                console.error('❌ [Web Save] Error:', error);
+                showToast('저장 중 오류가 발생했습니다', 'error');
+                throw error;
+            }
         }
 
         async function newCustomer() {
