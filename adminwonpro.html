@@ -9017,7 +9017,8 @@
                     result = { success: true, message: responseText };
                 }
 
-                if (result.success) {
+                // Google Apps Script returns {result: 'success'} or {success: true}
+                if (result.success || result.result === 'success') {
                     console.log('✅ [Web Save] ========== SAVE COMPLETE ==========');
                 } else {
                     console.error('❌ [Web Save] Save failed:', result.message || 'Unknown error');
