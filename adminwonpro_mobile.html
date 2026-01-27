@@ -15563,19 +15563,16 @@
 
             let stageFilter = ['all'];
             let categoryFilter = ['all'];
-            let searchText = '';
 
             // [Mobile/Desktop Filtering Logic Switch]
             if (window.innerWidth <= 768) {
                 // Mobile: Read from Mobile DOM Inputs
                 const mStageVal = document.getElementById('mobileStageFilter') ? document.getElementById('mobileStageFilter').value : 'all';
                 const mCatVal = document.getElementById('mobileCategoryFilter') ? document.getElementById('mobileCategoryFilter').value : '';
-                const mSearchVal = document.getElementById('mobileSearchInput') ? document.getElementById('mobileSearchInput').value : '';
 
                 // Mobile now uses actual stage values (시공전, 철거, 설비, etc.)
                 stageFilter = mStageVal && mStageVal !== 'all' ? [mStageVal] : ['all'];
                 categoryFilter = mCatVal ? [mCatVal] : ['all'];
-                searchText = mSearchVal.toLowerCase().trim();
 
             } else {
                 // Desktop: Read from MultiSelect
@@ -15596,7 +15593,6 @@
                     if (!categoryFilter.includes(item.카테고리 || '')) return false;
                 }
 
-                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
 
@@ -16184,7 +16180,6 @@
             checklistFilteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
                 if (!categoryFilter.includes('all') && !categoryFilter.includes(item.카테고리 || '')) return false;
-                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
         }
@@ -16251,7 +16246,6 @@
             const filteredData = checklistMasterData.filter(item => {
                 if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
                 if (!categoryFilter.includes('all') && !categoryFilter.includes(item.카테고리 || '')) return false;
-                if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                 return true;
             });
 
@@ -16653,8 +16647,6 @@
                         if (!categoryFilter.includes('all')) {
                             if (!categoryFilter.includes(item.카테고리 || '')) return false;
                         }
-                        // 검색 필터
-                        if (searchText && !JSON.stringify(item).toLowerCase().includes(searchText)) return false;
                         return true;
                     });
 
