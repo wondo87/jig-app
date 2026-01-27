@@ -667,14 +667,18 @@ function exportCustomerToNotion(customerId, data) {
     const totalAmount = data['총 계약금액'] ? Number(String(data['총 계약금액']).replace(/[^0-9]/g, '')) : 0;
     const area = data['평수'] ? Number(String(data['평수']).replace(/[^0-9.]/g, '')) : 0;
 
-    // 현장명 생성: 성명&배우자 성명_고객ID 형식
-    const clientName = data['성명'] || '';
-    const spouseName = data['배우자 성명'] || '';
-    let siteTitle = clientName;
+    // 현장명 생성 규칙 변경 (2026-01-27)
+    const clientName = (data['성명'] || '').trim();
+    const spouseName = (data['배우자 성명'] || '').trim();
+    let siteTitle = '';
+
     if (spouseName) {
-        siteTitle += '♥️' + spouseName;
+        // 배우자가 있는 경우: 성명·배우자 성명 고객님 공사 안내문
+        siteTitle = `${clientName}·${spouseName} 고객님 공사 안내문`;
+    } else {
+        // 배우자가 없는 경우: 성명 · 공사 안내 페이지
+        siteTitle = `${clientName} · 공사 안내 페이지`;
     }
-    siteTitle += '_' + customerId;
 
     const properties = {
         '현장명': { title: [{ text: { content: siteTitle } }] },
