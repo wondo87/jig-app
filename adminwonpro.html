@@ -55,6 +55,14 @@
             padding-top: 56px;
         }
 
+        /* Vercel Toolbar 숨김 */
+        #__next-build-watcher,
+        [data-vercel-toolbar],
+        [class*="vercel-toolbar"],
+        [id*="vercel-toolbar"] {
+            display: none !important;
+        }
+
         /* 글씨 크기 조절 UI */
         .font-size-control {
             display: flex;
