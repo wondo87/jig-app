@@ -5681,14 +5681,9 @@
                                     <option value="디자인 상담 및 설계">디자인 상담 및 설계</option>
                                     <!-- Will be populated dynamically -->
                                 </select>
-                                <button id="mobileSearchToggle" class="mobile-search-btn" onclick="toggleMobileSearch()"
-                                    style="flex: 0 0 36px; height: 40px; padding: 0; border: 1px solid #e5e5ea; border-radius: 8px; font-size: 16px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;">🔍</button>
-                            </div>
-                            <!-- Mobile Search Input Overlay -->
-                            <div id="mobileSearchInputWrapper" style="display:none; margin-bottom:0;">
-                                <input type="text" id="mobileSearchInput" placeholder="항목, 내용, 비고로 검색..."
-                                    style="width:100%; padding:10px; height: 40px; border:1px solid #e5e5ea; border-radius:8px; font-size:14px;"
-                                    oninput="renderChecklistItems()">
+                                <button class="mobile-add-btn" onclick="showAddChecklistItemModal()"
+                                    style="flex: 0 0 40px; height: 40px; padding: 0; border: none; border-radius: 8px; font-size: 20px; background: rgba(52, 199, 89, 0.9); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 600;"
+                                    title="필터 항목 추가">➕</button>
                             </div>
 
                             <!-- 진행 상황 요약 -->
@@ -5735,12 +5730,6 @@
                                         미완료
                                     </button>
                                 </div>
-                                <!-- [추가] 모바일 전용 필터 항목 추가 버튼 -->
-                                <button class="btn btn-primary btn-sm no-print mobile-add-items-btn" onclick="showAddChecklistItemModal()"
-                                    style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 600; width: 100%; margin-top: 10px;"
-                                    title="현재 필터 조건의 항목을 일괄 추가">
-                                    ➕ 필터 항목 추가
-                                </button>
                             </div>
 
                             <!-- 체크리스트 필터 (데스크톱 전용) -->
@@ -15665,12 +15654,11 @@
                 if (mobileContainer) {
                     mobileContainer.style.display = 'block';
 
-                    // Apply Mobile Status Filter
+                    // Apply Mobile Status Filter (체크 여부 기준)
                     let mobileFilteredData = filteredData;
                     if (mobileChecklistStatusFilter !== 'all') {
                         mobileFilteredData = mobileFilteredData.filter(item => {
-                            const state = customerChecklistData[item.번호] || {};
-                            const isChecked = state.checked || false;
+                            const isChecked = !!customerChecklistData[item.번호];
                             if (mobileChecklistStatusFilter === 'completed') return isChecked;
                             if (mobileChecklistStatusFilter === 'incomplete') return !isChecked;
                             return true;
