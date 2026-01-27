@@ -28,8 +28,8 @@ const DELETE_PASSWORD_HASH = '80409fb2145a39539cf9c876c11c903d341c6166edce59e0e8
 const DELETE_TEST_PASSWORD = 'delete1234'; // 로컬 테스트용 (HTTP+LAN 환경, 운영 시 삭제)
 
 // [통합] 고객관리/상담관리/원가관리 등 모든 데이터 동기화를 위한 Apps Script Web App URL (배포 후 생성된 URL)
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyB3kGQWQaNJtkYhVHK_2jRC-EB7t1UuT0jnBvrD3Jm556oj3eGo4u0IX4pzogew_XofA/exec'; // 구글 시트 연동용
-const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyB3kGQWQaNJtkYhVHK_2jRC-EB7t1UuT0jnBvrD3Jm556oj3eGo4u0IX4pzogew_XofA/exec'; // 데이터 동기화용
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyYiH4WE2WBLXG0Fk_grCSh_xYwoHRTR1ckIKc50yBLhSH2KnYpPN8G19xVEMmj8vKvew/exec'; // 구글 시트 연동용
+const CUSTOMER_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyYiH4WE2WBLXG0Fk_grCSh_xYwoHRTR1ckIKc50yBLhSH2KnYpPN8G19xVEMmj8vKvew/exec'; // 데이터 동기화용
 
 // 초기 설정값
 const DEFAULT_PROFIT_RATE = 15; // 기본 이윤율 (%)
