@@ -73,8 +73,8 @@ const NOTION_DB_IDS = {
     FAQ: 'dd49a5148c7a41cf8244f8f97dd8e0eb' // [추가] 고객 안내·FAQ
 };
 
-// 커버 이미지 URL
-const NOTION_COVER_IMAGE = 'https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png';
+// 커버 이미지 URL (브랜딩 통일)
+const NOTION_COVER_IMAGE = 'https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png';
 
 /**
  * [보안 설정] Notion API 키 안전 저장소
@@ -721,10 +721,14 @@ function exportCustomerToNotion(customerId, data) {
         const response = callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
         notionUrl = response.url;
     } else {
-        // [생성] - 커버 이미지 포함
+        // [생성] - 커버 이미지 및 아이콘 포함
         const response = callNotionAPI('/pages', 'POST', {
             parent: { database_id: dbId },
             properties: properties,
+            icon: {
+                type: 'emoji',
+                emoji: '🏠'
+            },
             cover: {
                 type: 'external',
                 external: {
@@ -738,6 +742,26 @@ function exportCustomerToNotion(customerId, data) {
 
     // [추가] 페이지 본문에 콘텐츠 추가
     const pageBlocks = [];
+
+    // 0. 최상단 브랜딩 블록 (SNS 공유 시 Description으로 사용됨)
+    pageBlocks.push({
+        object: 'block',
+        type: 'callout',
+        callout: {
+            rich_text: [{
+                type: 'text',
+                text: { content: '기준으로 완성하는 인테리어. 디자인지그 시공 사례와 칼럼.' }
+            }],
+            icon: { emoji: '✨' },
+            color: 'gray_background'
+        }
+    });
+
+    pageBlocks.push({
+        object: 'block',
+        type: 'divider',
+        divider: {}
+    });
 
     // 1. 📅 공사 스케줄 섹션
     if (NOTION_DB_IDS.SCHEDULE) {
