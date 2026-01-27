@@ -725,8 +725,10 @@ function exportCustomerToNotion(customerId, data) {
             parent: { database_id: dbId },
             properties: properties,
             icon: {
-                type: 'emoji',
-                emoji: '🏠'
+                type: 'external',
+                external: {
+                    url: 'https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png'
+                }
             },
             cover: {
                 type: 'external',
