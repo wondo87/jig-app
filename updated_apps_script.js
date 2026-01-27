@@ -728,7 +728,7 @@ function exportCustomerToNotion(customerId, data) {
             icon: {
                 type: 'external',
                 external: {
-                    url: 'https://res.cloudinary.com/designjig/image/upload/c_crop,g_north,h_300/v1769232218/sfugtbfiuyi8ehvtkzcs.png'
+                    url: 'https://res.cloudinary.com/designjig/image/upload/v1769224042/cqnem8lysrkpusbdi1rb.png'
                 }
             },
             cover: {
@@ -780,8 +780,7 @@ function exportCustomerToNotion(customerId, data) {
                 object: 'block',
                 type: 'callout',
                 callout: {
-                    rich_text: [{ type: 'text', text: { content: '💡 공사 진행 안내 및 유의사항' } }],
-                    icon: { emoji: '💡' },
+                    rich_text: [{ type: 'text', text: { content: '공사 진행 안내 및 유의사항' } }],
                     color: 'yellow_background'
                 }
             });
@@ -844,8 +843,7 @@ function exportCustomerToNotion(customerId, data) {
                 object: 'block',
                 type: 'callout',
                 callout: {
-                    rich_text: [{ type: 'text', text: { content: '💡 A/S(사후관리) 안내 및 유의사항' } }],
-                    icon: { emoji: '💡' },
+                    rich_text: [{ type: 'text', text: { content: 'A/S(사후관리) 안내 및 유의사항' } }],
                     color: 'blue_background'
                 }
             });
@@ -983,7 +981,6 @@ function exportScheduleToNotion(customerId, data) {
                     {
                         type: 'callout',
                         callout: {
-                            icon: { type: 'emoji', emoji: '💡' },
                             color: 'yellow_background',
                             rich_text: [{ type: 'text', text: { content: '공사 진행 안내 및 유의사항' } }],
                             children: calloutContent
@@ -1202,7 +1199,6 @@ function exportASListToNotion(customerId, data) {
                     {
                         type: 'callout',
                         callout: {
-                            icon: { type: 'emoji', emoji: '⚠️' },
                             color: 'orange_background',
                             rich_text: [{ type: 'text', text: { content: 'A/S 안내 및 유의사항' } }],
                             children: calloutContent
