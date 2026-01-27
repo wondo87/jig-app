@@ -10741,7 +10741,18 @@
                     }
                 };
 
-                console.log('📦 [Mobile Save] Payload:', JSON.stringify(payload, null, 2));
+                console.log('📦 [Mobile Save] Payload (full):', JSON.stringify(payload, null, 2));
+                console.log('📦 [Mobile Save] jsonData field length:', payload.data.jsonData.length);
+                console.log('📦 [Mobile Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
+
+                // Parse jsonData to verify checklistData is included
+                try {
+                    const parsedJsonData = JSON.parse(payload.data.jsonData);
+                    console.log('📦 [Mobile Save] Verified - checklistData in jsonData:', Object.keys(parsedJsonData.checklistData || {}).length, 'items');
+                } catch (e) {
+                    console.error('❌ [Mobile Save] Failed to verify jsonData:', e);
+                }
+
                 console.log('🌐 [Mobile Save] Target URL:', CUSTOMER_SYNC_URL);
 
                 const response = await fetch(CUSTOMER_SYNC_URL, {
