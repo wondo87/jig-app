@@ -673,12 +673,9 @@ function exportCustomerToNotion(customerId, data) {
     const spouseName = (data['배우자 성명'] || '').trim();
     let siteTitle = '';
 
-    if (spouseName) {
-        // 배우자가 있는 경우: 성명·배우자 성명 고객님 공사 안내문
-        siteTitle = `${clientName}·${spouseName} 고객님 공사 안내문`;
-    } else {
-        siteTitle = `${clientName} 고객님 공사 안내문`;
-    }
+    // [수정] 현장명은 심플하게, 상세 내용은 본문으로 이동 (중복 방지)
+    siteTitle = '공사 안내문';
+    const customerGreeting = spouseName ? `${clientName}·${spouseName} 고객님` : `${clientName} 고객님`;
 
     const properties = {
         '현장명': { title: [{ text: { content: siteTitle } }] },
@@ -734,7 +731,7 @@ function exportCustomerToNotion(customerId, data) {
             cover: {
                 type: 'external',
                 external: {
-                    url: NOTION_COVER_IMAGE
+                    url: 'https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png'
                 }
             }
         });
@@ -752,7 +749,7 @@ function exportCustomerToNotion(customerId, data) {
         paragraph: {
             rich_text: [{
                 type: 'text',
-                text: { content: '공사 스케줄·공정별 체크리스트·자재목록(A/S)정보·FAQ' }
+                text: { content: `${customerGreeting}을 위한 공사 안내\n공사 스케줄·공정별 체크리스트·자재목록(A/S)정보·FAQ` }
             }]
         }
     });
@@ -800,8 +797,8 @@ function exportCustomerToNotion(customerId, data) {
 
         pageBlocks.push({
             object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
+            type: 'link_to_page',
+            link_to_page: {
                 type: 'database_id',
                 database_id: NOTION_DB_IDS.SCHEDULE
             }
@@ -819,8 +816,8 @@ function exportCustomerToNotion(customerId, data) {
         });
         pageBlocks.push({
             object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
+            type: 'link_to_page',
+            link_to_page: {
                 type: 'database_id',
                 database_id: NOTION_DB_IDS.CHECKLIST
             }
@@ -862,8 +859,8 @@ function exportCustomerToNotion(customerId, data) {
 
         pageBlocks.push({
             object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
+            type: 'link_to_page',
+            link_to_page: {
                 type: 'database_id',
                 database_id: NOTION_DB_IDS.AS_LIST
             }
@@ -881,8 +878,8 @@ function exportCustomerToNotion(customerId, data) {
         });
         pageBlocks.push({
             object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
+            type: 'link_to_page',
+            link_to_page: {
                 type: 'database_id',
                 database_id: NOTION_DB_IDS.FAQ
             }
