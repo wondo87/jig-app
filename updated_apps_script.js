@@ -497,7 +497,10 @@ function handleScheduleTemplateGet(e) {
 
 
 // ==========================================
-// 2.5 Notion Integration Logic
+/**
+ * Design Jig Web - Integrated Apps Script
+ * Last Updated: 2026-01-28 15:50 (KST)
+ */
 // ==========================================
 
 function handleNotionExport(payload) {
