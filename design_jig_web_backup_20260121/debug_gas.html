@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAS Connection Debugger</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .pending {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+
+        .success {
+            background: #e6fffa;
+            border: 1px solid #38b2ac;
+            color: #234e52;
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 1px solid #fc8181;
+            color: #c53030;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #2c5282;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Google Apps Script 연결 테스트</h1>
+    <p>아래 버튼을 눌러 스크립트 연결 상태를 확인합니다.</p>
+
+    <div style="margin-bottom: 20px;">
+        <strong>테스트 대상 URL:</strong><br>
+        <code id="targetUrl"></code>
+    </div>
+
+    <button onclick="runTest()">테스트 시작 실행</button>
+
+    <div id="results" style="margin-top: 30px;"></div>
+
+    <script>
+        // 사용자가 제공한 최신 URL
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx51OLoL-o63UgEhLAest4FtYz-sUpnfvXnXhAHmIEkEFoFeAoKQaWf1Gfp6CsJtrMZxg/exec';
+
+        document.getElementById('targetUrl').textContent = GAS_URL;
+
+        async function runTest() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="status pending">테스트 진행 중...</div>';
+
+            try {
+                // 1. POST 테스트 (no-cors) - 실제 폼 전송 방식
+                log(resultsDiv, '1. POST 요청 시도 (mode: no-cors)...');
+                const start = Date.now();
+
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ test: true, message: "Debug Test" })
+                });
+
+                log(resultsDiv, `✅ POST 요청 완료 (소요시간: ${Date.now() - start}ms)`, 'success');
+                log(resultsDiv, '👉 no-cors 모드는 성공 여부를 정확히 알 수 없지만, 에러가 안 났다면 "전송 시도"는 성공한 것입니다.');
+
+                // 2. GET 테스트 (cors 허용 여부 확인용, 보통은 실패함)
+                log(resultsDiv, '2. GET 요청 시도 (일반 접속)...');
+                try {
+                    const response = await fetch(GAS_URL + '?sheet=고객관리_견적서');
+                    if (response.ok) {
+                        log(resultsDiv, `✅ GET 요청 성공: ${response.status}`, 'success');
+                    } else {
+                        log(resultsDiv, `⚠️ GET 요청 응답: ${response.status} ${response.statusText}`, 'error');
+                        const text = await response.text();
+                        if (text.includes("Google Drive")) {
+                            log(resultsDiv, `🚨 결과가 "Google Drive" 에러 페이지입니다. URL이 잘못되었거나 권한이 없습니다.`, 'error');
+                        }
+                    }
+                } catch (e) {
+                    log(resultsDiv, `❌ GET 요청 실패 (CORS 또는 네트워크 오류): ${e.message}`, 'error');
+                }
+
+            } catch (error) {
+                log(resultsDiv, `❌ 치명적 오류: ${error.message}`, 'error');
+            }
+        }
+
+        function log(container, message, type = '') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+    </script>
+</body>
+
+</html>

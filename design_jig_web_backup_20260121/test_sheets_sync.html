@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets 동기화 테스트</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #f5f5f7;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+        }
+
+        .description {
+            color: #86868b;
+            margin-bottom: 2rem;
+        }
+
+        .info-box {
+            background: #f0f0f2;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .info-box code {
+            background: #e8e8ed;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+
+        .test-data {
+            background: #f9f9f9;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-data h3 {
+            margin-top: 0;
+            color: #1d1d1f;
+        }
+
+        button {
+            background: #0071e3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0077ed;
+        }
+
+        button:disabled {
+            background: #86868b;
+            cursor: not-allowed;
+        }
+
+        .log {
+            background: #1d1d1f;
+            color: #f5f5f7;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .log-entry.success {
+            color: #30d158;
+        }
+
+        .log-entry.error {
+            color: #ff453a;
+        }
+
+        .log-entry.info {
+            color: #64d2ff;
+        }
+
+        .log-entry.warning {
+            color: #ffd60a;
+        }
+
+        .step {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-left: 4px solid #0071e3;
+            border-radius: 4px;
+        }
+
+        .step h3 {
+            margin-top: 0;
+            color: #0071e3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔄 Google Sheets 동기화 테스트</h1>
+        <p class="description">실제 고객 데이터 형식으로 Google Sheets 동기화를 테스트합니다.</p>
+
+        <div class="info-box">
+            <strong>📍 대상 URL:</strong><br>
+            <code id="targetUrl"></code>
+        </div>
+
+        <div class="test-data">
+            <h3>📋 테스트 데이터</h3>
+            <pre id="testDataDisplay" style="margin: 0; overflow-x: auto;"></pre>
+        </div>
+
+        <div class="step">
+            <h3>1단계: 기본 연결 테스트</h3>
+            <p>Google Apps Script가 응답하는지 확인합니다.</p>
+            <button onclick="testConnection()">연결 테스트 시작</button>
+        </div>
+
+        <div class="step">
+            <h3>2단계: 실제 데이터 전송 테스트</h3>
+            <p>adminwonpro.html과 동일한 형식으로 데이터를 전송합니다.</p>
+            <button onclick="testRealData()">데이터 전송 테스트</button>
+        </div>
+
+        <div class="step">
+            <h3>3단계: Google Sheet 확인</h3>
+            <p>테스트 후 Google Sheet에서 다음 고객 ID를 찾아보세요:</p>
+            <code>TEST-001</code>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx51OLoL-o63UgEhLAest4FtYz-sUpnfvXnXhAHmIEkEFoFeAoKQaWf1Gfp6CsJtrMZxg/exec';
+
+        const testData = {
+            customerId: 'TEST-001',
+            clientName: '테스트고객',
+            clientPhone: '010-1234-5678',
+            status: 'consulting',
+            clientAddress: '서울시 강남구',
+            projectName: '테스트 프로젝트',
+            siteAddress: '서울시 강남구 테스트동 123',
+            constructionPeriod: '2026-01 ~ 2026-03',
+            area: '30',
+            totalAmount: '50000000',
+            estimateProfitRate: 15,
+            timestamp: new Date().toISOString()
+        };
+
+        document.getElementById('targetUrl').textContent = GAS_URL;
+        document.getElementById('testDataDisplay').textContent = JSON.stringify(testData, null, 2);
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function testConnection() {
+            log('🔍 연결 테스트 시작...', 'info');
+
+            try {
+                log('📡 GET 요청 시도 중...', 'info');
+                const response = await fetch(GAS_URL + '?test=1');
+
+                if (response.ok) {
+                    log('✅ GET 요청 성공! (Status: ' + response.status + ')', 'success');
+                    const text = await response.text();
+                    if (text.length > 0) {
+                        log('📄 응답 내용: ' + text.substring(0, 100), 'info');
+                    }
+                } else {
+                    log('⚠️ GET 요청 응답: ' + response.status + ' ' + response.statusText, 'warning');
+                }
+            } catch (error) {
+                log('❌ GET 요청 실패: ' + error.message, 'error');
+                log('ℹ️ CORS 오류는 정상입니다. POST 요청을 시도해보세요.', 'info');
+            }
+
+            try {
+                log('📡 POST 요청 시도 중 (no-cors 모드)...', 'info');
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ test: true })
+                });
+                log('✅ POST 요청 전송 완료 (no-cors 모드는 응답을 확인할 수 없음)', 'success');
+                log('📝 Google Sheet를 직접 확인해야 합니다', 'info');
+            } catch (error) {
+                log('❌ POST 요청 실패: ' + error.message, 'error');
+            }
+        }
+
+        async function testRealData() {
+            log('🚀 실제 데이터 전송 시작...', 'info');
+
+            const payload = {
+                sheetName: '고객관리',
+                data: {
+                    customerId: testData.customerId,
+                    clientName: testData.clientName,
+                    clientPhone: testData.clientPhone,
+                    status: testData.status,
+                    clientAddress: testData.clientAddress,
+                    projectName: testData.projectName,
+                    siteAddress: testData.siteAddress,
+                    constructionPeriod: testData.constructionPeriod,
+                    pyeong: testData.area,
+                    totalAmount: testData.totalAmount,
+                    estimateProfitRate: testData.estimateProfitRate,
+                    jsonData: JSON.stringify(testData)
+                }
+            };
+
+            log('📦 Payload 구성:', 'info');
+            log(JSON.stringify(payload, null, 2), 'info');
+
+            try {
+                const startTime = Date.now();
+
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const elapsed = Date.now() - startTime;
+                log('✅ 데이터 전송 완료 (소요시간: ' + elapsed + 'ms)', 'success');
+                log('📋 Google Sheet에서 고객 ID "TEST-001"를 확인하세요', 'success');
+                log('🔗 시트 URL: https://docs.google.com/spreadsheets/d/1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw/', 'info');
+            } catch (error) {
+                log('❌ 전송 실패: ' + error.message, 'error');
+                log('상세 오류: ' + error.stack, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

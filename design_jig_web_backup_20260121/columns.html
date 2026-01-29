@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COLUMNS - 디자인 지그</title>
+    <meta name="description" content="인테리어 가이드, 시공 팁, 디자인 이야기를 확인해보세요.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.designjig.com/columns">
+    <meta property="og:title" content="COLUMNS - 디자인 지그">
+    <meta property="og:description" content="인테리어 가이드, 시공 팁, 디자인 이야기를 확인해보세요.">
+    <meta property="og:image"
+        content="https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png">
+    <meta property="og:site_name" content="디자인 지그">
+
+    <!-- 폰트 최적화: preconnect + preload -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+            rel="stylesheet">
+    </noscript>
+
+    <script src="js/protection.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+            background: #fff;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.5rem 3rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .nav-list {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-link:hover {
+            color: #B4956F;
+        }
+
+        .nav-link-cta {
+            color: #B4956F;
+        }
+
+        /* 모바일 메뉴 버튼 (index.html과 동일) */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #1a1a1a;
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+
+        .mobile-menu-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* 모바일 네비게이션 오버레이 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.98);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .mobile-nav.active {
+            display: flex;
+        }
+
+        .mobile-nav a {
+            font-size: 1.5rem;
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .mobile-nav a:hover {
+            color: #B4956F;
+        }
+
+        @media (max-width: 768px) {
+            .nav-list {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        .nav-link.active {
+            color: #B4956F;
+            border-bottom: 2px solid #B4956F;
+            padding-bottom: 4px;
+        }
+
+        .page-hero {
+            padding: 160px 3rem 60px;
+            background: linear-gradient(135deg, #f8f6f3 0%, #fff 100%);
+            text-align: center;
+        }
+
+        .page-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+
+        .page-hero p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .br-mo {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .br-mo {
+                display: block;
+            }
+        }
+
+        .columns-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 3rem;
+        }
+
+        .columns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .column-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .column-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .column-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .column-content {
+            padding: 24px;
+        }
+
+        .column-date {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .column-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+        .column-summary {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .column-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #B4956F;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 스켈레톤 로딩 스타일 */
+        .skeleton-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .skeleton-image {
+            width: 100%;
+            padding-top: 60%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-content {
+            padding: 20px;
+        }
+
+        .skeleton-tag {
+            width: 50px;
+            height: 14px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-title {
+            width: 80%;
+            height: 24px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-text {
+            width: 60%;
+            height: 16px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.show {
+            display: block;
+        }
+
+        .modal-content {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            position: relative;
+        }
+
+        .modal-header img {
+            width: 100%;
+            height: auto;
+            /* 높이를 자동으로 조절하여 원래 비율 유지 */
+            max-height: 600px;
+            /* 너무 커지지 않도록 최대 높이 제한 */
+            object-fit: contain;
+            /* 이미지가 잘리지 않고 다 보이도록 설정 */
+            background: #f8f8f8;
+            /* 여백이 생길 경우 부드러운 배경색 */
+        }
+
+        @media (max-width: 768px) {
+            .modal-header img {
+                height: auto;
+                min-height: 200px;
+                object-fit: contain;
+                background: #f8f8f8;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 40px;
+        }
+
+        .modal-body h1 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .modal-body .meta {
+            color: #888;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-body .content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .modal-body .content p {
+            margin: 2px 0;
+        }
+
+        .modal-body .content h2 {
+            margin: 32px 0 4px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .modal-body .content h3 {
+            margin: 24px 0 4px;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-body .content h4 {
+            margin: 16px 0 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-body .content img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1.5em 0;
+        }
+
+        .modal-body .content pre {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.5em 0;
+        }
+
+        .modal-body .content code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .modal-body .content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Notion Styles (High Fidelity) */
+        .modal-body .content {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 16px;
+            line-height: 1.75;
+            color: #37352f;
+            word-break: break-word;
+            /* 긴 단어 줄바꿈 처리 */
+        }
+
+        /* Mobile specific adjustments for readability */
+        @media (max-width: 768px) {
+            .modal-body .content {
+                font-size: 17px;
+                /* 모바일에서 가독성을 위해 폰트 키움 */
+                line-height: 1.8;
+            }
+        }
+
+        .notion-h1 {
+            font-size: 1.875em;
+            font-weight: 700;
+            line-height: 1.3;
+            margin: 1.4em 0 0.5em 0;
+            color: #37352f;
+        }
+
+        .notion-h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            line-height: 1.3;
+            margin: 1.4em 0 0.3em 0;
+            color: #37352f;
+        }
+
+        .notion-h3 {
+            font-size: 1.25em;
+            font-weight: 600;
+            line-height: 1.3;
+            margin: 1em 0 0.2em 0;
+            color: #37352f;
+        }
+
+        .modal-body .content p {
+            margin: 0 0 2px 0;
+            /* 글줄 간격은 좁게 (2px) */
+            min-height: 1.5em;
+            letter-spacing: -0.01em;
+            padding: 0;
+        }
+
+        /* 빈 문단(Spacer) 스타일: 문단 간격 12px 확보 */
+        /* 빈 문단(Spacer) 스타일: 엔터 두 번 친 효과 (한 줄 높이 확보) */
+        .modal-body .content p.notion-spacer {
+            height: 28px;
+            /* 일반 줄 높이(약 1.75em)와 비슷하게 설정하여 확실한 공백 제공 */
+            min-height: 28px;
+            display: block;
+            margin: 0;
+        }
+
+        .modal-body .content ul,
+        .modal-body .content ol {
+            margin: 4px 0 12px 24px;
+            padding: 0;
+        }
+
+        .modal-body .content li {
+            margin: 2px 0;
+            padding-left: 2px;
+        }
+
+        .notion-color-gray {
+            color: #9B9A97;
+        }
+
+        .notion-color-brown {
+            color: #64473A;
+        }
+
+        .notion-color-orange {
+            color: #D9730D;
+        }
+
+        .notion-color-yellow {
+            color: #DFAB01;
+        }
+
+        .notion-color-green {
+            color: #0F7B6C;
+        }
+
+        .notion-color-blue {
+            color: #0B6E99;
+        }
+
+        .notion-color-purple {
+            color: #6940A5;
+        }
+
+        .notion-color-pink {
+            color: #AD1A72;
+        }
+
+        .notion-color-red {
+            color: #E03E3E;
+        }
+
+        .notion-color-gray_background {
+            background: #EBECED;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-brown_background {
+            background: #E9E5E3;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-orange_background {
+            background: #FAEBDD;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-yellow_background {
+            background: #FBF3DB;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-green_background {
+            background: #DDEDEA;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-blue_background {
+            background: #DDEBF1;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-purple_background {
+            background: #EAE4F2;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-pink_background {
+            background: #F4DFEB;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-color-red_background {
+            background: #FBE4E4;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        .notion-quote {
+            border-left: 3px solid #37352f;
+            padding-left: 14px;
+            margin: 4px 0;
+            color: #37352f;
+        }
+
+        .notion-callout {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 16px 16px 12px;
+            border-radius: 4px;
+            margin: 4px 0;
+            background: #F1F1EF;
+        }
+
+        .notion-callout .callout-icon {
+            font-size: 1.5em;
+            margin-right: 12px;
+            line-height: 1.1;
+            user-select: none;
+        }
+
+        .notion-callout-gray_background {
+            background: #F1F1EF;
+        }
+
+        .notion-callout-brown_background {
+            background: #F4EEEE;
+        }
+
+        .notion-callout-orange_background {
+            background: #FBECDD;
+        }
+
+        .notion-callout-yellow_background {
+            background: #FBF3DB;
+        }
+
+        .notion-callout-green_background {
+            background: #EDF3EC;
+        }
+
+        .notion-callout-blue_background {
+            background: #E7F3F8;
+        }
+
+        .notion-callout-purple_background {
+            background: #F4F0F7;
+        }
+
+        .notion-callout-pink_background {
+            background: #F9F2F5;
+        }
+
+        .notion-callout-red_background {
+            background: #FDEBEC;
+        }
+
+        .notion-divider {
+            border: none;
+            border-top: 1px solid #E1E1E1;
+            margin: 6px 0;
+        }
+
+        .notion-toggle {
+            margin: 2px 0;
+        }
+
+        .notion-toggle summary {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .notion-toggle .toggle-content {
+            padding-left: 1.2em;
+            margin-top: 2px;
+        }
+
+        .notion-list {
+            margin: 2px 0;
+            padding-left: 24px;
+        }
+
+        .notion-list li {
+            margin: 2px 0;
+            padding-left: 2px;
+        }
+
+        .notion-todo-list {
+            list-style: none;
+            padding-left: 2px;
+            margin: 4px 0;
+        }
+
+        .notion-todo-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 2px 0;
+        }
+
+        .notion-todo-checked {
+            text-decoration: line-through;
+            color: #9B9A97;
+        }
+
+        .notion-image {
+            margin: 4px 0;
+        }
+
+        .notion-image img {
+            max-width: 100%;
+            border-radius: 1px;
+        }
+
+        .notion-image figcaption {
+            text-align: left;
+            color: #9B9A97;
+            font-size: 0.9em;
+            margin-top: 6px;
+        }
+
+        .notion-video {
+            margin: 4px 0;
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+
+        .notion-video iframe,
+        .notion-video video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 1px;
+        }
+
+        .notion-link-preview {
+            margin: 4px 0;
+            padding: 0.5em;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+        }
+
+        .notion-link-preview a {
+            color: #37352f;
+            text-decoration: none;
+            word-break: break-all;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .notion-code {
+            background: #F7F6F3;
+            padding: 32px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.85em;
+            margin: 4px 0;
+        }
+
+        code {
+            background: rgba(135, 131, 120, 0.15);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            color: #EB5757;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Table Styles */
+        .notion-table-wrapper {
+            overflow-x: auto;
+            margin: 4px 0;
+        }
+
+        .notion-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        .notion-table td,
+        .notion-table th {
+            border: 1px solid #e0e0e0;
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        .notion-table th {
+            background: #f7f6f3;
+            font-weight: 600;
+        }
+
+        /* TOC */
+        .notion-toc {
+            padding: 12px;
+            background: #f7f6f3;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        /* 푸터 */
+        .footer {
+            background: #f8f8f8;
+            color: #333;
+            padding: 30px 2rem;
+            text-align: center;
+        }
+
+        .footer-brand {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            color: #1a1a1a;
+        }
+
+        .footer-tagline {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .footer-info {
+            margin-bottom: 1rem;
+        }
+
+        .footer-info p {
+            color: #666;
+            font-size: 0.7rem;
+            margin: 0.2rem 0;
+        }
+
+        .footer-info a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .footer-info a:hover {
+            color: #B4956F;
+        }
+
+        .footer-sns {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .footer-sns a {
+            color: #666;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .footer-sns a:hover {
+            color: #B4956F;
+            transform: translateY(-2px);
+        }
+
+        .footer-sns svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .footer-copyright {
+            color: #999;
+            font-size: 0.65rem;
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-list {
+                display: none;
+            }
+
+            .page-hero {
+                padding: 120px 1.5rem 40px;
+            }
+
+            .page-hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .columns-section {
+                padding: 40px 1.5rem;
+            }
+
+            .columns-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 20px;
+            }
+
+            .modal-body {
+                padding: 24px;
+            }
+
+            .modal-body h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="/" class="logo">DESIGN JIG</a>
+            <nav>
+                <ul class="nav-list">
+                    <li><a href="/columns" class="nav-link active">COLUMNS</a></li>
+                    <li><a href="/portfolio" class="nav-link">PORTFOLIO</a></li>
+                    <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 모바일 네비게이션 -->
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="/columns">COLUMNS</a>
+        <a href="/portfolio">PORTFOLIO</a>
+        <a href="/quote" class="nav-cta">ASK A QUOTE</a>
+    </nav>
+
+    <main>
+        <section class="page-hero">
+            <h1>COLUMNS</h1>
+            <p>
+                기본이 탄탄해야 아름다움도 오래갑니다.<br class="br-mo">
+                디자인지그가 인테리어를 대하는 생각,<br class="br-mo">
+                하자없는 시공의 디테일, 현실적인 가이드까지.<br class="br-mo">
+                현장에서 쌓은 이야기를 나눕니다.
+            </p>
+        </section>
+
+        <section class="columns-section">
+            <div id="columnsContainer" class="columns-grid">
+                <!-- 스켈레톤 로딩 -->
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="columnModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <img id="modalImage" src="" alt="">
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <h1 id="modalTitle"></h1>
+                <div class="meta" id="modalMeta"></div>
+                <div class="content" id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <h2 class="footer-brand">디자인지그</h2>
+        <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
+        <div class="footer-info">
+            <p>경기도 용인시</p>
+            <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+            <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
+        </div>
+        <div class="footer-sns">
+            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                </svg>
+            </a>
+            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                    <path d="M2 20h20v2H2z" />
+                </svg>
+            </a>
+            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </a>
+            <a href="https://www.youtube.com/@DESIGN_JIG" target="_blank" title="유튜브" aria-label="유튜브">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
+    </footer>
+
+    <script>
+        // 칼럼 데이터
+        let COLUMNS_DATA = [];
+        // 미리 로드된 콘텐츠 캐시
+        let CONTENT_CACHE = {};
+        // localStorage 키
+        const CACHE_KEY = 'designjig_columns';
+        const CACHE_EXPIRY = 30 * 60 * 1000; // 30분
+
+        // 페이지 로드
+        document.addEventListener('DOMContentLoaded', loadColumns);
+
+        // 칼럼 로드 (캐시 우선, API 백그라운드 업데이트)
+        async function loadColumns() {
+            // 1. localStorage에서 캐시된 데이터 즉시 표시
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (data && data.length > 0) {
+                        COLUMNS_DATA = data;
+                        displayColumns(COLUMNS_DATA);
+                        console.log('⚡ 캐시에서 즉시 로드');
+
+                        // 캐시가 30분 이내면 백그라운드에서만 업데이트
+                        if (Date.now() - timestamp < CACHE_EXPIRY) {
+                            preloadAllContent();
+                            refreshInBackground();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('캐시 파싱 실패:', e);
+                }
+            }
+
+            // 2. API에서 새 데이터 로드
+            await fetchAndDisplayColumns();
+        }
+
+        // API에서 칼럼 가져와서 표시
+        async function fetchAndDisplayColumns() {
+            try {
+                const response = await fetch('/api/columns');
+                if (response.ok) {
+                    const data = await response.json();
+                    COLUMNS_DATA = data;
+                    displayColumns(COLUMNS_DATA);
+
+                    // localStorage에 캐시 저장
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data: data,
+                        timestamp: Date.now()
+                    }));
+
+                    // 백그라운드에서 콘텐츠 미리 로드
+                    preloadAllContent();
+                    return;
+                } else {
+                    const errData = await response.json();
+                    throw new Error(errData.error || response.statusText);
+                }
+            } catch (e) {
+                console.warn('API 연동 실패:', e.message);
+            }
+
+            // API 실패 시 (캐시도 없으면) 샘플 데이터 표시
+            if (COLUMNS_DATA.length === 0) {
+                COLUMNS_DATA = getSampleData();
+                displayColumns(COLUMNS_DATA);
+            }
+        }
+
+        // 백그라운드에서 데이터 새로고침
+        async function refreshInBackground() {
+            try {
+                const response = await fetch('/api/columns');
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data: data,
+                        timestamp: Date.now()
+                    }));
+                    console.log('🔄 백그라운드 새로고침 완료');
+                }
+            } catch (e) {
+                // 백그라운드 실패는 무시
+            }
+        }
+
+        // 모든 콘텐츠 미리 로드 (백그라운드에서 병렬 실행)
+        async function preloadAllContent() {
+            console.log('📥 콘텐츠 미리 로드 시작...');
+            const promises = COLUMNS_DATA.map(async (column) => {
+                try {
+                    const res = await fetch(`/api/content?id=${column.id}`);
+                    if (res.ok) {
+                        CONTENT_CACHE[column.id] = await res.json();
+                    }
+                } catch (e) {
+                    // 개별 실패는 무시
+                }
+            });
+            await Promise.all(promises);
+            console.log(`✅ ${Object.keys(CONTENT_CACHE).length}개 콘텐츠 로드 완료`);
+        }
+
+        // 샘플 데이터 (API 연동 전 테스트용)
+        function getSampleData() {
+            return [
+                {
+                    id: '1',
+                    properties: {
+                        이름: { title: [{ plain_text: '아파트 인테리어 비용, 얼마가 적당할까?' }] },
+                        날짜: { date: { start: '2024-12-20' } },
+                        썸네일: { files: [{ external: { url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600' } }] },
+                        요약: { rich_text: [{ plain_text: '32평 아파트 기준 실제 견적 사례와 함께 적정 예산을 알려드립니다.' }] },
+                        태그: { select: { name: '비용안내' } },
+                        본문: { rich_text: [{ plain_text: '인테리어를 준비하시면서 가장 먼저 궁금한 것이 바로 비용입니다.\n\n평형대별 인테리어 비용\n• 20평대: 2,500만원 ~ 4,000만원\n• 30평대: 3,500만원 ~ 6,000만원\n• 40평대: 5,000만원 ~ 8,000만원' }] }
+                    }
+                },
+                {
+                    id: '2',
+                    properties: {
+                        이름: { title: [{ plain_text: '주방 리모델링 전 꼭 알아야 할 5가지' }] },
+                        날짜: { date: { start: '2024-12-18' } },
+                        썸네일: { files: [{ external: { url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600' } }] },
+                        요약: { rich_text: [{ plain_text: '주방 공사 전 반드시 체크해야 할 사항들을 정리했습니다.' }] },
+                        태그: { select: { name: '시공가이드' } },
+                        본문: { rich_text: [{ plain_text: '주방은 인테리어에서 가장 신경 써야 할 공간입니다.' }] }
+                    }
+                }
+            ];
+        }
+
+        // 칼럼 표시 (Notion 데이터 구조 지원)
+        function displayColumns(columns) {
+            const container = document.getElementById('columnsContainer');
+
+            if (columns.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#888;padding:60px;">준비된 칼럼이 없습니다.</p>';
+                return;
+            }
+
+            container.innerHTML = columns.map((col, index) => {
+                const p = col.properties;
+                // Notion 속성에 맞춰 매핑 (제목, 작성일, 카테고리, 태그)
+                const title = p.제목?.title?.[0]?.plain_text || p.이름?.title?.[0]?.plain_text || '제목 없음';
+                const date = p.작성일?.date?.start || p.날짜?.date?.start || new Date().toISOString().split('T')[0];
+                const category = p.카테고리?.select?.name || '';
+                const tags = p.태그?.multi_select?.map(t => t.name).join(', ') || p.태그?.select?.name || '인테리어';
+
+                // 썸네일: cover, 썸네일, URL 순서로 찾음
+                // 썸네일 우선순위: 1.커버 2.속성(Thumbnail) 3.아이콘 4.기본이미지
+                const thumbnail = col.cover?.external?.url ||
+                    col.cover?.file?.url ||
+                    p.썸네일?.files?.[0]?.external?.url ||
+                    p.썸네일?.files?.[0]?.file?.url ||
+                    p.Thumbnail?.files?.[0]?.external?.url ||
+                    p.Thumbnail?.files?.[0]?.file?.url ||
+                    (col.icon?.type === 'file' ? col.icon.file.url : null) ||
+                    (col.icon?.type === 'external' ? col.icon.external.url : null) ||
+                    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+                return `
+                    <article class="column-card" onclick="openColumn(${index})">
+                        <img class="column-thumbnail" src="${thumbnail}" alt="${title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600'">
+                        <div class="column-content">
+                            <div class="column-date">${formatDate(date)}</div>
+                            <h2 class="column-title">${title}</h2>
+                            <p class="column-summary">${category}</p>
+                            <span class="column-tag">${tags}</span>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
+
+        async function openColumn(index) {
+            const column = COLUMNS_DATA[index];
+            if (!column) return;
+
+            const p = column.properties;
+            const title = p.제목?.title?.[0]?.plain_text || p.이름?.title?.[0]?.plain_text || '제목 없음';
+            const date = p.작성일?.date?.start || p.날짜?.date?.start || '';
+
+            // 썸네일 우선순위: 1.커버 2.속성(Thumbnail) 3.아이콘 4.기본이미지
+            const thumbnail = column.cover?.external?.url ||
+                column.cover?.file?.url ||
+                p.썸네일?.files?.[0]?.external?.url ||
+                p.썸네일?.files?.[0]?.file?.url ||
+                p.Thumbnail?.files?.[0]?.external?.url ||
+                p.Thumbnail?.files?.[0]?.file?.url ||
+                (column.icon?.type === 'file' ? column.icon.file.url : null) ||
+                (column.icon?.type === 'external' ? column.icon.external.url : null) ||
+                'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600';
+
+            const category = p.카테고리?.select?.name || '';
+            const tags = p.태그?.multi_select?.map(t => t.name).join(', ') || p.태그?.select?.name || '인테리어';
+
+            document.getElementById('modalImage').src = thumbnail;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMeta').textContent = formatDate(date) + ' · ' + category + (category ? ' · ' : '') + tags;
+
+            const contentDiv = document.getElementById('modalContent');
+
+            document.getElementById('columnModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // 1. 캐시된 콘텐츠 확인 (즉시 표시)
+            if (CONTENT_CACHE[column.id]) {
+                contentDiv.innerHTML = renderNotionBlocks(CONTENT_CACHE[column.id]);
+                return;
+            }
+
+            // 로딩 표시
+            contentDiv.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner"></div><p>내용을 불러오는 중...</p></div>';
+
+            // 2. API에서 로드
+            try {
+                const res = await fetch(`/api/content?id=${column.id}`);
+                if (!res.ok) throw new Error('Failed to fetch content');
+                const blocks = await res.json();
+                CONTENT_CACHE[column.id] = blocks;
+                contentDiv.innerHTML = renderNotionBlocks(blocks);
+            } catch (e) {
+                console.error('Content Load Error:', e);
+                contentDiv.innerHTML = '<p>내용을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
+            }
+        }
+
+        function renderNotionBlocks(blocks) {
+            if (!blocks || blocks.length === 0) return '<p>내용이 없습니다.</p>';
+
+            // 연속된 리스트 아이템 그룹화
+            let result = '';
+            let i = 0;
+
+            while (i < blocks.length) {
+                const block = blocks[i];
+                const type = block.type;
+                const value = block[type];
+
+                // 글머리 기호 리스트 그룹화
+                if (type === 'bulleted_list_item') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'bulleted_list_item') {
+                        const listBlock = blocks[i];
+                        const listText = renderRichText(listBlock.bulleted_list_item.rich_text);
+                        const listChildren = listBlock.children ? renderNotionBlocks(listBlock.children) : '';
+                        items += `<li>${listText}${listChildren}</li>`;
+                        i++;
+                    }
+                    result += `<ul class="notion-list">${items}</ul>`;
+                    continue;
+                }
+
+                // 번호 리스트 그룹화
+                if (type === 'numbered_list_item') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'numbered_list_item') {
+                        const listBlock = blocks[i];
+                        const listText = renderRichText(listBlock.numbered_list_item.rich_text);
+                        const listChildren = listBlock.children ? renderNotionBlocks(listBlock.children) : '';
+                        items += `<li>${listText}${listChildren}</li>`;
+                        i++;
+                    }
+                    result += `<ol class="notion-list">${items}</ol>`;
+                    continue;
+                }
+
+                // 체크리스트 그룹화
+                if (type === 'to_do') {
+                    let items = '';
+                    while (i < blocks.length && blocks[i].type === 'to_do') {
+                        const todo = blocks[i].to_do;
+                        const checked = todo.checked ? 'checked' : '';
+                        const checkedClass = todo.checked ? 'notion-todo-checked' : '';
+                        items += `<li class="${checkedClass}"><input type="checkbox" ${checked} disabled> ${renderRichText(todo.rich_text)}</li>`;
+                        i++;
+                    }
+                    result += `<ul class="notion-todo-list">${items}</ul>`;
+                    continue;
+                }
+
+                result += renderSingleBlock(block);
+                i++;
+            }
+
+            return result;
+        }
+
+        function renderSingleBlock(block) {
+            const type = block.type;
+            const value = block[type];
+
+            switch (type) {
+                case 'paragraph':
+                    const pText = renderRichText(value.rich_text);
+                    // 빈 문단은 명시적인 spacer 클래스 적용 (내용이 없어도 높이 차지하도록)
+                    return pText ? `<p>${pText}</p>` : '<p class="notion-spacer"></p>';
+
+                case 'heading_1':
+                    return `<h2 class="notion-h1">${renderRichText(value.rich_text)}</h2>`;
+                case 'heading_2':
+                    return `<h3 class="notion-h2">${renderRichText(value.rich_text)}</h3>`;
+                case 'heading_3':
+                    return `<h4 class="notion-h3">${renderRichText(value.rich_text)}</h4>`;
+
+                case 'quote':
+                    const quoteText = renderRichText(value.rich_text);
+                    const quoteChildren = block.children ? renderNotionBlocks(block.children) : '';
+                    return `<blockquote class="notion-quote">${quoteText}${quoteChildren}</blockquote>`;
+
+                case 'callout':
+                    let calloutIcon = '';
+                    if (value.icon) {
+                        if (value.icon.type === 'emoji') {
+                            calloutIcon = `<span class="callout-icon">${value.icon.emoji}</span>`;
+                        } else if (value.icon.type === 'external' || value.icon.type === 'file') {
+                            const iconUrl = value.icon.type === 'external' ? value.icon.external.url : value.icon.file.url;
+                            calloutIcon = `<span class="callout-icon"><img src="${iconUrl}" style="width:1.5em;height:1.5em;object-fit:contain;"></span>`;
+                        }
+                    }
+
+                    const calloutBgColor = value.color || 'gray_background';
+                    const calloutText = renderRichText(value.rich_text);
+                    const calloutChildren = block.children ? renderNotionBlocks(block.children) : '';
+                    return `<div class="notion-callout notion-callout-${calloutBgColor}">${calloutIcon}<div>${calloutText}${calloutChildren}</div></div>`;
+
+                case 'divider':
+                    return `<hr class="notion-divider">`;
+
+                case 'toggle':
+                    const toggleText = renderRichText(value.rich_text);
+                    const toggleChildren = block.children ? renderNotionBlocks(block.children) : '';
+                    return `<details class="notion-toggle"><summary>${toggleText}</summary><div class="toggle-content">${toggleChildren}</div></details>`;
+
+                case 'image':
+                    const imgCaptionText = value.caption ? renderRichText(value.caption) : '';
+                    const imgAltText = value.caption?.[0]?.plain_text || '';
+                    const imageUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return imageUrl ? `<figure class="notion-image"><img src="${imageUrl}" alt="${imgAltText}" loading="lazy"><figcaption>${imgCaptionText}</figcaption></figure>` : '';
+
+                case 'video':
+                    const videoUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const videoCaption = value.caption ? renderRichText(value.caption) : '';
+                    if (videoUrl && videoUrl.includes('youtube')) {
+                        const videoId = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1];
+                        return videoId ? `<figure class="notion-video"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>${videoCaption ? `<figcaption>${videoCaption}</figcaption>` : ''}</figure>` : '';
+                    }
+                    return videoUrl ? `<figure class="notion-video"><video controls src="${videoUrl}"></video>${videoCaption ? `<figcaption>${videoCaption}</figcaption>` : ''}</figure>` : '';
+
+                case 'audio':
+                    const audioUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const audioCaption = value.caption ? renderRichText(value.caption) : '';
+                    return audioUrl ? `<figure class="notion-audio"><audio controls src="${audioUrl}"></audio>${audioCaption ? `<figcaption>${audioCaption}</figcaption>` : ''}</figure>` : '';
+
+                case 'file':
+                    const fileUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    const fileName = value.name || value.caption?.[0]?.plain_text || '파일 다운로드';
+                    const fileCaption = value.caption ? renderRichText(value.caption) : '';
+                    return fileUrl ? `<div class="notion-file"><a href="${fileUrl}" target="_blank" download>📎 ${fileName}</a>${fileCaption ? `<div class="notion-file-caption">${fileCaption}</div>` : ''}</div>` : '';
+
+                case 'pdf':
+                    const pdfUrl = value.type === 'external' ? value.external?.url : value.file?.url;
+                    return pdfUrl ? `<div class="notion-pdf"><iframe src="${pdfUrl}" frameborder="0"></iframe></div>` : '';
+
+                case 'bookmark':
+                    const bookmarkUrl = value.url;
+                    const bookmarkCaption = value.caption ? renderRichText(value.caption) : '';
+                    const bookmarkDisplay = bookmarkCaption || bookmarkUrl;
+                    return `<div class="notion-bookmark"><a href="${bookmarkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${bookmarkDisplay}</a></div>`;
+
+                case 'embed':
+                    const embedUrl = value.url;
+                    return embedUrl ? `<div class="notion-embed"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : '';
+
+                case 'link_preview':
+                    const linkUrl = value.url;
+                    return `<div class="notion-link-preview"><a href="${linkUrl}" target="_blank" rel="noopener noreferrer">🔗 ${linkUrl}</a></div>`;
+
+                case 'equation':
+                    const expression = value.expression;
+                    return `<div class="notion-equation"><code>${expression}</code></div>`;
+
+                case 'code':
+                    const codeContent = value.rich_text?.map(t => t.plain_text).join('') || '';
+                    const language = value.language || 'text';
+                    const escapedCode = codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<pre class="notion-code"><code class="language-${language}">${escapedCode}</code></pre>`;
+
+                case 'table':
+                    // 테이블은 하위 블록에 row가 있어 별도 처리 필요
+                    return `<div class="notion-table-wrapper"><table class="notion-table"><tbody><!-- 테이블 내용 --></tbody></table></div>`;
+
+                case 'table_of_contents':
+                    return `<div class="notion-toc">📋 목차 (Table of Contents)</div>`;
+
+                case 'breadcrumb':
+                    return `<div class="notion-breadcrumb">🏠 경로</div>`;
+
+                case 'column_list':
+                    return `<div class="notion-columns"><!-- 컬럼 레이아웃 --></div>`;
+
+                case 'synced_block':
+                    return `<div class="notion-synced"><!-- 동기화된 블록 --></div>`;
+
+                default:
+                    console.log('Unsupported block type:', type);
+                    return '';
+            }
+        }
+
+        function renderRichText(richText) {
+            if (!richText || richText.length === 0) return '';
+            return richText.map(text => {
+                let content = text.plain_text.replace(/\n/g, '<br>');
+                const ann = text.annotations;
+
+                // 텍스트 색상 처리
+                if (ann.color && ann.color !== 'default') {
+                    content = `<span class="notion-color-${ann.color}">${content}</span>`;
+                }
+
+                if (ann.bold) content = `<strong>${content}</strong>`;
+                if (ann.italic) content = `<em>${content}</em>`;
+                if (ann.strikethrough) content = `<del>${content}</del>`;
+                if (ann.underline) content = `<u>${content}</u>`;
+                if (ann.code) content = `<code>${content}</code>`;
+                if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
+                return content;
+            }).join('');
+        }
+
+        function closeModal() {
+            document.getElementById('columnModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('columnModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+        // 모바일 메뉴 토글
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+
+        if (mobileMenuBtn && mobileNav) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenuBtn.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+            });
+        }
+    </script>
+</body>
+
+</html>

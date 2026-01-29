@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PORTFOLIO - 디자인 지그</title>
+    <meta name="description" content="디자인 지그의 인테리어 시공 사례를 확인하세요.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.designjig.com/portfolio">
+    <meta property="og:title" content="PORTFOLIO - 디자인 지그">
+    <meta property="og:description" content="디자인 지그의 인테리어 시공 사례를 확인하세요.">
+    <meta property="og:image"
+        content="https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png">
+    <meta property="og:site_name" content="디자인 지그">
+
+    <!-- 폰트 최적화: preconnect + preload -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+            rel="stylesheet">
+    </noscript>
+
+    <script src="js/protection.js"></script>
+    <style>
+        /* [기본 스타일 및 헤더 고정] */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+            background: #fff;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.5rem 3rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .nav-list {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-link:hover {
+            color: #B4956F;
+        }
+
+        .nav-link.active {
+            color: #B4956F;
+            border-bottom: 2px solid #B4956F;
+            padding-bottom: 4px;
+        }
+
+        .nav-link-cta {
+            color: #B4956F;
+        }
+
+        /* 모바일 메뉴 버튼 */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #1a1a1a;
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+
+        .mobile-menu-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* 모바일 네비게이션 오버레이 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.98);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .mobile-nav.active {
+            display: flex;
+        }
+
+        .mobile-nav a {
+            font-size: 1.5rem;
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .mobile-nav a:hover {
+            color: #B4956F;
+        }
+
+        @media (max-width: 768px) {
+            .nav-list {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* 포트폴리오 섹션 */
+        .page-hero {
+            padding: 160px 3rem 60px;
+            background: linear-gradient(135deg, #f8f6f3 0%, #fff 100%);
+            text-align: center;
+        }
+
+        .page-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+
+        .page-hero p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .portfolio-section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 3rem 80px;
+        }
+
+        .br-mo {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .br-mo {
+                display: block;
+            }
+        }
+
+        /* 필터 탭 */
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.3rem;
+            margin-bottom: 2rem;
+            flex-wrap: nowrap;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 0.8rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .filter-tab:hover {
+            color: #1a1a1a;
+        }
+
+        .filter-tab.active {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .portfolio-card {
+            cursor: pointer;
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .portfolio-card img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .portfolio-card:hover img {
+            transform: scale(1.05);
+        }
+
+        /* 호버 오버레이 */
+        .portfolio-card .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .portfolio-card:hover .overlay {
+            opacity: 1;
+        }
+
+        .portfolio-card .overlay h3 {
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 500;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* 로딩 */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+
+        /* [핵심] 라이트박스 - 세로 레이아웃 (텍스트 상단, 이미지 중앙) */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            z-index: 2500;
+            overflow-y: auto;
+        }
+
+        .lightbox.show {
+            display: block;
+        }
+
+        /* 라이트박스 내 헤더 */
+        .lightbox-header {
+            position: sticky;
+            top: 0;
+            z-index: 2600;
+            padding: 1.5rem 3rem;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .lightbox-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .lightbox-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .lightbox-nav {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .lightbox-nav-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .lightbox-nav-link:hover,
+        .lightbox-nav-link.active {
+            color: #B4956F;
+        }
+
+        .lightbox-nav-cta {
+            color: #B4956F;
+        }
+
+        /* 라이트박스 컨텐츠 - 세로 배치 */
+        .lightbox-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 3rem 4rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* 상단 정보 영역 - 중앙 정렬 */
+        .lightbox-info {
+            text-align: center;
+            padding: 2rem 0;
+            width: 100%;
+        }
+
+        .lightbox-info h2 {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        .info-grid {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-item h4 {
+            font-size: 0.75rem;
+            color: #aaa;
+            font-weight: 400;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .info-item p {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        /* 이미지 영역 - 중앙 배치 */
+        .lightbox-main {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        .lightbox-main img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: opacity 0.5s;
+        }
+
+
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            font-size: 2.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 15px;
+            transition: 0.3s;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            color: #B4956F;
+            background: #fff;
+        }
+
+        .nav-btn.prev {
+            left: 15px;
+        }
+
+        .nav-btn.next {
+            right: 15px;
+        }
+
+        /* 푸터 */
+        .footer {
+            background: #f8f8f8;
+            color: #333;
+            padding: 30px 2rem;
+            text-align: center;
+        }
+
+        .footer-brand {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            color: #1a1a1a;
+        }
+
+        .footer-tagline {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .footer-info {
+            margin-bottom: 1rem;
+        }
+
+        .footer-info p {
+            color: #666;
+            font-size: 0.7rem;
+            margin: 0.2rem 0;
+        }
+
+        .footer-info a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .footer-info a:hover {
+            color: #B4956F;
+        }
+
+        .footer-sns {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .footer-sns a {
+            color: #666;
+            font-size: 1rem;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .footer-sns a:hover {
+            color: #B4956F;
+            transform: translateY(-2px);
+        }
+
+        .footer-sns svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .footer-copyright {
+            color: #999;
+            font-size: 0.65rem;
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+
+        @media (max-width: 1024px) {
+            .lightbox-main {
+                height: 50vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-list {
+                display: none;
+            }
+
+            .lightbox-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .lightbox-nav {
+                display: none;
+            }
+
+            .page-hero {
+                padding: 120px 1.5rem 40px;
+            }
+
+            .page-hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .portfolio-section {
+                padding: 30px 1.5rem 60px;
+            }
+
+            .portfolio-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lightbox-container {
+                padding: 1.5rem;
+            }
+
+            .lightbox-info h2 {
+                font-size: 1.5rem;
+            }
+
+            .info-grid {
+                gap: 1.5rem;
+            }
+
+            .lightbox-main {
+                height: 45vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="/" class="logo">DESIGN JIG</a>
+            <nav>
+                <ul class="nav-list">
+                    <li><a href="/columns" class="nav-link">COLUMNS</a></li>
+                    <li><a href="/portfolio" class="nav-link active">PORTFOLIO</a></li>
+                    <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 모바일 네비게이션 -->
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="/columns">COLUMNS</a>
+        <a href="/portfolio">PORTFOLIO</a>
+        <a href="/quote" class="nav-cta">ASK A QUOTE</a>
+    </nav>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <h1>PORTFOLIO</h1>
+            <p>아직 채워가는 중입니다.<br class="br-mo"> 다음 공간의 주인공이 되어주세요.</p>
+        </section>
+
+        <section class="portfolio-section">
+            <!-- 필터 탭 -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All</button>
+                <button class="filter-tab" data-filter="20py">20py</button>
+                <button class="filter-tab" data-filter="30py">30py</button>
+                <button class="filter-tab" data-filter="40py">40py</button>
+                <button class="filter-tab" data-filter="50py+">50py+</button>
+            </div>
+
+            <div id="portfolioGrid" class="portfolio-grid">
+                <div class="loading">데이터를 불러오는 중입니다...</div>
+            </div>
+        </section>
+    </main>
+
+    <div class="lightbox" id="lightbox">
+        <!-- 라이트박스 내 헤더 -->
+        <header class="lightbox-header">
+            <div class="lightbox-header-container">
+                <a href="/" class="lightbox-logo">DESIGN JIG</a>
+                <nav>
+                    <ul class="lightbox-nav">
+                        <li><a href="/columns" class="lightbox-nav-link">COLUMNS</a></li>
+                        <li><a href="/portfolio" class="lightbox-nav-link active">PORTFOLIO</a></li>
+                        <li><a href="/quote" class="lightbox-nav-link lightbox-nav-cta">ASK A QUOTE</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <div class="lightbox-container">
+            <!-- 상단: 제목 및 정보 (중앙 정렬) -->
+            <div class="lightbox-info">
+                <h2 id="lightboxTitle"></h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4>면적</h4>
+                        <p id="specArea">-</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>주거형태</h4>
+                        <p id="specType">-</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>바닥</h4>
+                        <p id="specFloor">-</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>가구</h4>
+                        <p id="specFurniture">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단: 이미지 (중앙 배치) -->
+            <div class="lightbox-main">
+                <button class="nav-btn prev" onclick="changeImg(-1)">‹</button>
+                <img id="lightboxImage" src="">
+                <button class="nav-btn next" onclick="changeImg(1)">›</button>
+            </div>
+        </div>
+
+        <!-- 라이트박스 내 푸터 -->
+        <footer class="footer lightbox-footer">
+            <h2 class="footer-brand">디자인지그</h2>
+            <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
+            <div class="footer-info">
+                <p>경기도 용인시</p>
+                <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+                <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
+            </div>
+            <div class="footer-sns">
+                <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                    </svg>
+                </a>
+                <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                        <path d="M2 20h20v2H2z" />
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="https://www.youtube.com/@DESIGN_JIG" target="_blank" title="유튜브" aria-label="유튜브">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                </a>
+            </div>
+            <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
+        </footer>
+    </div>
+
+    <footer class="footer">
+        <h2 class="footer-brand">디자인지그</h2>
+        <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
+        <div class="footer-info">
+            <p>경기도 용인시</p>
+            <p>연락처: <a href="tel:031-000-0000">031-000-0000</a></p>
+            <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
+        </div>
+        <div class="footer-sns">
+            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                </svg>
+            </a>
+            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                    <path d="M2 20h20v2H2z" />
+                </svg>
+            </a>
+            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </a>
+            <a href="https://www.youtube.com/@DESIGN_JIG" target="_blank" title="유튜브" aria-label="유튜브">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
+    </footer>
+
+    <script>
+        let PORTFOLIO_DATA = [];
+        let curIdx = 0;
+        let imgIdx = 0;
+        let slideTimer = null;
+
+        // 로컬 테스트용 샘플 데이터
+        const fallbackData = [{
+            properties: {
+                이름: { title: [{ plain_text: "반포 자이 거실 인테리어" }] },
+                면적: { select: { name: "32py" } },
+                카테고리: { select: { name: "거실 주방 욕실" } },
+                바닥: { select: { name: "lx 에디톤" } },
+                가구: { select: { name: "패트 제품" } },
+                URL: {
+                    files: [
+                        { external: { url: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80" } },
+                        { external: { url: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80" } }
+                    ]
+                }
+            }
+        }];
+
+        async function loadPortfolio() {
+            try {
+                // Vercel API 경로
+                const res = await fetch('/api/portfolio');
+                if (!res.ok) throw new Error("API Error");
+                const data = await res.json();
+                PORTFOLIO_DATA = data.results || data;
+            } catch (error) {
+                console.warn("로컬 테스트 모드 (Notion 연동 대기 중):", error.message);
+                PORTFOLIO_DATA = fallbackData;
+            }
+            displayPortfolio();
+        }
+
+        let currentFilter = 'all';
+
+        function displayPortfolio(filter = 'all') {
+            currentFilter = filter;
+            const grid = document.getElementById('portfolioGrid');
+
+            // 필터 탭 active 상태 업데이트
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+
+            // 이미지가 있는 항목만 필터링
+            let filteredData = PORTFOLIO_DATA.filter(p => {
+                const hasImage = p.properties.URL?.files?.length > 0;
+                return hasImage;
+            });
+
+            // 평수 필터 적용 (범위 기반)
+            if (filter !== 'all') {
+                filteredData = filteredData.filter(p => {
+                    const area = p.properties.면적?.select?.name || '';
+                    const num = parseInt(area); // 숫자만 추출 (32py -> 32)
+
+                    if (isNaN(num)) return false; // 숫자가 없으면 제외
+
+                    switch (filter) {
+                        case '20py': return num >= 20 && num < 30;
+                        case '30py': return num >= 30 && num < 40;
+                        case '40py': return num >= 40 && num < 50;
+                        case '50py+': return num >= 50;
+                        default: return true;
+                    }
+                });
+            }
+
+            if (filteredData.length === 0) {
+                grid.innerHTML = '<div class="loading">해당 조건의 포트폴리오가 없습니다.</div>';
+                return;
+            }
+
+            grid.innerHTML = filteredData.map((p, i) => {
+                const imgUrl = p.properties.URL?.files?.[0]?.external?.url ||
+                    p.properties.URL?.files?.[0]?.file?.url || "";
+                const title = p.properties.이름?.title?.[0]?.plain_text || "Project";
+                const area = p.properties.면적?.select?.name || "";
+                // 원본 데이터에서의 인덱스를 찾아 openLightbox에 전달
+                const originalIndex = PORTFOLIO_DATA.indexOf(p);
+                return `
+                    <article class="portfolio-card" onclick="openLightbox(${originalIndex})">
+                        <img src="${imgUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/600x600?text=Design+Jig'">
+                        <div class="overlay">
+                            <h3>${title}${area ? ' ' + area : ''}</h3>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // 필터 탭 클릭 이벤트
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    displayPortfolio(tab.dataset.filter);
+                });
+            });
+        });
+
+        function openLightbox(i) {
+            curIdx = i;
+            imgIdx = 0;
+            updateLightbox();
+            document.getElementById('lightbox').classList.add('show');
+            document.body.style.overflow = 'hidden';
+            startAutoSlide();
+            // 브라우저 히스토리에 추가 (뒤로가기 버튼 활성화)
+            history.pushState({ lightbox: true }, '', '#view');
+        }
+
+        function updateLightbox() {
+            const p = PORTFOLIO_DATA[curIdx].properties;
+            const images = p.URL?.files || [];
+
+            const imgUrl = images[imgIdx]?.external?.url || images[imgIdx]?.file?.url || "";
+            document.getElementById('lightboxImage').src = imgUrl;
+            document.getElementById('lightboxTitle').textContent = p.이름?.title?.[0]?.plain_text || "-";
+
+            // Notion 데이터 매핑
+            document.getElementById('specArea').textContent = p.면적?.select?.name || "-";
+            document.getElementById('specType').textContent = p.카테고리?.select?.name || "-";
+            document.getElementById('specFloor').textContent = p.바닥?.select?.name || "-";
+            document.getElementById('specFurniture').textContent = p.가구?.select?.name || "-";
+        }
+
+        function changeImg(dir) {
+            const imgs = PORTFOLIO_DATA[curIdx].properties.URL?.files || [];
+            if (imgs.length <= 1) return;
+            imgIdx = (imgIdx + dir + imgs.length) % imgs.length;
+            updateLightbox();
+            startAutoSlide();
+        }
+
+        function startAutoSlide() {
+            if (slideTimer) clearInterval(slideTimer);
+            const imgs = PORTFOLIO_DATA[curIdx]?.properties?.URL?.files || [];
+            if (imgs.length > 1) {
+                slideTimer = setInterval(() => changeImg(1), 4000);
+            }
+        }
+
+        function closeLightbox() {
+            if (slideTimer) clearInterval(slideTimer);
+            document.getElementById('lightbox').classList.remove('show');
+            document.body.style.overflow = '';
+            // URL에서 #view 제거
+            if (location.hash === '#view') {
+                history.back();
+            }
+        }
+
+        // 브라우저 뒤로가기 버튼으로 라이트박스 닫기
+        window.addEventListener('popstate', function (e) {
+            if (document.getElementById('lightbox').classList.contains('show')) {
+                closeLightbox();
+            }
+        });
+
+        // 모바일 메뉴 토글
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+
+        if (mobileMenuBtn && mobileNav) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenuBtn.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+            });
+        }
+
+        // 페이지 로드 시 포트폴리오 불러오기
+        window.onload = loadPortfolio;
+    </script>
+</body>
+
+</html>

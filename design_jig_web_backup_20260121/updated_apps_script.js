@@ -5,23 +5,8 @@
  * 2. 관리자 페이지(adminwonpro.html) 고객 데이터 동기화
  * 3. 트리거 기반 자동화 (상담 상태 변경 시 이동, A/S 만료 알림)
  *
- * 마지막 업데이트: 2026-01-21 (고객 상태 자동 갱신 기능 추가)
+ * 마지막 업데이트: 2026-01-19 (공사 스케줄 관리 시트 연동 수정)
  */
-
-// ==========================================
-// [디버그용] DriveApp 권한 승인 함수 (실행 후 삭제 가능)
-// 1. 이 함수를 선택하고 '실행' 버튼을 클릭하세요.
-// 2. 권한 검토 팝업에서 승인을 완료하세요.
-// ==========================================
-function debugUseDriveApp() {
-    console.log("Drive 권한 확인 중...");
-    var files = DriveApp.getFiles();
-    if (files.hasNext()) {
-        console.log("Drive 접근 성공: " + files.next().getName());
-    } else {
-        console.log("Drive 접근 성공 (파일 없음)");
-    }
-}
 
 // ==========================================
 // 1. 설정 및 상수 정의
@@ -37,10 +22,7 @@ const CONSULTING_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 const CUSTOMER_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
 
 // [원가관리표용] 스프레드시트 ID (통합 시트에 추가됨)
-// [원가관리표용] 스프레드시트 ID (통합 시트에 추가됨)
 const COST_SHEET_ID = '1Yp9UjY37PlBgXdyC2_acwfa8prxo7yD_VKAOcnIQQVw';
-const SETTLEMENT_SHEET_NAME = '정산관리대장';
-const LOG_SHEET_NAME = '작업기록';
 
 // [상담용] 설문 Form URL
 const FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdcsD1hjKMNezFTaPAZRlKovdRDfCW08cy4VfLHL_LJDcmbVw/viewform';
@@ -68,13 +50,8 @@ function getNotionApiKey() {
 const NOTION_DB_IDS = {
     PROJECTS: '22bc2a121ce94ff28e171cf91bcdf3a8',
     SCHEDULE: '6b993a15bb2643979ceb382460ed7e77',
-    CHECKLIST: '6040d967e63e4268905739f2a8be436e',
-    AS_LIST: '4f22eaa4dab246f2b32ab9dcbb37bd7a',
-    FAQ: 'dd49a5148c7a41cf8244f8f97dd8e0eb' // [추가] 고객 안내·FAQ
+    CHECKLIST: '6040d967e63e4268905739f2a8be436e'
 };
-
-// 커버 이미지 URL
-const NOTION_COVER_IMAGE = 'https://res.cloudinary.com/designjig/image/upload/v1766495336/%E1%84%85%E1%85%A9%E1%84%80%E1%85%A9_w3be1q.png';
 
 /**
  * [보안 설정] Notion API 키 안전 저장소
@@ -162,12 +139,9 @@ function doPost(e) {
         }
 
         // --- [라우팅 로직] ---
-        // 1. 원가관리표 업데이트 요청 (DISABLED: Master DB는 읽기 전용)
+        // 1. 원가관리표 업데이트 요청
         if (payload.action === 'updateCost') {
-            return ContentService.createTextOutput(JSON.stringify({
-                success: false,
-                error: '마스터 데이터베이스(원가관리표)는 이 API를 통해 수정할 수 없습니다. 시트에서 직접 수정하세요.'
-            })).setMimeType(ContentService.MimeType.JSON);
+            return handleCostUpdate(payload);
         }
 
         // 1.5. 샘플 견적서 처리
@@ -178,33 +152,7 @@ function doPost(e) {
             return handleDeleteSampleEstimate(payload);
         }
         if (payload.action === 'restoreCostDatabase') {
-            return ContentService.createTextOutput(JSON.stringify({
-                success: false,
-                error: '마스터 데이터베이스 복구 기능이 비활성화되었습니다.'
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        // 1.6 정산 관리 대장 저장
-        if (payload.action === 'updateSettlement') {
-            return handleSettlementUpdate(payload);
-        }
-
-        // 1.7 운영비 관리 대장 저장
-        if (payload.action === 'updateExpenses') {
-            return handleExpensesUpdate(payload);
-        }
-
-        // 1.8 작업 기록 저장
-        if (payload.action === 'logUserAction') {
-            return handleLogUserAction(payload);
-        }
-
-        // 1.9 공정별 체크리스트 마스터 저장 (DISABLED: Master DB는 읽기 전용)
-        if (payload.action === 'updateChecklistMaster' || payload.action === 'saveChecklistMaster') {
-            return ContentService.createTextOutput(JSON.stringify({
-                success: false,
-                error: '마스터 데이터베이스(체크리스트)는 이 API를 통해 수정할 수 없습니다. 시트에서 직접 수정하세요.'
-            })).setMimeType(ContentService.MimeType.JSON);
+            return handleRestoreCostDatabase(payload);
         }
 
         // 2. 노션 내보내기 요청 (반드시 CustomerSync보다 먼저 체크!)
@@ -281,39 +229,12 @@ function doGet(e) {
         }
 
 
-
-        // [추가] 정산 관리 대장 옵션 마스터 조회
-        if (sheetParam === 'settlement' && actionParam === 'getSettlementOptions') {
-            return handleGetSettlementOptions(e);
-        }
-
-        // [추가] 정산 관리 대장 조회
-        if (sheetParam === 'settlement' || sheetParam === '정산관리대장') {
-            return handleSettlementGet(e);
-        }
-
-        // [추가] 운영비 관리 대장 조회
-        if (sheetParam === 'expenses' || sheetParam === '운영비관리') {
-            return handleExpensesGet(e);
-        }
-
-        // [추가] 작업 기록 조회
-        if (sheetParam === 'action_log' || actionParam === 'getLogs') {
-            return handleGetActionLogs(e);
-        }
-
         // 2.5. 샘플 견적서 조회
         if (actionParam === 'getSampleEstimates') {
             return handleGetSampleEstimates();
         }
         if (actionParam === 'getSampleEstimate') {
             return handleGetSampleEstimate(e.parameter.id);
-        }
-
-
-        // 2.6. Excel 내보내기 (읽기 전용)
-        if (actionParam === 'exportExcel') {
-            return handleExcelExport(e);
         }
 
         // 3. 그 외(기본값)는 상담 목록 조회로 간주 (기존 웹사이트 호환)
@@ -511,79 +432,13 @@ function handleNotionExport(payload) {
             result = exportScheduleToNotion(customerId, data);
         } else if (type === 'checklist') {
             result = exportChecklistToNotion(customerId, data);
-        } else if (type === 'asList') {
-            result = exportASListToNotion(customerId, data);
-        } else if (type === 'all') {
-            // [통합 내보내기] 상세 결과 추적
-            const details = {
-                customer: { success: false, message: '실패' },
-                schedule: { success: false, message: '데이터 없음' },
-                checklist: { success: false, message: '데이터 없음' },
-                asList: { success: false, message: '데이터 없음' }
-            };
-
-            // 1. 고객 정보 (필수)
-            const customerData = data.customer || data;
-            try {
-                result = exportCustomerToNotion(customerId, customerData);
-                details.customer = { success: true, message: '성공' };
-            } catch (e) {
-                console.error('고객 정보 내보내기 실패:', e);
-                details.customer = { success: false, message: e.toString() };
-                // 고객 정보 생성 실패 시에도 나머지 진행 시도 (단, pageId 의존성이 있다면 실패할 수 있음)
-            }
-
-            // 2. 스케줄
-            if (data.schedule) {
-                Utilities.sleep(300); // 딜레이 단축
-                try {
-                    exportScheduleToNotion(customerId, data.schedule);
-                    details.schedule = { success: true, message: '성공' };
-                } catch (e) {
-                    console.error('스케줄 내보내기 실패:', e);
-                    details.schedule = { success: false, message: e.toString() };
-                }
-            }
-
-            // 3. 체크리스트
-            if (data.checklist) {
-                Utilities.sleep(300);
-                try {
-                    exportChecklistToNotion(customerId, data.checklist);
-                    details.checklist = { success: true, message: '성공' };
-                } catch (e) {
-                    console.error('체크리스트 내보내기 실패:', e);
-                    details.checklist = { success: false, message: e.toString() };
-                }
-            }
-
-            // 4. A/S 리스트
-            if (data.asList) {
-                Utilities.sleep(300);
-                try {
-                    exportASListToNotion(customerId, data.asList);
-                    details.asList = { success: true, message: '성공' };
-                } catch (e) {
-                    console.error('A/S 리스트 내보내기 실패:', e);
-                    details.asList = { success: false, message: e.toString() };
-                }
-            }
-
-            // 최종 응답에 details 포함
-            return ContentService.createTextOutput(JSON.stringify({
-                success: true,
-                notionUrl: result ? result.url : null,
-                details: details,
-                message: '통합 내보내기 완료'
-            })).setMimeType(ContentService.MimeType.JSON);
-
         } else {
             throw new Error('지원하지 않는 내보내기 유형입니다: ' + type);
         }
 
         return ContentService.createTextOutput(JSON.stringify({
             success: true,
-            notionUrl: result ? result.url : null,
+            notionUrl: result.url,
             message: '성공적으로 내보냈습니다.'
         })).setMimeType(ContentService.MimeType.JSON);
 
@@ -621,554 +476,446 @@ function callNotionAPI(endpoint, method, payload) {
     return JSON.parse(responseBody);
 }
 
-// 1. Notion Page ID 찾기 (공통 헬퍼)
-function findCustomerPageId(customerId) {
-    const dbId = NOTION_DB_IDS.PROJECTS;
-    try {
-        const response = callNotionAPI('/databases/' + dbId + '/query', 'POST', {
-            filter: {
-                property: '고객ID',
-                rich_text: { equals: customerId }
-            }
-        });
-        if (response.results && response.results.length > 0) {
-            return response.results[0].id;
-        }
-        return null; // 없음
-    } catch (e) {
-        console.error('findCustomerPageId Error: ' + e.toString());
-        return null;
-    }
-}
-
 // 1. 고객 정보 내보내기
 function exportCustomerToNotion(customerId, data) {
     // 디버깅 로그
     console.log('📤 Notion Export - Customer ID:', customerId);
     console.log('📤 Notion Export - Data:', JSON.stringify(data));
 
-    if (!customerId) throw new Error('Customer ID is missing');
+    // API 키 확인
+    const notionApiKey = getNotionApiKey();
+    if (!notionApiKey) {
+        throw new Error('Notion API 키가 설정되지 않았습니다. setupNotionProperties() 함수를 실행해주세요.');
+    }
 
-    // PropertiesService에서 API Key 확인
-    const apiKey = getNotionApiKey();
-    if (!apiKey) throw new Error('Notion API Key가 설정되지 않았습니다.');
+    const customerName = data['성명'] || '이름없음';
+    const projectName = data['공사명'] || data['프로젝트명'] || '';
+    const contractDate = data['계약일'] || '';
 
-    // DB ID 확인
-    const dbId = NOTION_DB_IDS.PROJECTS;
-    if (!dbId) throw new Error('Notion Project Database ID not configured.');
+    // 제목 형식: 이름_공사명_계약일 (예: 홍길동_강남아파트인테리어_2026-01-15)
+    const titleParts = [customerName];
+    if (projectName) titleParts.push(projectName);
+    if (contractDate) titleParts.push(contractDate);
+    const notionTitle = titleParts.join('_');
 
-    // 1. 기존 페이지 검색
-    let pageId = findCustomerPageId(customerId);
+    console.log('📋 Notion Title:', notionTitle);
+
+    // 1. 기존 페이지 검색 (고객ID로 검색 - 고유값)
+    // 고객ID가 없으면 제목으로 검색
+    const searchId = customerId || notionTitle;
+    let searchResponse;
+    try {
+        // 먼저 고객ID로 검색 시도 (rich_text 속성)
+        searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.PROJECTS + '/query', 'POST', {
+            filter: {
+                property: '고객ID',
+                rich_text: {
+                    equals: customerId
+                }
+            }
+        });
+    } catch (e) {
+        console.error('노션 검색 실패:', e.toString());
+        throw new Error('노션 데이터베이스 검색 실패: ' + e.toString());
+    }
+
+    let pageId;
     let notionUrl;
 
-    // 2. 속성 매핑
-    const totalAmount = data['총 계약금액'] ? Number(String(data['총 계약금액']).replace(/[^0-9]/g, '')) : 0;
-    const area = data['평수'] ? Number(String(data['평수']).replace(/[^0-9.]/g, '')) : 0;
+    // 데이터 전처리 (숫자형 변환 등)
+    const totalAmountStr = (data['총계약금액'] || '').toString().replace(/[^0-9.]/g, '');
+    const totalAmount = parseFloat(totalAmountStr) || 0;
 
-    // 현장명 생성: 성명&배우자 성명_고객ID 형식
-    const clientName = data['성명'] || '';
-    const spouseName = data['배우자 성명'] || '';
-    let siteTitle = clientName;
-    if (spouseName) {
-        siteTitle += '♥️' + spouseName;
-    }
-    siteTitle += '_' + customerId;
+    const areaStr = (data['평수'] || '').toString().replace(/[^0-9.]/g, '');
+    const area = parseFloat(areaStr) || 0;
 
+    console.log('📊 Parsed values - Amount:', totalAmount, ' / Area:', area);
+
+    // Notion Properties 구성 (스크린샷 기반)
+    // 값이 없는 Date 타입은 아예 키를 빼야 에러가 안남
     const properties = {
-        '현장명': { title: [{ text: { content: siteTitle } }] },
-        '성명': { rich_text: [{ text: { content: data['성명'] || '' } }] },
+        // 현장명이 Title 속성 (Aa 아이콘) - 이름_공사명_계약일 형식으로 저장
+        '현장명': { title: [{ text: { content: notionTitle } }] },
+
+        // 성명은 rich_text 속성
+        '성명': { rich_text: [{ text: { content: customerName } }] },
+
+        // 연락처는 phone_number 속성
+        '연락처': { phone_number: data['연락처'] || null },
+
         '이메일': { email: data['이메일'] || null },
+
         '주소': { rich_text: [{ text: { content: data['주소'] || '' } }] },
         '현장주소': { rich_text: [{ text: { content: data['현장주소'] || '' } }] },
+
+        // 배우자 정보
         '배우자 성명': { rich_text: [{ text: { content: data['배우자 성명'] || '' } }] },
+
         '공사 담당자': { rich_text: [{ text: { content: data['공사 담당자'] || '' } }] },
         '건물유형': { rich_text: [{ text: { content: data['건물유형'] || '' } }] },
         '유입경로': { rich_text: [{ text: { content: data['유입경로'] || '' } }] },
+
         '고객 요청사항': { rich_text: [{ text: { content: data['고객 요청사항'] || '' } }] },
         '내부 메모': { rich_text: [{ text: { content: data['내부 메모'] || '' } }] },
         '특약사항': { rich_text: [{ text: { content: data['특약사항'] || '' } }] },
-        // '공사 유의사항': { rich_text: [{ text: { content: data['공사 유의사항'] || '' } }] }, // 노션에 컬럼 없음
-        // 'A/S 유의사항': { rich_text: [{ text: { content: data['A/S 유의사항'] || '' } }] }, // 노션에 컬럼 없음
         '고객ID': { rich_text: [{ text: { content: customerId || '' } }] },
+
         '총 계약금액 (VAT 포함)': { number: totalAmount },
         '평수': { number: area }
     };
 
-    // 연락처 (값이 있을 때만 포함)
-    if (data['연락처']) {
-        properties['연락처'] = { phone_number: data['연락처'] };
-    }
-    // 배우자 연락처 (값이 있을 때만 포함)
+    // 배우자 연락처 - Phone 속성은 빈 문자열이면 에러남
     if (data['배우자 연락처']) {
         properties['배우자 연락처'] = { phone_number: data['배우자 연락처'] };
     }
 
-    // 날짜 필드 (공백일 경우 제외) - 'A/S 기간' 포함
-    ['이사날짜', '계약일', '착공일', '준공일', '잔금일', 'A/S 기간'].forEach(field => {
-        if (data[field] && data[field].match(/^\d{4}-\d{2}-\d{2}/)) {
-            properties[field] = { date: { start: data[field] } };
-        }
-    });
-
-    if (pageId) {
-        // [업데이트]
-        const response = callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
-        notionUrl = response.url;
-    } else {
-        // [생성] - 커버 이미지 포함
-        const response = callNotionAPI('/pages', 'POST', {
-            parent: { database_id: dbId },
-            properties: properties,
-            cover: {
-                type: 'external',
-                external: {
-                    url: NOTION_COVER_IMAGE
-                }
-            }
-        });
-        pageId = response.id;
-        notionUrl = response.url;
+    // 날짜 필드들 - 값이 있을 때만 전송 (YYYY-MM-DD 형식 필요)
+    if (data['이사날짜'] && data['이사날짜'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['이사날짜'] = { date: { start: data['이사날짜'] } };
+    }
+    if (data['계약일'] && data['계약일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['계약일'] = { date: { start: data['계약일'] } };
+    }
+    if (data['착공일'] && data['착공일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['착공일'] = { date: { start: data['착공일'] } };
+    }
+    if (data['준공일'] && data['준공일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['준공일'] = { date: { start: data['준공일'] } };
+    }
+    if (data['잔금일'] && data['잔금일'].match(/^\d{4}-\d{2}-\d{2}/)) {
+        properties['잔금일'] = { date: { start: data['잔금일'] } };
     }
 
-    // [추가] 페이지 본문에 콘텐츠 추가
-    const pageBlocks = [];
+    console.log('📝 Properties to send:', JSON.stringify(properties));
 
-    // 1. 📅 공사 스케줄 섹션
-    if (NOTION_DB_IDS.SCHEDULE) {
-        pageBlocks.push({
-            object: 'block',
-            type: 'heading_2',
-            heading_2: {
-                rich_text: [{ type: 'text', text: { content: '📅 공사 스케줄' } }]
-            }
-        });
-
-        // 공사 유의사항 삭제됨 (사용자 요청)
-        /*
-        if (data['공사 유의사항'] && data['공사 유의사항'].trim()) {
-            pageBlocks.push({
-                object: 'block',
-                type: 'callout',
-                callout: {
-                    rich_text: [{ type: 'text', text: { content: '💡 공사 진행 안내 및 유의사항' } }],
-                    icon: { emoji: '💡' },
-                    color: 'yellow_background'
-                }
+    try {
+        if (searchResponse.results && searchResponse.results.length > 0) {
+            // 업데이트
+            pageId = searchResponse.results[0].id;
+            notionUrl = searchResponse.results[0].url;
+            console.log('🔄 Updating existing page:', pageId);
+            callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
+        } else {
+            // 생성
+            console.log('➕ Creating new page in database:', NOTION_DB_IDS.PROJECTS);
+            const createResponse = callNotionAPI('/pages', 'POST', {
+                parent: { database_id: NOTION_DB_IDS.PROJECTS },
+                properties: properties
             });
-
-            const constructionItems = data['공사 유의사항'].split('\n').filter(item => item.trim());
-            constructionItems.forEach(item => {
-                pageBlocks.push({
-                    object: 'block',
-                    type: 'bulleted_list_item',
-                    bulleted_list_item: {
-                        rich_text: [{ type: 'text', text: { content: item.trim() } }]
-                    }
-                });
-            });
-        }
-        */
-
-        pageBlocks.push({
-            object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
-                type: 'database_id',
-                database_id: NOTION_DB_IDS.SCHEDULE
-            }
-        });
-    }
-
-    // 2. ✅ 공정별 체크리스트 섹션
-    if (NOTION_DB_IDS.CHECKLIST) {
-        pageBlocks.push({
-            object: 'block',
-            type: 'heading_2',
-            heading_2: {
-                rich_text: [{ type: 'text', text: { content: '✅ 공정별 체크리스트' } }]
-            }
-        });
-        pageBlocks.push({
-            object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
-                type: 'database_id',
-                database_id: NOTION_DB_IDS.CHECKLIST
-            }
-        });
-    }
-
-    // 3. 🔧 A/S 관리 리스트 섹션
-    if (NOTION_DB_IDS.AS_LIST) {
-        pageBlocks.push({
-            object: 'block',
-            type: 'heading_2',
-            heading_2: {
-                rich_text: [{ type: 'text', text: { content: '� A/S 관리 리스트' } }]
-            }
-        });
-
-        // A/S 유의사항 (A/S 리스트 상단에 배치)
-        if (data['A/S 유의사항'] && data['A/S 유의사항'].trim()) {
-            pageBlocks.push({
-                object: 'block',
-                type: 'callout',
-                callout: {
-                    rich_text: [{ type: 'text', text: { content: '💡 A/S(사후관리) 안내 및 유의사항' } }],
-                    icon: { emoji: '💡' },
-                    color: 'blue_background'
-                }
-            });
-
-            const asItems = data['A/S 유의사항'].split('\n').filter(item => item.trim());
-            asItems.forEach(item => {
-                pageBlocks.push({
-                    object: 'block',
-                    type: 'bulleted_list_item',
-                    bulleted_list_item: {
-                        rich_text: [{ type: 'text', text: { content: item.trim() } }]
-                    }
-                });
-            });
+            pageId = createResponse.id;
+            notionUrl = createResponse.url;
         }
 
-        pageBlocks.push({
-            object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
-                type: 'database_id',
-                database_id: NOTION_DB_IDS.AS_LIST
-            }
-        });
-    }
-
-    // 4. 📚 고객 안내·FAQ 섹션
-    if (NOTION_DB_IDS.FAQ) {
-        pageBlocks.push({
-            object: 'block',
-            type: 'heading_2',
-            heading_2: {
-                rich_text: [{ type: 'text', text: { content: '� 고객 안내·FAQ' } }]
-            }
-        });
-        pageBlocks.push({
-            object: 'block',
-            type: 'linked_to_page',
-            linked_to_page: {
-                type: 'database_id',
-                database_id: NOTION_DB_IDS.FAQ
-            }
-        });
-    }
-
-    // 5. 구분선 추가
-    pageBlocks.push({
-        object: 'block',
-        type: 'divider',
-        divider: {}
-    });
-
-    // 페이지 본문에 블록 추가
-    if (pageBlocks.length > 0) {
-        try {
-            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', {
-                children: pageBlocks
-            });
-        } catch (e) {
-            console.warn('페이지 본문 추가 실패:', e.toString());
+        // 스케줄 데이터가 있거나 특약사항이 있으면 페이지 본문에 추가
+        if ((data.scheduleRows && data.scheduleRows.length > 0) || data['특약사항']) {
+            addScheduleBlocksToPageV2(pageId, data.scheduleRows || [], data['특약사항'] || '');
         }
+
+    } catch (e) {
+        console.error('노션 페이지 생성/수정 실패:', e.toString());
+        throw new Error('노션 페이지 저장 실패: ' + e.toString());
     }
 
-    // 만약 Schedule/Checklist 데이터가 같이 넘어왔다면 연결 처리 (선택사항)
-    if (data.scheduleRows && data.scheduleRows.length > 0) {
-        exportScheduleToNotion(customerId, data);
-    }
-    if (data.checklist && data.checklist.length > 0) {
-        exportChecklistToNotion(customerId, data);
-    }
-
+    console.log('✅ Notion export successful:', notionUrl);
     return { url: notionUrl, pageId: pageId };
 }
 
-// 3. 스케줄 내보내기 (관계형 DB 연결 + 고객ID)
+// 페이지에 스케줄 및 유의사항 블록 추가
+function addScheduleBlocksToPage(pageId, scheduleRows, specialNote) {
+    console.log('📅 Adding schedule/note blocks to page:', pageId);
+
+    // 먼저 기존 블록 가져오기 (싹 지우고 다시 쓰는게 깔끔함)
+    // 주의: 유저가 수동으로 작성한 다른 내용이 있을 수 있으므로, "공정 스케줄" 헤더 아래만 지우거나
+    // 안전하게 구분선 아래를 지우는 방식을 사용
+    try {
+        const existingBlocks = callNotionAPI('/blocks/' + pageId + '/children', 'GET');
+
+        let shouldDelete = false;
+        if (existingBlocks.results) {
+            for (const block of existingBlocks.results) {
+                // 구분선(divider)이 있으면 그 아래는 자동 생성 영역으로 간주하고 삭제
+                if (block.type === 'divider') {
+                    shouldDelete = true;
+                }
+
+                // 또는 "📋 공정 스케줄" 헤더가 있으면 그 아래 삭제
+                if (block.type === 'heading_2' && block.heading_2?.rich_text?.[0]?.plain_text?.includes('공정 스케줄')) {
+                    shouldDelete = true;
+                }
+
+                if (shouldDelete) {
+                    try {
+                        callNotionAPI('/blocks/' + block.id, 'DELETE');
+                    } catch (e) {
+                        console.log('블록 삭제 실패 (무시):', e.toString());
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.log('기존 블록 조회 실패:', e.toString());
+    }
+
+    // 새 블록 구성
+    const blocks = [];
+
+    // 1. 구분선 (자동 생성 영역 시작 표시)
+    blocks.push({ type: 'divider', divider: {} });
+
+    // 2. 유의사항 (특약사항) - 콜아웃 박스로 강조
+    if (specialNote) {
+        blocks.push({
+            type: 'heading_3',
+            heading_3: { rich_text: [{ text: { content: '🔔 유의사항 (특약사항)' } }] }
+        });
+
+        blocks.push({
+            type: 'callout',
+            callout: {
+                rich_text: [{ text: { content: specialNote } }],
+                icon: { emoji: '�' },
+                color: 'gray_background'
+            }
+        });
+
+        // 간격
+        blocks.push({ type: 'paragraph', paragraph: { rich_text: [] } });
+    }
+
+    // 3. 스케줄 표
+    if (scheduleRows && scheduleRows.length > 0) {
+        blocks.push({
+            type: 'heading_2',
+            heading_2: { rich_text: [{ text: { content: '📋 공정 스케줄' } }] }
+        });
+
+        const tableRows = [];
+
+        // 헤더 행
+        tableRows.push({
+            type: 'table_row',
+            table_row: {
+                cells: [
+                    [{ type: 'text', text: { content: '공정명', annotations: { bold: true } } }],
+                    [{ type: 'text', text: { content: '기간', annotations: { bold: true } } }],
+                    [{ type: 'text', text: { content: '상태', annotations: { bold: true } } }],
+                    [{ type: 'text', text: { content: '담당/비고', annotations: { bold: true } } }]
+                ]
+            }
+        });
+
+        // 데이터 행
+        for (let i = 0; i < scheduleRows.length; i++) {
+            const row = scheduleRows[i];
+            const category = row.category || row['대분류'] || '';
+            const process = row.process || row['공정명'] || '';
+            const startDate = row.startDate || row['시작일'] || '';
+            const endDate = row.endDate || row['종료일'] || '';
+            const status = row.status || row['상태'] || '';
+            const manager = row.manager || row['담당자'] || '';
+
+            // 날짜 포맷
+            const simpleStart = startDate.substring(5); // MM-DD
+            const simpleEnd = endDate.substring(5);
+            const dateStr = (simpleStart === simpleEnd) ? simpleStart : `${simpleStart}~${simpleEnd}`;
+            const processName = (category ? `[${category}] ` : '') + process;
+
+            // 상태 표현
+            let statusText = status;
+            if (status === '완료') statusText = '✅ 완료';
+            else if (status === '진행중') statusText = '🔄 진행중';
+            else if (status === '지연') statusText = '⚠️ 지연';
+            else if (status === '예정') statusText = '🗓️ 예정';
+
+            tableRows.push({
+                type: 'table_row',
+                table_row: {
+                    cells: [
+                        [{ type: 'text', text: { content: processName } }],
+                        [{ type: 'text', text: { content: dateStr } }],
+                        [{ type: 'text', text: { content: statusText } }],
+                        [{ type: 'text', text: { content: manager } }]
+                    ]
+                }
+            });
+        }
+
+        blocks.push({
+            type: 'table',
+            table: {
+                table_width: 4,
+                has_column_header: true,
+                has_row_header: false,
+                children: tableRows
+            }
+        });
+    }
+
+    // 블록 추가 요청
+    if (blocks.length > 0) {
+        try {
+            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', {
+                children: blocks
+            });
+            console.log('✅ Schedule/Note blocks added successfully');
+        } catch (e) {
+            console.error('블록 추가 실패:', e.toString());
+        }
+    }
+}
+
+
+
+// 2. 스케줄 내보내기 (개별 스케줄 항목을 데이터베이스에 추가)
 function exportScheduleToNotion(customerId, data) {
-    const pageId = findCustomerPageId(customerId);
-    if (!pageId) throw new Error('고객 페이지를 찾을 수 없습니다. 먼저 고객 정보를 내보내주세요.');
+    console.log('📅 Exporting schedule to Notion for customer:', customerId);
 
-    const dbId = NOTION_DB_IDS.SCHEDULE;
-    if (!dbId) throw new Error('Notion Schedule Database ID not configured.');
+    // 1. 먼저 고객 페이지 찾기/생성 (pageId 필요)
+    const customerResult = exportCustomerToNotion(customerId, {
+        '성명': data['성명'] || data['고객명'],
+        '현장주소': data['현장주소'] || ''
+    });
+    const customerPageId = customerResult.pageId;
 
-    // 1. 기존 해당 프로젝트의 스케줄 항목 삭제 (고객ID 기준)
-    deleteExistingRelatedPages(dbId, customerId);
+    if (!customerPageId) {
+        throw new Error('고객 페이지를 찾을 수 없습니다.');
+    }
 
-    const scheduleRows = data.scheduleRows || data.공정목록 || [];
-    let count = 0;
+    console.log('👤 Customer page ID:', customerPageId);
 
-    scheduleRows.forEach((row, index) => {
-        const process = row.process || row.공정 || row.공정명 || '공정';
-        const start = row.startDate || row.시작일 || '';
-        const end = row.endDate || row.종료일 || '';
-        const manager = row.manager || row.담당자 || '';
-        const memo = row.memo || row.비고 || '';
+    // 2. 기존 스케줄 모두 삭제 (고객ID 기준)
+    try {
+        const existingSchedules = callNotionAPI('/databases/' + NOTION_DB_IDS.SCHEDULE + '/query', 'POST', {
+            filter: {
+                property: '프로젝트 관리',
+                relation: { contains: customerPageId }
+            }
+        });
 
-        const props = {
-            '공정명': { title: [{ text: { content: process } }] },
+        if (existingSchedules.results && existingSchedules.results.length > 0) {
+            console.log('🗑️ Deleting existing schedules:', existingSchedules.results.length);
+            for (const page of existingSchedules.results) {
+                try {
+                    callNotionAPI('/pages/' + page.id, 'PATCH', { archived: true });
+                } catch (e) {
+                    console.log('스케줄 삭제 실패 (무시):', e.toString());
+                }
+            }
+        }
+    } catch (e) {
+        console.log('기존 스케줄 검색 실패 (무시):', e.toString());
+    }
+
+    // 3. 새 스케줄 항목들 생성
+    const scheduleList = data.공정목록 || [];
+    let createdCount = 0;
+
+    for (const item of scheduleList) {
+        const processName = item.공정 || item.process || '';
+        const startDate = item.시작일 || item.startDate || '';
+        const endDate = item.종료일 || item.endDate || '';
+        const manager = item.담당자 || item.manager || '';
+        const status = item.상태 || item.status || '';
+        const memo = item.비고 || item.memo || '';
+
+        const properties = {
+            // 공정명이 Title 속성
+            '공정명': { title: [{ text: { content: processName } }] },
+
+            // 프로젝트 관리 - 관계형 (고객 페이지 연결)
+            '프로젝트 관리': { relation: [{ id: customerPageId }] },
+
+            // 담당자
             '담당자': { rich_text: [{ text: { content: manager } }] },
-            '비고': { rich_text: [{ text: { content: memo } }] },
-            '고객ID': { rich_text: [{ text: { content: customerId } }] },
-            'NO': { number: index + 1 }, // [추가] NO 속성
-            '고객정보': { relation: [{ id: pageId }] } // [수정] 컬럼명 '프로젝트' -> '고객정보'
+
+            // 비고
+            '비고': { rich_text: [{ text: { content: memo } }] }
         };
 
-        if (start) {
-            // 종료일이 없거나 시작일과 같으면 start만, 다르면 end 포함 (단, 노션은 end가 start보다 커야 함)
-            const dateObj = { start: start };
-            if (end && end !== start) {
-                dateObj.end = end;
+        // 시작~종료 날짜 (Date Range)
+        if (startDate && startDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+            const dateObj = { start: startDate };
+            if (endDate && endDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+                dateObj.end = endDate;
             }
-            props['시작-종료'] = { date: dateObj }; // [수정] 스크린샷 기준 '시작-종료'로 변경
+            properties['시작~종료'] = { date: dateObj };
         }
 
-        callNotionAPI('/pages', 'POST', {
-            parent: { database_id: dbId },
-            properties: props
-        });
-        count++;
-    });
-
-    // [삭제] 고객 페이지에 공사 진행 안내 및 유의사항 콜아웃 추가 (사용자 요청)
-    /*
-    try {
-        const guidelines = data.guidelines || data.유의사항 || [];
-        if (guidelines.length > 0) {
-            const calloutContent = guidelines.map(g => ({
-                type: 'paragraph',
-                paragraph: {
-                    rich_text: [{ type: 'text', text: { content: '• ' + g } }]
-                }
-            }));
-
-            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', {
-                children: [
-                    {
-                        type: 'callout',
-                        callout: {
-                            icon: { type: 'emoji', emoji: '💡' },
-                            color: 'yellow_background',
-                            rich_text: [{ type: 'text', text: { content: '공사 진행 안내 및 유의사항' } }],
-                            children: calloutContent
-                        }
-                    }
-                ]
+        try {
+            callNotionAPI('/pages', 'POST', {
+                parent: { database_id: NOTION_DB_IDS.SCHEDULE },
+                properties: properties
             });
+            createdCount++;
+        } catch (e) {
+            console.error('스케줄 항목 생성 실패:', processName, e.toString());
         }
-    } catch (e) {
-        console.warn('유의사항 콜아웃 추가 실패:', e.toString());
     }
-    */
 
-    return { url: '', count: count };
+    console.log('✅ Schedule export complete. Created:', createdCount, 'items');
+    return { url: customerResult.url, createdCount: createdCount };
 }
 
-// 4. 체크리스트 내보내기 (관계형 DB 연결 + 고객ID)
+// 3. 체크리스트 내보내기
 function exportChecklistToNotion(customerId, data) {
-    const pageId = findCustomerPageId(customerId);
-    if (!pageId) throw new Error('고객 페이지를 찾을 수 없습니다. 먼저 고객 정보를 내보내주세요.');
+    const name = data['성명'] || data['고객명'] || '고객';
+    const title = name + ' - 공정별 체크리스트';
 
-    const dbId = NOTION_DB_IDS.CHECKLIST;
-    if (!dbId) throw new Error('Notion Checklist Database ID not configured.');
+    const properties = {
+        '이름': { title: [{ text: { content: title } }] },
+        '고객ID': { rich_text: [{ text: { content: customerId } }] },
+        '현장': { rich_text: [{ text: { content: data.현장주소 || '' } }] },
+        '진행율': { number: data.완료항목수 / data.전체항목수 || 0 }
+    };
 
-    // 1. 기존 항목 삭제 (고객정보 Relation 기준)
-    deleteExistingRelatedPages(dbId, customerId, pageId);
-
-    // [수정] 체크리스트 순서
-    const checklist = (data.checklist || data.체크리스트 || []).slice().reverse();
-    let count = 0;
-
-    checklist.forEach(item => {
-        const title = item.항목 || item.content || '체크리스트 항목';
-        const category = item.분류 || '기타';
-        const detail = item.내용 || '';
-        const stage = item.진행단계 || '';
-        const note = item.비고 || '';
-        const isChecked = item.isChecked === true;
-        const no = parseInt(item.번호) || 0;
-
-        // 노션 DB 속성에 맞춰 수정
-        const props = {
-            '항목': { title: [{ text: { content: title } }] },
-            '분류': { rich_text: [{ text: { content: category } }] },
-            '내용': { rich_text: [{ text: { content: detail } }] },
-            '진행단계': { rich_text: [{ text: { content: stage } }] },
-            '비고': { rich_text: [{ text: { content: note } }] },
-            '완료': { checkbox: isChecked }, // [수정] 노션 속성명 '완료'
-            'NO': { number: no },
-            '고객정보': { relation: [{ id: pageId }] }
-        };
-
-        callNotionAPI('/pages', 'POST', {
-            parent: { database_id: dbId },
-            properties: props
-        });
-        count++;
-    });
-
-    return { url: '', count: count };
-}
-
-// [헬퍼] 관련 페이지 삭제 (고객정보 Relation 기준 필터링)
-function deleteExistingRelatedPages(dbId, customerId, pageId) {
-    try {
-        const filter = pageId ? {
-            property: '고객정보',
-            relation: { contains: pageId }
-        } : {
-            property: '고객ID', // fallback
-            rich_text: { equals: customerId }
-        };
-
-        const response = callNotionAPI('/databases/' + dbId + '/query', 'POST', {
-            filter: filter
-        });
-
-        if (response.results && response.results.length > 0) {
-            response.results.forEach(page => {
-                callNotionAPI('/blocks/' + page.id, 'DELETE', {}); // 페이지 삭제(Archive)
-            });
+    const children = [
+        {
+            object: 'block',
+            type: 'heading_2',
+            heading_2: { rich_text: [{ text: { content: '현장 체크리스트' } }] }
+        },
+        {
+            object: 'block',
+            type: 'paragraph',
+            paragraph: { rich_text: [{ text: { content: `총 ${data.전체항목수}개 중 ${data.완료항목수}개 완료` } }] }
         }
-    } catch (e) {
-        console.warn('기존 항목 삭제 실패 (DB 속성 확인 필요): ' + e.toString());
-    }
-}
+    ];
 
-// 5. A/S 관리 리스트 내보내기 (관계형 DB 연결 + 고객ID)
-function exportASListToNotion(customerId, data) {
-    const pageId = findCustomerPageId(customerId);
-    if (!pageId) throw new Error('고객 페이지를 찾을 수 없습니다. 먼저 고객 정보를 내보내주세요.');
-
-    const dbId = NOTION_DB_IDS.AS_LIST;
-    if (!dbId) throw new Error('Notion A/S List Database ID not configured.');
-
-    // 1) 고객 정보 페이지 속성 업데이트 (잔금일, 보증기간 등)
-    // 상단 A/S 정보 테이블의 데이터가 변경되었을 수 있으므로 업데이트
-    const customerProps = {};
-    if (data.balanceDate) {
-        customerProps['잔금일'] = { date: { start: data.balanceDate } };
-    }
-    if (data.leakWarranty) {
-        // 화장실 누수 보증 기간을 텍스트나 날짜로 저장
-        customerProps['화장실 누수 보증 기간'] = { rich_text: [{ text: { content: data.leakWarranty } }] };
-    }
-    // A/S 기간 등도 필요하다면 업데이트
-
-    if (Object.keys(customerProps).length > 0) {
-        try {
-            callNotionAPI('/pages/' + pageId, 'PATCH', { properties: customerProps });
-        } catch (e) {
-            console.warn('고객 페이지 속성 업데이트 실패(속성명 확인 필요): ' + e.toString());
-        }
-    }
-
-    // 2) 기존 A/S 리스트 항목 삭제 (고객ID 기준)
-    deleteExistingRelatedPages(dbId, customerId);
-
-    // 3) 새로운 A/S 항목 추가
-    const asList = data.items || [];
-    let count = 0;
-
-    // 날짜 포맷 변환 헬퍼 함수 (~27.01.08 -> 2027-01-08)
-    function parseWarrantyDate(dateStr) {
-        if (!dateStr) return null;
-        try {
-            // 숫자와 점(.)만 남기고 나머지 제거 (예: ~27.01.08 -> 27.01.08)
-            const cleanStr = dateStr.replace(/[^0-9.]/g, "");
-            const parts = cleanStr.split('.');
-            if (parts.length === 3) {
-                let year = parseInt(parts[0], 10);
-                const month = parts[1];
-                const day = parts[2];
-                // 2자리 연도인 경우 2000년대 처리
-                if (year < 100) year += 2000;
-                return `${year}-${month}-${day}`;
-            }
-            // 이미 YYYY-MM-DD 형식이면 그대로 반환
-            if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
-            return null;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    asList.forEach((item, index) => {
-        // A/S 항목 데이터 매핑 (노션 A/S 관리 리스트 DB 속성명에 맞춤)
-        const category = item.category || item.카테고리 || '';
-        const brand = item.brand || item.브랜드 || '';
-        const detailItem = item.item || item.세부항목 || '';
-        const modelNum = item.modelNum || item.품번 || '';
-        const size = item.size || item.치수 || '';
-        const serviceCenter = item.service || item.serviceCenter || item.서비스센터 || '';
-        const warranty = item.warranty || item.보증기간 || '';
-        const note = item.note || item.비고 || '';
-
-        const formattedDate = parseWarrantyDate(warranty);
-
-        const props = {
-            '카테고리': { title: [{ text: { content: category } }] },
-            '브랜드': { rich_text: [{ text: { content: brand } }] },
-            '세부항목': { rich_text: [{ text: { content: detailItem } }] },
-            '품번': { rich_text: [{ text: { content: modelNum } }] },
-            '치수': { rich_text: [{ text: { content: size } }] },
-            '서비스센터': { phone_number: serviceCenter || null },
-            '보증기간': formattedDate ? { date: { start: formattedDate } } : undefined,
-            '비고': { rich_text: [{ text: { content: note } }] },
-            'NO': { number: index + 1 },
-            '고객정보': { relation: [{ id: pageId }] }
-        };
-
-        // undefined 속성 제거
-        Object.keys(props).forEach(key => props[key] === undefined && delete props[key]);
-
-        callNotionAPI('/pages', 'POST', {
-            parent: { database_id: dbId },
-            properties: props
-        });
-        count++;
-    });
-
-    // [삭제] 고객 페이지에 A/S 유의사항 콜아웃 추가 (사용자 요청)
-    /*
-    try {
-        const guidelines = data.guidelines || data.유의사항 || [];
-        if (guidelines.length > 0) {
-            const calloutContent = guidelines.map(g => ({
-                type: 'paragraph',
-                paragraph: {
-                    rich_text: [{ type: 'text', text: { content: '• ' + g } }]
+    if (data.체크리스트 && Array.isArray(data.체크리스트)) {
+        data.체크리스트.forEach(item => {
+            children.push({
+                object: 'block',
+                type: 'to_do',
+                to_do: {
+                    rich_text: [{ text: { content: `[${item.분류}] ${item.항목}: ${item.내용}` } }],
+                    checked: true // 이미 완료된 항목만 넘어옴 (프론트 로직상)
                 }
-            }));
-
-            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', {
-                children: [
-                    {
-                        type: 'callout',
-                        callout: {
-                            icon: { type: 'emoji', emoji: '⚠️' },
-                            color: 'orange_background',
-                            rich_text: [{ type: 'text', text: { content: 'A/S 안내 및 유의사항' } }],
-                            children: calloutContent
-                        }
-                    }
-                ]
             });
-        }
-    } catch (e) {
-        console.warn('A/S 유의사항 콜아웃 추가 실패:', e.toString());
+        });
     }
-    */
 
-    return { url: '', count: count };
+    // DB 검색 및 생성/업데이트
+    const searchResponse = callNotionAPI('/databases/' + NOTION_DB_IDS.CHECKLIST + '/query', 'POST', {
+        filter: { property: '고객ID', rich_text: { equals: customerId } }
+    });
+
+    let notionUrl;
+    if (searchResponse.results.length > 0) {
+        const pageId = searchResponse.results[0].id;
+        notionUrl = searchResponse.results[0].url;
+        callNotionAPI('/pages/' + pageId, 'PATCH', { properties: properties });
+        callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: children });
+    } else {
+        const createResponse = callNotionAPI('/pages', 'POST', {
+            parent: { database_id: NOTION_DB_IDS.CHECKLIST },
+            properties: properties,
+            children: children
+        });
+        notionUrl = createResponse.url;
+    }
+
+    return { url: notionUrl };
 }
-
 
 // [트리거] onEdit (단순 트리거)
 // 주의: "설치형 트리거"로 processStatusChange를 별도 설정했으므로,
@@ -2570,19 +2317,11 @@ function handleCostGet(e) {
 
 
 /**
- * [DISABLED] 원가관리표 데이터베이스 업데이트 (POST)
- * 마스터 데이터 정합성을 위해 API를 통한 쓰기 권한이 제거되었습니다.
+ * 원가관리표 데이터베이스 업데이트 (POST)
+ * Google Sheets에 원가관리표 데이터를 저장합니다.
+ * 새 구조: A열=카테고리, B열=NO/MEMO, C열=구분, D열=품명, E열=상세내용, F열=단위, G열=수량, H열=단가, I열=합계
  */
 function handleCostUpdate(payload) {
-    return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        error: 'Master DB (Cost) is read-only via API.'
-    })).setMimeType(ContentService.MimeType.JSON);
-}
-
-// 원본 로직 보존 (필요시 백업 참고)
-/*
-function handleCostUpdate_ORIGINAL(payload) {
     try {
         var costData = payload.data || [];
         var memoData = payload.memos || {};
@@ -2679,10 +2418,12 @@ function handleCostUpdate_ORIGINAL(payload) {
         })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (err) {
-        // ...
+        return ContentService.createTextOutput(JSON.stringify({
+            error: err.toString(),
+            stack: err.stack
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 }
-*/
 
 // ==========================================
 // 10. 샘플 견적서 기능
@@ -3006,1094 +2747,171 @@ function handleChecklistGet(e) {
     }
 }
 
-
-// ==========================================
-// 12. 정산 관리 대장 (Settlement Management)
-// ==========================================
-
-// [추가] 정산 관리 대장 옵션 마스터 조회
-function handleGetSettlementOptions(e) {
+// 권한 요청용 테스트 함수 (한 번 실행하면 권한 팝업이 뜹니다)
+function requestPermissions() {
     try {
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        // [수정] 실제 시트 이름: "정산 관리 대장"
-        var sheet = spreadsheet.getSheetByName('정산 관리 대장');
-
-        // Fallback: 다른 가능한 이름들 시도
-        if (!sheet) sheet = spreadsheet.getSheetByName('정산관리대장');
-        if (!sheet) sheet = spreadsheet.getSheetByName('정산옵션마스터');
-
-        if (!sheet) {
-            // 시트가 없으면 빈 배열 반환
-            return ContentService.createTextOutput(JSON.stringify({
-                result: 'success',
-                options: [],
-                message: '정산 관리 대장 시트를 찾을 수 없습니다.'
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        var data = sheet.getDataRange().getValues();
-        if (data.length < 2) {
-            return ContentService.createTextOutput(JSON.stringify({
-                result: 'success',
-                options: []
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        // 헤더 기반 인덱스 찾기
-        var headers = data[0];
-        // [수정] 실제 구글 시트 헤더 반영: 카테고리, 공정분류, 거래처/작업자, 비용구분, 대금방식, 사업자/주민번호, 은행명/예금주/계좌번호, 비고
-        var idx = {
-            category: Math.max(headers.indexOf('카테고리'), headers.indexOf('분류')),
-            process: Math.max(headers.indexOf('공정분류'), headers.indexOf('공정'), headers.indexOf('공정명')),
-            client: Math.max(headers.indexOf('거래처/작업자'), headers.indexOf('거래처')),
-            costType: headers.indexOf('비용구분'),
-            payType: headers.indexOf('대금방식'),
-            bizId: Math.max(headers.indexOf('사업자/주민번호'), headers.indexOf('사업자번호')),
-            bankInfo: Math.max(headers.indexOf('은행명/예금주/계좌번호'), headers.indexOf('계좌정보')),
-            note: headers.indexOf('비고')
-        };
-
-        // 인덱스 결정 (못 찾으면 기본값)
-        // 인덱스 결정
-        var iCat = idx.category;
-        var iProc = idx.process;
-        var iClient = idx.client;
-        var iCost = idx.costType;
-        var iPay = idx.payType;
-        var iBiz = idx.bizId;
-        var iBank = idx.bankInfo;
-        var iNote = idx.note;
-
-        // 필수 값 fallback
-        if (iCat === -1) iCat = 0;
-
-        var options = [];
-        for (var i = 1; i < data.length; i++) {
-            var row = data[i];
-            if (row[iCat]) { // 카테고리가 있는 경우만
-                options.push({
-                    category: row[iCat] || '',
-                    process: row[iProc] || '',
-                    client: row[iClient] || '',
-                    costType: (iCost > -1 ? row[iCost] : '') || '',
-                    payType: (iPay > -1 ? row[iPay] : '') || '',
-                    bizId: (iBiz > -1 ? row[iBiz] : '') || '',
-                    bankInfo: (iBank > -1 ? row[iBank] : '') || '',
-                    note: (iNote > -1 ? row[iNote] : '') || ''
-                });
-            }
-        }
-
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'success',
-            options: options
-        })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'error',
-            error: err.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-function handleSettlementGet(e) {
-    try {
-        var customerId = e.parameter.customerId;
-        if (!customerId) {
-            throw new Error('고객 ID가 필요합니다.');
-        }
-
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName(SETTLEMENT_SHEET_NAME);
-
-        if (!sheet) {
-            return ContentService.createTextOutput(JSON.stringify({
-                result: 'success',
-                rows: []
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        var data = sheet.getDataRange().getValues();
-        if (data.length < 2) {
-            return ContentService.createTextOutput(JSON.stringify({
-                result: 'success',
-                rows: []
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        var rows = [];
-        // 헤더 기반 인덱스 찾기
-        var headers = data[0];
-        // 예상 헤더: 고객ID, 고객명, 분류, 공정, 거래처, 비용구분, 지출증빙(or 대금방식), 사업자번호, 계좌정보, 결제금액, 결제일, 결제상태, 비고
-        var idx = {
-            id: headers.indexOf('고객ID'),
-            category: headers.indexOf('분류'),
-            process: headers.indexOf('공정'),
-            client: headers.indexOf('거래처'),
-            costType: headers.indexOf('비용구분'),
-            payType: headers.indexOf('지출증빙'), // 구글시트 헤더명 '지출증빙'
-            payType2: headers.indexOf('대금방식'), // 호환성
-            bizId: headers.indexOf('사업자번호'),
-            bankInfo: headers.indexOf('계좌정보'),
-            payAmount: headers.indexOf('결제금액'),
-            payDate: headers.indexOf('결제일'),
-            payStatus: headers.indexOf('결제상태'),
-            note: headers.indexOf('비고')
-        };
-
-        var iId = idx.id > -1 ? idx.id : 0;
-        var iCat = idx.category > -1 ? idx.category : 2;
-        var iProc = idx.process > -1 ? idx.process : 3;
-        var iClient = idx.client > -1 ? idx.client : 4;
-        var iCost = idx.costType > -1 ? idx.costType : 5;
-        var iPayType = idx.payType > -1 ? idx.payType : (idx.payType2 > -1 ? idx.payType2 : 6);
-        var iBiz = idx.bizId > -1 ? idx.bizId : 7;
-        var iBank = idx.bankInfo > -1 ? idx.bankInfo : 8;
-        var iAmount = idx.payAmount > -1 ? idx.payAmount : 9;
-        var iDate = idx.payDate > -1 ? idx.payDate : 10;
-        var iStatus = idx.payStatus > -1 ? idx.payStatus : 11;
-        var iNote = idx.note > -1 ? idx.note : 12;
-
-        for (var i = 1; i < data.length; i++) {
-            var row = data[i];
-            if (row[iId].toString() === customerId.toString()) {
-                rows.push({
-                    category: row[iCat],
-                    process: row[iProc],
-                    client: row[iClient],
-                    costType: row[iCost],
-                    payType: row[iPayType],
-                    bizId: row[iBiz],
-                    bankInfo: row[iBank],
-                    payAmount: row[iAmount],
-                    payDate: row[iDate] ? formatDate(row[iDate]) : '',
-                    payStatus: row[iStatus],
-                    note: row[iNote]
-                });
-            }
-        }
-
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'success',
-            rows: rows
-        })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'error',
-            error: err.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-function handleSettlementUpdate(payload) {
-    try {
-        var customerId = payload.customerId;
-        var customerName = payload.customerName || '';
-        var rowsData = payload.rows || [];
-
-        if (!customerId) throw new Error('고객 ID가 누락되었습니다.');
-
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName(SETTLEMENT_SHEET_NAME);
-
-        if (!sheet) {
-            sheet = spreadsheet.insertSheet(SETTLEMENT_SHEET_NAME);
-            sheet.appendRow([
-                '고객ID', '고객명', '분류', '공정', '거래처', '비용구분',
-                '지출증빙', '사업자번호', '계좌정보', '결제금액', '결제일', '결제상태', '비고', '수정일'
-            ]);
-        }
-
-        // 기존 데이터 삭제 (해당 고객ID)
-        var data = sheet.getDataRange().getValues();
-        /*
-          행 삭제 시 아래에서 위로 삭제해야 인덱스가 꼬이지 않음.
-          모든 데이터를 읽어서 메모리에서 필터링 후 다시 쓰는 방식도 있지만,
-          데이터가 많아지면 메모리 이슈가 있을 수 있음.
-          여기서는 그냥 루프 돌면서 삭제.
-        */
-        for (var i = data.length - 1; i >= 1; i--) {
-            if (data[i][0].toString() === customerId.toString()) {
-                sheet.deleteRow(i + 1);
-            }
-        }
-
-        // 새 데이터 추가
-        var newRows = [];
-        var now = new Date().toLocaleString('ko-KR');
-
-        rowsData.forEach(function (item) {
-            newRows.push([
-                customerId,
-                customerName,
-                item.category || '',
-                item.process || '',
-                item.client || '',
-                item.costType || '',
-                item.payType || '',
-                item.bizId || '',
-                item.bankInfo || '',
-                item.payAmount || 0,
-                item.payDate || '',
-                item.payStatus || '미지급',
-                item.note || '',
-                now
-            ]);
+        const response = UrlFetchApp.fetch('https://api.notion.com/v1/users/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + getNotionApiKey(),
+                'Notion-Version': '2022-06-28'
+            },
+            muteHttpExceptions: true
         });
-
-        if (newRows.length > 0) {
-            // 한 번에 쓰기 (appendRow 반복보다 빠름)
-            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
-        }
-
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'success',
-            count: newRows.length
-        })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'error',
-            error: err.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-// 날짜 포맷 헬퍼 (YYYY-MM-DD)
-function formatDate(date) {
-    if (!date) return '';
-    if (typeof date === 'string') return date.substring(0, 10);
-    try {
-        var d = new Date(date);
-        var year = d.getFullYear();
-        var month = ('0' + (d.getMonth() + 1)).slice(-2);
-        var day = ('0' + d.getDate()).slice(-2);
-        return year + '-' + month + '-' + day;
+        Logger.log('✅ 권한 승인 완료! 응답: ' + response.getContentText());
     } catch (e) {
-        return date;
+        Logger.log('❌ 에러: ' + e.toString());
     }
 }
 
-// ==========================================
-// 12. 운영비 관리 대장 (Expenses Management)
-// ==========================================
+// [V2] 페이지에 스케줄 및 유의사항 블록 추가 (Robust Version)
+function addScheduleBlocksToPageV2(pageId, scheduleRows, specialNote) {
+    console.log('📅 Adding schedule/note blocks to page (V2):', pageId);
 
-/**
- * 운영비 관리 대장 조회 (GET)
- * - 시트 이름: "운영비 관리 대장" 또는 "운영비관리"
- * - 고정지출 설정도 함께 반환
- */
-function handleExpensesGet(e) {
+    // 1. 기존 블록 정리 (Bottom-up, 안전한 삭제)
     try {
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName('운영비 관리 대장');
-        if (!sheet) sheet = spreadsheet.getSheetByName('운영비관리');
-        if (!sheet) sheet = spreadsheet.getSheetByName('운영비 관리');
-
-        if (!sheet) {
-            // 시트가 없으면 생성
-            sheet = spreadsheet.insertSheet('운영비 관리 대장');
-            var headers = ['No', '날짜', '대분류', '상세내역', '금액', '결제수단', '증빙자료', '비고'];
-            sheet.appendRow(headers);
-            var headerRange = sheet.getRange(1, 1, 1, headers.length);
-            headerRange.setBackground('#4CAF50');
-            headerRange.setFontColor('#ffffff');
-            headerRange.setFontWeight('bold');
-            sheet.setFrozenRows(1);
-        }
-
-        var lastRow = sheet.getLastRow();
-        var expenses = [];
-
-        if (lastRow >= 2) {
-            var data = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
-            for (var i = 0; i < data.length; i++) {
-                var row = data[i];
-                if (row[1] || row[2] || row[3]) { // 날짜, 대분류, 상세내역 중 하나라도 있으면
-                    expenses.push({
-                        no: row[0] || (i + 1),
-                        date: formatDate(row[1]),
-                        category: row[2] || '',
-                        detail: row[3] || '',
-                        amount: row[4] || 0,
-                        payMethod: row[5] || '',
-                        receipt: row[6] || '',
-                        memo: row[7] || ''
-                    });
-                }
-            }
-        }
-
-        // 고정지출 설정 조회 (별도 시트 또는 설정 영역)
-        var fixedExpenses = [];
-        var fixedSheet = spreadsheet.getSheetByName('고정지출 설정');
-        if (fixedSheet && fixedSheet.getLastRow() >= 2) {
-            // [수정] 6개 컬럼 읽기 (대분류, 상세내역, 금액, 결제수단, 증빙자료, 활성화)
-            var fixedData = fixedSheet.getRange(2, 1, fixedSheet.getLastRow() - 1, 6).getValues();
-            for (var j = 0; j < fixedData.length; j++) {
-                var fRow = fixedData[j];
-                // 대분류나 상세내역이 있으면 유효한 데이터로 간주
-                if (fRow[0] || fRow[1]) {
-                    fixedExpenses.push({
-                        category: fRow[0] || '',
-                        detail: fRow[1] || '',
-                        amount: fRow[2] || 0,
-                        payMethod: fRow[3] || '',
-                        receipt: fRow[4] || '',
-                        active: fRow[5] !== 'N' // 기본 활성화 ('N'일 때만 false)
-                    });
-                }
-            }
-        }
-
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'success',
-            expenses: expenses,
-            fixedExpenses: fixedExpenses
-        })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'error',
-            error: err.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-/**
- * 운영비 관리 대장 저장 (POST)
- * - payload.expenses: 운영비 데이터 배열
- * - payload.fixedExpenses: 고정지출 설정 배열 (선택사항)
- */
-function handleExpensesUpdate(payload) {
-    try {
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-
-        // 1. 운영비 저장
-        var sheet = spreadsheet.getSheetByName('운영비 관리 대장');
-        if (!sheet) sheet = spreadsheet.getSheetByName('운영비관리');
-        if (!sheet) {
-            sheet = spreadsheet.insertSheet('운영비 관리 대장');
-            var headers = ['No', '날짜', '대분류', '상세내역', '금액', '결제수단', '증빙자료', '비고'];
-            sheet.appendRow(headers);
-            var headerRange = sheet.getRange(1, 1, 1, headers.length);
-            headerRange.setBackground('#4CAF50');
-            headerRange.setFontColor('#ffffff');
-            headerRange.setFontWeight('bold');
-            sheet.setFrozenRows(1);
-        }
-
-        var expenses = payload.expenses || [];
-
-        // 기존 데이터 삭제 (헤더 제외)
-        var lastRow = sheet.getLastRow();
-        if (lastRow > 1) {
-            sheet.getRange(2, 1, lastRow - 1, 8).clearContent();
-        }
-
-        // 새 데이터 입력
-        if (expenses.length > 0) {
-            var newData = expenses.map(function (exp, idx) {
-                return [
-                    idx + 1,
-                    exp.date || '',
-                    exp.category || '',
-                    exp.detail || '',
-                    exp.amount || 0,
-                    exp.payMethod || '',
-                    exp.receipt || '',
-                    exp.memo || ''
-                ];
-            });
-            sheet.getRange(2, 1, newData.length, 8).setValues(newData);
-        }
-
-        // 2. 고정지출 설정 저장 (있는 경우)
-        if (payload.fixedExpenses && payload.fixedExpenses.length > 0) {
-            var fixedSheet = spreadsheet.getSheetByName('고정지출 설정');
-            if (!fixedSheet) {
-                fixedSheet = spreadsheet.insertSheet('고정지출 설정');
-                // [수정] 대분류, 상세내역, 월 고정금액, 결제수단, 증빙자료, 활성화
-                var fixedHeaders = ['대분류', '상세내역', '월 고정금액', '결제수단', '증빙자료', '활성화'];
-                fixedSheet.appendRow(fixedHeaders);
-                var fHeaderRange = fixedSheet.getRange(1, 1, 1, fixedHeaders.length);
-                fHeaderRange.setBackground('#FF9800');
-                fHeaderRange.setFontColor('#ffffff');
-                fHeaderRange.setFontWeight('bold');
-                fixedSheet.setFrozenRows(1);
-            }
-
-            // 기존 고정지출 삭제
-            var fLastRow = fixedSheet.getLastRow();
-            if (fLastRow > 1) {
-                fixedSheet.getRange(2, 1, fLastRow - 1, 6).clearContent();
-            }
-
-            // 새 고정지출 입력
-            var fixedData = payload.fixedExpenses.map(function (f) {
-                return [
-                    f.category || '',
-                    f.detail || f.itemName || '', // itemName -> detail로 명칭 변경 대응
-                    f.amount || 0,
-                    f.payMethod || '',
-                    f.receipt || '', // 증빙자료 추가
-                    f.active !== false ? 'Y' : 'N'
-                ];
-            });
-            fixedSheet.getRange(2, 1, fixedData.length, 6).setValues(fixedData);
-        }
-
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'success',
-            message: '운영비가 저장되었습니다.',
-            count: expenses.length
-        })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            result: 'error',
-            error: err.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-// ==========================================
-// 7. 고객 상태 자동 갱신 (공사기간/A/S 기간 기반)
-// ==========================================
-
-/**
- * 상태 자동 갱신 규칙:
- * - 오늘 < 공사시작일 → 상태 유지 (또는 "공사예정")
- * - 공사시작일 ≤ 오늘 ≤ 공사종료일 → 상태 = "공사중"
- * - 공사종료일 < 오늘 ≤ A/S종료일 → 상태 = "A/S기간"
- * - 오늘 > A/S종료일 → 상태 = "A/S 만료"
- */
-function updateCustomerStatusByDate() {
-    try {
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var sheet = spreadsheet.getSheetByName('계약완료');
-        if (!sheet) {
-            console.log('[상태갱신] 계약완료 시트가 없습니다.');
-            return { updated: 0, checked: 0, error: null };
-        }
-
-        var lastRow = sheet.getLastRow();
-        if (lastRow < 2) {
-            console.log('[상태갱신] 데이터가 없습니다.');
-            return { updated: 0, checked: 0, error: null };
-        }
-
-        // 헤더 읽기
-        var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-        var headerMap = {};
-        headers.forEach(function (h, i) {
-            headerMap[String(h).trim()] = i;
-        });
-
-        // 필수 컬럼 인덱스
-        var IDX_STATUS = headerMap['상태'];
-        var IDX_CONSTRUCTION = headerMap['공사기간'];
-        var IDX_AS = headerMap['A/S 기간'];
-
-        if (IDX_STATUS === undefined || IDX_CONSTRUCTION === undefined) {
-            console.log('[상태갱신] 필수 컬럼이 없습니다. 상태:', IDX_STATUS, '공사기간:', IDX_CONSTRUCTION);
-            return { updated: 0, checked: 0, error: '필수 컬럼 없음' };
-        }
-
-        var data = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-        var today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        var updatedCount = 0;
-        var checkedCount = 0;
-
-        for (var i = 0; i < data.length; i++) {
-            var row = data[i];
-            var currentStatus = String(row[IDX_STATUS] || '').trim();
-            var constructionPeriod = String(row[IDX_CONSTRUCTION] || '');
-            var asEndDateStr = String(row[IDX_AS] || '');
-
-            // 공사기간 파싱 (형식: "YYYY.MM.DD ~ YYYY.MM.DD" 또는 "YYYY-MM-DD ~ YYYY-MM-DD")
-            var startDate = null;
-            var endDate = null;
-
-            if (constructionPeriod) {
-                var cleanPeriod = constructionPeriod.replace(/\s+/g, '');
-                var parts = cleanPeriod.split('~');
-                if (parts.length >= 1 && parts[0]) {
-                    startDate = parseFlexDate(parts[0]);
-                }
-                if (parts.length >= 2 && parts[1]) {
-                    endDate = parseFlexDate(parts[1]);
-                }
-            }
-
-            // A/S 종료일 파싱
-            var asEndDate = null;
-            if (asEndDateStr) {
-                asEndDate = parseFlexDate(asEndDateStr);
-            }
-
-            // 필수 날짜 없으면 스킵 (상태 유지)
-            if (!startDate || !endDate) {
-                continue;
-            }
-
-            checkedCount++;
-            var newStatus = '';
-
-            // 상태 결정 로직
-            if (today < startDate) {
-                // 공사 시작 전 → 상태 유지 (기존 상태 그대로)
-                continue;
-            } else if (today >= startDate && today <= endDate) {
-                // 공사중
-                newStatus = '공사중';
-            } else if (today > endDate) {
-                // 공사 완료 후
-                if (asEndDate && today <= asEndDate) {
-                    // A/S 기간 중
-                    newStatus = 'A/S기간';
-                } else if (asEndDate && today > asEndDate) {
-                    // A/S 기간 만료
-                    newStatus = 'A/S 만료';
-                } else {
-                    // A/S 종료일 정보 없으면 공사완료 처리
-                    newStatus = '공사완료';
-                }
-            }
-
-            // 상태가 변경되어야 하고 현재 상태와 다를 때만 업데이트
-            if (newStatus && newStatus !== currentStatus) {
-                // 시트에 업데이트 (행 번호 = i + 2)
-                sheet.getRange(i + 2, IDX_STATUS + 1).setValue(newStatus);
-                updatedCount++;
-                console.log('[상태갱신] 행 ' + (i + 2) + ': "' + currentStatus + '" → "' + newStatus + '"');
-            }
-        }
-
-        console.log('[상태갱신] 완료 - 확인: ' + checkedCount + '건, 업데이트: ' + updatedCount + '건');
-        return { updated: updatedCount, checked: checkedCount, error: null };
-
-    } catch (err) {
-        console.error('[상태갱신] 오류:', err);
-        return { updated: 0, checked: 0, error: err.toString() };
-    }
-}
-
-/**
- * 다양한 날짜 형식 파싱 (YYYY.MM.DD, YYYY-MM-DD, YYYY/MM/DD)
- */
-function parseFlexDate(str) {
-    if (!str) return null;
-
-    var cleaned = String(str).trim();
-
-    // Date 객체가 이미 들어온 경우
-    if (str instanceof Date) {
-        return str;
-    }
-
-    // 숫자(타임스탬프)인 경우
-    if (!isNaN(str) && str > 10000000) {
-        return new Date(str);
-    }
-
-    // 문자열 형식 파싱
-    // 점, 대시, 슬래시 모두 지원
-    var normalized = cleaned.replace(/\./g, '-').replace(/\//g, '-');
-
-    // YYYY-MM-DD 형식 체크
-    var match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (match) {
-        var d = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
-        d.setHours(0, 0, 0, 0);
-        return d;
-    }
-
-    // 그냥 Date 파싱 시도
-    var parsed = new Date(cleaned);
-    if (!isNaN(parsed.getTime())) {
-        parsed.setHours(0, 0, 0, 0);
-        return parsed;
-    }
-
-    return null;
-}
-
-/**
- * 매일 자동 실행 트리거 설정 (00:10 KST)
- * 이 함수를 한 번 수동 실행하면 트리거가 설치됩니다.
- */
-function setupDailyStatusTrigger() {
-    // 기존 트리거 제거
-    removeDailyStatusTrigger();
-
-    // 새 트리거 설정 (매일 00:00~01:00 사이 실행)
-    ScriptApp.newTrigger('updateCustomerStatusByDate')
-        .timeBased()
-        .atHour(0)      // 00시
-        .nearMinute(10) // 약 10분
-        .everyDays(1)   // 매일
-        .inTimezone('Asia/Seoul')
-        .create();
-
-    console.log('✅ 상태 자동 갱신 트리거가 설치되었습니다. (매일 00:10 KST)');
-    return '트리거 설치 완료';
-}
-
-/**
- * 상태 자동 갱신 트리거 제거
- */
-function removeDailyStatusTrigger() {
-    var triggers = ScriptApp.getProjectTriggers();
-    var removed = 0;
-
-    triggers.forEach(function (trigger) {
-        if (trigger.getHandlerFunction() === 'updateCustomerStatusByDate') {
-            ScriptApp.deleteTrigger(trigger);
-            removed++;
-        }
-    });
-
-    if (removed > 0) {
-        console.log('🗑️ 기존 트리거 ' + removed + '개 제거됨');
-    }
-    return removed + '개 제거됨';
-}
-
-/**
- * 수동 테스트용 함수 - 상태 갱신 결과 확인
- */
-function testStatusUpdate() {
-    var result = updateCustomerStatusByDate();
-    console.log('테스트 결과:', JSON.stringify(result));
-
-    if (result.error) {
-        SpreadsheetApp.getUi().alert('오류 발생: ' + result.error);
-    } else {
-        SpreadsheetApp.getUi().alert(
-            '상태 자동 갱신 완료!\n' +
-            '- 확인: ' + result.checked + '건\n' +
-            '- 업데이트: ' + result.updated + '건'
-        );
-    }
-    return result;
-}
-
-// ==========================================
-// 작업 기록 (Action Log) 관리
-// ==========================================
-
-/**
- * 작업 기록 저장 (POST)
- */
-function handleLogUserAction(payload) {
-    var lock = LockService.getScriptLock();
-    // 로깅은 중요하지만 메인 프로세스를 막으면 안 되므로 짧게 대기
-    try {
-        if (!lock.tryLock(3000)) {
-            // 락 획득 실패 시 에러보다는 그냥 패스하거나 에러 로그
-            console.error('Lock failed for logging');
-            return ContentService.createTextOutput(JSON.stringify({ result: "error", error: "Lock failed" })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        var sheet = getOrCreateLogSheet();
-
-        var timestamp = Utilities.formatDate(new Date(), "GMT+9", "yyyy-MM-dd HH:mm");
-        var adminId = payload.adminId || 'Unknown';
-        var actionType = payload.actionType || 'Unknown';
-        var detail = payload.detail || '';
-
-        // 데이터 추가: [일시, 작업자ID, 구분, 상세내용]
-        sheet.appendRow([timestamp, adminId, actionType, detail]);
-
-        return ContentService.createTextOutput(JSON.stringify({ result: "success" })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (e) {
-        return ContentService.createTextOutput(JSON.stringify({ result: "error", error: e.toString() })).setMimeType(ContentService.MimeType.JSON);
-    } finally {
-        lock.releaseLock();
-    }
-}
-
-/**
- * 작업 기록 조회 (GET)
- * 최근 50건 반환 (역순)
- */
-function handleGetActionLogs(e) {
-    try {
-        var sheet = getOrCreateLogSheet();
-        var lastRow = sheet.getLastRow();
-
-        if (lastRow < 2) {
-            return ContentService.createTextOutput(JSON.stringify({ success: true, logs: [] })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        // 최근 50건만 가져오기
-        var limit = 50;
-        var startRow = Math.max(2, lastRow - limit + 1);
-        var numRows = lastRow - startRow + 1;
-
-        if (numRows <= 0) {
-            return ContentService.createTextOutput(JSON.stringify({ success: true, logs: [] })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        var data = sheet.getRange(startRow, 1, numRows, 4).getValues();
-
-        // 역순 정렬 (최신순)
-        data.reverse();
-
-        // 객체 배열로 변환
-        var logs = data.map(function (row) {
-            const date = new Date(row[0]);
-            // 날짜 객체인 경우 포맷팅
-            const ts = (row[0] instanceof Date)
-                ? Utilities.formatDate(row[0], "GMT+9", "yyyy-MM-dd HH:mm")
-                : row[0];
-
-            return {
-                timestamp: ts,
-                adminId: row[1],
-                actionType: row[2],
-                detail: row[3]
-            };
-        });
-
-        return ContentService.createTextOutput(JSON.stringify({ success: true, logs: logs })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (e) {
-        return ContentService.createTextOutput(JSON.stringify({ success: false, error: e.toString() })).setMimeType(ContentService.MimeType.JSON);
-    }
-}
-
-/**
- * 작업기록 시트 가져오기 또는 생성
- */
-function getOrCreateLogSheet() {
-    var ss = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-    var sheet = ss.getSheetByName(LOG_SHEET_NAME);
-
-    if (!sheet) {
-        sheet = ss.insertSheet(LOG_SHEET_NAME);
-        // 헤더 설정
-        sheet.getRange(1, 1, 1, 4).setValues([['일시', '작업자', '구분', '상세내용']]);
-        sheet.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#f3f3f3');
-        sheet.setColumnWidth(1, 150); // 일시
-        sheet.setColumnWidth(2, 100); // 작업자
-        sheet.setColumnWidth(3, 120); // 구분
-        sheet.setColumnWidth(4, 400); // 상세내용
-        sheet.setFrozenRows(1);
-    }
-
-    return sheet;
-}
-
-/**
- * [DISABLED] 공정별 체크리스트 마스터 데이터 업데이트
- * 마스터 데이터 정합성을 위해 API를 통한 쓰기 권한이 제거되었습니다.
- */
-function handleChecklistUpdate(payload) {
-    return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        error: 'Master DB (Checklist) is read-only via API.'
-    })).setMimeType(ContentService.MimeType.JSON);
-}
-
-// 원본 로직 보존
-/*
-function handleChecklistUpdate_ORIGINAL(payload) {
-    try {
-        Logger.log('[Checklist Update] Started');
-        Logger.log('Admin ID: ' + (payload.adminId || 'unknown'));
-
-        var newData = payload.data;
-        if (!newData || !Array.isArray(newData)) {
-            throw new Error('유효한 데이터가 아닙니다.');
-        }
-
-        var ss = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var sheet = ss.getSheetByName('공정별체크리스트');
-
-        // 시트가 없으면 생성 (헤더 포함)
-        if (!sheet) {
-            sheet = ss.insertSheet('공정별체크리스트');
-        }
-
-        // 헤더 정의
-        var headers = ['번호', '항목', '내용', '진행단계', '분류', '비고'];
-
-        // 기존 데이터 클리어 (헤더 제외하고 데이터만 교체하거나, 전체 교체)
-        // 안전하게 전체 클리어 후 다시 쓰기
-        sheet.clear();
-
-        // 2D 배열로 변환
-        var values = [headers];
-        newData.forEach(function (item) {
-            var row = [
-                item.번호 || item.no || '',
-                item.항목 || item.title || '',
-                item.내용 || item.content || '',
-                item.진행단계 || item.stage || '',
-                item.분류 || item.category || '',
-                item.비고 || item.note || ''
-            ];
-            values.push(row);
-        });
-
-        // 데이터 쓰기
-        if (values.length > 0) {
-            sheet.getRange(1, 1, values.length, values[0].length).setValues(values);
-        }
-
-        // 서식 적용 (옵션)
-        sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#efefef');
-        sheet.setFrozenRows(1);
-
-        Logger.log('[Checklist Update] Saved ' + (values.length - 1) + ' rows.');
-
-        return ContentService.createTextOutput(JSON.stringify({
-            success: true,
-            result: 'success',
-            count: values.length - 1,
-            sheetName: '공정별체크리스트',
-            updatedAt: new Date().toISOString()
-        })).setMimeType(ContentService.MimeType.JSON);
-
-    } catch (e) {
-        // ...
-    }
-}
-*/
-
-// ==========================================
-// 15. Excel Export (Read-Only Report)
-// ==========================================
-
-/**
- * Excel 데이터 내보내기 핸들러
- * Google Sheets 데이터를 읽어 Excel 형식으로 반환
- * @param {Object} e - 요청 파라미터
- */
-function handleExcelExport(e) {
-    try {
-        var customerId = e.parameter.customerId; // 특정 고객 또는 'all'
-        var spreadsheet = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
-        var customerSheet = spreadsheet.getSheetByName('고객관리_견적서');
-
-        if (!customerSheet || customerSheet.getLastRow() < 2) {
-            return ContentService.createTextOutput(JSON.stringify({
-                success: false,
-                error: '고객 데이터가 없습니다.'
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        // 고객 데이터 로드
-        var customerData = customerSheet.getDataRange().getValues();
-        var customers = [];
-
-        for (var i = 1; i < customerData.length; i++) {
-            var row = customerData[i];
-            if (!row[0]) continue;
-
-            var customer = buildCustomerFromRow(row);
-
-            // JSON 데이터가 있으면 파싱
-            if (row[17]) {
-                try {
-                    var jsonData = JSON.parse(row[17]);
-                    customer = Object.assign(customer, jsonData);
-                } catch (err) { }
-            }
-
-            // 특정 고객만 필터링
-            if (customerId && customerId !== 'all' && customer.customerId !== customerId) {
-                continue;
-            }
-
-            customers.push(customer);
-        }
-
-        if (customers.length === 0) {
-            return ContentService.createTextOutput(JSON.stringify({
-                success: false,
-                error: '해당 고객을 찾을 수 없습니다.'
-            })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        // 임시 스프레드시트 생성
-        var today = Utilities.formatDate(new Date(), 'GMT+9', 'yyyyMMdd');
-        var tempSpreadsheet = SpreadsheetApp.create('디자인지그_고객데이터_' + today);
-        var tempFile = DriveApp.getFileById(tempSpreadsheet.getId());
-
-        try {
-            // 기본 시트 삭제 (나중에 실제 시트 추가 후)
-            var sheets = tempSpreadsheet.getSheets();
-
-            // 각 고객별 시트 생성
-            customers.forEach(function (cust, idx) {
-                // 시트 이름 생성: 디자인지그_고객명_현장명_계약일
-                var contractDateStr = '';
-                if (cust.contractDate) {
+        const existingBlocks = callNotionAPI('/blocks/' + pageId + '/children', 'GET');
+        
+        if (existingBlocks.results && existingBlocks.results.length > 0) {
+            // 역순으로 탐색
+            for (let i = existingBlocks.results.length - 1; i >= 0; i--) {
+                const block = existingBlocks.results[i];
+                let shouldDelete = false;
+
+                // 자동 생성된 블록 식별 (구분선, 공정 스케줄 헤더, 유의사항 헤더 등)
+                if (block.type === 'divider') shouldDelete = true;
+                if (block.type === 'heading_2' && block.heading_2?.rich_text?.[0]?.plain_text?.includes('공정 스케줄')) shouldDelete = true;
+                if (block.type === 'heading_3' && block.heading_3?.rich_text?.[0]?.plain_text?.includes('유의사항')) shouldDelete = true;
+                
+                // 만약 이 블록이 삭제 대상이라면
+                if (shouldDelete) {
                     try {
-                        var d = new Date(cust.contractDate);
-                        if (!isNaN(d.getTime())) {
-                            contractDateStr = Utilities.formatDate(d, 'GMT+9', 'yyyyMMdd');
-                        }
-                    } catch (e) { }
+                        callNotionAPI('/blocks/' + block.id, 'DELETE');
+                    } catch (e) {
+                        // 이미 삭제됨 등 무시
+                    }
                 }
-                var sheetName = ('디자인지그_' + (cust.clientName || '고객') + '_' + (cust.projectName || '') + (contractDateStr ? '_' + contractDateStr : ''))
-                    .replace(/[\\/:*?\[\]]/g, '')
-                    .substring(0, 31) || ('고객' + (idx + 1));
-
-                var sheet = tempSpreadsheet.insertSheet(sheetName);
-                var rowNum = 1;
-
-                // ========== 1. 고객 기본 정보 ==========
-                sheet.getRange(rowNum, 1).setValue('【 고객 기본 정보 】').setFontWeight('bold').setBackground('#e8f0fe');
-                rowNum++;
-                var basicInfo = [
-                    ['고객ID', cust.customerId || '-'],
-                    ['고객명', cust.clientName || '-'],
-                    ['연락처', cust.clientPhone || '-'],
-                    ['이메일', cust.clientEmail || '-'],
-                    ['현장명', cust.projectName || '-'],
-                    ['현장주소', cust.siteAddress || cust.clientAddress || '-'],
-                    ['계약일', cust.contractDate || '-'],
-                    ['공사기간', cust.constructionPeriod || '-'],
-                    ['상태', cust.status || '-'],
-                    ['담당자', cust.manager || '-']
-                ];
-                sheet.getRange(rowNum, 1, basicInfo.length, 2).setValues(basicInfo);
-                // 첫 번째 열 (라벨) 스타일링
-                sheet.getRange(rowNum, 1, basicInfo.length, 1).setFontWeight('bold').setBackground('#f8f9fa');
-                rowNum += basicInfo.length + 1;
-
-                // ========== 2. 공정별 체크리스트 (필수) ==========
-                sheet.getRange(rowNum, 1).setValue('【 공정별 체크리스트 】').setFontWeight('bold').setBackground('#e8f0fe');
-                rowNum++;
-                var checklistHeaders = ['공정명', '체크여부', '메모', '완료일'];
-                sheet.getRange(rowNum, 1, 1, checklistHeaders.length).setValues([checklistHeaders]).setFontWeight('bold').setBackground('#f8f9fa');
-                rowNum++;
-
-                var checklist = cust.checklist || cust.checklistItems || [];
-                if (checklist.length > 0) {
-                    checklist.forEach(function (item) {
-                        var checkStatus = item.checked === true || item.checked === 'true' || item.status === 'completed' ? 'O' : 'X';
-                        sheet.getRange(rowNum, 1, 1, 4).setValues([[
-                            item.name || item.stepName || item.process || '-',
-                            checkStatus,
-                            item.memo || item.note || item.remarks || '-',
-                            item.completedDate || item.endDate || item.date || '-'
-                        ]]);
-                        rowNum++;
-                    });
-                } else {
-                    // 데이터 없음 표시
-                    sheet.getRange(rowNum, 1, 1, 4).setValues([['(데이터 없음)', '-', '-', '-']]).setFontColor('#999999');
-                    rowNum++;
-                }
-                rowNum++;
-
-                // ========== 3. 공사 스케줄 ==========
-                sheet.getRange(rowNum, 1).setValue('【 공사 스케줄 】').setFontWeight('bold').setBackground('#e8f0fe');
-                rowNum++;
-                var scheduleHeaders = ['공정', '세부공정', '시작일', '종료일', '상태'];
-                sheet.getRange(rowNum, 1, 1, scheduleHeaders.length).setValues([scheduleHeaders]).setFontWeight('bold').setBackground('#f8f9fa');
-                rowNum++;
-
-                var schedules = cust.schedules || cust.schedule || [];
-                if (schedules.length > 0) {
-                    schedules.forEach(function (s) {
-                        sheet.getRange(rowNum, 1, 1, 5).setValues([[
-                            s.category || s.process || '-',
-                            s.name || s.stepName || s.detail || '-',
-                            s.start || s.startDate || '-',
-                            s.end || s.endDate || '-',
-                            s.status || '-'
-                        ]]);
-                        rowNum++;
-                    });
-                } else {
-                    sheet.getRange(rowNum, 1, 1, 5).setValues([['(데이터 없음)', '-', '-', '-', '-']]).setFontColor('#999999');
-                    rowNum++;
-                }
-                rowNum++;
-
-                // ========== 4. A/S 관리 기록 ==========
-                sheet.getRange(rowNum, 1).setValue('【 A/S 관리 기록 】').setFontWeight('bold').setBackground('#e8f0fe');
-                rowNum++;
-                var asHeaders = ['카테고리', '브랜드', '품목', '보증기간', '비고'];
-                sheet.getRange(rowNum, 1, 1, asHeaders.length).setValues([asHeaders]).setFontWeight('bold').setBackground('#f8f9fa');
-                rowNum++;
-
-                var asList = cust.as_list || cust.asList || cust.asItems || [];
-                if (asList.length > 0) {
-                    asList.forEach(function (a) {
-                        sheet.getRange(rowNum, 1, 1, 5).setValues([[
-                            a.category || '-',
-                            a.brand || '-',
-                            a.item || a.itemName || '-',
-                            a.warranty || a.warrantyPeriod || '-',
-                            a.note || a.remarks || '-'
-                        ]]);
-                        rowNum++;
-                    });
-                } else {
-                    sheet.getRange(rowNum, 1, 1, 5).setValues([['(데이터 없음)', '-', '-', '-', '-']]).setFontColor('#999999');
-                    rowNum++;
-                }
-
-                // 컬럼 너비 자동 조정
-                sheet.autoResizeColumns(1, 5);
-            });
-
-            // 기본 빈 시트 삭제
-            var allSheets = tempSpreadsheet.getSheets();
-            if (allSheets.length > 1 && allSheets[0].getName() === 'Sheet1') {
-                tempSpreadsheet.deleteSheet(allSheets[0]);
             }
+        }
+    } catch (e) {
+        console.log('기존 블록 조회 실패 (무시):', e.toString());
+    }
 
-            // xlsx로 변환 (export URL 사용)
-            var exportUrl = 'https://docs.google.com/spreadsheets/d/' + tempSpreadsheet.getId() + '/export?format=xlsx';
+    // 2. 유의사항(Callout) 추가
+    try {
+        const noteBlocks = [];
+        noteBlocks.push({ type: 'divider', divider: {} }); // 구분선
 
-            // 다운로드 URL 반환 (직접 다운로드용)
-            // 또는 base64로 반환
-            var xlsxBlob = UrlFetchApp.fetch(exportUrl, {
-                headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() }
-            }).getBlob();
-
-            var base64Data = Utilities.base64Encode(xlsxBlob.getBytes());
-            var fileName = 'designjig_고객데이터_' + today + '.xlsx';
-
-            // 임시 파일 삭제
-            tempFile.setTrashed(true);
-
-            return ContentService.createTextOutput(JSON.stringify({
-                result: 'success', // User request strict key
-                success: true,     // Backward compatibility
-                fileName: fileName,
-                customerCount: customers.length,
-                mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                data: base64Data
-            })).setMimeType(ContentService.MimeType.JSON);
-
-        } catch (innerErr) {
-            // 에러 시 임시 파일 정리
-            try { tempFile.setTrashed(true); } catch (e) { }
-            throw innerErr;
+        if (specialNote && String(specialNote).trim() !== '') {
+            noteBlocks.push({
+                type: 'heading_3',
+                heading_3: { rich_text: [{ text: { content: '🔔 유의사항 (특약사항)' } }] }
+            });
+            
+            noteBlocks.push({
+                type: 'callout',
+                callout: {
+                    rich_text: [{ text: { content: String(specialNote) } }],
+                    icon: { emoji: '💡' },
+                    color: 'gray_background'
+                }
+            });
+            
+            // 여백
+            noteBlocks.push({ type: 'paragraph', paragraph: { rich_text: [] } });
         }
 
-    } catch (err) {
-        return ContentService.createTextOutput(JSON.stringify({
-            success: false,
-            error: err.toString(),
-            stack: err.stack
-        })).setMimeType(ContentService.MimeType.JSON);
+        if (noteBlocks.length > 0) {
+            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: noteBlocks });
+        }
+    } catch (e) {
+        console.error('유의사항 블록 추가 실패:', e.toString());
+    }
+
+    // 3. 스케줄 테이블 추가
+    try {
+        if (scheduleRows && scheduleRows.length > 0) {
+            const tableBlocks = [];
+            
+            // 제목
+            tableBlocks.push({
+                type: 'heading_2',
+                heading_2: { rich_text: [{ text: { content: '📋 공정 스케줄' } }] }
+            });
+
+            const tableRows = [];
+
+            // [헤더 행]
+            tableRows.push({
+                type: 'table_row',
+                table_row: {
+                    cells: [
+                        [{ type: 'text', text: { content: '공정명', annotations: { bold: true } } }],
+                        [{ type: 'text', text: { content: '기간', annotations: { bold: true } } }],
+                        [{ type: 'text', text: { content: '상태', annotations: { bold: true } } }],
+                        [{ type: 'text', text: { content: '담당/비고', annotations: { bold: true } } }]
+                    ]
+                }
+            });
+
+            // [데이터 행]
+            for (let i = 0; i < scheduleRows.length; i++) {
+                const row = scheduleRows[i];
+                
+                // 데이터 정제 (undefined/null 방지)
+                const process = (row.process || row['공정명'] || '공정 없음').toString();
+                const category = (row.category || row['대분류'] || '').toString();
+                const startDate = (row.startDate || row['시작일'] || '').toString();
+                const endDate = (row.endDate || row['종료일'] || '').toString();
+                const status = (row.status || row['상태'] || '').toString();
+                const manager = (row.manager || row['담당자'] || '').toString();
+                
+                // 날짜 표시
+                let dateStr = '';
+                if (startDate) {
+                    const s = startDate.length >= 10 ? startDate.substring(5) : startDate;
+                    const e = endDate.length >= 10 ? endDate.substring(5) : endDate;
+                    dateStr = (s === e || !e) ? s : `${s}~${e}`;
+                }
+
+                // 공정명 표시
+                const processName = category ? `[${category}] ${process}` : process;
+
+                // 상태 이모지
+                let statusText = status;
+                if (status === '완료') statusText = '✅ 완료';
+                else if (status === '진행중') statusText = '🔄 진행중';
+                else if (status === '지연') statusText = '⚠️ 지연';
+                else if (status === '예정') statusText = '🗓️ 예정';
+
+                tableRows.push({
+                    type: 'table_row',
+                    table_row: {
+                        cells: [
+                            [{ type: 'text', text: { content: processName || '-' } }],
+                            [{ type: 'text', text: { content: dateStr || '-' } }],
+                            [{ type: 'text', text: { content: statusText || '-' } }],
+                            [{ type: 'text', text: { content: manager || '-' } }]
+                        ]
+                    }
+                });
+            }
+
+            // 테이블 블록 감싸기
+            tableBlocks.push({
+                type: 'table',
+                table: {
+                    table_width: 4,
+                    has_column_header: true,
+                    has_row_header: false,
+                    children: tableRows
+                }
+            });
+
+            callNotionAPI('/blocks/' + pageId + '/children', 'PATCH', { children: tableBlocks });
+            console.log('✅ Schedule table added successfully');
+        }
+    } catch (e) {
+        console.error('스케줄 테이블 추가 실패:', e.toString());
     }
 }
-
-
-

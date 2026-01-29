@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile UI Test - Schedule & Checklist</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        /* Base Reset */
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f5f5f7;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Shared Mobile Styles */
+        .mobile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 16px 12px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .mobile-card-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .mobile-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .chip-green {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .chip-category {
+            background: #f0f0f0;
+            color: #666;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .mobile-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1d1d1f;
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        /* No truncation */
+        .mobile-date-text {
+            font-size: 12px;
+            color: #1d1d1f;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
+        .mobile-edit-field {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            color: #333;
+            padding: 4px 0;
+            outline: none;
+        }
+
+        .mobile-filter-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #f5f5f7;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            overflow-x: auto;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .mobile-filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: white;
+            border: 1px solid #d2d2d7;
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .mobile-filter-chip.active {
+            background: #1d1d1f;
+            color: white;
+            border-color: #1d1d1f;
+            font-weight: 600;
+        }
+
+        .header {
+            padding: 20px 16px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #1d1d1f;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h2>공사 스케줄 관리 [TEST]</h2>
+    </div>
+    <div id="scheduleMobileContainer"></div>
+
+    <div style="height: 40px; background: #eee;"></div>
+
+    <div class="header">
+        <h2>공정별 체크리스트 [TEST]</h2>
+    </div>
+    <div id="checklistMobileContainer"></div>
+
+    <script>
+        // --- 1. MOCK DATA ---
+        const scheduleRows = [
+            { name: "철거 공사", start: "2026-01-20", end: "2026-01-22", category: "철거", inCharge: "김철수", checkPoint: "소음 주의", memo: "오전 8시 시작" }, // Passed (Completed)
+            { name: "목공 기초", start: "2026-01-23", end: "2026-01-25", category: "목공", inCharge: "이목수", checkPoint: "자재 확인", memo: "" }, // Current/Future
+            { name: "전기 배선", start: "2026-01-24", end: "2026-01-24", category: "전기", inCharge: "박전기", checkPoint: "", memo: "콘센트 위치 재확인" }
+        ];
+
+        const checklistMasterData = [
+            { 번호: 1, 항목: "철거 공사", 카테고리: "철거", 진행단계: "인테리어 시작 전", 내용: "", 비고: "" },
+            { 번호: 2, 항목: "샷시 발주", 카테고리: "샷시", 진행단계: "인테리어 시작 전", 내용: "", 비고: "사이즈 실측 완료" },
+            { 번호: 3, 항목: "목공 기초", 카테고리: "목공", 진행단계: "공사 중", 내용: "석고보드 2P", 비고: "" },
+            { 번호: 4, 항목: "전기 배선", 카테고리: "전기", 진행단계: "공사 중", 내용: "", 비고: "" }
+        ];
+
+        const customerChecklistData = {
+            1: { checked: true, content: "완료됨", remarks: "" },
+            2: { checked: false, content: "", remarks: "발주 대기" }
+        };
+
+        // --- 2. HELPERS ---
+        function formatMobileDateRange(start, end) {
+            if (!start || !end) return '';
+            const s = new Date(start); const e = new Date(end);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
+            // Format: 1.22 (Mon)
+            const fmt = (d) => `${d.getMonth() + 1}.${d.getDate()}`;
+            if (s.getTime() === e.getTime()) return fmt(s);
+            return `${fmt(s)} ~ ${fmt(e)}`;
+        }
+
+        function getCategoryColor(category) {
+            // Simplified Palette
+            const palette = {
+                '철거': { bg: '#FFE2DD', text: '#5D1715' },
+                '목공': { bg: '#EEE0DA', text: '#442A1E' },
+                '전기': { bg: '#FDECC8', text: '#402C1B' },
+                '샷시': { bg: '#E3E2E0', text: '#32302C' }
+            };
+            return palette[category] || { bg: '#F1F1EF', text: '#37352F' };
+        }
+
+        // --- 3. RENDER SCHEDULE ---
+        function renderScheduleTable() {
+            const container = document.getElementById('scheduleMobileContainer');
+            container.innerHTML = scheduleRows.map(row => {
+                const dateStr = formatMobileDateRange(row.start, row.end);
+
+                // Status Logic
+                const now = new Date(); now.setHours(0, 0, 0, 0);
+                let isComplete = false;
+                if (row.end) {
+                    let eDate = new Date(row.end); eDate.setHours(0, 0, 0, 0);
+                    if (now > eDate) isComplete = true; // Ends in past
+                }
+                const statusBadge = isComplete ? `<div class="mobile-chip chip-green">✅ 완료</div>` : ``;
+
+                return `
+                <div class="mobile-card">
+                    <div class="mobile-card-row" style="margin-bottom: 2px;">
+                        <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
+                            ${statusBadge}
+                            <div class="mobile-card-title">${row.name || '공정명 없음'}</div>
+                        </div>
+                        <div class="mobile-date-text">${dateStr}</div>
+                    </div>
+                    
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 6px;">
+                        <div class="mobile-chip chip-category">${row.category || '미분류'}</div>
+                        ${row.inCharge ? `<div class="mobile-chip chip-category" style="background:#f5f5f7; color:#333;">👤 ${row.inCharge}</div>` : ''}
+                    </div>
+                    ${row.memo ? `<div style="font-size:12px; color:#86868b;">✏️ ${row.memo}</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        // --- 4. RENDER CHECKLIST ---
+        let mobileChecklistStatusFilter = 'all';
+        function setMobileChecklistFilter(status) {
+            mobileChecklistStatusFilter = status;
+            renderChecklistItems();
+        }
+
+        function toggleChecklistItem(id) {
+            console.log(`Toggled item ${id}`);
+            // Mock toggle for UI feedback
+            const el = document.getElementById(`chk-${id}`);
+            if (el) el.checked = !el.checked;
+        }
+        function updateChecklistField(id, field, val) { console.log(`Updated ${id} ${field} to ${val}`); }
+
+        function renderChecklistItems() {
+            const container = document.getElementById('checklistMobileContainer');
+
+            // Filter Data
+            let filtered = checklistMasterData.filter(item => {
+                const state = customerChecklistData[item.번호] || {};
+                const isChecked = state.checked || false;
+                if (mobileChecklistStatusFilter === 'completed') return isChecked;
+                if (mobileChecklistStatusFilter === 'incomplete') return !isChecked;
+                return true;
+            });
+
+            // Filter Bar
+            const filterBar = `
+            <div class="mobile-filter-bar">
+                <button class="mobile-filter-chip ${mobileChecklistStatusFilter === 'all' ? 'active' : ''}" onclick="setMobileChecklistFilter('all')">전체</button>
+                <button class="mobile-filter-chip ${mobileChecklistStatusFilter === 'completed' ? 'active' : ''}" onclick="setMobileChecklistFilter('completed')">완료</button>
+                <button class="mobile-filter-chip ${mobileChecklistStatusFilter === 'incomplete' ? 'active' : ''}" onclick="setMobileChecklistFilter('incomplete')">미완료</button>
+            </div>`;
+
+            const listHtml = filtered.map(item => {
+                const state = customerChecklistData[item.번호] || {};
+                const isChecked = state.checked || false;
+                const userContent = state.content;
+                const userRemarks = state.remarks;
+                const catColor = getCategoryColor(item.카테고리);
+
+                // Date Link
+                const relatedSchedule = scheduleRows.find(s => s.name === item.항목);
+                const dateStr = relatedSchedule ? formatMobileDateRange(relatedSchedule.start, relatedSchedule.end) : '';
+
+                return `
+                <div class="mobile-card">
+                    <div class="mobile-card-row" style="margin-bottom:2px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                ${isChecked ? `<div class="mobile-chip chip-green" onclick="toggleChecklistItem('${item.번호}')">✅ 완료</div>` : `<input type="checkbox" id="chk-${item.번호}" style="width:20px; height:20px;">`}
+                            <div class="mobile-card-title">${item.항목}</div>
+                        </div>
+                        <div class="mobile-date-text">${dateStr}</div>
+                    </div>
+
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                        <div class="mobile-chip chip-category" style="background:${catColor.bg}; color:${catColor.text};">${item.카테고리 || '미분류'}</div>
+                        <div class="mobile-chip chip-category" style="background:#f5f5f7; color:#86868b;">${item.진행단계}</div>
+                    </div>
+                    
+                    <div style="margin-top:4px;">
+                        <input type="text" class="mobile-edit-field" value="${userContent || item.내용 || ''}" placeholder="내용 입력..." />
+                    </div>
+                    <div style="border-top:1px dashed #f0f0f0; padding-top:4px; margin-top:4px; display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#bdbdbd; margin-right:6px;">비고</span>
+                        <input type="text" class="mobile-edit-field" value="${userRemarks || item.비고 || ''}" placeholder="비고 입력" />
+                        <div style="color:#d2d2d7; font-size:12px;">✏️</div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = filterBar + listHtml;
+        }
+
+        // Init
+        renderScheduleTable();
+        renderChecklistItems();
+    </script>
+</body>
+
+</html>
