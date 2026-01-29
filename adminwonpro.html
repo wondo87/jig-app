@@ -3359,6 +3359,35 @@
         </div>
     </div>
 
+    <!-- 노션 고객 공유 모달 -->
+    <div class="admin-modal" id="notionShareModal">
+        <div class="admin-modal-content" style="max-width: 500px;">
+            <h3>📋 노션 고객 공유</h3>
+            <p style="margin-bottom: 16px; color: #666; font-size: 13px;">노션 공유 URL을 입력하면 카카오톡용 공유 메시지가 생성됩니다.</p>
+            <input type="text" id="notionShareUrlInput" placeholder="노션 공유 URL을 붙여넣으세요"
+                style="width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; margin-bottom: 16px;"
+                onkeypress="if(event.key==='Enter')generateNotionShareMessage()">
+            <div class="admin-modal-btns">
+                <button class="cancel-btn" onclick="closeNotionShareModal()">취소</button>
+                <button class="confirm-btn" onclick="generateNotionShareMessage()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 노션 공유 메시지 결과 모달 -->
+    <div class="admin-modal" id="notionShareResultModal">
+        <div class="admin-modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <h3>📋 공유 메시지 생성 완료</h3>
+            <p style="margin-bottom: 12px; color: #666; font-size: 13px;">아래 내용을 복사하여 카카오톡으로 보내세요.</p>
+            <textarea id="notionShareResultText" readonly
+                style="width: 100%; height: 400px; padding: 16px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; line-height: 1.6; resize: none; font-family: inherit; background: #f9f9f9;"></textarea>
+            <div class="admin-modal-btns" style="margin-top: 16px;">
+                <button class="cancel-btn" onclick="closeNotionShareResultModal()">닫기</button>
+                <button class="confirm-btn" onclick="copyNotionShareResult()" style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%);">📋 복사하기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 메인 레이아웃 -->
     <div class="main-layout">
         <!-- 사이드바: 고객 목록 -->
@@ -4500,6 +4529,11 @@
                                     style="background: linear-gradient(135deg, #34C759 0%, #30B753 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="스케줄 문자 보내기">
                                     💬 문자보내기
+                                </button>
+                                <button class="notion-export-btn" onclick="openNotionShareModal()"
+                                    style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="노션 고객 공유 URL 생성">
+                                    📋 노션 고객 공유
                                 </button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printSchedule(true)"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
@@ -15784,6 +15818,125 @@
                         console.log('ServiceWorker registration failed: ', err);
                     });
             });
+        }
+
+        // ==========================================
+        // [New] 노션 고객 공유 기능
+        // ==========================================
+        function openNotionShareModal() {
+            if (!currentData || !currentData.clientName) {
+                showToast('고객을 먼저 선택해주세요.', 'error');
+                return;
+            }
+            document.getElementById('notionShareUrlInput').value = '';
+            document.getElementById('notionShareModal').style.display = 'flex';
+            document.getElementById('notionShareUrlInput').focus();
+        }
+
+        function closeNotionShareModal() {
+            document.getElementById('notionShareModal').style.display = 'none';
+        }
+
+        function closeNotionShareResultModal() {
+            document.getElementById('notionShareResultModal').style.display = 'none';
+        }
+
+        function generateNotionShareMessage() {
+            const notionUrl = document.getElementById('notionShareUrlInput').value.trim();
+            if (!notionUrl) {
+                showToast('노션 공유 URL을 입력해주세요.', 'error');
+                return;
+            }
+
+            // 노션 URL 유효성 검사
+            if (!notionUrl.includes('notion.so') && !notionUrl.includes('notion.site')) {
+                showToast('올바른 노션 URL을 입력해주세요.', 'error');
+                return;
+            }
+
+            // 스케줄 정보 가져오기
+            const clientName = currentData.clientName || '';
+            const siteAddress = currentData.siteAddress || '';
+            const schPeriod = document.getElementById('schPeriod')?.textContent || '';
+            const schManager = document.querySelector('input[data-field="manager"]')?.value || '원프로 소장 (010-4650-7013)';
+            const gatePw = document.querySelector('input[data-field="gatePw"]')?.value || '';
+            const doorPw = document.querySelector('input[data-field="doorPw"]')?.value || '';
+
+            // 비밀번호 문자열 생성
+            let passwordStr = '';
+            if (gatePw && doorPw) {
+                passwordStr = `공동현관 ${gatePw} / 세대현관 ${doorPw}`;
+            } else if (gatePw) {
+                passwordStr = `공동현관 ${gatePw}`;
+            } else if (doorPw) {
+                passwordStr = `세대현관 ${doorPw}`;
+            } else {
+                passwordStr = '(미입력)';
+            }
+
+            // 카카오 공유 URL 생성
+            const encodedName = encodeURIComponent(clientName);
+            const encodedNotionUrl = encodeURIComponent(notionUrl);
+            const kakaoShareUrl = `https://www.designjig.com/api/notion?name=${encodedName}&url=${encodedNotionUrl}`;
+
+            // 메시지 생성
+            const message = `안녕하세요. 디자인지그입니다.
+공사 진행과 관련하여 아래 내용 안내드립니다.
+공사 기간 중 필요하실 때 언제든 다시 확인해 주세요.
+
+⸻
+
+■ 기본 현장 정보
+\t•\t고객명 : ${clientName}
+\t•\t현장주소 : ${siteAddress}
+\t•\t공사기간 : ${schPeriod}
+\t•\t비밀번호 : ${passwordStr}
+⸻
+
+■ 현장 담당자
+\t•\t현장소장 : ${schManager}
+\t•\t연락 가능 시간 : 평일 09:00 ~ 17:00
+
+⸻
+
+■ 공사 안내문 (노션)
+공사 관련 상세 내용은 아래 안내문에서 확인하실 수 있습니다.
+(공사 스케줄 / 공정별 체크리스트 / 자재 정보 / A/S 안내 포함)
+
+👉 공사 안내문 바로가기 : ${kakaoShareUrl}
+
+⸻
+
+■ 디자인지그 공식 채널
+시공 사례 및 관리 팁은 아래 채널에서 확인하실 수 있습니다.
+\t•\t홈페이지 : https://www.designjig.com/
+\t•\t블로그 : https://m.blog.naver.com/PostList.naver?blogId=sweet00700&tab=1
+\t•\t카페 : https://cafe.naver.com/supermanhome?iframe_url=/MyCafeIntro.nhn%3Fclubid=27635692
+\t•\t인스타그램 : https://www.instagram.com/design__jig/#
+
+⸻
+
+공사 관련 문의 사항은 언제든 편하게 연락 주시기 바랍니다.
+원활한 공사 진행을 위해 고객님의 협조에 감사드립니다.
+
+⸻
+
+디자인지그는 화려함보다 본질을 선택합니다.
+공간이 아닌 기준을 설계합니다.
+Pro. Beyond.
+디자인지그는 감이 아닌 기준으로 일합니다.`;
+
+            // 결과 모달에 표시
+            document.getElementById('notionShareResultText').value = message;
+            closeNotionShareModal();
+            document.getElementById('notionShareResultModal').style.display = 'flex';
+        }
+
+        function copyNotionShareResult() {
+            const textarea = document.getElementById('notionShareResultText');
+            textarea.select();
+            document.execCommand('copy');
+            showToast('클립보드에 복사되었습니다!', 'success');
         }
 
         // ==========================================
