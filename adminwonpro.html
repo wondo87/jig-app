@@ -4349,7 +4349,8 @@
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <!-- [수정] 저장내용불러오기 버튼만 유지 -->
-                                <button class="restore-btn no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
+                                <button class="restore-btn no-print"
+                                    onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
@@ -4424,7 +4425,8 @@
                                     </div>
                                 </div>
                                 <div style="flex: 1; min-width: 200px; display: flex; align-items: flex-end;">
-                                    <button class="btn btn-primary btn-sm no-print" onclick="showAddChecklistItemModal()"
+                                    <button class="btn btn-primary btn-sm no-print"
+                                        onclick="showAddChecklistItemModal()"
                                         style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%;"
                                         title="현재 필터 조건의 항목을 일괄 추가">
                                         ➕ 필터 항목 추가
@@ -4493,6 +4495,11 @@
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 스케줄 내보내기">
                                     📤 노션 내보내기
+                                </button>
+                                <button class="notion-export-btn" onclick="openScheduleMessageModal()"
+                                    style="background: linear-gradient(135deg, #34C759 0%, #30B753 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="스케줄 문자 보내기">
+                                    💬 문자보내기
                                 </button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printSchedule(true)"
                                     style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
@@ -9820,8 +9827,8 @@
                             if (checklistKeys.length > 0) {
                                 checklistFoundCount++;
                                 console.log('✅ [Web Debug] Customer:', customer.customerId,
-                                           '- checklistData:', checklistKeys.length, 'items',
-                                           '- sample keys:', checklistKeys.slice(0, 3));
+                                    '- checklistData:', checklistKeys.length, 'items',
+                                    '- sample keys:', checklistKeys.slice(0, 3));
                             }
 
                             // [FIX] Normalize checklistData structure
@@ -15776,6 +15783,215 @@
                     .catch(err => {
                         console.log('ServiceWorker registration failed: ', err);
                     });
+            });
+        }
+
+        // ==========================================
+        // [New] Schedule Message Generation
+        // ==========================================
+        function openScheduleMessageModal() {
+            if (!scheduleRows || scheduleRows.length === 0) {
+                showToast('생성할 스케줄 메시지가 없습니다.', 'error');
+                return;
+            }
+
+            // Modal HTML Injection (Lazy Load)
+            if (!document.getElementById('messageModal')) {
+                const modalHtml = `
+            <div id="messageModal" class="modal-overlay" style="display:none; z-index: 10000; justify-content: center; align-items: center;">
+                <div class="modal-content" style="width: 95%; max-width: 1600px; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                    <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 700;">스케줄 문자 보내기</h3>
+                            <span style="font-size: 13px; color: #666; margin-top: 4px; display:block;">총 <span id="msgTotalCount" style="color:#000; font-weight:600;">0</span>명의 담당자에게 보낼 메시지가 생성되었습니다.</span>
+                        </div>
+                        <button onclick="document.getElementById('messageModal').style.display='none'" style="background: #f0f0f0; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    </div>
+                    <div id="messageList" style="padding: 24px; overflow-y: auto; background: #f5f5f7; flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-content: start;">
+                        <!-- Message Cards will be injected here -->
+                    </div>
+                    <div style="padding: 14px; font-size: 13px; color: #666; text-align: center; background: #fff; border-top: 1px solid #eee; display:flex; justify-content:center; align-items:center; gap:6px;">
+                        <span>💡 카드를 클릭하면 내용이 복사됩니다.</span>
+                    </div>
+                </div>
+            </div>
+        `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            const messageList = document.getElementById('messageList');
+            const messages = generateScheduleMessages();
+
+            // Update Total Count
+            const countEl = document.getElementById('msgTotalCount');
+            if (countEl) countEl.textContent = messages.length;
+
+            if (messages.length === 0) {
+                messageList.innerHTML = '<div style="grid-column: 1 / -1; width:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column; padding: 40px;"><span style="font-size:48px; margin-bottom:16px;">📭</span><span>담당자가 지정된 스케줄이 없습니다.</span></div>';
+            } else {
+                messageList.innerHTML = messages.map(msg => `
+            <div class="message-card" onclick="copyMessageToClipboard(this)" data-copytext="${msg.fullText.replace(/"/g, '&quot;')}" 
+                style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;">
+                
+                <div style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+                    <span style="font-weight: 700; font-size: 16px; color:#1d1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;">${msg.cardTitle} <span style="font-size:13px; color:#86868b; font-weight:400;">(${msg.count}건)</span></span>
+                    <span class="copy-badge" style="font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;">복사하기</span>
+                </div>
+                
+                <div style="flex: 1; padding: 0; overflow-y: auto; background: #fafafa; min-height: 300px;">
+                    <div style="font-size: 13px; color: #333; line-height: 1.6; white-space: pre-wrap; padding: 20px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace;">${msg.previewText}</div>
+                </div>
+
+                <div class="hover-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.02); opacity: 0; transition: opacity 0.2s; pointer-events: none;"></div>
+            </div>
+        `).join('');
+            }
+
+            // Modal Styling Fix (ensure flex display)
+            const modal = document.getElementById('messageModal');
+            modal.style.display = 'flex';
+        }
+
+        function generateScheduleMessages() {
+            const grouped = {};
+
+            scheduleRows.forEach(row => {
+                if (!row.inCharge || !row.start) return;
+                const manager = row.inCharge.trim();
+                if (!grouped[manager]) {
+                    grouped[manager] = {
+                        rows: [],
+                        startDates: [],
+                        endDates: []
+                    };
+                }
+                grouped[manager].rows.push(row);
+                grouped[manager].startDates.push(new Date(row.start));
+                if (row.end) grouped[manager].endDates.push(new Date(row.end));
+                else grouped[manager].endDates.push(new Date(row.start));
+            });
+
+            const results = [];
+            const siteAddress = currentData.siteAddress || '주소 미입력';
+
+            const gatePwInput = document.querySelector('input[data-field="gatePw"]');
+            const doorPwInput = document.querySelector('input[data-field="doorPw"]');
+            const gatePw = gatePwInput ? gatePwInput.value : (currentData.gatePw || '');
+            const doorPw = doorPwInput ? doorPwInput.value : (currentData.doorPw || '');
+
+            Object.keys(grouped).forEach(manager => {
+                const data = grouped[manager];
+
+                // Sort rows by start date to find the earliest process
+                data.rows.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                // Determine Title
+                const earliestProcessName = data.rows[0].name;
+                const managerNameOnly = manager.split('(')[0].trim();
+                const cardTitle = `${earliestProcessName} - ${managerNameOnly}`;
+
+                // Calculate Overall Range
+                const minStart = new Date(Math.min(...data.startDates)).toISOString().split('T')[0];
+                const maxEnd = new Date(Math.max(...data.endDates)).toISOString().split('T')[0];
+
+                // Date Logic
+                const dateRangeDisplay = (minStart === maxEnd) ? minStart : `${minStart} ~ ${maxEnd}`;
+
+                // Build Process List
+                let processSection = "";
+                if (data.rows.length > 1) {
+                    const processList = data.rows.map(r => {
+                        const rStart = r.start;
+                        const rEnd = r.end || r.start;
+                        const rRange = (rStart === rEnd) ? rStart : `${rStart} ~ ${rEnd}`;
+                        return `- ${r.name} : ${rRange}`;
+                    }).join('\n');
+                    processSection = `\n■ 공정 일정\n${processList}\n`;
+                }
+
+                const managerName = managerNameOnly;
+
+                const fullText = `안녕하세요.
+디자인지그입니다.
+아래와 같이 현장 일정 및 내용을 안내드립니다.
+일정 확인 후 반드시 회신 부탁드립니다.
+
+■ 일정
+- ${dateRangeDisplay}
+${processSection}
+■ 현장 주소
+- ${siteAddress}
+
+■ 출입 비밀번호
+- 공동 출입문 : ${gatePw}
+- 세대 비밀번호 : ${doorPw}
+
+■ 공사 담당자
+- 원프로 (010-4650-7013)
+
+■ 현장 안내사항
+1. 세대 내부에서는 흡연을 절대 금지합니다.
+2. 안내된 작업 시간은 반드시 엄수해 주시기 바랍니다.
+3. 작업 종료 후 현장 정리정돈을 철저히 해주시기 바랍니다.
+4. 작업 종료 후 창문 개폐 여부를 반드시 확인해 주시기 바랍니다.
+5. 출입문 및 세대 문단속을 철저히 확인해 주시기 바랍니다.
+
+감사합니다.
+디자인지그 드림.
+
+디자인지그는 화려함보다 본질을 선택합니다.  
+Pro. Beyond.  
+디자인지그는 감이 아닌 기준으로 일합니다.`;
+
+                results.push({
+                    cardTitle: cardTitle,
+                    manager: manager,
+                    fullText: fullText,
+                    previewText: fullText,
+                    count: data.rows.length
+                });
+            });
+
+            return results;
+        }
+
+        function copyMessageToClipboard(element) {
+            // Toggle Logic
+            if (element.classList.contains('copied-card')) {
+                // If already copied/active, revert to normal
+                element.classList.remove('copied-card');
+                element.style.backgroundColor = '#fff';
+                element.style.outline = '1px solid transparent';
+
+                const badge = element.querySelector('.copy-badge');
+                if (badge) {
+                    badge.style.backgroundColor = '#e8f5e9';
+                    badge.style.color = '#2e7d32';
+                    badge.textContent = '복사하기';
+                }
+                return; // Stop here, do not copy again
+            }
+
+            // Normal State -> Copy & Activate
+            const text = element.getAttribute('data-copytext');
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('문자가 복사되었습니다.', 'success');
+
+                // Visual Feedback: Active State (Green)
+                element.classList.add('copied-card');
+                element.style.backgroundColor = '#f1f8e9'; // Light Green Background
+                element.style.outline = '2px solid #4cd964'; // Green Outline
+
+                const badge = element.querySelector('.copy-badge');
+                if (badge) {
+                    badge.style.backgroundColor = '#4cd964';
+                    badge.style.color = '#fff';
+                    badge.textContent = '복사완료';
+                }
+
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                showToast('복사에 실패했습니다.', 'error');
             });
         }
     </script>
