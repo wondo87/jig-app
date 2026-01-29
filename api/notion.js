@@ -103,8 +103,10 @@ export default function handler(req, res) {
 </body>
 </html>`;
 
-    // HTML 응답
+    // HTML 응답 (캐시 비활성화 - 동적 콘텐츠)
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.status(200).send(html);
 }
