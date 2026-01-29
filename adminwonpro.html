@@ -15830,7 +15830,9 @@
                 messageList.innerHTML = '<div style="grid-column: 1 / -1; width:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column; padding: 40px;"><span style="font-size:48px; margin-bottom:16px;">📭</span><span>담당자가 지정된 스케줄이 없습니다.</span></div>';
             } else {
                 messageList.innerHTML = messages.map(msg => `
-            <div class="message-card" onclick="copyMessageToClipboard(this)" data-copytext="${msg.fullText.replace(/"/g, '&quot;')}" 
+            <div class="message-card" onclick="copyMessageToClipboard(this)" 
+                data-copytext="${msg.fullText.replace(/"/g, '&quot;')}" 
+                data-manager="${msg.manager.replace(/"/g, '&quot;')}"
                 style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;">
                 
                 <div style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fff;">
@@ -15878,6 +15880,9 @@
             const doorPwInput = document.querySelector('input[data-field="doorPw"]');
             const gatePw = gatePwInput ? gatePwInput.value : (currentData.gatePw || '');
             const doorPw = doorPwInput ? doorPwInput.value : (currentData.doorPw || '');
+
+            const managerInput = document.querySelector('input[data-field="manager"]');
+            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-4650-7013)');
 
             Object.keys(grouped).forEach(manager => {
                 const data = grouped[manager];
@@ -15927,7 +15932,7 @@ ${processSection}
 - 세대 비밀번호 : ${doorPw}
 
 ■ 공사 담당자
-- 원프로 (010-4650-7013)
+- ${projectManager}
 
 ■ 현장 안내사항
 1. 세대 내 흡연 금지
@@ -15986,6 +15991,23 @@ Pro. Beyond.
                     badge.style.backgroundColor = '#4cd964';
                     badge.style.color = '#fff';
                     badge.textContent = '복사완료';
+                }
+
+                // [New] Update Schedule Rows marked as sent
+                const manager = element.getAttribute('data-manager');
+                if (manager) {
+                    let updateCount = 0;
+                    scheduleRows.forEach(row => {
+                        if (row.inCharge && row.inCharge.trim() === manager) {
+                            row.messageSent = true;
+                            row.messageSentAt = new Date().toISOString();
+                            updateCount++;
+                        }
+                    });
+                    if (updateCount > 0) {
+                        saveScheduleToCustomer(); // Persist to currentData in memory
+                        console.log(`[Schedule] Marked ${updateCount} rows as sent for manager: ${manager}`);
+                    }
                 }
 
             }).catch(err => {
