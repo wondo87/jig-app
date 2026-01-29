@@ -15856,7 +15856,23 @@
 
             // 스케줄 정보 가져오기
             const clientName = currentData.clientName || '';
+            const clientPhone = currentData.clientPhone || '';
+            const spouseName = currentData.spouseName || '';
+            const spousePhone = currentData.spousePhone || '';
             const siteAddress = currentData.siteAddress || '';
+
+            // 고객명 문자열 생성: 성명(연락처) | 배우자 성명(배우자 연락처)
+            let customerDisplayStr = '';
+            if (clientName) {
+                customerDisplayStr = clientName + (clientPhone ? `(${clientPhone})` : '');
+            }
+            if (spouseName) {
+                const spouseStr = spouseName + (spousePhone ? `(${spousePhone})` : '');
+                customerDisplayStr += customerDisplayStr ? ` | ${spouseStr}` : spouseStr;
+            }
+            if (!customerDisplayStr) {
+                customerDisplayStr = '(미입력)';
+            }
             const schPeriod = document.getElementById('schPeriod')?.textContent || '';
             const schManager = document.querySelector('input[data-field="manager"]')?.value || '원프로 소장 (010-4650-7013)';
             const gatePw = document.querySelector('input[data-field="gatePw"]')?.value || '';
@@ -15889,7 +15905,7 @@
 
 📌 기본 현장 정보
 
-• 고객명 : ${clientName}
+• 고객명 : ${customerDisplayStr}
 • 현장주소 : ${siteAddress}
 • 공사기간 : ${schPeriod}
 • 비밀번호 : ${passwordStr}
