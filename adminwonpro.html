@@ -15829,15 +15829,26 @@
             if (messages.length === 0) {
                 messageList.innerHTML = '<div style="grid-column: 1 / -1; width:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column; padding: 40px;"><span style="font-size:48px; margin-bottom:16px;">📭</span><span>담당자가 지정된 스케줄이 없습니다.</span></div>';
             } else {
-                messageList.innerHTML = messages.map(msg => `
-            <div class="message-card" onclick="copyMessageToClipboard(this)" 
+                messageList.innerHTML = messages.map(msg => {
+                    const isSent = msg.isSent;
+                    const cardClass = isSent ? 'message-card copied-card' : 'message-card';
+                    const cardStyle = isSent
+                        ? 'display: flex; flex-direction: column; background: #f1f8e9; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 2px solid #4cd964; position: relative; overflow: hidden; height: 100%;'
+                        : 'display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;';
+                    const badgeStyle = isSent
+                        ? 'font-size: 11px; background: #4cd964; color: #fff; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;'
+                        : 'font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;';
+                    const badgeText = isSent ? '복사완료' : '복사하기';
+
+                    return `
+            <div class="${cardClass}" onclick="copyMessageToClipboard(this)" 
                 data-copytext="${msg.fullText.replace(/"/g, '&quot;')}" 
                 data-manager="${msg.manager.replace(/"/g, '&quot;')}"
-                style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;">
+                style="${cardStyle}">
                 
                 <div style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fff;">
                     <span style="font-weight: 700; font-size: 16px; color:#1d1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;">${msg.cardTitle} <span style="font-size:13px; color:#86868b; font-weight:400;">(${msg.count}건)</span></span>
-                    <span class="copy-badge" style="font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;">복사하기</span>
+                    <span class="copy-badge" style="${badgeStyle}">${badgeText}</span>
                 </div>
                 
                 <div style="flex: 1; padding: 0; overflow-y: auto; background: #fafafa; min-height: 300px;">
@@ -15846,7 +15857,8 @@
 
                 <div class="hover-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.02); opacity: 0; transition: opacity 0.2s; pointer-events: none;"></div>
             </div>
-        `).join('');
+        `;
+                }).join('');
             }
 
             // Modal Styling Fix (ensure flex display)
@@ -15916,6 +15928,9 @@
 
                 const managerName = managerNameOnly;
 
+                // Determine 'sent' status
+                const isSent = data.rows.some(r => r.messageSent === true);
+
                 const fullText = `안녕하세요.
 디자인지그입니다.
 현장 일정 및 내용을 안내드립니다.
@@ -15952,7 +15967,8 @@ Pro. Beyond.
                     manager: manager,
                     fullText: fullText,
                     previewText: fullText,
-                    count: data.rows.length
+                    count: data.rows.length,
+                    isSent: isSent // [New] Pass sent status to UI
                 });
             });
 
