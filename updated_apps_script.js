@@ -1647,38 +1647,56 @@ function handleCustomerGet(e) {
     }
 
     var data = sheet.getDataRange().getValues();
+    var rows = data.slice(1); // 헤더 제외한 데이터 행만 추출
+
+    // [Pagination Logic]
+    var page = e.parameter.page ? parseInt(e.parameter.page) : null;
+    var limit = e.parameter.limit ? parseInt(e.parameter.limit) : null;
+
+    if (page && limit) {
+        // 최신순 정렬 (시트가 시간순이면 역순으로 뒤집기)
+        rows.reverse();
+
+        var startIdx = (page - 1) * limit;
+        var endIdx = startIdx + limit;
+        rows = rows.slice(startIdx, endIdx);
+    }
+
     var customers = [];
 
-    for (var i = 1; i < data.length; i++) {
-        var row = data[i];
+    rows.forEach(function (row) {
+        // [수정] 원본 데이터 인덱스 유지를 위해 row를 그대로 사용하지만,
+        // 원본 행 번호(i)를 알 수 없게 되므로 파싱 에러 로깅 시 주의 필요
+
         var customerId = row[0]; // 첫 번째 열이 customerId
 
-        // customerId가 없으면 건너뛰기 (빈 행 또는 잘못된 데이터)
-        if (!customerId) continue;
+        // customerId가 없으면 건너뛰기
+        if (!customerId) return;
 
         var jsonData = row[17]; // JSON데이터 열 (18번째 열 = 인덱스 17)
+        var parsedCustomer = null;
 
         if (jsonData) {
             try {
                 var parsedData = JSON.parse(jsonData);
-                // 파싱된 데이터에 customerId가 있는지 확인
                 if (parsedData.customerId) {
-                    customers.push(parsedData);
+                    parsedCustomer = parsedData;
                 } else {
-                    // customerId가 없으면 행 데이터에서 추가
                     parsedData.customerId = customerId;
-                    customers.push(parsedData);
+                    parsedCustomer = parsedData;
                 }
             } catch (e) {
-                // 파싱 실패 시 로깅 및 기본 구조로 생성
-                console.warn('JSON 파싱 실패 (행 ' + (i + 1) + '): ' + e.toString());
-                customers.push(buildCustomerFromRow(row));
+                console.warn('JSON 파싱 실패: ' + e.toString());
             }
-        } else {
-            // JSON데이터가 없으면 기본 컬럼에서 구성
-            customers.push(buildCustomerFromRow(row));
         }
-    }
+
+        // JSON 파싱 실패하거나 없으면 기본 로우에서 빌드
+        if (!parsedCustomer) {
+            parsedCustomer = buildCustomerFromRow(row);
+        }
+
+        customers.push(parsedCustomer);
+    });
     return ContentService.createTextOutput(JSON.stringify(customers)).setMimeType(ContentService.MimeType.JSON);
 }
 
