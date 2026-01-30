@@ -205,6 +205,11 @@ function doPost(e) {
             return handleChecklistMasterUpdate(payload);
         }
 
+        // 1.10 노션 공유 메시지 저장 (New)
+        if (payload.action === 'logNotionShare') {
+            return handleLogNotionShare(payload);
+        }
+
         // 2. 노션 내보내기 요청 (반드시 CustomerSync보다 먼저 체크!)
         // exportToNotion 요청도 customerId를 포함하므로, 먼저 체크해야 함
         if (payload.action === 'exportToNotion') {
@@ -994,7 +999,9 @@ function exportScheduleToNotion(customerId, data) {
     }
     */
 
-    return { url: '', count: count };
+    // Notion Page URL 생성 (페이지 ID에서 하이픈 제거)
+    const notionUrl = 'https://www.notion.so/' + pageId.replace(/-/g, '');
+    return { url: notionUrl, count: count };
 }
 
 // 4. 체크리스트 내보내기 (관계형 DB 연결 + 고객ID)
@@ -1040,7 +1047,9 @@ function exportChecklistToNotion(customerId, data) {
         count++;
     });
 
-    return { url: '', count: count };
+    // Notion Page URL 생성 (페이지 ID에서 하이픈 제거)
+    const notionUrl = 'https://www.notion.so/' + pageId.replace(/-/g, '');
+    return { url: notionUrl, count: count };
 }
 
 // [헬퍼] 관련 페이지 삭제 (고객정보 Relation 기준 필터링 및 전체 삭제)
@@ -1212,7 +1221,9 @@ function exportASListToNotion(customerId, data) {
     }
     */
 
-    return { url: '', count: count };
+    // Notion Page URL 생성 (페이지 ID에서 하이픈 제거)
+    const notionUrl = 'https://www.notion.so/' + pageId.replace(/-/g, '');
+    return { url: notionUrl, count: count };
 }
 
 
@@ -1583,8 +1594,11 @@ function handleCustomerSync(payload) {
     }
 
     // [로직] 상태별 분기
-    // 1. **계약완료** (Contracted) - 계약완료 시트 + 사후관리_A/S 시트 모두 추가
-    if (newStatus === 'contracted' || newStatus === '계약완료') {
+    // 1. **계약 후 단계** (Contracted, In Progress, Completed, A/S) - 계약완료 시트 + 사후관리_A/S 시트 모두 유지/업데이트
+    //    (기존에는 'contracted'일 때만 추가하고, 'in_progress' 등에서는 삭제해버리는 문제가 있었음)
+    var postContractStatuses = ['contracted', '계약완료', 'in_progress', '공사중', 'completed', '공사완료', 'as_done', 'A/S'];
+
+    if (postContractStatuses.includes(newStatus)) {
         // 계약완료 시트: 추가/업데이트
         if (contractedRowIndex > 0) {
             contractedSheet.getRange(contractedRowIndex, 1, 1, rowData.length).setValues([rowData]);
@@ -1592,7 +1606,7 @@ function handleCustomerSync(payload) {
             contractedSheet.appendRow(rowData);
         }
 
-        // 사후관리_A/S 시트: 자동 복사 (A/S 기간 계산)
+        // 사후관리_A/S 시트: 추가/업데이트
         var asRowData = buildAsRowData(customerData);
         if (asRowIndex > 0) {
             asSheet.getRange(asRowIndex, 1, 1, asRowData.length).setValues([asRowData]);
@@ -1600,28 +1614,13 @@ function handleCustomerSync(payload) {
             asSheet.appendRow(asRowData);
         }
     }
-    // 2. **A/S** (After Sales)
-    else if (newStatus === 'as_done' || newStatus === 'A/S') {
-        // 계약완료 시트: 유지 (Data Copy) - 업데이트
-        if (contractedRowIndex > 0) {
-            contractedSheet.getRange(contractedRowIndex, 1, 1, rowData.length).setValues([rowData]);
-        } else {
-            contractedSheet.appendRow(rowData);
-        }
-        // A/S 시트: 추가/업데이트
-        var asRowData2 = buildAsRowData(customerData);
-        if (asRowIndex > 0) {
-            asSheet.getRange(asRowIndex, 1, 1, asRowData2.length).setValues([asRowData2]);
-        } else {
-            asSheet.appendRow(asRowData2);
-        }
-    }
-    // 3. **기타** (상담중 등)
+    // 2. **그 외** (상담중, 견적서, 보류, 미계약 등)
     else {
         // 계약완료/AS 시트에서 제거 (상태가 돌아갔을 경우)
         if (contractedRowIndex > 0) contractedSheet.deleteRow(contractedRowIndex);
         if (asRowIndex > 0) asSheet.deleteRow(asRowIndex);
     }
+
 
     return ContentService.createTextOutput(JSON.stringify({
         result: 'success',
@@ -4285,4 +4284,73 @@ function handleChecklistMasterUpdate(payload) {
     } finally {
         lock.releaseLock();
     }
+}
+
+/**
+ * 노션 공유 메시지 저장 핸들러
+ */
+function handleLogNotionShare(payload) {
+    var lock = LockService.getScriptLock();
+    try {
+        if (!lock.tryLock(5000)) {
+            return ContentService.createTextOutput(JSON.stringify({ result: "error", error: "Server busy" })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        const customerId = payload.customerId;
+        const message = payload.message || '';
+        const manager = payload.manager || '';
+        const timestamp = Utilities.formatDate(new Date(), "GMT+9", "yyyy-MM-dd HH:mm:ss");
+
+        if (!customerId) throw new Error('Customer ID is required');
+
+        // Notion Page URL 찾기
+        const pageId = findCustomerPageId(customerId);
+        const notionUrl = pageId ? 'https://www.notion.so/' + pageId.replace(/-/g, '') : '';
+
+        // 시트 가져오기 또는 생성
+        const sheet = getOrCreateNotionShareSheet();
+
+        // 데이터 추가: [고객ID, 메시지내용, 노션URL, 저장일시, 저장자(담당자)]
+        sheet.appendRow([
+            customerId,
+            message,
+            notionUrl,
+            timestamp,
+            manager
+        ]);
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            message: '메시지가 저장되었습니다.',
+            notionUrl: notionUrl
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (e) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            error: e.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
+ * 노션 공유 메시지 시트 가져오기 (없으면 생성)
+ */
+function getOrCreateNotionShareSheet() {
+    const spreadsheet = SpreadsheetApp.openById(CONSULTING_SHEET_ID);
+    let sheet = spreadsheet.getSheetByName('노션공유메시지');
+
+    if (!sheet) {
+        sheet = spreadsheet.insertSheet('노션공유메시지');
+        // 헤더 추가
+        sheet.appendRow(['고객ID', '메시지', 'Notion URL', '저장일시', '저장자']);
+        // 헤더 스타일링
+        sheet.getRange(1, 1, 1, 5).setBackground('#f3f3f3').setFontWeight('bold');
+        sheet.setColumnWidth(2, 400); // 메시지 컬럼 넓게
+        sheet.setColumnWidth(3, 300); // URL 컬럼 넓게
+    }
+
+    return sheet;
 }

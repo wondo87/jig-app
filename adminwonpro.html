@@ -566,6 +566,14 @@
             width: 300px;
             background: #fff;
             border-right: 1px solid #e8e8ed;
+            /* [New] Fixed height and scrollable content */
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Prevent sidebar itself from scrolling */
         }
 
         .sidebar-header {
@@ -574,6 +582,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
+            /* Header stays fixed */
         }
 
         .sidebar-header h3 {
@@ -585,6 +595,7 @@
         .sidebar-search {
             padding: 10px 14px;
             border-bottom: 1px solid #e8e8ed;
+            flex-shrink: 0;
         }
 
         .sidebar-search input {
@@ -606,6 +617,7 @@
             border-bottom: 1px solid #e8e8ed;
             display: flex;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .date-filter select {
@@ -629,6 +641,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            flex-shrink: 0;
         }
 
         .filter-btn {
@@ -651,7 +664,13 @@
             border-color: #0071e3;
         }
 
-        .customer-list {}
+        /* [New] Scrollable Customer List */
+        .customer-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            /* Important for firefox/flex */
+        }
 
         .customer-item {
             padding: 12px 14px;
@@ -3224,9 +3243,9 @@
         </style>
     </div>
     <!-- 토스트 알림 -->
-    <div class="toast" id="toast">
-        <span id="toastIcon">✓</span>
-        <span id="toastMessage">저장되었습니다</span>
+    <div class="toast" id="toast" style="display:none; align-items:flex-start;">
+        <span id="toastIcon" style="font-size:18px; margin-top:2px;">✓</span>
+        <span id="toastMessage" style="flex:1; word-break:break-all; line-height:1.4;">저장되었습니다</span>
     </div>
 
     <!-- 메인 헤더 -->
@@ -3699,7 +3718,8 @@
                                 <div class="subtitle">Customer Information</div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="notion-export-btn" onclick="exportToNotion('customer', event);"
+                                <button type="button" class="notion-export-btn"
+                                    onclick="exportToNotion('customer', event);"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"
                                     title="노션으로 고객 정보만 내보내기">
                                     📤 노션 내보내기
@@ -4355,7 +4375,8 @@
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
                                 </button>
-                                <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
+                                <button type="button" class="notion-export-btn"
+                                    onclick="exportToNotion('checklist', event)"
                                     style="background: #000; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 체크리스트 내보내기">
                                     📤 노션 내보내기
@@ -4491,7 +4512,8 @@
                                 <div class="subtitle">Construction Schedule Manager</div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="notion-export-btn" onclick="exportToNotion('schedule', event)"
+                                <button type="button" class="notion-export-btn"
+                                    onclick="exportToNotion('schedule', event)"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 스케줄 내보내기">
                                     📤 노션 내보내기
@@ -4677,7 +4699,7 @@
                                 <button class="sync-btn no-print" onclick="syncASListFromCloud()"
                                     style="background: #34c759; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="Google Sheets에서 불러오기">☁️↓ 불러오기</button>
-                                <button class="sync-btn no-print" onclick="exportASListToNotion()"
+                                <button type="button" class="sync-btn no-print" onclick="exportASListToNotion()"
                                     style="background: linear-gradient(135deg, #000 0%, #333 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="노션으로 A/S 리스트 내보내기">📤 노션 내보내기</button>
                                 <button class="btn btn-secondary btn-sm no-print" onclick="printASList(true)"
@@ -6514,7 +6536,7 @@
                     div.className = 'trash-item';
                     div.innerHTML = `
                 <div >
-        <div style="font-weight:600;">${c.clientName || '(이름없음)'}</div>
+        <div style="font-weight:600;">${c.name || '(이름없음)'}</div>
         <div style="font-size:11px; color:#86868b;">
             삭제: ${c.deletedAt?.split('T')[0] || '-'}(${c.deletedBy || '?'})
         </div>
@@ -7323,12 +7345,12 @@
         </td>
 
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="date" value="${row.start || ''}" class="customer-field"
+            <input type="date" value="${(row.start || '').replace(/\./g, '-')}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="handleStartDateChange(${index}, this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="date" value="${row.end || ''}" class="customer-field"
+            <input type="date" value="${(row.end || '').replace(/\./g, '-')}" class="customer-field"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
@@ -8684,7 +8706,7 @@
 
             } catch (err) {
                 console.error(err);
-                showToast('저장 실패: ' + err.message, 'error');
+                showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -9503,7 +9525,7 @@
                 // 휴지통 항목 제외
                 if (c.status === 'trash') return false;
 
-                const matchSearch = [c.clientName, c.clientPhone, c.siteAddress, c.projectName].join(' ').toLowerCase().includes(searchTerm);
+                const matchSearch = [c.name, c.phone, c.siteAddress, c.projectName].join(' ').toLowerCase().includes(searchTerm);
                 const matchStatus = currentStatusFilter === 'all' || c.status === currentStatusFilter;
 
                 // 년/월 필터 (customerId 기준: YYMMDD-XXX)
@@ -9592,7 +9614,7 @@
                         statusText = `A/S ~${c.asEndDate}`;
                     }
                     const displayName = c.projectName || '현장명 미지정';
-                    const subInfo = (c.clientName || '') + (c.clientName && c.clientPhone ? ' / ' : '') + (c.clientPhone || '');
+                    const subInfo = (c.name || '') + (c.name && c.phone ? ' / ' : '') + (c.phone || '');
                     const lockIcon = c.isLocked ? '🔒' : '';
                     const creatorInfo = c.createdBy ? ` / <span style="color:#ff9500; font-weight:600;">${c.createdBy}</span>` : '';
                     // [수정] 날짜(updatedAt) 제거 - 고객목록에서 날짜 표시 안함
@@ -9886,7 +9908,7 @@
                 console.log('📊 [PC Web Debug] 공사중 고객 목록:',
                     cloudCustomers.filter(c => c.status === 'in_progress').map(c => ({
                         id: c.customerId,
-                        name: c.projectName || c.clientName,
+                        name: c.projectName || c.name,
                         status: c.status
                     }))
                 );
@@ -14190,8 +14212,12 @@
         window.exportToNotion = async function (type, event) {
             console.log('🚀 노션 내보내기 시작 - 타입:', type);
 
-            // 이벤트 객체 확보
+            // 이벤트 객체 확보 & 기본 동작 방지 (폼 제출 방지 등)
             const evt = event || window.event;
+            if (evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+            }
 
             // currentCustomer 대신 currentData 사용 (호환성)
             const targetData = currentData || currentCustomer;
@@ -14223,9 +14249,10 @@
                     customerId: currentCustomerId // currentCustomer.id -> currentCustomerId
                 };
 
-                // 날짜 및 기간 정보 추출
-                const startDateVal = document.getElementById('constructionStartInput')?.value || targetData.startDate || '';
-                const endDateVal = document.getElementById('constructionEndInput')?.value || targetData.endDate || '';
+                // 날짜 및 기간 정보 추출 (yyyy.MM.dd -> yyyy-MM-dd 정규화)
+                const normalizeDate = (d) => d ? d.replace(/\./g, '-') : '';
+                const startDateVal = normalizeDate(document.getElementById('constructionStartInput')?.value || targetData.startDate || '');
+                const endDateVal = normalizeDate(document.getElementById('constructionEndInput')?.value || targetData.endDate || '');
                 const periodVal = document.getElementById('hiddenConstructionPeriod')?.value || targetData.constructionPeriod || '';
 
                 // 타입별 데이터 준비 (Backend update_apps_script.js와 키 일치시킴)
@@ -14235,8 +14262,8 @@
                     const scheduleRows = scheduleData.map((item, idx) => ({
                         category: item.category || '',
                         process: item.name || '',
-                        startDate: item.start || '',
-                        endDate: item.end || '',
+                        startDate: normalizeDate(item.start || ''),
+                        endDate: normalizeDate(item.end || ''),
                         status: item.checkPoint || '',
                         manager: item.inCharge || ''
                     }));
@@ -14388,8 +14415,8 @@
                         'guidelines': getScheduleGuidelinesArray(), // [추가] 유의사항 배열
                         '공정목록': scheduleData.map(item => ({
                             공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
-                            시작일: item.start || '',
-                            종료일: item.end || '',
+                            시작일: normalizeDate(item.start || ''),
+                            종료일: normalizeDate(item.end || ''),
                             담당자: item.inCharge || '',
                             상태: item.checkPoint || '',
                             비고: item.memo || ''
@@ -14426,6 +14453,16 @@
                             };
                         })
                     };
+
+                    // [Validation] 내보낼 항목이 없으면 중단
+                    if (requestData.data.체크리스트.length === 0) {
+                        showToast('선택된 체크리스트 항목이 없습니다.\n먼저 체크리스트에서 항목을 선택해주세요.', 'warning');
+                        if (btn) {
+                            btn.innerHTML = originalHTML;
+                            btn.disabled = false;
+                        }
+                        return;
+                    }
                 }
 
                 console.log('📤 노션 내보내기 요청:', requestData);
@@ -14488,7 +14525,12 @@
                 }
             } catch (error) {
                 console.error('❌ 노션 내보내기 실패:', error);
-                showToast('노션 내보내기 실패: ' + error.message, 'error');
+                let errMsg = '알 수 없는 오류';
+                if (typeof error === 'string') errMsg = error;
+                else if (error.message) errMsg = error.message;
+                else if (error.toString) errMsg = error.toString();
+
+                showToast('노션 내보내기 실패: ' + errMsg, 'error');
             } finally {
                 if (btn) {
                     btn.innerHTML = originalHTML;
@@ -15368,7 +15410,7 @@
                 }
             } catch (err) {
                 console.error('고정지출 저장 오류:', err);
-                showToast('저장 실패: ' + err.message, 'error');
+                showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -15609,7 +15651,7 @@
                 }
             } catch (err) {
                 console.error('운영비 저장 오류:', err);
-                showToast('저장 실패: ' + err.message, 'error');
+                showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
                 saveExpensesLocal(); // 실패해도 로컬에는 저장
             } finally {
                 if (btn) {
@@ -16024,6 +16066,27 @@ Pro. Beyond.
                         saveScheduleToCustomer(); // Persist to currentData in memory
                         console.log(`[Schedule] Marked ${updateCount} rows as sent for manager: ${manager}`);
                     }
+
+                    // [New] Log to Notion Share Sheet (Backend)
+                    // 메시지 복사 시 자동으로 시트에 저장
+                    fetch(CUSTOMER_SYNC_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'logNotionShare',
+                            customerId: currentData.customerId,
+                            message: text,
+                            manager: manager
+                        })
+                    }).then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('Message logged to sheet:', data);
+                                showToast('메시지가 시트에 저장되었습니다.', 'success');
+                            } else {
+                                console.error('Failed to log message:', data.error);
+                            }
+                        })
+                        .catch(err => console.error('Error logging message:', err));
                 }
 
             }).catch(err => {
@@ -16031,6 +16094,19 @@ Pro. Beyond.
                 showToast('복사에 실패했습니다.', 'error');
             });
         }
+    </script>
+    <script>
+        // 디버깅용 스크립트 추가
+        const originalShowToast = window.showToast;
+        window.showToast = function (message, type, duration) {
+            console.log('showToast 호출:', { message, type, duration });
+            if (originalShowToast) originalShowToast(message, type, duration);
+        };
+
+        document.addEventListener('submit', function (e) {
+            console.log('폼 제출 감지:', e.target);
+            // e.preventDefault(); // 디버깅용: 제출 막기 (필요시 주석 해제)
+        });
     </script>
 </body>
 
