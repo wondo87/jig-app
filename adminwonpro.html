@@ -503,6 +503,446 @@
             color: #e65100;
         }
 
+        /* =========================================
+           블록 형태 대시보드 (Dashboard) 스타일
+           ========================================= */
+        /* ------------------------------------------------------------------
+         * MAIN BOARD (LANDING PAGE)
+         * ------------------------------------------------------------------ */
+        .main-board-wrapper {
+            padding: 40px;
+            background: #fbfbfd;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .main-board-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-board-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .main-board-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .board-stat-item {
+            background: #fff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            min-width: 100px;
+        }
+
+        .board-stat-label {
+            font-size: 11px;
+            color: #86868b;
+            font-weight: 600;
+        }
+
+        .board-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-top: 2px;
+        }
+
+        .main-board-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .project-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 180px;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .project-card-header {
+            margin-bottom: 12px;
+        }
+
+        .project-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .project-card-client {
+            font-size: 14px;
+            color: #86868b;
+            font-weight: 500;
+        }
+
+        .project-card-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Status Colors */
+        .status-consulting {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-estimate {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-contracted {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-in_progress {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .status-completed {
+            background: #f5f5f7;
+            color: #424245;
+        }
+
+        .project-card-footer {
+            margin-top: 20px;
+            border-top: 1px solid #f5f5f7;
+            padding-top: 12px;
+            font-size: 12px;
+            color: #86868b;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .dashboard-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 1. 프로필 카드 */
+        .card-profile {
+            grid-column: span 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #0071e3, #42a5f5);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .profile-info h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+            color: #1d1d1f;
+        }
+
+        .profile-info p {
+            font-size: 12px;
+            color: #86868b;
+        }
+
+        .profile-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .profile-detail-item {
+            background: #f5f5f7;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .profile-detail-label {
+            font-size: 11px;
+            color: #86868b;
+            margin-bottom: 4px;
+        }
+
+        .profile-detail-value {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        /* 2. 상태/일정 카드 */
+        .card-status {
+            grid-column: span 7;
+        }
+
+        .status-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        /* 타임라인 바 */
+        .timeline-bar {
+            position: absolute;
+            top: 24px;
+            /* dot center */
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e5e5e5;
+            z-index: 1;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            top: 24px;
+            left: 0;
+            height: 4px;
+            background: #0071e3;
+            z-index: 2;
+            width: 0%;
+            /* JS로 제어 */
+        }
+
+        .timeline-step {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            flex: 1;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border: 3px solid #e5e5e5;
+            border-radius: 50%;
+            margin: 18px auto 8px;
+            /* 바 위치 보정 */
+            transition: all 0.3s;
+        }
+
+        .timeline-step.active .timeline-dot {
+            border-color: #0071e3;
+            background: #0071e3;
+            transform: scale(1.2);
+        }
+
+        .timeline-label {
+            font-size: 11px;
+            color: #86868b;
+            font-weight: 500;
+        }
+
+        .timeline-step.active .timeline-label {
+            color: #0071e3;
+            font-weight: 700;
+        }
+
+        .d-day-badge {
+            display: inline-block;
+            background: #ff3b30;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: auto;
+        }
+
+        /* 3. 원가/정산 요약 (핵심) -> 클릭 시 원가 상세로 이동 */
+        .card-cost-summary {
+            grid-column: span 12;
+            background: linear-gradient(135deg, #1d1d1f 0%, #2c2c2e 100%);
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .card-cost-summary h3 {
+            color: white;
+        }
+
+        .cost-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .cost-stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .cost-stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+
+        .cost-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .cost-stat-item.profit .cost-stat-value {
+            color: #34c759;
+        }
+
+        /* 4. 퀵 메뉴 그리드 (Navigation) */
+        .card-nav {
+            grid-column: span 12;
+            padding: 0;
+            /* 내부 그리드 패딩 사용 */
+            background: transparent;
+            box-shadow: none;
+            border: none;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+            border-color: #0071e3;
+        }
+
+        .nav-icon {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .nav-sub {
+            font-size: 10px;
+            color: #86868b;
+        }
+
+        /* 반응형 */
+        @media (max-width: 900px) {
+            .card-profile {
+                grid-column: span 12;
+            }
+
+            .card-status {
+                grid-column: span 12;
+            }
+
+            .cost-summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         .cost-lock-overlay .unlock-btn {
             padding: 6px 12px;
             border-radius: 6px;
@@ -3385,6 +3825,9 @@
             <div class="sidebar-header">
                 <h3>고객 목록</h3>
                 <div style="display:flex;gap:6px;">
+                    <!-- [NEW] 메인 보드 이동 버튼 -->
+                    <button class="btn btn-sm" onclick="showMainBoardView()" title="홈으로 (메인 보드)"
+                        style="background:#8e8e93; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">🏠</button>
                     <!-- 휴지통 (메인 관리자용) - 상단 이동 -->
                     <button class="btn btn-sm" id="trashBtnHeader" onclick="showTrashModal()" title="휴지통"
                         style="background:#ff3b30; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:600;">🗑️</button>
@@ -3623,12 +4066,71 @@
                 </div>
             </div>
 
-            <!-- 빈 상태 -->
-            <div class="empty-state" id="emptyState">
-                <div class="empty-state-icon">👤</div>
-                <h3>고객을 선택하세요</h3>
-                <p>왼쪽 목록에서 고객을 선택하거나<br>신규 고객을 등록하세요.</p>
-                <button class="btn btn-primary" onclick="newCustomer()">+ 신규 고객 등록</button>
+            <!-- Empty State -> Global Main Board -->
+            <div id="mainBoardView" class="main-board-wrapper">
+                <div class="main-board-header">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%;">
+                        <div>
+                            <h1>Project Overview</h1>
+                            <div style="color:#86868b; font-size:14px; margin-top:4px;">전체 프로젝트 현황을 한눈에 확인하세요</div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <select id="mbYearFilter" onchange="renderMainBoard()"
+                                style="padding:6px; border-radius:6px; border:1px solid #d2d2d7; font-size:13px; cursor:pointer;">
+                                <option value="">전체 년도</option>
+                                <option value="2026">2026년</option>
+                                <option value="2025">2025년</option>
+                                <option value="2024">2024년</option>
+                            </select>
+                            <select id="mbStatusFilter" onchange="renderMainBoard()"
+                                style="padding:6px; border-radius:6px; border:1px solid #d2d2d7; font-size:13px; cursor:pointer;">
+                                <option value="">전체 상태</option>
+                                <option value="consulting">상담중</option>
+                                <option value="estimate">견적</option>
+                                <option value="contracted">계약완료</option>
+                                <option value="in_progress">공사중</option>
+                                <option value="completed">완료</option>
+                                <option value="as_done">A/S</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="main-board-stats">
+                        <div class="board-stat-item">
+                            <span class="board-stat-label">Total Projects</span>
+                            <span class="board-stat-value" id="statsTotal">0</span>
+                        </div>
+                        <div class="board-stat-item">
+                            <span class="board-stat-label">In Progress</span>
+                            <span class="board-stat-value" id="statsProgress">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mainBoardGrid" class="main-board-grid">
+                    <!-- Project Cards will be rendered here via JS -->
+                </div>
+
+                <button onclick="newCustomer()" style="
+                    position: fixed;
+                    bottom: 40px;
+                    right: 40px;
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 30px;
+                    background: #0071e3;
+                    color: white;
+                    border: none;
+                    text-align: center;
+                    font-size: 24px;
+                    box-shadow: 0 4px 12px rgba(0,113,227,0.3);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    +
+                </button>
             </div>
 
             <!-- 고객 상세 뷰 -->
@@ -3686,7 +4188,9 @@
                 </div>
 
                 <div class="customer-tabs">
-                    <button class="customer-tab active" onclick="showCustomerTab('info')" data-tab="info">👤
+                    <button class="customer-tab active" onclick="showCustomerTab('dashboard')" data-tab="dashboard">🏠
+                        메인 대시보드</button>
+                    <button class="customer-tab" onclick="showCustomerTab('info')" data-tab="info">👤
                         고객정보</button>
                     <button class="customer-tab" onclick="showCustomerTab('contract')" data-tab="contract">📋
                         도급계약서</button>
@@ -3706,8 +4210,98 @@
                         작업기록</button>
                 </div>
 
+                <!-- 대시보드 패널 (New) -->
+                <div class="tab-panel active" id="panel-dashboard">
+                    <div class="dashboard-container">
+                        <div class="dashboard-grid">
+                            <!-- 1. 프로필 카드 -->
+                            <div class="dashboard-card card-profile">
+                                <div class="profile-header">
+                                    <div class="profile-avatar" id="dashAvatar">?</div>
+                                    <div class="profile-info">
+                                        <h2 id="dashName">고객명</h2>
+                                        <p id="dashPhone">010-0000-0000</p>
+                                    </div>
+                                </div>
+                                <div class="profile-details">
+                                    <div class="profile-detail-item">
+                                        <div class="profile-detail-label">현장주소</div>
+                                        <div class="profile-detail-value" id="dashAddress">-</div>
+                                    </div>
+                                    <div class="profile-detail-item">
+                                        <div class="profile-detail-label">평수/유형</div>
+                                        <div class="profile-detail-value" id="dashAreaType">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. 상태/일정 카드 -->
+                            <div class="dashboard-card card-status">
+                                <h3>🚀 진행 현황</h3>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                                    <span id="dashStatusBadge" class="status-badge"
+                                        style="font-size:14px; padding:6px 12px; background:#f5f5f7; color:#86868b;">상담중</span>
+                                    <span id="dashDDay" class="d-day-badge" style="display:none;">D-Day</span>
+                                </div>
+                                <div style="font-size:13px; color:#1d1d1f; margin-bottom:20px;">
+                                    <strong>공사 기간:</strong> <span id="dashPeriod">- ~ -</span>
+                                </div>
+                                <div class="status-timeline">
+                                    <div class="timeline-bar"></div>
+                                    <div class="timeline-progress" id="dashProgressWidth" style="width: 0%;"></div>
+                                    <!-- Steps -->
+                                    <div class="timeline-step active" id="step-consulting">
+                                        <div class="timeline-label">상담</div>
+                                        <div class="timeline-dot"></div>
+                                    </div>
+                                    <div class="timeline-step" id="step-contract">
+                                        <div class="timeline-label">계약</div>
+                                        <div class="timeline-dot"></div>
+                                    </div>
+                                    <div class="timeline-step" id="step-construction">
+                                        <div class="timeline-label">공사중</div>
+                                        <div class="timeline-dot"></div>
+                                    </div>
+                                    <div class="timeline-step" id="step-completed">
+                                        <div class="timeline-label">완료</div>
+                                        <div class="timeline-dot"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. 원가/정산 요약 (클릭 시 원가관리표로 이동) -->
+                            <button class="dashboard-card card-cost-summary" onclick="showCustomerTab('cost')">
+                                <h3>💰 운영 원가 요약 <span
+                                        style="font-size:12px; font-weight:400; opacity:0.7; margin-left:auto;">클릭하여 상세
+                                        보기 →</span></h3>
+                                <div class="cost-summary-grid">
+                                    <div class="cost-stat-item">
+                                        <div class="cost-stat-label">총 계약금액</div>
+                                        <div class="cost-stat-value" id="dashTotalAmount">0</div>
+                                    </div>
+                                    <div class="cost-stat-item">
+                                        <div class="cost-stat-label">총 지출(원가)</div>
+                                        <div class="cost-stat-value" id="dashTotalCost">0</div>
+                                    </div>
+                                    <div class="cost-stat-item profit">
+                                        <div class="cost-stat-label">예상 순이익</div>
+                                        <div class="cost-stat-value" id="dashNetProfit">0</div>
+                                    </div>
+                                    <div class="cost-stat-item">
+                                        <div class="cost-stat-label">수익률</div>
+                                        <div class="cost-stat-value" id="dashProfitRate">0%</div>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <!-- 4. 네비게이션 그리드 -->
+                            <!-- 4. 네비게이션 그리드 (삭제됨) -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 고객정보 패널 -->
-                <div class="tab-panel active" id="panel-info">
+                <div class="tab-panel" id="panel-info">
                     <div class="document-wrapper" id="customerInfoDoc">
                         <div class="doc-header">
                             <div>
@@ -7064,6 +7658,140 @@
             if (tabId === 'stats') {
                 if (typeof renderAuditLog === 'function') renderAuditLog(currentCustomerId ? currentCustomerId : null);
             }
+            if (tabId === 'dashboard') {
+                if (typeof renderDashboard === 'function') renderDashboard();
+            }
+        }
+
+        function renderDashboard() {
+            // 1. Profile
+            document.getElementById('dashName').innerText = document.getElementById('headerCustomerName').innerText;
+            const name = document.getElementById('headerCustomerName').innerText;
+            document.getElementById('dashAvatar').innerText = name ? name.charAt(0) : '?';
+
+            const fieldPhone = document.querySelector('.customer-field[data-field="clientPhone"]');
+            if (fieldPhone) document.getElementById('dashPhone').innerText = fieldPhone.value || '-';
+
+            const fieldAddress = document.querySelector('.customer-field[data-field="siteAddress"]');
+            if (fieldAddress) document.getElementById('dashAddress').innerText = fieldAddress.value || '-';
+
+            const fieldArea = document.querySelector('.customer-field[data-field="area"]');
+            const fieldType = document.querySelector('.customer-field[data-field="buildingType"]');
+            let areaType = [];
+            if (fieldArea && fieldArea.value) areaType.push(fieldArea.value);
+            if (fieldType && fieldType.value) areaType.push(fieldType.value);
+            document.getElementById('dashAreaType').innerText = areaType.length > 0 ? areaType.join(' / ') : '-';
+
+            // 2. Status & Timeline
+            const statusSelect = document.getElementById('customerStatus');
+            const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+            const statusVal = statusSelect.value;
+            // Remove emoji for badge
+            let statusLabel = statusText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[\u{2600}-\u{26FF}]/gu, '').trim();
+
+            // [New] A/S Period Check (진행상황에 A/S 기간 표시)
+            if (statusVal === 'completed' || statusVal === 'as_done' || statusVal === 'contracted' || statusVal === 'in_progress') {
+                // 잔금일이 입력되어 있어야 계산 가능
+                const finalDateStr = currentData.finalPaymentDate || '';
+                if (finalDateStr) {
+                    const finalDate = new Date(finalDateStr);
+                    const asEndDate = new Date(finalDate);
+                    asEndDate.setFullYear(finalDate.getFullYear() + 1); // 1년 A/S 기간
+                    const today = new Date();
+
+                    // 오늘 날짜가 잔금일과 A/S 종료일 사이라면
+                    if (today >= finalDate && today <= asEndDate) {
+                        statusLabel = "A/S 기간 중";
+                    }
+                }
+            }
+
+            document.getElementById('dashStatusBadge').innerText = statusLabel;
+
+            // Period (공사 기간 또는 A/S 기간 표시)
+            const start = document.getElementById('constructionStartInput').value;
+
+            if (statusLabel === "A/S 기간 중" && currentData.finalPaymentDate) {
+                const finalDate = new Date(currentData.finalPaymentDate);
+                const asEndDate = new Date(finalDate);
+                asEndDate.setFullYear(finalDate.getFullYear() + 1);
+
+                const formattedStart = finalDate.toISOString().split('T')[0];
+                const formattedEnd = asEndDate.toISOString().split('T')[0];
+
+                // A/S 기간으로 표시
+                document.getElementById('dashPeriod').innerText = `${formattedStart} ~ ${formattedEnd} (A/S 기간)`;
+            } else {
+                const end = document.getElementById('constructionEndInput').value;
+                document.getElementById('dashPeriod').innerText = (start || '?') + ' ~ ' + (end || '?');
+            }
+
+            // Update Timeline
+            let progress = 0;
+            document.querySelectorAll('.timeline-step').forEach(s => s.classList.remove('active'));
+            let activeStepId = '';
+
+            if (statusVal === 'consulting') { progress = 10; activeStepId = 'step-consulting'; }
+            else if (statusVal === 'estimate') { progress = 25; activeStepId = 'step-consulting'; }
+            else if (statusVal === 'contracted') { progress = 40; activeStepId = 'step-contract'; }
+            else if (statusVal === 'in_progress') { progress = 70; activeStepId = 'step-construction'; }
+            else if (statusVal === 'completed' || statusVal === 'as_done' || statusVal.includes('as_')) { progress = 100; activeStepId = 'step-completed'; }
+
+            if (activeStepId) document.getElementById(activeStepId).classList.add('active');
+            document.getElementById('dashProgressWidth').style.width = progress + '%';
+
+            // 3. Cost Summary (수정: 정산 관리 대장 기준)
+            // Get Total Amount
+            const totalAmtInput = document.querySelector('.customer-field[data-field="totalAmount"]');
+            const totalAmtStr = totalAmtInput ? totalAmtInput.value.replace(/[^0-9]/g, '') : '0';
+            const totalAmt = parseInt(totalAmtStr) || 0;
+            document.getElementById('dashTotalAmount').innerText = totalAmt.toLocaleString() + '원';
+
+            // Get Total Expenditure (Cost) from Settlement Ledger (정산 관리 대장)
+            // [변경] 원가관리표가 아닌 정산 관리 대장의 '지출' 합계를 사용
+            let totalCost = 0;
+            if (currentData.settlementRows && currentData.settlementRows.length > 0) {
+                currentData.settlementRows.forEach(row => {
+                    // expense 필드가 '지출' 금액임
+                    const expense = parseInt((row.expense || '0').replace(/[^0-9]/g, '')) || 0;
+                    totalCost += expense;
+                });
+            }
+
+            document.getElementById('dashTotalCost').innerText = totalCost.toLocaleString() + '원';
+
+            // Net Profit
+            const netProfit = totalAmt - totalCost;
+            document.getElementById('dashNetProfit').innerText = netProfit.toLocaleString() + '원';
+            if (netProfit < 0) document.getElementById('dashNetProfit').style.color = '#ff3b30';
+            else document.getElementById('dashNetProfit').style.color = '#34c759';
+
+            // Profit Rate
+            let rate = 0;
+            if (totalAmt > 0) rate = (netProfit / totalAmt) * 100;
+            document.getElementById('dashProfitRate').innerText = rate.toFixed(1) + '%';
+        }
+
+        // Helper to calc total cost from global data
+        function calculateTotalConstructionCost() {
+            let total = 0;
+            if (typeof categories !== 'undefined' && typeof globalCostData !== 'undefined') {
+                categories.forEach(cat => {
+                    const items = globalCostData['cost_' + cat.no] || [];
+                    items.forEach(item => {
+                        const qty = parseNumber(item.qty) || 0;
+                        // Price logic matches loadCostData
+                        let price = 0;
+                        if (item.price) {
+                            price = parseNumber(item.price);
+                        } else {
+                            price = (parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) + (parseNumber(item.expense) || 0);
+                        }
+                        total += (qty * price);
+                    });
+                });
+            }
+            return total;
         }
 
         function closeCostPasswordModal() {
@@ -9287,6 +10015,10 @@
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
 
+            // Main Dashboard Renewal: Default to Dashboard
+            showCustomerTab('dashboard');
+
+
             // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
             // Convert any stored dots (YYYY.MM.DD) to dashes.
             ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
@@ -9511,6 +10243,75 @@
             }
         }
 
+        // [New] Global Main Board Rendering
+        function renderMainBoard() {
+            const grid = document.getElementById('mainBoardGrid');
+            if (!grid) return;
+
+            // [NEW] Filters
+            const yearFilter = document.getElementById('mbYearFilter')?.value;
+            const statusFilter = document.getElementById('mbStatusFilter')?.value;
+
+            // Filter Logic
+            let filtered = customers.filter(c => {
+                // Year Check
+                let date = c.contractDate || c.consultDate || '';
+                let year = date.split('-')[0];
+                if (yearFilter && year !== yearFilter) return false;
+
+                // Status Check
+                if (statusFilter && c.status !== statusFilter) return false;
+
+                return true;
+            });
+
+            // Stats Logic (Update based on filtered view)
+            const total = filtered.length;
+            const inProgress = filtered.filter(c => c.status === 'in_progress').length;
+
+            const statsTotalEl = document.getElementById('statsTotal');
+            const statsProgressEl = document.getElementById('statsProgress');
+
+            if (statsTotalEl) statsTotalEl.innerText = total;
+            if (statsProgressEl) statsProgressEl.innerText = inProgress;
+
+            // Sort
+            const sorted = [...filtered].sort((a, b) => {
+                const dateA = a.contractDate || '0000-00-00';
+                const dateB = b.contractDate || '0000-00-00';
+                return dateB.localeCompare(dateA);
+            });
+
+            grid.innerHTML = sorted.map(c => {
+                let statusClass = 'status-consulting';
+                if (c.status === 'estimate') statusClass = 'status-estimate';
+                else if (c.status === 'contracted') statusClass = 'status-contracted';
+                else if (c.status === 'in_progress') statusClass = 'status-in_progress';
+                else if (c.status === 'completed' || c.status === 'as_done') statusClass = 'status-completed';
+
+                const statusMap = {
+                    'consulting': '상담중', 'estimate': '견적', 'contracted': '계약완료',
+                    'in_progress': '공사중', 'completed': '완료', 'as_done': 'A/S',
+                    'hold': '보류', 'budget_over': '예산초과', 'other_company': '타업체'
+                };
+                const statusText = statusMap[c.status] || c.status;
+
+                return `
+                    <div class="project-card" onclick="selectCustomer('${c.customerId}')">
+                        <div class="project-card-header">
+                            <div class="project-card-title">${c.clientName || '고객명 없음'}</div>
+                            <div class="project-card-client">${c.projectName || ''}</div>
+                            <div class="project-card-badge ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="project-card-footer">
+                             <div>${c.siteAddress || '-'}</div>
+                             <div>${c.manager ? c.manager.split(' ')[0] : '미지정'}</div>
+                        </div>
+                    </div>
+                 `;
+            }).join('');
+        }
+
         function updateCustomerList(resetPage = true) {
             const container = document.getElementById('customerList');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -9597,6 +10398,32 @@
                 // 전체 목록 렌더링
                 renderCustomerItems(container, filteredCustomers);
             }
+            // [NEW] Update Main Board if visible
+            const mainBoard = document.getElementById('mainBoardView');
+            if (mainBoard && mainBoard.style.display !== 'none') {
+                if (typeof renderMainBoard === 'function') renderMainBoard();
+            }
+        }
+
+        // [NEW] 메인 보드 보기 (홈 버튼)
+        function showMainBoardView() {
+            // 1. 고객 상세 뷰 숨기기
+            const customerView = document.getElementById('customerView');
+            if (customerView) customerView.style.display = 'none';
+
+            // 2. 메인 보드 보이기
+            const mainBoard = document.getElementById('mainBoardView');
+            if (mainBoard) {
+                mainBoard.style.display = 'block';
+                renderMainBoard(); // 데이터 갱신
+            }
+
+            // 3. 사이드바 선택 해제
+            const activeItems = document.querySelectorAll('.customer-item.active');
+            activeItems.forEach(el => el.classList.remove('active'));
+
+            // 4. 상태 변수 초기화
+            currentCustomerId = null;
         }
 
         // 고객 목록 아이템 렌더링 (공통)
@@ -15481,12 +16308,12 @@
 
         function showMainView(viewName) {
             const mainContent = document.getElementById('mainContent');
-            const emptyState = document.getElementById('emptyState');
-            const customerView = document.getElementById('customerView'); // [FIX] customerDetails -> customerView
+            const mainBoardView = document.getElementById('mainBoardView');
+            const customerView = document.getElementById('customerView');
             const expensesView = document.getElementById('view-expenses');
 
             // 초기화 - 모든 뷰 숨기기
-            if (emptyState) emptyState.style.display = 'none';
+            if (mainBoardView) mainBoardView.style.display = 'none';
             if (customerView) customerView.style.display = 'none';
             if (expensesView) expensesView.style.display = 'none';
 
@@ -15498,7 +16325,11 @@
             } else if (viewName === 'customer') {
                 if (customerView) customerView.style.display = 'block';
             } else {
-                if (emptyState) emptyState.style.display = 'flex';
+                // Default: Main Board
+                if (mainBoardView) {
+                    mainBoardView.style.display = 'block';
+                    if (typeof renderMainBoard === 'function') renderMainBoard();
+                }
             }
         }
 
