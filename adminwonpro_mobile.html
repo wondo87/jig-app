@@ -11655,12 +11655,11 @@
             if (!silent) setAppBusy(true, '최신 현장 불러오는 중...');
 
             try {
-                // [Phase 1] Load recent items first for speed (Pagination)
-                const INITIAL_LOAD_LIMIT = 50;
+                // [Mobile Optimization] Fetch ONLY 'In Progress' customers to minimize data
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',
-                    page: '1',
-                    limit: INITIAL_LOAD_LIMIT.toString(),
+                    status: 'in_progress', // Server-side filtering
+                    limit: '500',          // Limit to a reasonable number of active projects
                     t: Date.now()
                 });
 
@@ -11675,68 +11674,22 @@
 
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-                let initialData = await response.json();
+                let cloudData = await response.json();
 
-                if (!Array.isArray(initialData)) {
-                    if (initialData && initialData.error) throw new Error(initialData.error);
-                    initialData = [];
+                if (!Array.isArray(cloudData)) {
+                    if (cloudData && cloudData.error) throw new Error(cloudData.error);
+                    cloudData = [];
                 }
 
-                if (initialData.length === 0) {
-                    if (!silent) showToast('데이터가 없습니다.', 'info');
-                    customers = [];
-                    updateCustomerList();
-                    return true;
-                }
+                // Normalize & Update UI
+                normalizeCustomerStatus(cloudData);
+                customers = cloudData;
 
-                // 1. Normalize & Update UI immediately
-                normalizeCustomerStatus(initialData);
-
-                // Replace local data with cloud data
-                customers = initialData;
-
-                // Render List
                 updateCustomerList(true);
                 initYearFilter();
 
-                // Unblock UI immediately
-                if (!silent) setAppBusy(false);
-
-                // [Phase 2] Load remaining data in background if needed
-                if (initialData.length >= INITIAL_LOAD_LIMIT) {
-                    console.log('🔄 [Background Sync] Fetching remaining data...');
-
-                    const restParams = new URLSearchParams({
-                        sheet: '고객관리_견적서',
-                        page: '2',
-                        limit: '10000',
-                        t: Date.now()
-                    });
-
-                    fetch(`${CUSTOMER_SYNC_URL}?${restParams}`)
-                        .then(res => res.json())
-                        .then(restData => {
-                            if (Array.isArray(restData) && restData.length > 0) {
-                                console.log(`🔄 [Background Sync] Received ${restData.length} more records.`);
-                                normalizeCustomerStatus(restData);
-
-                                const currentMap = new Map();
-                                customers.forEach(c => currentMap.set(c.customerId, c));
-                                restData.forEach(c => currentMap.set(c.customerId, c));
-
-                                customers = Array.from(currentMap.values());
-
-                                // Silent update
-                                updateCustomerList(false);
-                                initYearFilter();
-
-                                console.log('✅ [Background Sync] Complete. Total:', customers.length);
-                                if (!silent) showToast(`전체 동기화 완료 (총 ${customers.length}명)`, 'success');
-                            }
-                        })
-                        .catch(err => console.error('Background fetch failed:', err));
-                } else {
-                    if (!silent) showToast(`동기화 완료 (총 ${customers.length}명)`, 'success');
+                if (!silent) {
+                    showToast(`동기화 완료 (공사중 ${customers.length}명)`, 'success');
                 }
 
                 return true;

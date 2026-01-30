@@ -1649,6 +1649,28 @@ function handleCustomerGet(e) {
     var data = sheet.getDataRange().getValues();
     var rows = data.slice(1); // 헤더 제외한 데이터 행만 추출
 
+    // [Status Filter Logic]
+    var statusFilter = e.parameter.status;
+    if (statusFilter) {
+        rows = rows.filter(function (row) {
+            // row[1] is the status column in buildCustomerFromRow/Sheet
+            var status = row[1] ? String(row[1]).trim() : '';
+            // Match exactly or with normalized version
+            var statusMapNormalizer = {
+                'consulting': '상담중',
+                'estimate': '견적',
+                'contracted': '계약완료',
+                'in_progress': '공사중',
+                'completed': '완료',
+                'as_done': 'AS완료',
+                'hold': '보류',
+                'budget_over': '예산초과',
+                'other_company': '타업체'
+            };
+            return status === statusFilter || status === statusMapNormalizer[statusFilter];
+        });
+    }
+
     // [Pagination Logic]
     var page = e.parameter.page ? parseInt(e.parameter.page) : null;
     var limit = e.parameter.limit ? parseInt(e.parameter.limit) : null;
