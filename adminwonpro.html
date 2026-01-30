@@ -3364,6 +3364,10 @@
         <div class="admin-modal-content" style="max-width: 500px;">
             <h3>📋 노션 고객 공유</h3>
             <p style="margin-bottom: 16px; color: #666; font-size: 13px;">노션 공유 URL을 입력하면 카카오톡용 공유 메시지가 생성됩니다.</p>
+            <div id="notionShareLoadInfo" style="display: none; margin-bottom: 12px; padding: 10px; background: #e3f2fd; border-radius: 8px; font-size: 12px; color: #1565c0;">
+                📂 저장된 메시지: <span id="notionShareLoadDate"></span>
+                <button onclick="loadNotionShareMessage()" style="margin-left: 8px; padding: 4px 10px; background: #1976d2; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">불러오기</button>
+            </div>
             <input type="text" id="notionShareUrlInput" placeholder="노션 공유 URL을 붙여넣으세요"
                 style="width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; margin-bottom: 16px;"
                 onkeypress="if(event.key==='Enter')generateNotionShareMessage()">
@@ -3379,11 +3383,15 @@
         <div class="admin-modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
             <h3>📋 공유 메시지 생성 완료</h3>
             <p style="margin-bottom: 12px; color: #666; font-size: 13px;">아래 내용을 복사하여 카카오톡으로 보내세요.</p>
+            <div id="notionShareSavedInfo" style="display: none; margin-bottom: 12px; padding: 10px; background: #e8f5e9; border-radius: 8px; font-size: 12px; color: #2e7d32;">
+                💾 저장됨: <span id="notionShareSavedDate"></span>
+            </div>
             <textarea id="notionShareResultText" readonly
-                style="width: 100%; height: 400px; padding: 16px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; line-height: 1.6; resize: none; font-family: inherit; background: #f9f9f9;"></textarea>
-            <div class="admin-modal-btns" style="margin-top: 16px;">
+                style="width: 100%; height: 380px; padding: 16px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; line-height: 1.6; resize: none; font-family: inherit; background: #f9f9f9;"></textarea>
+            <div class="admin-modal-btns" style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
                 <button class="cancel-btn" onclick="closeNotionShareResultModal()">닫기</button>
                 <button class="confirm-btn" onclick="copyNotionShareResult()" style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%);">📋 복사하기</button>
+                <button class="confirm-btn" onclick="saveNotionShareMessage()" style="background: linear-gradient(135deg, #34c759 0%, #2da44e 100%);">💾 저장</button>
             </div>
         </div>
     </div>
@@ -15831,6 +15839,8 @@
             document.getElementById('notionShareUrlInput').value = '';
             document.getElementById('notionShareModal').style.display = 'flex';
             document.getElementById('notionShareUrlInput').focus();
+            // 저장된 메시지 확인
+            checkSavedNotionShareMessage();
         }
 
         function closeNotionShareModal() {
@@ -15875,20 +15885,9 @@
             }
             const schPeriod = document.getElementById('schPeriod')?.textContent || '';
             const schManager = document.querySelector('input[data-field="manager"]')?.value || '원프로 소장 (010-4650-7013)';
+            const movingDate = currentData.movingDate || '(미정)';
             const gatePw = document.querySelector('input[data-field="gatePw"]')?.value || '';
             const doorPw = document.querySelector('input[data-field="doorPw"]')?.value || '';
-
-            // 비밀번호 문자열 생성
-            let passwordStr = '';
-            if (gatePw && doorPw) {
-                passwordStr = `공동현관 ${gatePw} / 세대현관 ${doorPw}`;
-            } else if (gatePw) {
-                passwordStr = `공동현관 ${gatePw}`;
-            } else if (doorPw) {
-                passwordStr = `세대현관 ${doorPw}`;
-            } else {
-                passwordStr = '(미입력)';
-            }
 
             // 카카오 공유 URL 생성
             const encodedName = encodeURIComponent(clientName);
@@ -15908,7 +15907,10 @@
 • 고객명 : ${customerDisplayStr}
 • 현장주소 : ${siteAddress}
 • 공사기간 : ${schPeriod}
-• 비밀번호 : ${passwordStr}
+• 이사예정일 : ${movingDate}
+• 비밀번호
+  - 공동현관 : ${gatePw || '(미입력)'}
+  - 세대현관 : ${doorPw || '(미입력)'}
 
 ━━━━━━━━━━━━━━
 
@@ -15964,6 +15966,115 @@ Pro. Beyond.`;
             textarea.select();
             document.execCommand('copy');
             showToast('클립보드에 복사되었습니다!', 'success');
+        }
+
+        // 노션 공유 메시지 저장
+        async function saveNotionShareMessage() {
+            if (!currentData || !currentData.customerId) {
+                showToast('고객을 먼저 선택해주세요.', 'error');
+                return;
+            }
+
+            const message = document.getElementById('notionShareResultText').value;
+            if (!message) {
+                showToast('저장할 메시지가 없습니다.', 'error');
+                return;
+            }
+
+            // 노션 URL 추출 (메시지에서)
+            const urlMatch = message.match(/https:\/\/www\.designjig\.com\/api\/notion\?[^\s]+/);
+            const notionUrl = urlMatch ? urlMatch[0] : '';
+
+            try {
+                showToast('저장 중...', 'info');
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveNotionShareMessage',
+                        customerId: currentData.customerId,
+                        message: message,
+                        notionUrl: notionUrl,
+                        savedBy: currentAdminId || 'unknown'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast('💾 저장되었습니다! (' + result.savedAt + ')', 'success');
+                    // 저장 정보 표시
+                    document.getElementById('notionShareSavedInfo').style.display = 'block';
+                    document.getElementById('notionShareSavedDate').textContent = result.savedAt;
+                } else {
+                    showToast('저장 실패: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showToast('저장 오류: ' + error.message, 'error');
+            }
+        }
+
+        // 노션 공유 메시지 불러오기
+        async function loadNotionShareMessage() {
+            if (!currentData || !currentData.customerId) {
+                showToast('고객을 먼저 선택해주세요.', 'error');
+                return;
+            }
+
+            try {
+                showToast('불러오는 중...', 'info');
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'loadNotionShareMessage',
+                        customerId: currentData.customerId
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success && result.found) {
+                    // 결과 모달에 표시
+                    document.getElementById('notionShareResultText').value = result.data.message;
+                    document.getElementById('notionShareSavedInfo').style.display = 'block';
+                    document.getElementById('notionShareSavedDate').textContent = result.data.savedAt;
+                    closeNotionShareModal();
+                    document.getElementById('notionShareResultModal').style.display = 'flex';
+                    showToast('불러오기 완료!', 'success');
+                } else {
+                    showToast('저장된 메시지가 없습니다.', 'info');
+                }
+            } catch (error) {
+                showToast('불러오기 오류: ' + error.message, 'error');
+            }
+        }
+
+        // 저장된 메시지 확인 (모달 열 때)
+        async function checkSavedNotionShareMessage() {
+            if (!currentData || !currentData.customerId) return;
+
+            try {
+                const response = await fetch(CUSTOMER_SYNC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'loadNotionShareMessage',
+                        customerId: currentData.customerId
+                    })
+                });
+
+                const result = await response.json();
+                const loadInfo = document.getElementById('notionShareLoadInfo');
+                const loadDate = document.getElementById('notionShareLoadDate');
+
+                if (result.success && result.found) {
+                    loadInfo.style.display = 'block';
+                    loadDate.textContent = result.data.savedAt;
+                } else {
+                    loadInfo.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('저장 메시지 확인 오류:', error);
+            }
         }
 
         // ==========================================

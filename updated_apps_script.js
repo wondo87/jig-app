@@ -211,6 +211,16 @@ function doPost(e) {
             return handleNotionExport(payload);
         }
 
+        // 2.1 노션 공유 메시지 저장
+        if (payload.action === 'saveNotionShareMessage') {
+            return handleSaveNotionShareMessage(payload);
+        }
+
+        // 2.2 노션 공유 메시지 불러오기
+        if (payload.action === 'loadNotionShareMessage') {
+            return handleLoadNotionShareMessage(payload);
+        }
+
         // 3. 관리자 데이터 동기화 요청인지 확인
         // 조건: action 필드가 있거나, 데이터 내에 customerId가 있음 (관리자 기능)
         var isAdminAction = (payload.action === 'admin' || payload.action === 'deleteAdmin');
@@ -4284,5 +4294,115 @@ function handleChecklistMasterUpdate(payload) {
         })).setMimeType(ContentService.MimeType.JSON);
     } finally {
         lock.releaseLock();
+    }
+}
+
+// ==========================================
+// 노션 공유 메시지 저장/불러오기
+// ==========================================
+
+const NOTION_SHARE_SHEET_NAME = '노션공유메시지';
+
+/**
+ * 노션 공유 메시지 저장
+ * @param {Object} payload - { customerId, message, notionUrl }
+ */
+function handleSaveNotionShareMessage(payload) {
+    try {
+        const ss = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        let sheet = ss.getSheetByName(NOTION_SHARE_SHEET_NAME);
+
+        // 시트가 없으면 생성
+        if (!sheet) {
+            sheet = ss.insertSheet(NOTION_SHARE_SHEET_NAME);
+            sheet.appendRow(['customerId', 'message', 'notionUrl', 'savedAt', 'savedBy']);
+            sheet.getRange(1, 1, 1, 5).setFontWeight('bold');
+        }
+
+        const customerId = payload.customerId;
+        const message = payload.message;
+        const notionUrl = payload.notionUrl || '';
+        const savedAt = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+        const savedBy = payload.savedBy || 'unknown';
+
+        // 기존 데이터 확인 (customerId로 검색)
+        const data = sheet.getDataRange().getValues();
+        let rowIndex = -1;
+        for (let i = 1; i < data.length; i++) {
+            if (data[i][0] === customerId) {
+                rowIndex = i + 1; // 1-based index
+                break;
+            }
+        }
+
+        if (rowIndex > 0) {
+            // 기존 행 업데이트
+            sheet.getRange(rowIndex, 2, 1, 4).setValues([[message, notionUrl, savedAt, savedBy]]);
+        } else {
+            // 새 행 추가
+            sheet.appendRow([customerId, message, notionUrl, savedAt, savedBy]);
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            message: '저장되었습니다.',
+            savedAt: savedAt
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            message: '저장 실패: ' + error.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+/**
+ * 노션 공유 메시지 불러오기
+ * @param {Object} payload - { customerId }
+ */
+function handleLoadNotionShareMessage(payload) {
+    try {
+        const ss = SpreadsheetApp.openById(CUSTOMER_SHEET_ID);
+        const sheet = ss.getSheetByName(NOTION_SHARE_SHEET_NAME);
+
+        if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({
+                success: true,
+                found: false,
+                message: '저장된 메시지가 없습니다.'
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        const customerId = payload.customerId;
+        const data = sheet.getDataRange().getValues();
+
+        for (let i = 1; i < data.length; i++) {
+            if (data[i][0] === customerId) {
+                return ContentService.createTextOutput(JSON.stringify({
+                    success: true,
+                    found: true,
+                    data: {
+                        customerId: data[i][0],
+                        message: data[i][1],
+                        notionUrl: data[i][2],
+                        savedAt: data[i][3],
+                        savedBy: data[i][4]
+                    }
+                })).setMimeType(ContentService.MimeType.JSON);
+            }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+            success: true,
+            found: false,
+            message: '저장된 메시지가 없습니다.'
+        })).setMimeType(ContentService.MimeType.JSON);
+
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            success: false,
+            message: '불러오기 실패: ' + error.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
     }
 }
