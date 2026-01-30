@@ -15989,7 +15989,7 @@ Pro. Beyond.`;
                 showToast('저장 중...', 'info');
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'saveNotionShareMessage',
                         customerId: currentData.customerId,
@@ -16024,7 +16024,7 @@ Pro. Beyond.`;
                 showToast('불러오는 중...', 'info');
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'loadNotionShareMessage',
                         customerId: currentData.customerId
@@ -16055,7 +16055,7 @@ Pro. Beyond.`;
             try {
                 const response = await fetch(CUSTOMER_SYNC_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'loadNotionShareMessage',
                         customerId: currentData.customerId
