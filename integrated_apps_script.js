@@ -1602,38 +1602,58 @@ function handleCustomerGet(e) {
     }
 
     var data = sheet.getDataRange().getValues();
+    // Separte headers and rows
+    // var headers = data[0]; // Not used currently
+    var rows = data.slice(1); // Remove header row
+
+    // [Pagination Logic]
+    var page = e.parameter.page ? parseInt(e.parameter.page) : null;
+    var limit = e.parameter.limit ? parseInt(e.parameter.limit) : null;
+
+    if (page && limit) {
+        // User wants "Recent" items first.
+        // Assuming sheet is appended chronologically (oldest at top).
+        // Reverse rows to put newest at index 0.
+        rows.reverse();
+
+        var startIdx = (page - 1) * limit;
+        var endIdx = startIdx + limit;
+        rows = rows.slice(startIdx, endIdx);
+    }
+
     var customers = [];
 
-    for (var i = 1; i < data.length; i++) {
-        var row = data[i];
+    rows.forEach(function (row) {
         var customerId = row[0]; // 첫 번째 열이 customerId
 
-        // customerId가 없으면 건너뛰기 (빈 행 또는 잘못된 데이터)
-        if (!customerId) continue;
+        // customerId가 없으면 건너뛰기
+        if (!customerId) return;
 
         var jsonData = row[17]; // JSON데이터 열 (18번째 열 = 인덱스 17)
+        var parsedCustomer = null;
 
         if (jsonData) {
             try {
                 var parsedData = JSON.parse(jsonData);
-                // 파싱된 데이터에 customerId가 있는지 확인
                 if (parsedData.customerId) {
-                    customers.push(parsedData);
+                    parsedCustomer = parsedData;
                 } else {
-                    // customerId가 없으면 행 데이터에서 추가
                     parsedData.customerId = customerId;
-                    customers.push(parsedData);
+                    parsedCustomer = parsedData;
                 }
             } catch (e) {
-                // 파싱 실패 시 로깅 및 기본 구조로 생성
-                console.warn('JSON 파싱 실패 (행 ' + (i + 1) + '): ' + e.toString());
-                customers.push(buildCustomerFromRow(row));
+                console.warn('JSON 파싱 실패: ' + e.toString());
             }
-        } else {
-            // JSON데이터가 없으면 기본 컬럼에서 구성
-            customers.push(buildCustomerFromRow(row));
         }
-    }
+
+        // JSON 파싱 실패하거나 없으면 기본 로우에서 빌드
+        if (!parsedCustomer) {
+            parsedCustomer = buildCustomerFromRow(row);
+        }
+
+        customers.push(parsedCustomer);
+    });
+
     return ContentService.createTextOutput(JSON.stringify(customers)).setMimeType(ContentService.MimeType.JSON);
 }
 

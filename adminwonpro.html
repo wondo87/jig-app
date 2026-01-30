@@ -10775,80 +10775,8 @@
         // ==========================================
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
-        async function syncFromCloud(silent = false) {
-            // [Task 3] Stabilization: Block UI during sync
-            if (!silent) setAppBusy(true, '클라우드 동기화 중...');
-
-            try {
-                // Google Apps Script GET 요청 (고객 데이터 조회 - 캐시 방지)
-                const params = new URLSearchParams({
-                    sheet: '고객관리_견적서',
-                    t: new Date().getTime()
-                });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
-                    method: 'GET'
-                });
-
-                if (!response.ok) {
-                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\nHTTP 오류: ${response.status}`, 'error');
-                    return false;
-                }
-
-                let cloudCustomers = await response.json();
-                console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
-
-                if (!Array.isArray(cloudCustomers)) {
-                    if (cloudCustomers.error) {
-                        throw new Error(cloudCustomers.error);
-                    }
-                    throw new Error('잘못된 응답 형식');
-                }
-
-                if (cloudCustomers.length === 0) {
-                    if (!silent && confirm('클라우드에 저장된 고객 데이터가 없습니다.\n\n로컬 대상을 초기화할까요?')) {
-                        customers = [];
-                        updateCustomerList();
-                        initYearFilter();
-                        showToast('고객 데이터가 없습니다.', 'info');
-                    }
-                    return true;
-                }
-
-                // [Phase 2] Cloud is the absolute Source of Truth. No local comparison needed.
-
-                // 중복 제거 로직 (customerId 기준)
-                const uniqueCloudMap = new Map();
-                cloudCustomers.forEach(c => {
-                    // 나중에 나온 데이터가 덮어쓰도록 함 (최신 데이터 우선 가정)
-                    uniqueCloudMap.set(c.customerId, c);
-                });
-                // 중복이 제거된 배열로 재할당
-                cloudCustomers = Array.from(uniqueCloudMap.values());
-
-                // [Performance] Removed eager parsing loop. JSON is now parsed lazily in selectCustomer().
-                // cloudCustomers = cloudCustomers.map(...) logic removed.
-
-            }
-
-                    // [FIX] Status Normalization
-                    const statusMap = {
-                '상담중': 'consulting',
-                '견적서': 'estimate',
-                '보류': 'hold',
-                '예산초과': 'budget_over',
-                '타업체': 'other_company',
-                '계약완료': 'contracted',
-                '공사중': 'in_progress',
-                '공사완료': 'completed',
-                'A/S': 'as_done'
-            };
-
-            let finalCustomer = { ...customer };
-            if (parsedJsonData) {
-                finalCustomer = { ...customer, ...parsedJsonData };
-            }
-            // [Performance] Removed eager parsing.
-            // However, we MUST normalize status (Korean -> English) for the UI to work.
+        // [Helper] Normalize status for UI compatibility
+        function normalizeCustomerStatus(customerList) {
             const statusMapNormalizer = {
                 '상담중': 'consulting',
                 '견적': 'estimate',
@@ -10862,58 +10790,130 @@
                 '타업체': 'other_company', '타사계약': 'other_company'
             };
 
-            cloudCustomers.forEach(c => {
+            customerList.forEach(c => {
                 if (c.status && statusMapNormalizer[c.status]) {
                     c.status = statusMapNormalizer[c.status];
                 }
                 // Flatten key fields if needed (compatibility)
                 if (!c.clientName && c.name) c.clientName = c.name;
             });
-
-
-
-
-            // [Phase 2] 클라우드 데이터로 완전 교체 (로컬 스토리지 저장 중단)
-
-            // [DEBUG] 상태별 고객 수 확인
-            const statusCounts = {};
-            cloudCustomers.forEach(c => {
-                const status = c.status || 'undefined';
-                statusCounts[status] = (statusCounts[status] || 0) + 1;
-            });
-            console.log('📊 [PC Web Debug] 클라우드 데이터 상태별 고객 수:', statusCounts);
-            console.log('📊 [PC Web Debug] 공사중 고객 목록:',
-                cloudCustomers.filter(c => c.status === 'in_progress').map(c => ({
-                    id: c.customerId,
-                    name: c.projectName || c.name,
-                    status: c.status
-                }))
-            );
-
-
-            // UI 업데이트
-            customers = cloudCustomers;
-            cachedCloudCount = cloudCustomers.length;
-            updateCustomerList();
-            initYearFilter();
-
-            // UI 업데이트 완료 후 알림 표시 (수동 클릭 시에만)
-            if (!silent) {
-                setTimeout(() => {
-                    showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명`, 'success');
-                }, 50);
-            }
-
-            return true; // 성공 반환
-
-        } catch (error) {
-            console.error('❌ [Cloud Sync] Error:', error);
-            if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
-            return false; // 실패 반환
-        } finally {
-            // Always release busy state
-            if (!silent) setAppBusy(false);
         }
+
+        async function syncFromCloud(silent = false) {
+            // [Task 3] Stabilization: Block UI during sync
+            if (!silent) setAppBusy(true, '최신 현장 불러오는 중...');
+
+            try {
+                // [Phase 1] Load recent items first for speed (Pagination)
+                const INITIAL_LOAD_LIMIT = 50;
+                // Add sorting param if supported, but relying on backend "Recent First" logic for page=1
+                const params = new URLSearchParams({
+                    sheet: '고객관리_견적서',
+                    page: '1',
+                    limit: INITIAL_LOAD_LIMIT.toString(),
+                    t: new Date().getTime()
+                });
+
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                let initialData = await response.json();
+
+                // Handle various response types (Array or {data: [], meta: {}})
+                if (!Array.isArray(initialData) && initialData.data) {
+                    initialData = initialData.data;
+                } else if (!Array.isArray(initialData)) {
+                    // If error object or unknown
+                    if (initialData.error) throw new Error(initialData.error);
+                    initialData = [];
+                }
+
+                if (initialData.length === 0) {
+                    if (!silent) showToast('데이터가 없습니다.', 'info');
+                    customers = [];
+                    updateCustomerList();
+                    return true;
+                }
+
+                // 1. Normalize & Update UI immediately
+                normalizeCustomerStatus(initialData);
+
+                // Replace local data with cloud data
+                cloudCustomers = initialData;
+                customers = cloudCustomers;
+
+                // Render List
+                updateCustomerList(true);
+                initYearFilter();
+
+                // Unblock UI immediately
+                if (!silent) {
+                    setAppBusy(false);
+                    // showToast(`최신 ${initialData.length}건 로드 완료`, 'success');
+                }
+
+                // [Phase 2] Load remaining data in background if needed
+                // If we received a full page (limit reached), assume there is more.
+                // If backend ignored 'limit' and sent 1000 items, length > limit.
+                if (initialData.length >= INITIAL_LOAD_LIMIT) {
+                    console.log('🔄 [Background Sync] Fetching remaining data...');
+
+                    const restParams = new URLSearchParams({
+                        sheet: '고객관리_견적서',
+                        page: '2',          // Get the rest
+                        limit: '10000',     // Large limit
+                        t: new Date().getTime()
+                    });
+
+                    // Background fetch - do not await
+                    fetch(`${CUSTOMER_SYNC_URL}?${restParams}`)
+                        .then(res => res.json())
+                        .then(restData => {
+                            let restList = restData;
+                            if (!Array.isArray(restList) && restList.data) restList = restList.data;
+
+                            if (Array.isArray(restList) && restList.length > 0) {
+                                console.log(`🔄 [Background Sync] Received ${restList.length} more records.`);
+                                normalizeCustomerStatus(restList);
+
+                                // Merge: We append restList to cloudCustomers
+                                // (Assuming 'page=2' returns OLDER items if page=1 was recent)
+
+                                // Use Map to ensure no duplicates in case of overlap or ID collision
+                                const currentMap = new Map();
+                                cloudCustomers.forEach(c => currentMap.set(c.customerId, c));
+                                restList.forEach(c => currentMap.set(c.customerId, c));
+
+                                // Update global list
+                                cloudCustomers = Array.from(currentMap.values());
+                                customers = cloudCustomers;
+
+                                // Silent update (maintain scroll/page)
+                                updateCustomerList(false);
+                                initYearFilter();
+
+                                console.log('✅ [Background Sync] Complete. Total:', cloudCustomers.length);
+                                if (!silent) showToast(`전체 동기화 완료 (총 ${cloudCustomers.length}명)`, 'success');
+                            }
+                        })
+                        .catch(err => console.error('Background fetch failed:', err));
+                } else {
+                    if (!silent) showToast(`동기화 완료 (총 ${cloudCustomers.length}명)`, 'success');
+                }
+
+                return true;
+
+            } catch (error) {
+                console.error('❌ [Cloud Sync] Error:', error);
+                if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
+                return false;
+            } finally {
+                // Safety: Ensure busy is off
+                if (!silent) setAppBusy(false);
+            }
         }
 
         async function syncToGoogleSheets(data) {
