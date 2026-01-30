@@ -5650,7 +5650,8 @@
                                     ☁️ 저장
                                 </button>
 
-                                <button class="restore-btn no-print" onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
+                                <button class="restore-btn no-print"
+                                    onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
@@ -5766,7 +5767,8 @@
                                     </div>
                                 </div>
                                 <div style="flex: 1; min-width: 200px; display: flex; align-items: flex-end;">
-                                    <button class="btn btn-primary btn-sm no-print" onclick="showAddChecklistItemModal()"
+                                    <button class="btn btn-primary btn-sm no-print"
+                                        onclick="showAddChecklistItemModal()"
                                         style="background: rgba(52, 199, 89, 0.9); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%;"
                                         title="현재 필터 조건의 항목을 일괄 추가">
                                         ➕ 필터 항목 추가
@@ -10935,15 +10937,38 @@
 
             // [DEBUG] 고객 데이터 확인
             console.log('🔍 [Mobile Debug] selectCustomer 호출:', customerId);
-            console.log('🔍 [Mobile Debug] customers 배열 길이:', customers.length);
+            const customerIdx = customers.findIndex(c => c.customerId === customerId);
 
-            const customer = customers.find(c => c.customerId === customerId);
-            console.log('🔍 [Mobile Debug] 찾은 고객:', customer);
-
-            if (!customer) {
+            if (customerIdx === -1) {
                 console.error('❌ [Mobile Debug] 고객을 찾을 수 없음:', customerId);
                 return;
             }
+
+            let customer = customers[customerIdx];
+
+            // [JIT Parsing] Defer jsonData parsing until selection
+            if (customer.jsonData && typeof customer.jsonData === 'string' && !customer._isParsed) {
+                try {
+                    console.log('🔄 [JIT Parser] Parsing jsonData for', customerId);
+                    const parsed = JSON.parse(customer.jsonData);
+
+                    // Normalize checklistData if exists
+                    if (parsed.checklistData && typeof parsed.checklistData === 'object') {
+                        const normalized = {};
+                        Object.entries(parsed.checklistData).forEach(([key, value]) => {
+                            normalized[key] = (value && typeof value === 'object' && 'checked' in value) ? value.checked : (typeof value === 'boolean' ? value : false);
+                        });
+                        parsed.checklistData = normalized;
+                    }
+
+                    // Update the customer object in the array
+                    customers[customerIdx] = { ...customer, ...parsed, _isParsed: true };
+                    customer = customers[customerIdx];
+                } catch (e) {
+                    console.error('❌ [JIT Parser] Parse error:', e.message);
+                }
+            }
+
             currentCustomerId = customerId;
 
             // Legacy Data Compatibility (Cloud Compatibility Fix)
@@ -11604,252 +11629,123 @@
         // ==========================================
         // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
         // ==========================================
+        function normalizeCustomerStatus(customerList) {
+            const statusMapNormalizer = {
+                '상담중': 'consulting',
+                '견적': 'estimate',
+                '계약완료': 'contracted',
+                '공사중': 'in_progress',
+                '완료': 'completed', '공사완료': 'completed',
+                'AS완료': 'as_done', 'A/S': 'as_done', 'A/S완료': 'as_done',
+                '보류': 'hold',
+                '예산초과': 'budget_over',
+                '타업체': 'other_company', '타사계약': 'other_company'
+            };
+
+            customerList.forEach(c => {
+                if (c.status && statusMapNormalizer[c.status]) {
+                    c.status = statusMapNormalizer[c.status];
+                }
+                // Compatibility for name fields
+                if (!c.clientName && c.name) c.clientName = c.name;
+            });
+        }
+
         async function syncFromCloud(silent = false) {
-            // [Task 3] Stabilization: Block UI during sync
-            if (!silent) setAppBusy(true, '클라우드 동기화 중...');
-
-            // Error classification helper (enhanced for iOS debugging)
-            function classifyError(error, response, responseText = '') {
-                if (!navigator.onLine) return { type: 'network', message: '네트워크 연결을 확인해주세요.' };
-                if (error && error.name === 'TypeError' && error.message.includes('fetch')) {
-                    return { type: 'network', message: '서버 연결 실패. 인터넷 상태를 확인하세요.' };
-                }
-                if (response && !response.ok) {
-                    return { type: 'http', message: `서버 오류 (HTTP ${response.status}: ${response.statusText})` };
-                }
-                if (error && (error.message.includes('JSON') || error.name === 'SyntaxError')) {
-                    // Include response preview for debugging
-                    const preview = responseText ? responseText.substring(0, 100) : '';
-                    return { type: 'json', message: `응답 파싱 오류${preview ? ': ' + preview + '...' : ''}` };
-                }
-                return { type: 'unknown', message: error?.message || '알 수 없는 오류' };
-            }
-
-            // Request URL for logging
-            if (typeof CUSTOMER_SYNC_URL === 'undefined') {
-                console.error('❌ CUSTOMER_SYNC_URL 미정의');
-                return false;
-            }
-            const requestUrl = `${CUSTOMER_SYNC_URL}?sheet=고객관리_견적서&t=${Date.now()}`;
-
-            let response = null;
-            let responseText = ''; // For debugging
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
+            if (!silent) setAppBusy(true, '최신 현장 불러오는 중...');
 
             try {
-                if (!silent) console.log('🔄 클라우드 데이터 가져오는 중...');
-
-                // [DEBUG] Log request URL
-                console.log('📡 [iOS Debug] Request URL:', requestUrl);
-
-                // Google Apps Script GET 요청 (iOS Safari 호환 옵션 포함)
+                // [Phase 1] Load recent items first for speed (Pagination)
+                const INITIAL_LOAD_LIMIT = 50;
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',
-                    t: Date.now() // Cache busting
+                    page: '1',
+                    limit: INITIAL_LOAD_LIMIT.toString(),
+                    t: Date.now()
                 });
 
-                // iOS Safari requires explicit cache and credentials handling
-                response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
+                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
                     method: 'GET',
-                    signal: controller.signal,   // 타임아웃 신호
-                    mode: 'cors',                // Explicit CORS mode
-                    redirect: 'follow',          // Follow Google Apps Script redirects
-                    cache: 'no-store',           // iOS cache issue fix
-                    credentials: 'omit',         // Avoid CORS preflight
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                    mode: 'cors',
+                    redirect: 'follow',
+                    cache: 'no-store',
+                    credentials: 'omit',
+                    headers: { 'Accept': 'application/json' }
                 });
-                clearTimeout(timeoutId);
 
-                // [DEBUG] Log response status
-                console.log('📡 [iOS Debug] Response Status:', response.status, response.statusText);
-                console.log('📡 [iOS Debug] Response URL (after redirect):', response.url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-                if (!response.ok) {
-                    const errInfo = classifyError(null, response);
-                    console.error('❌ [iOS Debug] HTTP Error:', response.status, response.statusText);
-                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n[${errInfo.type.toUpperCase()}] ${errInfo.message}`, 'error');
-                    if (!silent) setAppBusy(false);
-                    return false;
+                let initialData = await response.json();
+
+                if (!Array.isArray(initialData)) {
+                    if (initialData && initialData.error) throw new Error(initialData.error);
+                    initialData = [];
                 }
 
-                // Get response text first for debugging
-                responseText = await response.text();
-                console.log('📡 [iOS Debug] Response Preview (first 200 chars):', responseText.substring(0, 200));
-
-                let cloudCustomers;
-                try {
-                    cloudCustomers = JSON.parse(responseText);
-                } catch (jsonErr) {
-                    console.error('❌ [iOS Debug] JSON Parse Error:', jsonErr.message);
-                    console.error('❌ [iOS Debug] Raw Response:', responseText.substring(0, 500));
-                    const errInfo = classifyError(jsonErr, null, responseText);
-                    if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n[${errInfo.type.toUpperCase()}] ${errInfo.message}`, 'error');
-                    if (!silent) setAppBusy(false);
-                    return false;
-                }
-
-                console.log('☁️ [Cloud Sync] Received data:', cloudCustomers);
-
-                // Handle server-side errors (result.ok === false or result.error)
-                if (cloudCustomers && typeof cloudCustomers === 'object' && !Array.isArray(cloudCustomers)) {
-                    if (cloudCustomers.ok === false || cloudCustomers.error) {
-                        const serverMsg = cloudCustomers.message || cloudCustomers.error || '서버에서 오류가 발생했습니다.';
-                        console.error('❌ [iOS Debug] Server Error:', serverMsg);
-                        if (!silent) showPersistentAlert(`[SERVER] ${serverMsg}`, 'error');
-                        if (!silent) setAppBusy(false);
-                        return false;
-                    }
-                }
-
-                // Handle various response formats
-                if (!Array.isArray(cloudCustomers)) {
-                    console.error('❌ [iOS Debug] Invalid response format (not array):', typeof cloudCustomers);
-                    throw new Error('잘못된 응답 형식');
-                }
-
-                // [iOS FIX] Empty array is a valid SUCCESS case
-                if (cloudCustomers.length === 0) {
+                if (initialData.length === 0) {
+                    if (!silent) showToast('데이터가 없습니다.', 'info');
                     customers = [];
                     updateCustomerList();
-                    initYearFilter();
-                    if (!silent) showToast('클라우드에 고객 데이터가 없습니다.', 'info');
-                    if (!silent) setAppBusy(false);
-                    return true; // SUCCESS, not failure
+                    return true;
                 }
 
-                // [Phase 2] Cloud is the absolute Source of Truth. No local comparison needed.
+                // 1. Normalize & Update UI immediately
+                normalizeCustomerStatus(initialData);
 
-                // 중복 제거 로직 (customerId 기준)
-                const uniqueCloudMap = new Map();
-                cloudCustomers.forEach(c => {
-                    uniqueCloudMap.set(c.customerId, c);
-                });
-                cloudCustomers = Array.from(uniqueCloudMap.values());
+                // Replace local data with cloud data
+                customers = initialData;
 
-                // [Phase 2] 클라우드 데이터로 완전 교체
-
-                // [DEBUG] 상태별 고객 수 확인
-                const statusCounts = {};
-                cloudCustomers.forEach(c => {
-                    const status = c.status || 'undefined';
-                    statusCounts[status] = (statusCounts[status] || 0) + 1;
-                });
-                console.log('📊 [Mobile Debug] 클라우드 데이터 상태별 고객 수:', statusCounts);
-                console.log('📊 [Mobile Debug] 공사중 고객 목록:',
-                    cloudCustomers.filter(c => c.status === 'in_progress').map(c => ({
-                        id: c.customerId,
-                        name: c.projectName || c.clientName,
-                        status: c.status
-                    }))
-                );
-
-                // [CRITICAL FIX] Parse jsonData for each customer to restore checklistData
-                console.log('🔄 [Mobile Debug] Parsing jsonData for', cloudCustomers.length, 'customers...');
-
-                let hasJsonDataCount = 0;
-                let parsedCount = 0;
-                let errorCount = 0;
-
-                cloudCustomers = cloudCustomers.map((customer, index) => {
-                    // 첫 번째 고객은 상세 로그
-                    if (index === 0) {
-                        console.log('🔍 [Mobile Debug] First customer keys:', Object.keys(customer));
-                        console.log('🔍 [Mobile Debug] First customer jsonData exists?', !!customer.jsonData);
-                        console.log('🔍 [Mobile Debug] First customer jsonData type:', typeof customer.jsonData);
-                        if (customer.jsonData) {
-                            console.log('🔍 [Mobile Debug] First customer jsonData length:', customer.jsonData.length);
-                            console.log('🔍 [Mobile Debug] First customer jsonData preview:', customer.jsonData.substring(0, 200));
-                        }
-                    }
-
-                    if (customer.jsonData && typeof customer.jsonData === 'string') {
-                        hasJsonDataCount++;
-                        try {
-                            const parsedData = JSON.parse(customer.jsonData);
-                            parsedCount++;
-
-                            const checklistKeys = Object.keys(parsedData.checklistData || {});
-                            console.log('✅ [Mobile Debug] Parsed customer:', customer.customerId,
-                                       '- checklistData:', checklistKeys.length, 'items');
-
-                            // [FIX] Normalize checklistData structure: convert {"1": {"checked": true}} to {"1": true}
-                            if (parsedData.checklistData && typeof parsedData.checklistData === 'object') {
-                                const normalized = {};
-                                Object.entries(parsedData.checklistData).forEach(([key, value]) => {
-                                    if (value && typeof value === 'object' && 'checked' in value) {
-                                        // Convert {"checked": true} to true
-                                        normalized[key] = value.checked;
-                                    } else if (typeof value === 'boolean') {
-                                        // Already correct format
-                                        normalized[key] = value;
-                                    } else {
-                                        // Invalid format, default to false
-                                        normalized[key] = false;
-                                    }
-                                });
-                                parsedData.checklistData = normalized;
-                                console.log('🔧 [Mobile Debug] Normalized checklistData for customer:', customer.customerId);
-                            }
-
-                            // Merge parsed data with customer data (parsedData takes priority)
-                            return { ...customer, ...parsedData };
-                        } catch (e) {
-                            errorCount++;
-                            console.error('❌ [Mobile Debug] Parse error for customer:', customer.customerId, e.message);
-                            console.error('❌ [Mobile Debug] jsonData that failed:', customer.jsonData.substring(0, 200));
-                            return customer;
-                        }
-                    } else if (!customer.jsonData) {
-                        if (index < 3) console.log('⚠️ [Mobile Debug] No jsonData for customer:', customer.customerId);
-                        return customer;
-                    } else {
-                        console.warn('⚠️ [Mobile Debug] Invalid jsonData type for customer:', customer.customerId, 'type:', typeof customer.jsonData);
-                        return customer;
-                    }
-                });
-
-                console.log('📊 [Mobile Debug] Parsing summary:');
-                console.log('   - Total customers:', cloudCustomers.length);
-                console.log('   - Has jsonData:', hasJsonDataCount);
-                console.log('   - Successfully parsed:', parsedCount);
-                console.log('   - Parse errors:', errorCount);
-
-                // UI 업데이트
-                console.log('🔄 [Mobile Debug] 고객 데이터 설정 전 customers 길이:', customers.length);
-                customers = cloudCustomers;
-                console.log('🔄 [Mobile Debug] 고객 데이터 설정 후 customers 길이:', customers.length);
-                console.log('🔄 [Mobile Debug] 설정된 고객 목록:', customers.map(c => c.customerId));
-                console.log('🔄 [Mobile Debug] Sample customer checklistData:', customers[0]?.checklistData ? Object.keys(customers[0].checklistData).slice(0, 5) : 'none');
-                cachedCloudCount = cloudCustomers.length;
-                updateCustomerList();
+                // Render List
+                updateCustomerList(true);
                 initYearFilter();
 
-                // UI 업데이트 완료 후 알림 표시 (수동 클릭 시에만)
-                if (!silent) {
-                    setTimeout(() => {
-                        const inProgressCount = cloudCustomers.filter(c => c.status === 'in_progress').length;
-                        const statusInfo = Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(', ');
-                        showPersistentAlert(`클라우드 동기화 완료!\n\n총 고객 수: ${cloudCustomers.length}명\n공사중: ${inProgressCount}명\n\n상태별: ${statusInfo}`, 'success');
-                    }, 50);
+                // Unblock UI immediately
+                if (!silent) setAppBusy(false);
+
+                // [Phase 2] Load remaining data in background if needed
+                if (initialData.length >= INITIAL_LOAD_LIMIT) {
+                    console.log('🔄 [Background Sync] Fetching remaining data...');
+
+                    const restParams = new URLSearchParams({
+                        sheet: '고객관리_견적서',
+                        page: '2',
+                        limit: '10000',
+                        t: Date.now()
+                    });
+
+                    fetch(`${CUSTOMER_SYNC_URL}?${restParams}`)
+                        .then(res => res.json())
+                        .then(restData => {
+                            if (Array.isArray(restData) && restData.length > 0) {
+                                console.log(`🔄 [Background Sync] Received ${restData.length} more records.`);
+                                normalizeCustomerStatus(restData);
+
+                                const currentMap = new Map();
+                                customers.forEach(c => currentMap.set(c.customerId, c));
+                                restData.forEach(c => currentMap.set(c.customerId, c));
+
+                                customers = Array.from(currentMap.values());
+
+                                // Silent update
+                                updateCustomerList(false);
+                                initYearFilter();
+
+                                console.log('✅ [Background Sync] Complete. Total:', customers.length);
+                                if (!silent) showToast(`전체 동기화 완료 (총 ${customers.length}명)`, 'success');
+                            }
+                        })
+                        .catch(err => console.error('Background fetch failed:', err));
+                } else {
+                    if (!silent) showToast(`동기화 완료 (총 ${customers.length}명)`, 'success');
                 }
 
-                return true; // 성공 반환
+                return true;
 
             } catch (error) {
                 console.error('❌ [Cloud Sync] Error:', error);
-                const errInfo = classifyError(error, response);
-                if (!silent) {
-                    showPersistentAlert(
-                        `클라우드 동기화 실패\n\n[${errInfo.type.toUpperCase()}] ${errInfo.message}\n\n"다시 연결" 버튼을 눌러 재시도하세요.`,
-                        'error'
-                    );
-                }
-                return false; // 실패 반환
+                if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
+                return false;
             } finally {
-                // Always release busy state
                 if (!silent) setAppBusy(false);
             }
         }
