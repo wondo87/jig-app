@@ -10030,11 +10030,14 @@
                 asDisplay.style.display = 'none';
             }
 
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('customerView').style.display = 'block';
-            document.getElementById('headerCustomerName').textContent = currentData.projectName || currentData.clientName ||
-                '고객명 없음';
-            document.getElementById('headerCustomerId').textContent = currentCustomerId;
+            const emptyStateEl = document.getElementById('emptyState');
+            if (emptyStateEl) emptyStateEl.style.display = 'none';
+            const customerViewEl = document.getElementById('customerView');
+            if (customerViewEl) customerViewEl.style.display = 'block';
+            const headerNameEl = document.getElementById('headerCustomerName');
+            if (headerNameEl) headerNameEl.textContent = currentData.projectName || currentData.clientName || '고객명 없음';
+            const headerIdEl = document.getElementById('headerCustomerId');
+            if (headerIdEl) headerIdEl.textContent = currentCustomerId;
             loadCostData();
             loadEstimateData();
 
