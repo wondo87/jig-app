@@ -4252,7 +4252,7 @@
                                     <div class="profile-avatar" id="dashAvatar">?</div>
                                     <div class="profile-info">
                                         <h2 id="dashName">고객명</h2>
-                                        <p id="dashPhone">010-0000-0000</p>
+                                        <p id="dashPhone">성명(연락처) | 배우자(연락처)</p>
                                     </div>
                                 </div>
                                 <div class="profile-details">
@@ -4263,6 +4263,14 @@
                                     <div class="profile-detail-item">
                                         <div class="profile-detail-label">평수/유형</div>
                                         <div class="profile-detail-value" id="dashAreaType">-</div>
+                                    </div>
+                                    <div class="profile-detail-item">
+                                        <div class="profile-detail-label">계약일</div>
+                                        <div class="profile-detail-value" id="dashContractDate">-</div>
+                                    </div>
+                                    <div class="profile-detail-item">
+                                        <div class="profile-detail-label">총 계약금액 (VAT 포함)</div>
+                                        <div class="profile-detail-value" id="dashContractAmount">-</div>
                                     </div>
                                 </div>
                             </div>
@@ -7701,13 +7709,28 @@
         }
 
         function renderDashboard() {
-            // 1. Profile
+            // 1. Profile - 현장명
             document.getElementById('dashName').innerText = document.getElementById('headerCustomerName').innerText;
             const name = document.getElementById('headerCustomerName').innerText;
             document.getElementById('dashAvatar').innerText = name ? name.charAt(0) : '?';
 
-            const fieldPhone = document.querySelector('.customer-field[data-field="clientPhone"]');
-            if (fieldPhone) document.getElementById('dashPhone').innerText = fieldPhone.value || '-';
+            // 고객 연락처 표시: 성명(연락처) | 배우자 성명(배우자 연락처)
+            const customerName = currentData.name || currentData.clientName || '';
+            const customerPhone = currentData.phone || currentData.clientPhone || '';
+            const spouseName = currentData.spouseName || '';
+            const spousePhone = currentData.spousePhone || '';
+
+            let contactDisplay = '';
+            if (customerName) {
+                contactDisplay = customerName;
+                if (customerPhone) contactDisplay += `(${customerPhone})`;
+            }
+            if (spouseName) {
+                if (contactDisplay) contactDisplay += ' | ';
+                contactDisplay += spouseName;
+                if (spousePhone) contactDisplay += `(${spousePhone})`;
+            }
+            document.getElementById('dashPhone').innerText = contactDisplay || '-';
 
             const fieldAddress = document.querySelector('.customer-field[data-field="siteAddress"]');
             if (fieldAddress) document.getElementById('dashAddress').innerText = fieldAddress.value || '-';
@@ -7718,6 +7741,20 @@
             if (fieldArea && fieldArea.value) areaType.push(fieldArea.value);
             if (fieldType && fieldType.value) areaType.push(fieldType.value);
             document.getElementById('dashAreaType').innerText = areaType.length > 0 ? areaType.join(' / ') : '-';
+
+            // 계약일
+            const contractDate = currentData.contractDate || '';
+            document.getElementById('dashContractDate').innerText = contractDate || '-';
+
+            // 총 계약금액 (VAT 포함)
+            const totalAmountField = document.querySelector('.customer-field[data-field="totalAmount"]');
+            const totalAmount = totalAmountField ? totalAmountField.value : (currentData.totalAmount || '');
+            if (totalAmount) {
+                const amountNum = parseInt(String(totalAmount).replace(/[^0-9]/g, '')) || 0;
+                document.getElementById('dashContractAmount').innerText = amountNum.toLocaleString() + '원';
+            } else {
+                document.getElementById('dashContractAmount').innerText = '-';
+            }
 
             // 2. Status & Timeline
             const statusSelect = document.getElementById('customerStatus');
