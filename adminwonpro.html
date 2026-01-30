@@ -9872,21 +9872,44 @@
                                 parsedData.checklistData = normalized;
                                 console.log('🔧 [Web Debug] Normalized checklistData for customer:', customer.customerId);
                             }
-
-                            return { ...customer, ...parsedData };
+                            // return { ...customer, ...parsedData }; // Moved to finalCustomer logic below
                         } catch (e) {
                             errorCount++;
                             console.error('❌ [Web Debug] Parse error for customer:', customer.customerId, e.message);
                             console.error('❌ [Web Debug] jsonData that failed:', customer.jsonData.substring(0, 200));
-                            return customer;
+                            // return customer; // Let it fall through
                         }
                     } else if (!customer.jsonData) {
                         if (index < 3) console.log('⚠️ [Web Debug] No jsonData for customer:', customer.customerId);
-                        return customer;
                     } else {
                         console.warn('⚠️ [Web Debug] Invalid jsonData type for customer:', customer.customerId, 'type:', typeof customer.jsonData);
-                        return customer;
                     }
+
+                    // [FIX] Status Normalization (Korean -> Code)
+                    const statusMap = {
+                        '상담중': 'consulting',
+                        '견적서': 'estimate',
+                        '보류': 'hold',
+                        '예산초과': 'budget_over',
+                        '타업체': 'other_company',
+                        '계약완료': 'contracted',
+                        '공사중': 'in_progress',
+                        '공사완료': 'completed',
+                        'A/S': 'as_done'
+                    };
+
+                    // Re-implement parsing logic safely to create finalCustomer
+                    let finalCustomer = customer;
+                    if (parsedData) { // If parsedData was successfully created above
+                        finalCustomer = { ...customer, ...parsedData };
+                    }
+
+                    // 상태 변환 적용
+                    if (finalCustomer.status && statusMap[finalCustomer.status]) {
+                        finalCustomer.status = statusMap[finalCustomer.status];
+                    }
+
+                    return finalCustomer;
                 });
 
                 console.log('📊 [Web Debug] Parsing summary:');
