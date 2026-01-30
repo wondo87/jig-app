@@ -16814,20 +16814,45 @@
             const encodedUrl = encodeURIComponent(notionUrl);
             const proxyUrl = `https://www.designjig.com/api/notion?name=${encodedName}&url=${encodedUrl}`;
 
+            // 현장 담당자 정보
+            const managerInput = document.querySelector('input[data-field="manager"]');
+            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-4650-7013)');
+
             // 메시지 생성
-            let message = `안녕하세요, ${customerName} 고객님.\n디자인지그입니다.\n\n`;
-            message += `고객님의 공사 안내문을 공유드립니다.\n\n`;
+            let message = `안녕하세요. 디자인지그입니다.\n\n`;
+            message += `공사 진행과 관련하여 아래 내용 안내드립니다.\n`;
+            message += `공사 기간 중 필요하실 때 언제든 다시 확인해 주세요.\n\n`;
+            message += `━━━━━━━━━━━━━━\n\n`;
+            message += `📌 기본 현장 정보\n\n`;
             message += `• 고객명 : ${customerDisplayStr}\n`;
             message += `• 현장주소 : ${siteAddress}\n`;
             message += `• 공사기간 : ${periodStr}\n`;
-            if (movingDate) {
-                message += `• 이사예정일 : ${movingDate}\n`;
-            }
             message += `• 비밀번호\n`;
             message += `  - 공동현관 : ${gatePw || '없음'}\n`;
-            message += `  - 세대현관 : ${doorPw || '없음'}\n`;
-            message += `\n📋 공사 안내문 바로가기\n${proxyUrl}\n`;
-            message += `\n감사합니다.`;
+            message += `  - 세대현관 : ${doorPw || '없음'}\n\n`;
+            message += `━━━━━━━━━━━━━━\n\n`;
+            message += `👷 현장 담당자\n\n`;
+            message += `• 현장소장 : ${projectManager}\n`;
+            message += `• 연락가능 : 평일 09:00~17:00\n\n`;
+            message += `━━━━━━━━━━━━━━\n\n`;
+            message += `📋 공사 안내문 (노션)\n\n`;
+            message += `공사 스케줄 / 체크리스트 / 자재 정보 / A/S / FAQ 안내를\n`;
+            message += `한 번에 확인하실 수 있습니다.\n\n`;
+            message += `👉 바로가기\n${proxyUrl}\n\n`;
+            message += `━━━━━━━━━━━━━━\n\n`;
+            message += `🏠 디자인지그 공식 채널\n\n`;
+            message += `• 홈페이지\nhttps://www.designjig.com\n\n`;
+            message += `• 블로그\nhttps://blog.naver.com/sweet00700\n\n`;
+            message += `• 카페\nhttps://cafe.naver.com/supermanhome\n\n`;
+            message += `• 인스타그램\nhttps://www.instagram.com/design__jig\n\n`;
+            message += `━━━━━━━━━━━━━━\n\n`;
+            message += `문의사항은 언제든 편하게 연락 주세요.\n`;
+            message += `공사 진행 중에도 지속적으로 안내드리겠습니다.\n`;
+            message += `감사합니다.\n\n`;
+            message += `━━━━━━━━━━━━━━\n\n`;
+            message += `디자인지그\n`;
+            message += `화려함보다 본질을 선택합니다.\n`;
+            message += `Pro. Beyond.`;
 
             document.getElementById('notionShareResultText').value = message;
             document.getElementById('notionShareModal').style.display = 'none';
@@ -17015,8 +17040,8 @@ ${processSection}
 감사합니다.
 디자인지그 드림.
 
-디자인지그는 화려함보다 본질을 선택합니다.  
-Pro. Beyond.  
+디자인지그는 화려함보다 본질을 선택합니다.
+현장이 편해야 결과도 좋아진다고 믿습니다.
 디자인지그는 감이 아닌 기준으로 일합니다.`;
 
                 results.push({
