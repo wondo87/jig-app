@@ -517,44 +517,79 @@
         }
 
         .main-board-header {
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end;
+            gap: 20px;
         }
 
         .main-board-header h1 {
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 26px;
+            font-weight: 800;
             color: #1d1d1f;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
         }
 
         .main-board-stats {
             display: flex;
-            gap: 20px;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .board-filter-select {
+            padding: 10px 14px;
+            border: 1px solid #e2e2e7;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #1d1d1f;
+            background: #fff;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 48px;
+            font-weight: 500;
+        }
+
+        .board-filter-select:hover {
+            border-color: #d2d2d7;
+            background: #fdfdfd;
         }
 
         .board-stat-item {
             background: #fff;
-            padding: 10px 16px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 0 20px;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
-            min-width: 100px;
+            justify-content: center;
+            min-width: 110px;
+            height: 48px;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: transform 0.2s;
+        }
+
+        .board-stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
 
         .board-stat-label {
-            font-size: 11px;
+            font-size: 10px;
             color: #86868b;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
         }
 
         .board-stat-value {
             font-size: 18px;
             font-weight: 700;
             color: #1d1d1f;
-            margin-top: 2px;
+            line-height: 1;
         }
 
         .main-board-grid {
@@ -1128,8 +1163,10 @@
         }
 
         .customer-item.active {
-            background: #e8f4fd;
-            border: 2px solid #0071e3;
+            background: #e6f9ed !important;
+            /* Green tint */
+            border: 2px solid #34c759 !important;
+            /* Green border */
         }
 
         .customer-item-header {
@@ -4069,39 +4106,34 @@
             <!-- Empty State -> Global Main Board -->
             <div id="mainBoardView" class="main-board-wrapper">
                 <div class="main-board-header">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%;">
-                        <div>
-                            <h1>Project Overview</h1>
-                            <div style="color:#86868b; font-size:14px; margin-top:4px;">전체 프로젝트 현황을 한눈에 확인하세요</div>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <select id="mbYearFilter" onchange="renderMainBoard()"
-                                style="padding:6px; border-radius:6px; border:1px solid #d2d2d7; font-size:13px; cursor:pointer;">
-                                <option value="">전체 년도</option>
-                                <option value="2026">2026년</option>
-                                <option value="2025">2025년</option>
-                                <option value="2024">2024년</option>
-                            </select>
-                            <select id="mbStatusFilter" onchange="renderMainBoard()"
-                                style="padding:6px; border-radius:6px; border:1px solid #d2d2d7; font-size:13px; cursor:pointer;">
-                                <option value="">전체 상태</option>
-                                <option value="consulting">상담중</option>
-                                <option value="estimate">견적</option>
-                                <option value="contracted">계약완료</option>
-                                <option value="in_progress">공사중</option>
-                                <option value="completed">완료</option>
-                                <option value="as_done">A/S</option>
-                            </select>
-                        </div>
+                    <div>
+                        <h1>Project Overview</h1>
+                        <p style="color:#86868b; font-size:13px; margin-top:4px; opacity:0.8;">전체 프로젝트 현황을 한눈에 확인하세요</p>
                     </div>
                     <div class="main-board-stats">
+                        <select class="board-filter-select" id="mbYearFilter" onchange="renderMainBoard()">
+                            <option value="">전체 년도</option>
+                            <option value="2026">2026년</option>
+                            <option value="2025">2025년</option>
+                            <option value="2024">2024년</option>
+                        </select>
+                        <select class="board-filter-select" id="mbStatusFilter" onchange="renderMainBoard()">
+                            <option value="">전체 상태</option>
+                            <option value="consulting">상담중</option>
+                            <option value="estimate">견적</option>
+                            <option value="contracted">계약완료</option>
+                            <option value="in_progress">공사중</option>
+                            <option value="completed">완료</option>
+                            <option value="as_done">A/S</option>
+                        </select>
+
                         <div class="board-stat-item">
-                            <span class="board-stat-label">Total Projects</span>
-                            <span class="board-stat-value" id="statsTotal">0</span>
+                            <div class="board-stat-label">Total Projects</div>
+                            <div class="board-stat-value" id="statsTotal">0</div>
                         </div>
                         <div class="board-stat-item">
-                            <span class="board-stat-label">In Progress</span>
-                            <span class="board-stat-value" id="statsProgress">0</span>
+                            <div class="board-stat-label">In Progress</div>
+                            <div class="board-stat-value" id="statsProgress" style="color:#0071e3;">0</div>
                         </div>
                     </div>
                 </div>
@@ -10011,12 +10043,26 @@
             if (typeof renderChecklistItems === 'function') renderChecklistItems();
             if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
 
-            updateCustomerList(false); // Do not reset page
+            // [PERFORMANCE FIX] Direct DOM update for selection state
+            // updateCustomerList(false); // Removed full re-render
+
+            // Remove active class from previous selection
+            document.querySelectorAll('.customer-item.active').forEach(el => el.classList.remove('active'));
+
+            // Add active class to new selection
+            // Use robust data attribute selector
+            const activeItem = document.querySelector(`.customer-item[data-customer-id="${currentCustomerId}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
 
             // Main Dashboard Renewal: Default to Dashboard
             showCustomerTab('dashboard');
+            if (typeof renderDashboard === 'function') renderDashboard();
 
 
             // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
@@ -10448,6 +10494,7 @@
 
                     return `
                 <div class="customer-item ${c.customerId === currentCustomerId ? 'active' : ''}"
+                    data-customer-id="${c.customerId}"
                     onclick="selectCustomer('${c.customerId}')">
                     <div class="customer-item-header">
                         <span class="customer-item-id">${lockIcon}${c.customerId}${creatorInfo}</span>
