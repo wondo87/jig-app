@@ -4278,14 +4278,31 @@
                             <!-- 2. 상태/일정 카드 -->
                             <div class="dashboard-card card-status">
                                 <h3>🚀 진행 현황</h3>
-                                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                                     <span id="dashStatusBadge" class="status-badge"
                                         style="font-size:14px; padding:6px 12px; background:#f5f5f7; color:#86868b;">상담중</span>
                                     <span id="dashDDay" class="d-day-badge" style="display:none;">D-Day</span>
                                 </div>
-                                <div style="font-size:13px; color:#1d1d1f; margin-bottom:20px;">
-                                    <strong>공사 기간:</strong> <span id="dashPeriod">- ~ -</span>
+                                <!-- 기간 정보 그리드 -->
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; font-size:13px;">
+                                    <div style="background:#f5f5f7; padding:10px 12px; border-radius:8px;">
+                                        <div style="color:#86868b; font-size:11px; margin-bottom:4px;">공사 기간</div>
+                                        <div style="color:#1d1d1f; font-weight:600;" id="dashPeriod">- ~ -</div>
+                                    </div>
+                                    <div style="background:#f5f5f7; padding:10px 12px; border-radius:8px;">
+                                        <div style="color:#86868b; font-size:11px; margin-bottom:4px;">이사예정일</div>
+                                        <div style="color:#1d1d1f; font-weight:600;" id="dashMovingDate">-</div>
+                                    </div>
+                                    <div style="background:#e8f5e9; padding:10px 12px; border-radius:8px;">
+                                        <div style="color:#2e7d32; font-size:11px; margin-bottom:4px;">A/S 기간 (잔금일+12개월)</div>
+                                        <div style="color:#1d1d1f; font-weight:600;" id="dashASPeriod">-</div>
+                                    </div>
+                                    <div style="background:#e3f2fd; padding:10px 12px; border-radius:8px;">
+                                        <div style="color:#1565c0; font-size:11px; margin-bottom:4px;">화장실 누수 보증</div>
+                                        <div style="color:#1d1d1f; font-weight:600;" id="dashBathroomWarranty">-</div>
+                                    </div>
                                 </div>
+                                <!-- 상태 타임라인 -->
                                 <div class="status-timeline">
                                     <div class="timeline-bar"></div>
                                     <div class="timeline-progress" id="dashProgressWidth" style="width: 0%;"></div>
@@ -7765,15 +7782,12 @@
 
             // [New] A/S Period Check (진행상황에 A/S 기간 표시)
             if (statusVal === 'completed' || statusVal === 'as_done' || statusVal === 'contracted' || statusVal === 'in_progress') {
-                // 잔금일이 입력되어 있어야 계산 가능
                 const finalDateStr = currentData.finalPaymentDate || '';
                 if (finalDateStr) {
                     const finalDate = new Date(finalDateStr);
                     const asEndDate = new Date(finalDate);
-                    asEndDate.setFullYear(finalDate.getFullYear() + 1); // 1년 A/S 기간
+                    asEndDate.setFullYear(finalDate.getFullYear() + 1);
                     const today = new Date();
-
-                    // 오늘 날짜가 잔금일과 A/S 종료일 사이라면
                     if (today >= finalDate && today <= asEndDate) {
                         statusLabel = "A/S 기간 중";
                     }
@@ -7782,23 +7796,50 @@
 
             document.getElementById('dashStatusBadge').innerText = statusLabel;
 
-            // Period (공사 기간 또는 A/S 기간 표시)
+            // 공사 기간
             const start = document.getElementById('constructionStartInput').value;
+            const end = document.getElementById('constructionEndInput').value;
+            document.getElementById('dashPeriod').innerText = (start || '-') + ' ~ ' + (end || '-');
 
-            if (statusLabel === "A/S 기간 중" && currentData.finalPaymentDate) {
-                const finalDate = new Date(currentData.finalPaymentDate);
+            // 이사예정일
+            const movingDate = currentData.movingDate || '';
+            document.getElementById('dashMovingDate').innerText = movingDate || '-';
+
+            // A/S 기간 (잔금일 + 12개월)
+            const finalDateStr = currentData.finalPaymentDate || '';
+            if (finalDateStr) {
+                const finalDate = new Date(finalDateStr);
                 const asEndDate = new Date(finalDate);
                 asEndDate.setFullYear(finalDate.getFullYear() + 1);
-
                 const formattedStart = finalDate.toISOString().split('T')[0];
                 const formattedEnd = asEndDate.toISOString().split('T')[0];
-
-                // A/S 기간으로 표시
-                document.getElementById('dashPeriod').innerText = `${formattedStart} ~ ${formattedEnd} (A/S 기간)`;
+                document.getElementById('dashASPeriod').innerText = `${formattedStart} ~ ${formattedEnd}`;
             } else {
-                const end = document.getElementById('constructionEndInput').value;
-                document.getElementById('dashPeriod').innerText = (start || '?') + ' ~ ' + (end || '?');
+                document.getElementById('dashASPeriod').innerText = '-';
             }
+
+            // 화장실 누수 보증 기간 (A/S 관리 리스트에서 연동)
+            let bathroomWarranty = '-';
+            if (typeof asListDB !== 'undefined' && asListDB.length > 0) {
+                // A/S 리스트에서 '화장실' 또는 '누수' 관련 항목 찾기
+                const bathroomItem = asListDB.find(item =>
+                    (item.category && (item.category.includes('화장실') || item.category.includes('누수'))) ||
+                    (item.name && (item.name.includes('화장실') || item.name.includes('누수')))
+                );
+                if (bathroomItem && bathroomItem.warrantyPeriod) {
+                    bathroomWarranty = bathroomItem.warrantyPeriod;
+                } else if (bathroomItem && bathroomItem.asEndDate) {
+                    bathroomWarranty = `~ ${bathroomItem.asEndDate}`;
+                }
+            }
+            // 기본값: 잔금일 + 5년 (화장실 누수 보증 일반적으로 5년)
+            if (bathroomWarranty === '-' && finalDateStr) {
+                const finalDate = new Date(finalDateStr);
+                const warrantyEnd = new Date(finalDate);
+                warrantyEnd.setFullYear(finalDate.getFullYear() + 5);
+                bathroomWarranty = `~ ${warrantyEnd.toISOString().split('T')[0]} (5년)`;
+            }
+            document.getElementById('dashBathroomWarranty').innerText = bathroomWarranty;
 
             // Update Timeline
             let progress = 0;
