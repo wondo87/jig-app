@@ -8447,14 +8447,24 @@
                     statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
                     console.log('🚀 [Init] Starting initial sync...');
 
-                    // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
-                    const results = await Promise.allSettled([
+                    // [Phase 2 Sync Gate] 필수 데이터 동기화 대기
+                    const isMobile = window.innerWidth <= 768;
+
+                    // 모바일: 고객 + 체크리스트 + 관리자만 (원가/운영비 제외 - 속도 최적화)
+                    // 데스크톱: 전체 로드
+                    const syncTasks = isMobile ? [
+                        syncFromCloud(true),      // 고객
+                        syncChecklistFromCloud(), // 체크리스트
+                        syncAdminsFromCloud()     // 관리자
+                    ] : [
                         syncFromCloud(true),      // 고객
                         syncCostFromCloud(),      // 원가
                         syncChecklistFromCloud(), // 체크리스트
                         syncExpensesFromCloud(),  // 운영비
                         syncAdminsFromCloud()     // 관리자
-                    ]);
+                    ];
+
+                    const results = await Promise.allSettled(syncTasks);
 
                     // 필수 데이터 성공 여부 확인
                     const allSuccess = results.every(r => r.status === 'fulfilled' && r.value === true);
@@ -8466,10 +8476,10 @@
                         // 오버레이 제거
                         overlay.style.opacity = '0';
                         setTimeout(() => overlay.style.display = 'none', 500);
-                        console.log('✅ 전역 데이터 동기화 및 클린업 완료');
+                        console.log(isMobile ? '✅ [Mobile] 동기화 완료 (원가/운영비 제외)' : '✅ 전역 데이터 동기화 완료');
                     } else {
                         // 어떤 데이터가 실패했는지 로깅
-                        const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
+                        const labels = isMobile ? ['고객', '체크리스트', '관리자'] : ['고객', '원가', '체크리스트', '운영비', '관리자'];
                         const failedDetails = results.map((r, i) => {
                             if (r.status !== 'fulfilled' || r.value !== true) {
                                 return `${labels[i]} (${r.reason || 'False returned'})`;
