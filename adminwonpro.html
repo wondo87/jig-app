@@ -10582,9 +10582,12 @@
                     displayParts.push(c.projectName || '현장명 미지정');
                     const displayName = displayParts.join(' | ');
 
-                    // Sub info: Phone numbers
-                    let subInfo = c.phone || '';
-                    if (c.spousePhone) subInfo += (subInfo ? ' | ' : '') + c.spousePhone;
+                    // Sub info: Site Address | Phone
+                    let subParts = [];
+                    if (c.siteAddress) subParts.push(c.siteAddress);
+                    if (c.phone) subParts.push(c.phone);
+                    // if (c.spousePhone) subParts.push(c.spousePhone); // Too long?
+                    const subInfo = subParts.join(' | ');
                     const lockIcon = c.isLocked ? '🔒' : '';
                     const creatorInfo = c.createdBy ? ` / <span style="color:#ff9500; font-weight:600;">${c.createdBy}</span>` : '';
                     // [수정] 날짜(updatedAt) 제거 - 고객목록에서 날짜 표시 안함
