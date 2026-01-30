@@ -9839,13 +9839,14 @@
                         }
                     }
 
-                    if (customer.jsonData && typeof customer.jsonData === 'string') {
-                        hasJsonDataCount++;
-                        try {
-                            const parsedData = JSON.parse(customer.jsonData);
-                            parsedCount++;
+                    let parsedJsonData = null;
 
-                            const checklistKeys = Object.keys(parsedData.checklistData || {});
+                    if (customer.jsonData && typeof customer.jsonData === 'string') {
+                        try {
+                            const parsed = JSON.parse(customer.jsonData);
+                            parsedJsonData = parsed;
+
+                            const checklistKeys = Object.keys(parsed.checklistData || {});
                             if (checklistKeys.length > 0) {
                                 checklistFoundCount++;
                                 console.log('✅ [Web Debug] Customer:', customer.customerId,
@@ -9854,38 +9855,26 @@
                             }
 
                             // [FIX] Normalize checklistData structure
-                            // Some customers have malformed structure: {"1": {"checked": true}} instead of {"1": true}
-                            if (parsedData.checklistData && typeof parsedData.checklistData === 'object') {
+                            if (parsed.checklistData && typeof parsed.checklistData === 'object') {
                                 const normalized = {};
-                                Object.entries(parsedData.checklistData).forEach(([key, value]) => {
+                                Object.entries(parsed.checklistData).forEach(([key, value]) => {
                                     if (value && typeof value === 'object' && 'checked' in value) {
-                                        // Convert {"checked": true} to true
                                         normalized[key] = value.checked;
                                     } else if (typeof value === 'boolean') {
-                                        // Already correct format
                                         normalized[key] = value;
                                     } else {
-                                        // Invalid format, default to false
                                         normalized[key] = false;
                                     }
                                 });
-                                parsedData.checklistData = normalized;
-                                console.log('🔧 [Web Debug] Normalized checklistData for customer:', customer.customerId);
+                                parsed.checklistData = normalized;
                             }
-                            // return { ...customer, ...parsedData }; // Moved to finalCustomer logic below
                         } catch (e) {
                             errorCount++;
                             console.error('❌ [Web Debug] Parse error for customer:', customer.customerId, e.message);
-                            console.error('❌ [Web Debug] jsonData that failed:', customer.jsonData.substring(0, 200));
-                            // return customer; // Let it fall through
                         }
-                    } else if (!customer.jsonData) {
-                        if (index < 3) console.log('⚠️ [Web Debug] No jsonData for customer:', customer.customerId);
-                    } else {
-                        console.warn('⚠️ [Web Debug] Invalid jsonData type for customer:', customer.customerId, 'type:', typeof customer.jsonData);
                     }
 
-                    // [FIX] Status Normalization (Korean -> Code)
+                    // [FIX] Status Normalization
                     const statusMap = {
                         '상담중': 'consulting',
                         '견적서': 'estimate',
@@ -9898,14 +9887,14 @@
                         'A/S': 'as_done'
                     };
 
-                    // Re-implement parsing logic safely to create finalCustomer
-                    let finalCustomer = customer;
-                    if (parsedData) { // If parsedData was successfully created above
-                        finalCustomer = { ...customer, ...parsedData };
+                    let finalCustomer = { ...customer };
+                    if (parsedJsonData) {
+                        finalCustomer = { ...customer, ...parsedJsonData };
                     }
 
                     // 상태 변환 적용
                     if (finalCustomer.status && statusMap[finalCustomer.status]) {
+                        // console.log(`🔄 [Cloud Sync Debug] Converting ${finalCustomer.status} -> ${statusMap[finalCustomer.status]}`);
                         finalCustomer.status = statusMap[finalCustomer.status];
                     }
 
