@@ -1826,7 +1826,13 @@
                 if (ann.strikethrough) content = `<del>${content}</del>`;
                 if (ann.underline) content = `<u>${content}</u>`;
                 if (ann.code) content = `<code>${content}</code>`;
-                if (text.href) content = `<a href="${text.href}" target="_blank">${content}</a>`;
+                if (text.href) {
+                    let href = text.href;
+                    if (href.includes('youtube.com/@DESIGN_JIG')) {
+                        href = 'https://www.youtube.com/channel/UCCZQloBvgH4dQuThT9piNsg';
+                    }
+                    content = `<a href="${href}" target="_blank">${content}</a>`;
+                }
                 return content;
             }).join('');
         }
