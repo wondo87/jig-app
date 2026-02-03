@@ -985,11 +985,21 @@
             document.getElementById('lightboxImage').src = imgUrl;
             document.getElementById('lightboxTitle').textContent = p.이름?.title?.[0]?.plain_text || "-";
 
-            // Notion 데이터 매핑
-            document.getElementById('specArea').textContent = p.면적?.select?.name || "-";
-            document.getElementById('specType').textContent = p.카테고리?.select?.name || "-";
-            document.getElementById('specFloor').textContent = p.바닥?.select?.name || "-";
-            document.getElementById('specFurniture').textContent = p.가구?.select?.name || "-";
+            // 카테고리 확인
+            const category = p.카테고리?.select?.name || "";
+            const infoGrid = document.querySelector('.info-grid');
+
+            // Visual/Poster 카테고리일 때 메타데이터 테이블 숨김
+            if (category === 'Visual/Poster') {
+                infoGrid.style.display = 'none';
+            } else {
+                infoGrid.style.display = 'grid';
+                // Notion 데이터 매핑
+                document.getElementById('specArea').textContent = p.면적?.select?.name || "-";
+                document.getElementById('specType').textContent = p.카테고리?.select?.name || "-";
+                document.getElementById('specFloor').textContent = p.바닥?.select?.name || "-";
+                document.getElementById('specFurniture').textContent = p.가구?.select?.name || "-";
+            }
         }
 
         function changeImg(dir) {
