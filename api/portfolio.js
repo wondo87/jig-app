@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       database_id: databaseId,
       sorts: [
         {
-          property: '작성일',
+          timestamp: 'created_time',
           direction: 'descending',
         },
       ],
