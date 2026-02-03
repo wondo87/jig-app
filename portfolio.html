@@ -248,6 +248,39 @@
             color: #fff;
         }
 
+        /* 면적 필터 탭 (Residential 하위 필터) */
+        .area-filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            margin-top: -1rem;
+            flex-wrap: wrap;
+        }
+
+        .area-filter-tab {
+            padding: 0.4rem 0.7rem;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #666;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .area-filter-tab:hover {
+            border-color: #B4956F;
+            color: #B4956F;
+        }
+
+        .area-filter-tab.active {
+            background: #B4956F;
+            border-color: #B4956F;
+            color: #fff;
+        }
+
         .portfolio-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -644,10 +677,18 @@
             <!-- 필터 탭 -->
             <div class="filter-tabs">
                 <button class="filter-tab active" data-filter="all">All</button>
-                <button class="filter-tab" data-filter="20py">20py</button>
-                <button class="filter-tab" data-filter="30py">30py</button>
-                <button class="filter-tab" data-filter="40py">40py</button>
-                <button class="filter-tab" data-filter="50py+">50py+</button>
+                <button class="filter-tab" data-filter="residential">Residential</button>
+                <button class="filter-tab" data-filter="3d-design">3D Design</button>
+                <button class="filter-tab" data-filter="visual-poster">Visual / Poster</button>
+            </div>
+
+            <!-- 면적 필터 (Residential 선택 시만 표시) -->
+            <div class="area-filter-tabs" id="areaFilterTabs" style="display: none;">
+                <button class="area-filter-tab active" data-area="all">All</button>
+                <button class="area-filter-tab" data-area="20py">20py</button>
+                <button class="area-filter-tab" data-area="30py">30py</button>
+                <button class="area-filter-tab" data-area="40py">40py</button>
+                <button class="area-filter-tab" data-area="50py+">50py+</button>
             </div>
 
             <div id="portfolioGrid" class="portfolio-grid">
@@ -794,7 +835,7 @@
             properties: {
                 이름: { title: [{ plain_text: "반포 자이 거실 인테리어" }] },
                 면적: { select: { name: "32py" } },
-                카테고리: { select: { name: "거실 주방 욕실" } },
+                카테고리: { select: { name: "Residential" } },
                 바닥: { select: { name: "lx 에디톤" } },
                 가구: { select: { name: "패트 제품" } },
                 URL: {
@@ -821,10 +862,24 @@
         }
 
         let currentFilter = 'all';
+        let currentAreaFilter = 'all';
 
         function displayPortfolio(filter = 'all') {
             currentFilter = filter;
             const grid = document.getElementById('portfolioGrid');
+            const areaFilterTabs = document.getElementById('areaFilterTabs');
+
+            // Residential 선택 시 면적 필터 표시, 아니면 숨김
+            if (filter === 'residential') {
+                areaFilterTabs.style.display = 'flex';
+            } else {
+                areaFilterTabs.style.display = 'none';
+                currentAreaFilter = 'all'; // 다른 카테고리 선택 시 면적 필터 초기화
+                // 면적 필터 탭 active 상태 초기화
+                document.querySelectorAll('.area-filter-tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.area === 'all');
+                });
+            }
 
             // 필터 탭 active 상태 업데이트
             document.querySelectorAll('.filter-tab').forEach(tab => {
@@ -837,21 +892,32 @@
                 return hasImage;
             });
 
-            // 평수 필터 적용 (범위 기반)
+            // 카테고리 필터 적용 (노션 DB 카테고리 값과 정확히 일치해야 함)
+            // 허용된 카테고리: "Residential", "3D Design", "Visual/Poster"
             if (filter !== 'all') {
                 filteredData = filteredData.filter(p => {
-                    const area = p.properties.면적?.select?.name || '';
-                    const num = parseInt(area); // 숫자만 추출 (32py -> 32)
+                    const category = p.properties.카테고리?.select?.name || '';
 
-                    if (isNaN(num)) return false; // 숫자가 없으면 제외
+                    // 카테고리 값이 없으면 제외
+                    if (!category) return false;
 
                     switch (filter) {
-                        case '20py': return num >= 20 && num < 30;
-                        case '30py': return num >= 30 && num < 40;
-                        case '40py': return num >= 40 && num < 50;
-                        case '50py+': return num >= 50;
-                        default: return true;
+                        case 'residential':
+                            return category === 'Residential';
+                        case '3d-design':
+                            return category === '3D Design';
+                        case 'visual-poster':
+                            return category === 'Visual/Poster';
+                        default: return false;
                     }
+                });
+            }
+
+            // 면적 필터 적용 (Residential 카테고리에서만)
+            if (filter === 'residential' && currentAreaFilter !== 'all') {
+                filteredData = filteredData.filter(p => {
+                    const area = p.properties.면적?.select?.name || '';
+                    return area === currentAreaFilter;
                 });
             }
 
@@ -883,6 +949,19 @@
             document.querySelectorAll('.filter-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     displayPortfolio(tab.dataset.filter);
+                });
+            });
+
+            // 면적 필터 탭 클릭 이벤트
+            document.querySelectorAll('.area-filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentAreaFilter = tab.dataset.area;
+                    // 면적 필터 탭 active 상태 업데이트
+                    document.querySelectorAll('.area-filter-tab').forEach(t => {
+                        t.classList.toggle('active', t.dataset.area === currentAreaFilter);
+                    });
+                    // 현재 카테고리 필터 유지하면서 다시 표시
+                    displayPortfolio(currentFilter);
                 });
             });
         });
