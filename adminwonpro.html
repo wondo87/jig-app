@@ -11462,6 +11462,18 @@
                 }
             });
 
+            // 엔터 키로 모든 입력 필드 포커스 해제 (전역 이벤트 위임)
+            container.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    const target = e.target;
+                    // input, textarea에서 엔터 시 blur (textarea는 shift+enter로 줄바꿈 허용)
+                    if (target.tagName === 'INPUT' || (target.tagName === 'TEXTAREA' && !e.shiftKey)) {
+                        e.preventDefault();
+                        target.blur();
+                    }
+                }
+            });
+
             // select 더블클릭 감지 (select는 브라우저가 dblclick을 먹으므로 mousedown 타이밍으로 처리)
             let lastSelectClick = { time: 0, target: null };
             container.addEventListener('mousedown', function (e) {
@@ -12117,7 +12129,10 @@
             const inp = cell.querySelector('input');
             inp.focus();
             inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    inp.blur();
+                } else if (e.key === 'Escape') {
                     cell.textContent = originalText || '-';
                     saveEstimateData();
                 }
@@ -12144,7 +12159,10 @@
             const inp = cell.querySelector('input');
             inp.focus();
             inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    inp.blur();
+                } else if (e.key === 'Escape') {
                     cell.textContent = originalText || '-';
                     saveEstimateData();
                 }
