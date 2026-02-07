@@ -11526,7 +11526,10 @@
             inp.focus();
             inp.select();
             inp.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Escape') {
+                if (ev.key === 'Enter') {
+                    ev.preventDefault();
+                    inp.blur();
+                } else if (ev.key === 'Escape') {
                     td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                         <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
                     if (currentVal && currentVal !== '__custom_div__') {
@@ -11556,7 +11559,10 @@
             inp.focus();
             inp.select();
             inp.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Escape') {
+                if (ev.key === 'Enter') {
+                    ev.preventDefault();
+                    inp.blur();
+                } else if (ev.key === 'Escape') {
                     td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                         ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
                     if (currentVal && currentVal !== '__custom_name__') {
@@ -11583,11 +11589,15 @@
             inp.focus();
             inp.select();
             inp.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Escape') {
+                if (ev.key === 'Enter') {
+                    ev.preventDefault();
+                    inp.blur();
+                } else if (ev.key === 'Escape') {
                     specCell.innerHTML = savedHTML;
                     saveEstimateData();
                 }
             });
+
         }
 
         // 해당 카테고리의 구분 옵션 업데이트
