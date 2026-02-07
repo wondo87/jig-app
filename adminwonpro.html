@@ -1853,6 +1853,26 @@
             text-align: right;
             font-weight: 600;
             font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        /* 표지계약서 금액 정렬 - ₩ 왼쪽 고정, 금액 우측 정렬 */
+        .summary-table .amount .money-align {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .summary-table .amount .money-align .currency {
+            flex-shrink: 0;
+            margin-right: 4px;
+        }
+
+        .summary-table .amount .money-align .value {
+            flex-grow: 1;
+            text-align: right;
         }
 
         .summary-table .amount input {
@@ -4787,7 +4807,7 @@
                                     <tr>
                                         <th style="width:30px;">No</th>
                                         <th>공사 항목</th>
-                                        <th style="width:100px;text-align:right;">계약 금액</th>
+                                        <th style="width:130px;text-align:right;">계약 금액</th>
                                     </tr>
                                 </thead>
                                 <tbody id="coverTableBody"></tbody>
@@ -11190,33 +11210,34 @@
                 <tr >
                 <td class="no">${i + 1}</td>
                 <td>${cat.name}</td>
-                <td class="amount" id="coverCat${cat.no}">₩ 0</td>
+                <td class="amount" id="coverCat${cat.no}"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
                 `).join('');
             html += `
                 <tr class="subtotal" >
                 <td></td>
                 <td>소계 (공급가액)</td>
-                <td class="amount" id="coverSubtotal">₩ 0</td>
+                <td class="amount" id="coverSubtotal"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
             <tr style="background:#f0f7ff;">
                 <td></td>
                 <td>기업이윤 (<span id="coverProfitRate">0</span>%)</td>
-                <td class="amount" id="coverProfit">₩ 0</td>
+                <td class="amount" id="coverProfit"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
             <tr class="vat">
                 <td></td>
                 <td>부가가치세 (VAT 10%)</td>
-                <td class="amount" id="coverVat">₩ 0</td>
+                <td class="amount" id="coverVat"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
             <tr class="total">
                 <td></td>
                 <td>총 계약금액</td>
-                <td class="amount" id="coverTotal">₩ 0</td>
+                <td class="amount" id="coverTotal"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
             `;
             tbody.innerHTML = html;
         }
+
 
         function createCostCategories() {
             const container = document.getElementById('costCategories');
@@ -12150,7 +12171,11 @@
             const inp = cell.querySelector('input');
             inp.focus();
             inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
+                if (e.key === 'Enter') {
+                    // 엔터 키: 편집 완료, ₩ 표시, blur 처리
+                    e.preventDefault();
+                    inp.blur(); // blur 이벤트가 finalizePriceEdit 호출
+                } else if (e.key === 'Escape') {
                     cell.dataset.price = originalPrice;
                     cell.innerHTML = `<div class="money-wrapper">${originalPrice > 0 ? `<span>₩</span><span>${formatNumber(originalPrice)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
                     const row = cell.closest('tr');
@@ -12163,6 +12188,7 @@
                 }
             });
         }
+
 
         function finalizePriceEdit(input, catNo) {
             const price = parseNumber(input.value) || 0;
@@ -12235,12 +12261,20 @@
 
         // 표지계약서 금액 업데이트
         function updateCoverFromEstimate(categoryTotals, subtotal, profitRate, profit, vat, total) {
+            // 금액을 정렬된 HTML로 변환하는 헬퍼 함수
+            function formatAmountHtml(amount) {
+                if (amount > 0) {
+                    return `<div class="money-align"><span class="currency">₩</span><span class="value">${formatNumber(amount)}</span></div>`;
+                }
+                return '<div class="money-align"><span class="currency"></span><span class="value">-</span></div>';
+            }
+
             // 각 카테고리별 금액 업데이트
             categories.forEach(cat => {
                 const el = document.getElementById(`coverCat${cat.no}`);
                 if (el) {
                     const amount = categoryTotals[cat.no] || 0;
-                    el.textContent = amount > 0 ? '₩ ' + formatNumber(amount) : '-';
+                    el.innerHTML = formatAmountHtml(amount);
                 }
             });
 
@@ -12251,12 +12285,13 @@
             const coverVat = document.getElementById('coverVat');
             const coverTotal = document.getElementById('coverTotal');
 
-            if (coverSubtotal) coverSubtotal.textContent = '₩ ' + formatNumber(subtotal);
+            if (coverSubtotal) coverSubtotal.innerHTML = formatAmountHtml(subtotal);
             if (coverProfitRate) coverProfitRate.textContent = profitRate;
-            if (coverProfit) coverProfit.textContent = '₩ ' + formatNumber(profit);
-            if (coverVat) coverVat.textContent = '₩ ' + formatNumber(vat);
-            if (coverTotal) coverTotal.textContent = '₩ ' + formatNumber(total);
+            if (coverProfit) coverProfit.innerHTML = formatAmountHtml(profit);
+            if (coverVat) coverVat.innerHTML = formatAmountHtml(vat);
+            if (coverTotal) coverTotal.innerHTML = formatAmountHtml(total);
         }
+
 
         // 도급계약서 대금지급 자동 계산
         function updateContractPayments(total) {
