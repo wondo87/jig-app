@@ -2410,6 +2410,40 @@
             background: #fafafa;
             font-size: var(--font-size-md);
             text-align: left;
+            cursor: pointer;
+        }
+
+        .estimate-table .editable-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #0071e3;
+            border-radius: 4px;
+            font-size: 11px;
+            background: #f0f7ff;
+            box-sizing: border-box;
+        }
+
+        .estimate-table .editable-input:focus {
+            outline: none;
+            border-color: #0051a8;
+            box-shadow: 0 0 0 2px rgba(0,113,227,0.2);
+        }
+
+        .estimate-table .editable-price-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #0071e3;
+            border-radius: 4px;
+            font-size: 11px;
+            background: #f0f7ff;
+            text-align: right;
+            box-sizing: border-box;
+        }
+
+        .estimate-table .editable-price-input:focus {
+            outline: none;
+            border-color: #0051a8;
+            box-shadow: 0 0 0 2px rgba(0,113,227,0.2);
         }
 
         /* 단위 셀 (5번째) */
@@ -2422,6 +2456,7 @@
             background: #fafafa;
             font-size: var(--font-size-md);
             text-align: center;
+            cursor: pointer;
         }
 
         /* 수량 셀 (6번째) - 중앙정렬 */
@@ -4813,7 +4848,7 @@
                         <div class="doc-content">
                             <p class="no-print"
                                 style="background:#e8f4fd; padding:10px 14px; border-radius:6px; margin-bottom:16px; font-size:11px; color:#0071e3;">
-                                ℹ️ 구분과 품명을 선택하면 단가가 자동 입력됩니다. 수량만 조정 가능하며, 단가 수정은 원가관리표에서 진행하세요.
+                                ℹ️ 구분/품명 선택 시 단가 자동 입력. 모든 드롭다운(구분·품명·상세)을 더블클릭하면 직접 편집 가능. 단위/단가는 클릭으로 수정. ESC로 드롭다운 복귀.
                             </p>
                             <div id="estimateCategories"></div>
                             <div class="grand-total">
@@ -7675,6 +7710,48 @@
             msg.innerHTML = message; // [변경] 줄바꿈 지원을 위해 innerHTML 사용
 
             toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
+        }
+
+        // 저장 확인 토스트 (우측상단, 짧은 표시)
+        let saveToastTimer = null;
+        function showSaveConfirmToast(message) {
+            let saveToast = document.getElementById('saveConfirmToast');
+            if (!saveToast) {
+                saveToast = document.createElement('div');
+                saveToast.id = 'saveConfirmToast';
+                saveToast.style.cssText = `
+                    position: fixed; top: 20px; right: 20px;
+                    background: linear-gradient(135deg, #34c759, #28a745);
+                    color: #fff; padding: 12px 24px; border-radius: 12px;
+                    font-size: 14px; font-weight: 600; z-index: 99999;
+                    display: none; align-items: center; gap: 8px;
+                    box-shadow: 0 8px 30px rgba(52, 199, 89, 0.4);
+                    animation: slideInSaveToast 0.3s ease;
+                    transition: opacity 0.3s ease;
+                `;
+                document.body.appendChild(saveToast);
+
+                // 애니메이션 키프레임 추가
+                if (!document.getElementById('saveToastKeyframes')) {
+                    const style = document.createElement('style');
+                    style.id = 'saveToastKeyframes';
+                    style.textContent = `
+                        @keyframes slideInSaveToast {
+                            from { transform: translateX(100px); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            if (saveToastTimer) clearTimeout(saveToastTimer);
+            saveToast.innerHTML = message;
+            saveToast.style.display = 'flex';
+            saveToast.style.opacity = '1';
+            saveToastTimer = setTimeout(() => {
+                saveToast.style.opacity = '0';
+                setTimeout(() => { saveToast.style.display = 'none'; }, 300);
+            }, 1500);
         }
 
         // 상태 필터
@@ -11093,9 +11170,9 @@
             updateCustomerList();
 
             if (isLoggedIn()) {
-                showToast('저장되었습니다 (원가관리표 제외)', 'success');
+                showSaveConfirmToast('✅ 저장 완료! (원가관리표 제외)');
             } else {
-                showToast('저장되었습니다', 'success');
+                showSaveConfirmToast('✅ 저장 완료!');
             }
 
             // Google Sheets 동기화 (백그라운드)
@@ -11321,6 +11398,159 @@
             categories.forEach(cat => {
                 updateDivOptions(cat.no);
             });
+
+            // 셀 클릭 편집 이벤트 위임 (spec-cell, unit-cell, price-cell)
+            container.addEventListener('click', function(e) {
+                const specCell = e.target.closest('.spec-cell');
+                const unitCell = e.target.closest('.unit-cell');
+                const priceCell = e.target.closest('.price-cell');
+
+                if (specCell && !specCell.querySelector('input')) {
+                    // 드롭다운(select)이 아닌 텍스트 영역을 클릭한 경우 편집 모드 전환
+                    if (!specCell.querySelector('select')) {
+                        const row = specCell.closest('tr');
+                        const catNo = row.closest('tbody').id.replace('estBody', '');
+                        makeSpecEditable(specCell, catNo);
+                        return;
+                    }
+                }
+                if (unitCell && !unitCell.querySelector('input')) {
+                    const row = unitCell.closest('tr');
+                    const catNo = row.closest('tbody').id.replace('estBody', '');
+                    makeUnitEditable(unitCell, catNo);
+                    return;
+                }
+                if (priceCell && !priceCell.querySelector('input')) {
+                    const row = priceCell.closest('tr');
+                    const catNo = row.closest('tbody').id.replace('estBody', '');
+                    makePriceEditable(priceCell, catNo);
+                    return;
+                }
+            });
+
+            // 더블클릭: 드롭다운이 있는 spec-cell도 직접 편집 모드로 전환
+            container.addEventListener('dblclick', function(e) {
+                const specCell = e.target.closest('.spec-cell');
+                if (specCell && specCell.querySelector('select') && !specCell.querySelector('input')) {
+                    const row = specCell.closest('tr');
+                    const catNo = row.closest('tbody').id.replace('estBody', '');
+                    convertSpecSelectToInput(specCell, catNo);
+                    return;
+                }
+            });
+
+            // select 더블클릭 감지 (select는 브라우저가 dblclick을 먹으므로 mousedown 타이밍으로 처리)
+            let lastSelectClick = { time: 0, target: null };
+            container.addEventListener('mousedown', function(e) {
+                const selectEl = e.target.closest('select.div-select, select.name-select');
+                if (!selectEl) { lastSelectClick = { time: 0, target: null }; return; }
+
+                const now = Date.now();
+                if (lastSelectClick.target === selectEl && (now - lastSelectClick.time) < 400) {
+                    // 더블클릭 감지
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const row = selectEl.closest('tr');
+                    const catNo = row.closest('tbody').id.replace('estBody', '');
+
+                    if (selectEl.classList.contains('div-select')) {
+                        convertDivSelectToInput(selectEl, row, catNo);
+                    } else if (selectEl.classList.contains('name-select')) {
+                        convertNameSelectToInput(selectEl, row, catNo);
+                    }
+                    lastSelectClick = { time: 0, target: null };
+                } else {
+                    lastSelectClick = { time: now, target: selectEl };
+                }
+            });
+
+            // select의 이전 값 추적 (focus 시 저장) - 내용수정용
+            container.addEventListener('focus', function(e) {
+                const sel = e.target;
+                if (sel.tagName === 'SELECT' && (sel.classList.contains('div-select') || sel.classList.contains('name-select') || sel.classList.contains('spec-select'))) {
+                    sel._prevValue = sel.value;
+                    sel._prevText = sel.selectedOptions[0]?.textContent?.trim() || '';
+                }
+            }, true);
+        }
+
+        // 구분 select → input 전환 (더블클릭용)
+        function convertDivSelectToInput(selectEl, row, catNo) {
+            const td = selectEl.closest('td');
+            const currentVal = selectEl.value || '';
+            const currentText = selectEl.selectedOptions[0]?.textContent?.trim() || '';
+            const items = getCostItemsByCategory(catNo);
+            const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+            const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${currentVal && currentVal !== '__custom_div__' ? currentVal : ''}" placeholder="구분 입력"
+                onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
+            const inp = td.querySelector('input');
+            inp.focus();
+            inp.select();
+            inp.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Escape') {
+                    td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+                        <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
+                    if (currentVal && currentVal !== '__custom_div__') {
+                        td.querySelector('.div-select').value = currentVal;
+                    }
+                    saveEstimateData();
+                }
+            });
+        }
+
+        // 품명 select → input 전환 (더블클릭용)
+        function convertNameSelectToInput(selectEl, row, catNo) {
+            const td = selectEl.closest('td');
+            const currentVal = selectEl.value || '';
+            const currentText = selectEl.selectedOptions[0]?.textContent?.trim() || '';
+            const divSelect = row.querySelector('.div-select');
+            const divCustom = row.querySelector('.div-custom-input');
+            const curDiv = divCustom ? divCustom.value : (divSelect ? divSelect.value : '');
+            const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+            const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+            const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+
+            const displayVal = currentVal && currentVal !== '__custom_name__' && currentText !== '품명 선택' && currentText !== '구분 먼저 선택' ? currentText : '';
+            td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${displayVal}" placeholder="품명 입력"
+                onchange="saveEstimateData()">`;
+            const inp = td.querySelector('input');
+            inp.focus();
+            inp.select();
+            inp.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Escape') {
+                    td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+                        ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
+                    if (currentVal && currentVal !== '__custom_name__') {
+                        const ns = td.querySelector('.name-select');
+                        for (let opt of ns.options) {
+                            if (opt.value === currentVal) { opt.selected = true; break; }
+                        }
+                    }
+                    saveEstimateData();
+                }
+            });
+        }
+
+        // 상세내용 select → input 전환 (더블클릭용)
+        function convertSpecSelectToInput(specCell, catNo) {
+            const specSelect = specCell.querySelector('select');
+            const selectedOpt = specSelect?.selectedOptions[0];
+            const currentSpec = selectedOpt?.dataset?.spec || selectedOpt?.textContent?.trim() || '';
+            const savedHTML = specCell.innerHTML;
+
+            specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${currentSpec && currentSpec !== '상세 선택' ? currentSpec : ''}"
+                placeholder="상세내용 입력" onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
+            const inp = specCell.querySelector('input');
+            inp.focus();
+            inp.select();
+            inp.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Escape') {
+                    specCell.innerHTML = savedHTML;
+                    saveEstimateData();
+                }
+            });
         }
 
         // 해당 카테고리의 구분 옵션 업데이트
@@ -11335,7 +11565,7 @@
                 const currentVal = select.value;
                 select.innerHTML = '<option value="">선택</option>' + divs.map(d =>
                     `<option value="${d}" ${d === currentVal ? 'selected' : ''}>${d}</option>`
-                ).join('');
+                ).join('') + '<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option>';
             });
         }
 
@@ -11392,6 +11622,8 @@
             </td>
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                     <option value="">선택</option>${divOptions}
+                    <option value="__edit_div__">📝 내용수정</option>
+                    <option value="__custom_div__">✏️ 직접입력</option>
                 </select></td>
             <td><select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
                     <option value="">구분 먼저 선택</option>
@@ -11436,6 +11668,74 @@
             const nameSelect = row.querySelector('.name-select');
             const div = select.value;
 
+            // _prevValue는 focus 이벤트에서 저장 (아래 initSelectPrevTracking 참조)
+            if (div === '__edit_div__') {
+                // 내용수정: 이전에 선택된 값을 유지한 채 input으로 전환
+                const td = select.closest('td');
+                const prevSelected = select._prevValue || '';
+                const items = getCostItemsByCategory(catNo);
+                const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+                const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+                td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${prevSelected}" placeholder="구분 수정"
+                    onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
+                const editInput = td.querySelector('input');
+                editInput.focus();
+                editInput.select();
+                editInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+                            <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
+                        if (prevSelected) td.querySelector('.div-select').value = prevSelected;
+                        saveEstimateData();
+                    }
+                });
+                return;
+            }
+
+            if (div === '__custom_div__') {
+                // 직접입력: select를 input으로 교체 (ESC로 복원 가능)
+                const td = select.closest('td');
+                const items = getCostItemsByCategory(catNo);
+                const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+                const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+                td.innerHTML = `<input type="text" class="editable-input div-custom-input" placeholder="구분 입력"
+                    onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
+                const divInput = td.querySelector('input');
+                divInput.focus();
+                divInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+                            <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
+                        // 품명도 다시 select로
+                        const nameTd = row.children[2];
+                        nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
+                            <option value="">구분 먼저 선택</option></select>`;
+                        resetEstRowValues(row);
+                        revertEditCellsToReadonly(row);
+                        saveEstimateData();
+                    }
+                });
+                // 품명도 직접입력 모드로
+                const nameTd = nameSelect.closest('td');
+                nameTd.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
+                    onchange="saveEstimateData()">`;
+                const nameInput = nameTd.querySelector('input');
+                nameInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        const divSel = row.querySelector('.div-select');
+                        const curDiv = divSel ? divSel.value : '';
+                        nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+                            <option value="">${curDiv ? '품명 선택' : '구분 먼저 선택'}</option></select>`;
+                        resetEstRowValues(row);
+                        revertEditCellsToReadonly(row);
+                        saveEstimateData();
+                    }
+                });
+                resetEstRowValues(row);
+                enableDirectEditCells(row, catNo);
+                return;
+            }
+
             if (!div) {
                 nameSelect.innerHTML = '<option value="">구분 먼저 선택</option>';
                 nameSelect.disabled = true;
@@ -11450,7 +11750,7 @@
 
             nameSelect.innerHTML = '<option value="">품명 선택</option>' + uniqueNames.map(name =>
                 `<option value="${name}">${name}</option>`
-            ).join('');
+            ).join('') + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>';
             nameSelect.disabled = false;
             resetEstRowValues(row);
         }
@@ -11459,6 +11759,61 @@
         function onEstNameChange(select, catNo) {
             const row = select.closest('tr');
             const option = select.selectedOptions[0];
+
+            if (select.value === '__edit_name__') {
+                // 내용수정: 이전에 선택된 값을 유지한 채 input으로 전환
+                const td = select.closest('td');
+                const prevText = select._prevText || '';
+                const prevVal = select._prevValue || '';
+                const divSelect = row.querySelector('.div-select');
+                const curDiv = divSelect ? divSelect.value : '';
+                const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+                const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+                const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${prevText && prevText !== '품명 선택' && prevText !== '구분 먼저 선택' ? prevText : ''}" placeholder="품명 수정"
+                    onchange="saveEstimateData()">`;
+                const nameInput = td.querySelector('input');
+                nameInput.focus();
+                nameInput.select();
+                nameInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+                            ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
+                        if (prevVal) {
+                            const ns = td.querySelector('.name-select');
+                            for (let opt of ns.options) { if (opt.value === prevVal) { opt.selected = true; break; } }
+                        }
+                        saveEstimateData();
+                    }
+                });
+                return;
+            }
+
+            if (select.value === '__custom_name__') {
+                // 직접입력: select를 input으로 교체 (ESC로 복원 가능)
+                const td = select.closest('td');
+                const divSelect = row.querySelector('.div-select');
+                const curDiv = divSelect ? divSelect.value : '';
+                const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+                const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+                const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                td.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
+                    onchange="saveEstimateData()">`;
+                const nameInput = td.querySelector('input');
+                nameInput.focus();
+                nameInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+                            ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
+                        resetEstRowValues(row);
+                        revertEditCellsToReadonly(row);
+                        saveEstimateData();
+                    }
+                });
+                resetEstRowValues(row);
+                enableDirectEditCells(row, catNo);
+                return;
+            }
 
             if (!option || !option.value) {
                 resetEstRowValues(row);
@@ -11486,6 +11841,7 @@
                 style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;">
                 <option value="">상세 선택</option>
                 ${specOptions}
+                <option value="__edit_spec__">📝 내용수정</option>
                 <option value="__custom__">✏️ 직접입력</option>
             </select>
             `;
@@ -11546,11 +11902,46 @@
             const row = select.closest('tr');
             const option = select.selectedOptions[0];
 
+            if (select.value === '__edit_spec__') {
+                // 내용수정: 이전에 선택된 상세내용을 유지한 채 input으로 전환
+                const specCell = row.querySelector('.spec-cell');
+                const prevSpec = select._prevText || '';
+                const savedHTML = specCell.innerHTML;
+                specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${prevSpec && prevSpec !== '상세 선택' ? prevSpec : ''}" placeholder="상세 수정"
+                style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;"
+                onchange="saveEstimateData()">`;
+                const inp = specCell.querySelector('input');
+                inp.focus();
+                inp.select();
+                inp.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        specCell.innerHTML = savedHTML;
+                        const restoredSelect = specCell.querySelector('select');
+                        if (restoredSelect && select._prevValue) restoredSelect.value = select._prevValue;
+                        saveEstimateData();
+                    }
+                });
+                return;
+            }
+
             if (select.value === '__custom__') {
                 const specCell = row.querySelector('.spec-cell');
-                specCell.innerHTML = `<input type="text" class="spec-input" placeholder="상세 입력"
-                style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;">`;
-                specCell.querySelector('input').focus();
+                // 기존 드롭다운 옵션 저장 (ESC 복원용)
+                const savedHTML = specCell.innerHTML;
+                specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세 입력"
+                style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;"
+                onchange="saveEstimateData()">`;
+                const inp = specCell.querySelector('input');
+                inp.focus();
+                inp.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        specCell.innerHTML = savedHTML;
+                        // 드롭다운 복원 후 첫 번째 옵션 선택
+                        const restoredSelect = specCell.querySelector('select');
+                        if (restoredSelect) restoredSelect.value = '';
+                        saveEstimateData();
+                    }
+                });
                 return;
             }
 
@@ -11592,7 +11983,9 @@
 
         // 계약견적서 행 계산
         function calcEstimateRow(row) {
-            const price = parseInt(row.querySelector('.price-cell')?.dataset.price) || 0;
+            const priceCell = row.querySelector('.price-cell');
+            const priceInput = priceCell?.querySelector('input');
+            const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell?.dataset.price) || 0);
             const qty = parseInt(row.querySelector('.qty-input')?.value) || 1;
             const amount = price * qty;
             row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
@@ -11601,7 +11994,9 @@
         // 수량 변경
         function onEstQtyChange(input, catNo) {
             const row = input.closest('tr');
-            const price = parseInt(row.querySelector('.price-cell').dataset.price) || 0;
+            const priceCell = row.querySelector('.price-cell');
+            const priceInput = priceCell.querySelector('input');
+            const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell.dataset.price) || 0);
             const qty = parseInt(input.value) || 0;
             const amount = price * qty;
 
@@ -11620,13 +12015,176 @@
             row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
         }
 
+        // 직접입력 모드: 상세내용, 단위, 단가를 입력 필드로 전환
+        function enableDirectEditCells(row, catNo) {
+            const specCell = row.querySelector('.spec-cell');
+            const unitCell = row.querySelector('.unit-cell');
+            const priceCell = row.querySelector('.price-cell');
+
+            specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
+                onchange="saveEstimateData()">`;
+            specCell.querySelector('input').addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') { specCell.textContent = '-'; saveEstimateData(); }
+            });
+
+            unitCell.innerHTML = `<input type="text" class="editable-input" placeholder="단위" style="width:100%; text-align:center;"
+                onchange="saveEstimateData()">`;
+            unitCell.querySelector('input').addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') { unitCell.textContent = '-'; saveEstimateData(); }
+            });
+
+            priceCell.innerHTML = `<input type="text" class="editable-price-input" placeholder="단가" value=""
+                oninput="onEstDirectPriceInput(this, '${catNo}')" onchange="saveEstimateData()">`;
+            priceCell.dataset.price = '0';
+            priceCell.querySelector('input').addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+                    priceCell.dataset.price = '0';
+                    row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+                    updateCategorySubtotal(catNo);
+                    updateEstimateTotals();
+                    saveEstimateData();
+                }
+            });
+        }
+
+        // 직접입력 모드 해제: 상세내용, 단위, 단가를 읽기 전용으로 되돌리기
+        function revertEditCellsToReadonly(row) {
+            const specCell = row.querySelector('.spec-cell');
+            const unitCell = row.querySelector('.unit-cell');
+            const priceCell = row.querySelector('.price-cell');
+
+            if (specCell && specCell.querySelector('.spec-custom-input')) {
+                specCell.textContent = '-';
+            }
+            if (unitCell && unitCell.querySelector('input')) {
+                unitCell.textContent = '-';
+            }
+            if (priceCell && priceCell.querySelector('input')) {
+                priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+                priceCell.dataset.price = '0';
+            }
+            row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+        }
+
+        // 직접입력 단가 변경 시 금액 계산
+        function onEstDirectPriceInput(input, catNo) {
+            const row = input.closest('tr');
+            const price = parseNumber(input.value) || 0;
+            row.querySelector('.price-cell').dataset.price = price;
+            const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+            const amount = price * qty;
+            row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+            input.value = formatNumber(price);
+            updateCategorySubtotal(catNo);
+            updateEstimateTotals();
+        }
+
+        // 셀 클릭으로 편집 모드 전환 (spec-cell)
+        function makeSpecEditable(cell, catNo) {
+            const currentText = cell.textContent?.trim() || '';
+            const originalText = currentText;
+            if (currentText === '-') {
+                cell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
+                    onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
+            } else {
+                cell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${currentText}"
+                    onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
+            }
+            const inp = cell.querySelector('input');
+            inp.focus();
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    cell.textContent = originalText || '-';
+                    saveEstimateData();
+                }
+            });
+        }
+
+        function finalizeSpecEdit(input, catNo) {
+            const val = input.value.trim();
+            const cell = input.closest('.spec-cell');
+            if (cell) {
+                cell.textContent = val || '-';
+            }
+            saveEstimateData();
+        }
+
+        // 셀 클릭으로 편집 모드 전환 (unit-cell)
+        function makeUnitEditable(cell, catNo) {
+            const currentText = cell.textContent?.trim() || '';
+            const originalText = currentText;
+            if (cell.querySelector('input')) return;
+            cell.innerHTML = `<input type="text" class="editable-input" value="${currentText === '-' ? '' : currentText}"
+                placeholder="단위" style="width:100%; text-align:center;"
+                onchange="saveEstimateData()" onblur="finalizeUnitEdit(this)">`;
+            const inp = cell.querySelector('input');
+            inp.focus();
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    cell.textContent = originalText || '-';
+                    saveEstimateData();
+                }
+            });
+        }
+
+        function finalizeUnitEdit(input) {
+            const val = input.value.trim();
+            const cell = input.closest('.unit-cell');
+            if (cell) {
+                cell.textContent = val || '-';
+            }
+            saveEstimateData();
+        }
+
+        // 셀 클릭으로 편집 모드 전환 (price-cell)
+        function makePriceEditable(cell, catNo) {
+            if (cell.querySelector('input')) return;
+            const currentPrice = parseInt(cell.dataset.price) || 0;
+            const originalPrice = currentPrice;
+            cell.innerHTML = `<input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
+                placeholder="단가" oninput="onEstDirectPriceInput(this, '${catNo}')"
+                onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()">`;
+            const inp = cell.querySelector('input');
+            inp.focus();
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    cell.dataset.price = originalPrice;
+                    cell.innerHTML = `<div class="money-wrapper">${originalPrice > 0 ? `<span>₩</span><span>${formatNumber(originalPrice)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+                    const row = cell.closest('tr');
+                    const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+                    const amount = originalPrice * qty;
+                    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+                    updateCategorySubtotal(catNo);
+                    updateEstimateTotals();
+                    saveEstimateData();
+                }
+            });
+        }
+
+        function finalizePriceEdit(input, catNo) {
+            const price = parseNumber(input.value) || 0;
+            const cell = input.closest('.price-cell');
+            cell.dataset.price = price;
+            cell.innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+            const row = cell.closest('tr');
+            const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+            const amount = price * qty;
+            row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+            updateCategorySubtotal(catNo);
+            updateEstimateTotals();
+            saveEstimateData();
+        }
+
         // 카테고리 소계 업데이트
         function updateCategorySubtotal(catNo) {
             const tbody = document.getElementById(`estBody${catNo}`);
             let subtotal = 0;
 
             tbody.querySelectorAll('tr').forEach(row => {
-                const price = parseInt(row.querySelector('.price-cell')?.dataset.price) || 0;
+                const priceCell = row.querySelector('.price-cell');
+                const priceInput = priceCell?.querySelector('input');
+                const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell?.dataset.price) || 0);
                 const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
                 subtotal += price * qty;
             });
@@ -11745,9 +12303,34 @@
                 const rows = [];
                 tbody.querySelectorAll('tr').forEach(row => {
                     const divSelect = row.querySelector('.div-select');
+                    const divCustomInput = row.querySelector('.div-custom-input');
                     const nameSelect = row.querySelector('.name-select');
+                    const nameCustomInput = row.querySelector('.name-custom-input');
                     const qtyInput = row.querySelector('.qty-input');
                     const specCell = row.querySelector('.spec-cell');
+
+                    // 구분 값: select 또는 직접입력
+                    let divValue = '';
+                    let isCustomDiv = false;
+                    if (divCustomInput) {
+                        divValue = divCustomInput.value || '';
+                        isCustomDiv = true;
+                    } else if (divSelect) {
+                        divValue = divSelect.value || '';
+                    }
+
+                    // 품명 값: select 또는 직접입력
+                    let nameValue = '';
+                    let nameIndexValue = '';
+                    let isCustomName = false;
+                    if (nameCustomInput) {
+                        nameValue = nameCustomInput.value || '';
+                        nameIndexValue = '';
+                        isCustomName = true;
+                    } else if (nameSelect) {
+                        nameIndexValue = nameSelect.value || '';
+                        nameValue = nameSelect.selectedOptions[0]?.textContent || '';
+                    }
 
                     // spec-cell이 select나 input인 경우 값 가져오기
                     let specValue = '-';
@@ -11764,19 +12347,39 @@
                         }
                     }
 
+                    // 단위: input 또는 텍스트
+                    const unitCell = row.querySelector('.unit-cell');
+                    let unitValue = '-';
+                    if (unitCell) {
+                        const unitInput = unitCell.querySelector('input');
+                        unitValue = unitInput ? (unitInput.value || '-') : (unitCell.textContent || '-');
+                    }
+
                     // 비고 입력값 가져오기
                     const remarkInput = row.querySelector('.remark-input');
                     const remarkValue = remarkInput?.value || '';
 
+                    // 단가: input 또는 dataset
+                    const priceCell = row.querySelector('.price-cell');
+                    const priceInput = priceCell?.querySelector('input');
+                    let priceValue = '0';
+                    if (priceInput) {
+                        priceValue = String(parseNumber(priceInput.value) || 0);
+                    } else {
+                        priceValue = priceCell?.dataset.price || '0';
+                    }
+
                     rows.push({
-                        div: divSelect?.value || '',
-                        nameIndex: nameSelect?.value || '',
-                        name: nameSelect?.selectedOptions[0]?.textContent || '',
+                        div: divValue,
+                        nameIndex: nameIndexValue,
+                        name: nameValue,
                         spec: specValue,
-                        unit: row.querySelector('.unit-cell')?.textContent || '-',
+                        unit: unitValue,
                         qty: qtyInput?.value || '1',
-                        price: row.querySelector('.price-cell')?.dataset.price || '0',
-                        remark: remarkValue
+                        price: priceValue,
+                        remark: remarkValue,
+                        isCustomDiv: isCustomDiv,
+                        isCustomName: isCustomName
                     });
                 });
 
@@ -11823,14 +12426,13 @@
 
 
                     savedRows.forEach((item, i) => {
-                        const nameItems = item.div ? getItemsByDivInCat(cat.no, item.div) : [];
+                        const isCustomDiv = item.isCustomDiv || false;
+                        const isCustomName = item.isCustomName || false;
+                        const nameItems = (!isCustomDiv && item.div) ? getItemsByDivInCat(cat.no, item.div) : [];
 
                         // 고유한 품명만 추출 (중복 제거)
                         const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
 
-                        // 저장된 품명과 일치하는지 확인 (이름 또는 인덱스 호환)
-                        // item.name이 있으면 그것을 사용, 없으면 item.nameIndex를 사용할 수도 있지만
-                        // 이전 로직에서 nameIndex는 map index였으므로 신뢰하기 어려울 수 있음. item.name을 우선 사용.
                         const currentName = item.name || '';
 
                         const nameOptions = uniqueNames.map(name =>
@@ -11841,14 +12443,39 @@
                         const qty = parseInt(item.qty) || 0;
                         const amount = price * qty;
 
-                        // 상세내용 셀 처리 (드롭다운 복원 필요 여부 확인)
+                        // 구분 셀 처리
+                        let divCellContent;
+                        if (isCustomDiv) {
+                            divCellContent = `<input type="text" class="editable-input div-custom-input" value="${item.div || ''}" placeholder="구분 입력"
+                                onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
+                        } else {
+                            divCellContent = `<select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
+                                <option value="">선택</option>${divOptions.replace(`"${item.div}"`, `"${item.div}" selected`)}
+                                <option value="__edit_div__">📝 내용수정</option>
+                                <option value="__custom_div__">✏️ 직접입력</option>
+                            </select>`;
+                        }
+
+                        // 품명 셀 처리
+                        let nameCellContent;
+                        if (isCustomName) {
+                            nameCellContent = `<input type="text" class="editable-input name-custom-input" value="${currentName}" placeholder="품명 입력"
+                                onchange="saveEstimateData()">`;
+                        } else {
+                            nameCellContent = `<select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
+                            }>${item.div ? '<option value="">품명 선택</option>' + nameOptions + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
+                        }
+
+                        // 상세내용 셀 처리
                         let specCellContent = item.spec || '-';
                         const sameNameItems = nameItems.filter(it => it.name === currentName);
 
-                        if (sameNameItems.length > 1) {
-                            // 중복 품명이면 상세내용 드롭다운 생성
+                        if (isCustomDiv || isCustomName) {
+                            // 직접입력 모드면 상세내용도 입력 필드
+                            specCellContent = `<input type="text" class="editable-input spec-custom-input" value="${item.spec && item.spec !== '-' ? item.spec : ''}" placeholder="상세내용 입력"
+                                onchange="saveEstimateData()">`;
+                        } else if (sameNameItems.length > 1) {
                             const specOptions = sameNameItems.map((it, idx) => {
-                                // 저장된 스펙과 일치하는지 확인 (공백 제거 등 유연하게)
                                 const isSelected = (it.spec || '') === item.spec || (it.spec === null && item.spec === '-');
                                 return `<option value="${idx}" data-spec="${it.spec || ''}" data-unit="${it.unit || ''}" data-price="${it.unitPrice || 0}" ${isSelected ? 'selected' : ''}>
                                 ${it.spec || '(상세내용 없음)'}</option>`;
@@ -11859,16 +12486,27 @@
                                 style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;">
                                 <option value="">상세 선택</option>
                                 ${specOptions}
+                                <option value="__edit_spec__">📝 내용수정</option>
                                 <option value="__custom__" ${item.spec && !sameNameItems.find(it => it.spec === item.spec) ? 'selected' : ''}>✏️ 직접입력</option>
                             </select>`;
+                        }
 
-                            // 만약 직접 입력된 값이라면 input으로 보여줘야 할 수도 있음 (여기선 일단 드롭다운으로 복원하고 직접입력 선택 시 처리)
-                            // 복잡함을 줄이기 위해 기본은 드롭다운으로 하되, 매칭 안되면 '직접입력'으로 처리
-                        } else if (item.spec && !sameNameItems.find(it => it.spec === item.spec) && item.spec !== '-') {
-                            // 매칭되는 스펙이 없는데 값이 있으면 input (직접입력 등)
-                            // 다만 기존 데이터가 단순 텍스트일 수 있으므로 상황에 따라 다름.
-                            // 여기서는 텍스트로 표시하되, 수정 시 풀림.
-                            // 완벽한 복원을 위해 input으로 바꿀 수도 있지만 UI 복잡도 고려하여 텍스트로 둠.
+                        // 단위 셀 처리
+                        let unitCellContent;
+                        if (isCustomDiv || isCustomName) {
+                            unitCellContent = `<input type="text" class="editable-input" value="${item.unit && item.unit !== '-' ? item.unit : ''}" placeholder="단위" style="width:100%; text-align:center;"
+                                onchange="saveEstimateData()">`;
+                        } else {
+                            unitCellContent = item.unit || '-';
+                        }
+
+                        // 단가 셀 처리
+                        let priceCellContent;
+                        if (isCustomDiv || isCustomName) {
+                            priceCellContent = `<input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
+                                placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onchange="saveEstimateData()">`;
+                        } else {
+                            priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
                         }
 
                         const tr = document.createElement('tr');
@@ -11879,16 +12517,13 @@
                 </button>
                 ${i + 1}
             </td>
-            <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
-                    <option value="">선택</option>${divOptions.replace(`"${item.div}"`, `"${item.div}" selected`)}
-                </select></td>
-            <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
-                            }>${item.div ? '<option value="">품명 선택</option>' + nameOptions : '<option value="">구분 먼저 선택</option>'}</select></td>
+            <td class="col-div">${divCellContent}</td>
+            <td>${nameCellContent}</td>
             <td class="spec-cell">${specCellContent}</td>
-            <td class="unit-cell">${item.unit || '-'}</td>
+            <td class="unit-cell">${unitCellContent}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
-            <td class="price-cell" data-price="${price}"><div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
+            <td class="price-cell" data-price="${price}">${priceCellContent}</td>
             <td class="amount-cell"><div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
                         `;
