@@ -13102,9 +13102,9 @@
                 estimateData[cat.no] = rows;
 
                 // 메모 저장 (textarea)
-                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
-                if (memoTextarea) {
-                    currentData[`estMemo_${cat.no}`] = memoTextarea.value;
+                const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
+                if (estMemoTextarea) {
+                    currentData[`estMemo_${cat.no}`] = estMemoTextarea.value;
                 }
             });
 
