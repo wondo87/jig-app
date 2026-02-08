@@ -2882,10 +2882,14 @@
                 display: none !important;
             }
 
-            /* 인쇄 시 메모 컨테이너 스타일 확인 (파란색 선 삭제) */
+            /* 인쇄 시 메모 컨테이너 스타일 확인 (대괄호 같은 파란 선 복구: 둥근 모서리) */
             .estimate-memo {
-                border-left: none !important;
-                padding-left: 0 !important;
+                border: 3px solid transparent !important;
+                border-left-color: #0071e3 !important;
+                border-radius: 12px !important;
+                /* 둥글게 꺾이도록 */
+
+                padding-left: 12px !important;
                 margin-top: 10px !important;
                 display: block !important;
             }
