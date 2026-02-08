@@ -2882,12 +2882,9 @@
                 display: none !important;
             }
 
-            /* 인쇄 시 메모 타이틀 숨김 */
-            .estimate-memo>div:first-child {
-                display: none !important;
-            }
+            /* 인쇄 시 메모 타이틀 숨김 제거 (이미지 1 기준 복원) */
 
-            /* 인쇄 시 메모란 스타일 개선: 기준 이미지 매칭 */
+            /* 인쇄 시 메모란 스타일 개선: 내용 전체 표시 및 문서화 (이미지 1 기준: 파란색 포인트 복원) */
             .estimate-memo .memo-editable {
                 display: block !important;
                 height: auto !important;
@@ -2896,12 +2893,12 @@
                 overflow: visible !important;
                 white-space: pre-wrap !important;
 
-                /* 스타일링: 깔끔한 박스 형태 (파란선 제거) */
-                border: 1px solid #d2d2d7 !important;
-                border-left: 1px solid #d2d2d7 !important;
-                background-color: #fff !important;
-                border-radius: 4px !important;
-                padding: 10px !important;
+                /* 스타일링: 기준 이미지 1 매칭 (파란색 포인트, 연회색 배경, 테두리 없음) */
+                border: none !important;
+                border-left: 4px solid #0071e3 !important;
+                background-color: #f9f9fb !important;
+                border-radius: 0 4px 4px 0 !important;
+                padding: 12px 16px !important;
                 margin-top: 5px !important;
 
                 width: 100% !important;
