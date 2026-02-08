@@ -3290,7 +3290,7 @@
         }
 
         .estimate-table td {
-            padding: 5px 4px;
+            padding: 8px 4px;
             border: 1px solid #e8e8ed;
             text-align: center;
             vertical-align: middle;
@@ -4624,17 +4624,13 @@
                 table-layout: auto !important;
             }
 
-            /* 숨길 컬럼: No(1), 구분(2), 단위(5), 비고(9=last-child) */
+            /* 숨길 컬럼: No(1), 구분(2), 단위(5) — 비고는 JS에서 DOM 제거 */
             #panel-estimate .estimate-table th:nth-child(1),
             #panel-estimate .estimate-table td:nth-child(1),
             #panel-estimate .estimate-table th:nth-child(2),
             #panel-estimate .estimate-table td:nth-child(2),
             #panel-estimate .estimate-table th:nth-child(5),
-            #panel-estimate .estimate-table td:nth-child(5),
-            #panel-estimate .estimate-table th:nth-child(9),
-            #panel-estimate .estimate-table td:nth-child(9),
-            #panel-estimate .table-scroll-wrapper th:last-child,
-            #panel-estimate .table-scroll-wrapper td:last-child {
+            #panel-estimate .estimate-table td:nth-child(5) {
                 display: none !important;
             }
 
@@ -4927,17 +4923,13 @@
                     display: none !important;
                 }
 
-                /* 숨길 컬럼: No(1), 구분(2), 단위(5), 비고(9=last-child) */
-                #panel-estimate .table-scroll-wrapper th:last-child,
-                #panel-estimate .table-scroll-wrapper td:last-child,
+                /* 숨길 컬럼: No(1), 구분(2), 단위(5) — 비고는 JS에서 DOM 제거 */
                 #panel-estimate .estimate-table th:nth-child(1),
                 #panel-estimate .estimate-table td:nth-child(1),
                 #panel-estimate .estimate-table th:nth-child(2),
                 #panel-estimate .estimate-table td:nth-child(2),
                 #panel-estimate .estimate-table th:nth-child(5),
-                #panel-estimate .estimate-table td:nth-child(5),
-                #panel-estimate .estimate-table th:nth-child(9),
-                #panel-estimate .estimate-table td:nth-child(9) {
+                #panel-estimate .estimate-table td:nth-child(5) {
                     display: none !important;
                     width: 0 !important;
                     padding: 0 !important;
@@ -5004,27 +4996,7 @@
                 }
 
                 /* Aggressively Hide Remark Column */
-                #panel-estimate .estimate-table col:nth-child(9),
-                #panel-estimate .estimate-table col:last-child {
-                    display: none !important;
-                    width: 0 !important;
-                    visibility: collapse !important;
-                }
-
-                #panel-estimate .estimate-table .remark-cell,
-                #panel-estimate .estimate-table th.remark-cell,
-                #panel-estimate .estimate-table td.remark-cell,
-                #panel-estimate .estimate-table th:nth-child(9),
-                #panel-estimate .estimate-table td:nth-child(9),
-                #panel-estimate .estimate-table th:last-child,
-                #panel-estimate .estimate-table td:last-child {
-                    display: none !important;
-                    width: 0 !important;
-                    padding: 0 !important;
-                    border: none !important;
-                    visibility: hidden !important;
-                    font-size: 0 !important;
-                }
+                /* 비고 컬럼은 JS(removeEstimateRemarkColumns)에서 DOM 제거됨 */
 
                 /* Cleaned up: Removed conflicting global pixel-based widths that were overriding mobile percentages */
             }
@@ -9417,6 +9389,8 @@
 
             if (tabId === 'estimate') {
                 updateEstimateFromCost();
+                // 비고 컬럼 DOM 제거
+                removeEstimateRemarkColumns();
                 // [모바일] colgroup 인라인 style 제거 + 테이블 레이아웃 강제 적용
                 if (window.innerWidth <= 768) {
                     setTimeout(() => {
@@ -13046,6 +13020,36 @@
             categories.forEach(cat => {
                 updateDivOptions(cat.no);
             });
+            removeEstimateRemarkColumns();
+        }
+
+        // 견적서 비고 컬럼을 DOM에서 물리적으로 제거 (remark 값은 hidden input으로 보존)
+        function removeEstimateRemarkColumns() {
+            document.querySelectorAll('#panel-estimate .estimate-table').forEach(table => {
+                // colgroup 9번째 col 제거
+                const cols = table.querySelectorAll('colgroup col');
+                if (cols.length >= 9) cols[8].remove();
+                // thead th 9번째 제거
+                table.querySelectorAll('thead tr').forEach(tr => {
+                    const th9 = tr.children[8];
+                    if (th9) th9.remove();
+                });
+                // tbody 각 행의 9번째 td 처리
+                table.querySelectorAll('tbody tr').forEach(tr => {
+                    const td9 = tr.children[8];
+                    if (!td9) return;
+                    // remark-input 값 보존: hidden input으로 첫 번째 td에 이동
+                    const remarkEl = td9.querySelector('.remark-input');
+                    const remarkVal = remarkEl ? remarkEl.value : '';
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.className = 'remark-input';
+                    hidden.value = remarkVal;
+                    tr.children[0].appendChild(hidden);
+                    // 비고 td 제거
+                    td9.remove();
+                });
+            });
         }
 
         // 해당 카테고리의 구분 옵션 업데이트
@@ -13130,6 +13134,17 @@
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             `;
             tbody.appendChild(tr);
+            // 추가된 행의 비고 td 제거 (remark 값을 hidden으로 보존)
+            const lastTd = tr.lastElementChild;
+            if (lastTd) {
+                const remarkEl = lastTd.querySelector('.remark-input');
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.className = 'remark-input';
+                hidden.value = remarkEl ? remarkEl.value : '';
+                tr.children[0].appendChild(hidden);
+                lastTd.remove();
+            }
         }
 
         // 견적 행 삭제
@@ -13703,6 +13718,7 @@
             if (authorSpan) {
                 authorSpan.textContent = currentData?.createdBy || '-';
             }
+            removeEstimateRemarkColumns();
         }
 
         // textarea 자동 높이 조절
