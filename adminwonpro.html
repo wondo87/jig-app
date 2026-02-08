@@ -12929,9 +12929,13 @@
             if (cell.querySelector('input')) return;
             const currentPrice = parseInt(cell.dataset.price) || 0;
             const originalPrice = currentPrice;
-            cell.innerHTML = `<input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
+            cell.innerHTML = `<div class="money-wrapper" style="justify-content:flex-end; align-items:center;">
+                <span style="font-size:12px; margin-right:4px;">₩</span>
+                <input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
                 placeholder="단가" oninput="onEstDirectPriceInput(this, '${catNo}')"
-                onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()">`;
+                onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()"
+                style="text-align:right; width:80px; border:1px solid #0071e3; border-radius:4px; padding:2px;">
+                </div>`;
             const inp = cell.querySelector('input');
             inp.focus();
             inp.addEventListener('keydown', function (e) {
@@ -13384,8 +13388,12 @@
                         // 단가 셀 처리
                         let priceCellContent;
                         if (isCustomDiv || isCustomName) {
-                            priceCellContent = `<input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
-                                placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onblur="finalizePriceEdit(this, '${cat.no}')" onchange="saveEstimateData()">`;
+                            priceCellContent = `<div class="money-wrapper" style="justify-content:flex-end; align-items:center;">
+                                <span style="font-size:12px; margin-right:4px;">₩</span>
+                                <input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
+                                placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onblur="finalizePriceEdit(this, '${cat.no}')" onchange="saveEstimateData()"
+                                style="text-align:right; width:80px; border:1px solid #0071e3; border-radius:4px; padding:2px;">
+                                </div>`;
                         } else {
                             priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
                         }
