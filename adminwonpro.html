@@ -2879,28 +2879,43 @@
             .estimate-table .col-div,
             .estimate-table th.col-div,
             .estimate-table col.col-div {
-                display: none;
+                display: none !important;
             }
 
-            /* 인쇄 시 메모란 스타일 개선 (이미지처럼 깔끔하게) */
+            /* 인쇄 시 메모란 스타일 개선: 내용 전체 표시 및 문서화 */
             .estimate-memo .memo-editable {
-                max-height: none !important;
+                display: block !important;
                 height: auto !important;
+                min-height: 50px !important;
+                max-height: none !important;
                 overflow: visible !important;
+                white-space: pre-wrap !important;
+
+                /* 스타일링: 깔끔한 문서 형태 (파란색 포인트 테두리) */
                 border: none !important;
                 border-left: 4px solid #0071e3 !important;
                 background-color: #f9f9fb !important;
                 border-radius: 0 4px 4px 0 !important;
                 padding: 12px 16px !important;
-                box-shadow: none !important;
-                white-space: pre-wrap !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+
+                /* 폰트 및 여백 조정 */
+                font-size: 11px !important;
+                line-height: 1.6 !important;
+                color: #333 !important;
+
+                /* 스크롤바 강제 숨김 */
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+
+                /* 페이지 넘김 방지 */
+                page-break-inside: avoid !important;
             }
 
-            /* 인쇄 시 메모 스크롤바 숨김 */
+            /* 웹킷(Chrome/Safari) 스크롤바 숨김 */
             .estimate-memo .memo-editable::-webkit-scrollbar {
-                display: none;
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
             }
         }
 
