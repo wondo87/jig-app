@@ -210,6 +210,17 @@
             font-style: italic !important;
         }
 
+        .fmt-black {
+            color: #000 !important;
+            background: #fff !important;
+            border: 1px solid #999 !important;
+        }
+
+        .fmt-clear {
+            color: #ff3b30 !important;
+            font-weight: bold;
+        }
+
         /* 텍스트 서식 플로팅 툴바 (드래그 선택 시) */
         .text-format-toolbar {
             display: none;
@@ -2837,6 +2848,8 @@
         .estimate-memo .memo-editable {
             width: 100%;
             min-height: 50px;
+            max-height: 120px;
+            overflow-y: auto;
             padding: 8px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
@@ -2846,6 +2859,15 @@
             outline: none;
             white-space: pre-wrap;
             word-break: keep-all;
+        }
+
+        .estimate-memo .memo-editable::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .estimate-memo .memo-editable::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
         }
 
         .estimate-memo .memo-editable:focus {
@@ -2864,6 +2886,57 @@
             .estimate-table th.col-div,
             .estimate-table col.col-div {
                 display: none;
+            }
+
+            /* 인쇄 시 테이블 레이아웃 고정 및 컬럼 너비 유지 */
+            .estimate-table {
+                table-layout: fixed !important;
+                width: 100% !important;
+            }
+
+            .estimate-table colgroup col {
+                width: auto !important;
+            }
+
+            /* 인쇄 시 컬럼별 너비 명시 (구분 제외 = 8개 컬럼) */
+            .estimate-table th:nth-child(1),
+            .estimate-table td:nth-child(1) {
+                width: 5% !important;
+            }
+
+            .estimate-table th:nth-child(2),
+            .estimate-table td:nth-child(2) {
+                width: 18% !important;
+            }
+
+            .estimate-table th:nth-child(3),
+            .estimate-table td:nth-child(3) {
+                width: 20% !important;
+            }
+
+            .estimate-table th:nth-child(4),
+            .estimate-table td:nth-child(4) {
+                width: 5% !important;
+            }
+
+            .estimate-table th:nth-child(5),
+            .estimate-table td:nth-child(5) {
+                width: 5% !important;
+            }
+
+            .estimate-table th:nth-child(6),
+            .estimate-table td:nth-child(6) {
+                width: 12% !important;
+            }
+
+            .estimate-table th:nth-child(7),
+            .estimate-table td:nth-child(7) {
+                width: 15% !important;
+            }
+
+            .estimate-table th:nth-child(8),
+            .estimate-table td:nth-child(8) {
+                width: 20% !important;
             }
         }
 
@@ -4138,12 +4211,14 @@
     <!-- 텍스트 서식 플로팅 툴바 -->
     <div class="text-format-toolbar no-print" id="textFormatToolbar">
         <button class="fmt-bold" onclick="applyTextFormat('bold')" title="굵게">B</button>
+        <button class="fmt-black" onclick="applyTextFormat('color','#000000')" title="검정색">A</button>
         <button class="fmt-red" onclick="applyTextFormat('color','#ff3b30')" title="빨간색">A</button>
         <button class="fmt-blue" onclick="applyTextFormat('color','#007aff')" title="파란색">A</button>
         <button class="fmt-orange" onclick="applyTextFormat('color','#ff9500')" title="주황색">A</button>
         <button class="fmt-underline" onclick="applyTextFormat('underline')" title="밑줄">U</button>
         <button class="fmt-strike" onclick="applyTextFormat('strikethrough')" title="취소선">S</button>
         <button class="fmt-italic" onclick="applyTextFormat('italic')" title="기울임">I</button>
+        <button class="fmt-clear" onclick="applyTextFormat('removeFormat')" title="서식 제거">✕</button>
     </div>
 
     <!-- 관리자 로그인 모달 -->
@@ -8044,7 +8119,7 @@
             sel.addRange(savedSelection);
 
             try {
-                if (type === 'clear') {
+                if (type === 'clear' || type === 'removeFormat') {
                     // 서식 제거: 선택 영역의 format span 풀기
                     const range = savedSelection;
                     const container = range.commonAncestorContainer;
