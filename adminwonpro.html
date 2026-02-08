@@ -8070,13 +8070,24 @@
                     // execCommand 시도 (contenteditable 내에서만 작동)
                     if (parent.closest('[contenteditable="true"]')) {
                         document.execCommand('removeFormat', false, null);
+
+                        // 서식 제거 후에도 선택 영역 유지 시도
+                        savedSelection = window.getSelection().getRangeAt(0).cloneRange();
                     } else {
                         // 수동 서식 제거
                         const fragment = range.extractContents();
                         const tempDiv = document.createElement('div');
                         tempDiv.appendChild(fragment);
                         const plainText = tempDiv.textContent;
-                        range.insertNode(document.createTextNode(plainText));
+                        const textNode = document.createTextNode(plainText);
+                        range.insertNode(textNode);
+
+                        // 선택 영역 재설정 (텍스트 노드 전체 선택)
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(textNode);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+                        savedSelection = newRange;
                     }
                 } else {
                     // 스타일 span 감싸기 (execCommand 없이 작동)
@@ -8095,17 +8106,33 @@
                     }
                     try {
                         range.surroundContents(span);
+
+                        // 서식 적용 후 선택 영역 유지 (span 내용 다시 선택)
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(span);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+                        savedSelection = newRange;
                     } catch (e) {
                         // 다중 노드 선택 시 extractContents 사용
                         const fragment = range.extractContents();
                         span.appendChild(fragment);
                         range.insertNode(span);
+
+                        // 선택 영역 유지 (span 내용 다시 선택)
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(span);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+                        savedSelection = newRange;
                     }
                 }
             } catch (e) { console.warn('텍스트 서식 적용 실패:', e); }
 
-            toolbar.classList.remove('show');
-            savedSelection = null;
+            // 툴바 숨김 방지 (연속 서식 적용을 위해 유지)
+            // toolbar.classList.remove('show'); 
+            // savedSelection = null; 
+
             saveEstimateData();
         }
 
