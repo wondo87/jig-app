@@ -3,624 +3,558 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>가이드 - 디자인 지그</title>
-    <meta name="description" content="디자인 지그 고객 가이드. 정밀한 기준으로 설계하는 공간.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABOUT - 디자인 지그</title>
+    <meta name="description" content="디자인 지그는 감각이 아닌 기준으로 일합니다. 정밀한 기준으로 설계하는 공간.">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.designjig.com/guide">
-    <meta property="og:title" content="고객 가이드 - 디자인 지그">
+    <meta property="og:url" content="https://www.designjig.com/about">
+    <meta property="og:title" content="ABOUT - 디자인 지그">
     <meta property="og:description" content="디자인 지그는 감각이 아닌 기준으로 일합니다.">
     <meta property="og:image"
         content="https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png">
+    <meta property="og:site_name" content="디자인 지그">
 
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
 
-    <!-- Redirection Script -->
-    <script>
-        (function () {
-            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            var isMobile = /android|ipad|iphone|ipod/i.test(userAgent) && !window.MSStream;
-
-            // If NOT mobile, redirect to Figma
-            if (!isMobile) {
-                window.location.replace("https://www.figma.com/make/adL0DjRqABoH6ADRvxLnCb/%EA%B3%A0%EA%B0%9D%EC%83%81%EB%8B%B4--Community-?fullscreen=1&t=7wcrmkHiN5imEdK8-1");
-            }
-        })();
-    </script>
-
-    <!-- Fonts -->
+    <!-- 폰트 최적화 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=Oswald:wght@700&display=swap"
-        rel="stylesheet">
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+            rel="stylesheet">
+    </noscript>
 
+    <script src="js/protection.js"></script>
     <style>
-        /* Reset & Base Styles */
+        /* 기본 스타일 및 헤더 (portfolio.html과 동일) */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html {
-            font-size: 16px;
-            background-color: #f5f5f5;
-            /* Desktop background */
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #fff;
-            color: #333;
-            line-height: 1.5;
-            max-width: 600px;
-            /* Mobile width constraint for desktop testing/viewing */
-            margin: 0 auto;
-            min-height: 100vh;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-            position: relative;
-            padding-top: 60px;
-            /* Header height */
-        }
-
-        /* Typography */
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-            line-height: 1.3;
-        }
-
-        a {
-            text-decoration: none;
-            color: inherit;
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+            background: #f8f9fa;
+            /* 배경색 살짝 변경 (피그마 느낌) */
         }
 
         /* Header */
         .header {
             position: fixed;
             top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 600px;
-            height: 60px;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1.5rem 3rem;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid #eee;
-            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .logo {
-            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
             font-weight: 700;
-            font-size: 1.4rem;
-            color: #111;
-            letter-spacing: -0.02em;
+            color: #1a1a1a;
+            text-decoration: none;
         }
 
-        /* Content Sections (Previously Slides) */
-        .content-section {
-            padding: 4rem 1.5rem;
-            border-bottom: 1px solid #f0f0f0;
+        .nav-list {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-link:hover {
+            color: #2563eb;
+            /* 피그마 블루 */
+        }
+
+        .nav-link.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 4px;
+        }
+
+        .nav-link-cta {
+            color: #2563eb;
+        }
+
+        /* 모바일 메뉴 버튼 */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #1a1a1a;
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+
+        .mobile-menu-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* 모바일 네비게이션 오버레이 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.98);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .mobile-nav.active {
+            display: flex;
+        }
+
+        .mobile-nav a {
+            font-size: 1.5rem;
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .mobile-nav a:hover {
+            color: #2563eb;
+        }
+
+        @media (max-width: 768px) {
+            .nav-list {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* [MAIN CONTENT STYLES] - Figma Implementation */
+        .about-main {
+            padding-top: 100px;
+            /* 헤더 높이 확보 */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
+            align-items: center;
             justify-content: center;
-            min-height: auto;
-            /* Allow content to dictate height */
+            text-align: center;
+            padding-bottom: 80px;
+            background: radial-gradient(circle at center, #ffffff 0%, #f0f4ff 100%);
+            /* 미묘한 블루 글로우 효과 */
         }
 
-        /* Intro Section Special Styling */
-        .content-section.intro {
-            text-align: left;
-            padding-top: 2rem;
-            padding-bottom: 4rem;
+        .brand-title {
+            font-family: 'Oswald', 'Impact', sans-serif;
+            /* 강한 고딕 폰트 */
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            color: #000;
+            line-height: 1;
         }
 
-        .slide-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 1.25rem;
-            letter-spacing: -0.03em;
-            word-break: keep-all;
-        }
-
-        .slide-subtitle {
-            font-size: 1rem;
+        .brand-tagline {
+            font-size: 1.25rem;
             color: #666;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
+            font-weight: 500;
+        }
+
+        .divider {
+            width: 60px;
+            height: 4px;
+            background: #2563eb;
+            /* Blue Accent */
+            margin: 0 auto 3rem;
+            border-radius: 2px;
+        }
+
+        .main-message {
+            font-size: 2rem;
             font-weight: 400;
+            color: #1a1a1a;
+            margin-bottom: 5rem;
+            word-break: keep-all;
+            padding: 0 1rem;
+            line-height: 1.4;
         }
 
-        .highlight-blue {
+        .main-message strong {
+            font-weight: 800;
             color: #2563eb;
+            /* Blue highlight */
         }
 
-        /* Checklist Styles */
-        .checklist-item {
-            display: flex;
-            align-items: flex-start;
-            padding: 1.25rem;
-            background-color: #f9fafb;
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
+        /* Features Grid */
+        .features-section {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 2rem;
         }
 
-        .check-icon {
-            color: #2563eb;
-            font-weight: bold;
-            margin-right: 0.75rem;
+        .section-title {
             font-size: 1.1rem;
-            margin-top: 2px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        /* Feature Grid */
-        .feature-grid {
+        .features-grid {
             display: grid;
-            gap: 1rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            /* Reduced gap since cards are smaller */
+            margin-bottom: 4rem;
         }
 
         .feature-card {
-            background: #fff;
-            border: 1px solid #eee;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+            /* background: white; */
+            /* 투명 배경 */
+            /* border-radius: 16px; */
+            /* box-shadow: 0 10px 30px rgba(0,0,0,0.05); */
+            transition: transform 0.3s;
         }
 
-        .feature-icon {
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 0.75rem;
-        }
+        /* .feature-card:hover { transform: translateY(-5px); } */
 
-        .feature-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            color: #111;
-        }
-
-        .feature-desc {
-            font-size: 0.95rem;
-            color: #555;
-            word-break: keep-all;
-            line-height: 1.5;
-        }
-
-        /* Price Card */
-        .price-card {
-            background-color: #eff6ff;
-            border: 1px solid #dbeafe;
-            border-radius: 16px;
-            padding: 2rem 1.5rem;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .price-amount {
-            font-size: 2.25rem;
-            font-weight: 800;
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            background: #eef4ff;
+            /* Light Blue Bg */
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #2563eb;
-            font-family: 'Inter', sans-serif;
-            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
         }
 
-        /* Process Steps */
-        .process-list {
-            position: relative;
-            padding-left: 20px;
-            margin: 1rem 0;
+        .icon-box svg {
+            width: 40px;
+            height: 40px;
+            stroke-width: 1.5;
         }
 
-        .process-line {
-            position: absolute;
-            left: 5px;
-            top: 10px;
-            bottom: 30px;
-            width: 2px;
-            background: #e5e7eb;
+        .feature-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #444;
+            max-width: 240px;
+            line-height: 1.5;
+            word-break: keep-all;
         }
 
-        .process-item {
-            position: relative;
-            margin-bottom: 2.5rem;
-            padding-left: 1.5rem;
+        /* Keywords / Chips */
+        .keywords-row {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        .process-dot {
-            position: absolute;
-            left: 0;
-            top: 6px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #d1d5db;
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 1px #d1d5db;
-            z-index: 2;
-        }
-
-        .process-dot.active {
-            background: #2563eb;
-            box-shadow: 0 0 0 1px #2563eb;
-        }
-
-        .process-title {
-            font-weight: 700;
-            font-size: 1.05rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .process-desc {
+        .keyword-chip {
+            padding: 0.6rem 1.5rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 50px;
             font-size: 0.9rem;
+            font-weight: 600;
             color: #666;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s;
         }
 
-        /* Footer */
+        .keyword-chip:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+
+        /* Footer (portfolio.html과 동일) */
         .footer {
             background: #f8f8f8;
-            padding: 3rem 1.5rem;
+            color: #333;
+            padding: 30px 2rem;
             text-align: center;
             border-top: 1px solid #eee;
         }
 
         .footer-brand {
-            font-family: 'Oswald', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1rem;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
+            color: #1a1a1a;
         }
 
         .footer-tagline {
-            font-size: 0.9rem;
+            font-size: 0.7rem;
             color: #666;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
         .footer-info {
-            font-size: 0.85rem;
-            color: #555;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
         .footer-info p {
-            margin-bottom: 0.4rem;
+            color: #666;
+            font-size: 0.7rem;
+            margin: 0.2rem 0;
+        }
+
+        .footer-info a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .footer-info a:hover {
+            color: #2563eb;
         }
 
         .footer-sns {
             display: flex;
+            gap: 0.8rem;
             justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            margin: 1rem 0;
         }
 
-        .sns-link {
-            width: 40px;
-            height: 40px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-            transition: all 0.2s;
+        .footer-sns a {
+            color: #666;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .footer-sns a:hover {
+            color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .footer-sns svg {
+            width: 18px;
+            height: 18px;
         }
 
         .footer-copyright {
-            font-size: 0.75rem;
             color: #999;
+            font-size: 0.65rem;
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
         }
 
-        .btn-cta {
-            display: block;
-            width: 100%;
-            padding: 1.1rem;
-            background: #111;
-            color: white;
-            text-align: center;
-            font-weight: 600;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            font-size: 1.05rem;
+        /* [MOBILE RESPONSIVE] */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .about-main {
+                padding-top: 80px;
+                padding-bottom: 60px;
+                justify-content: flex-start;
+                /* 모바일에서는 위에서부터 자연스럽게 */
+            }
+
+            .brand-title {
+                font-size: 2.5rem;
+                margin-top: 2rem;
+            }
+
+            .brand-tagline {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .main-message {
+                font-size: 1.4rem;
+                margin-bottom: 3rem;
+                padding: 0 1.5rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                /* 1열로 변경 */
+                gap: 3rem;
+                margin-bottom: 3rem;
+            }
+
+            .feature-card {
+                padding: 0;
+                gap: 1rem;
+            }
+
+            .keywords-row {
+                padding: 0 1rem;
+            }
+
+            .keyword-chip {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
         }
     </style>
+    <!-- Oswald Font for Brand Title (Strong Gothic) -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <header class="header">
-        <a href="/" class="logo">DESIGN JIG</a>
+        <div class="header-container">
+            <a href="/" class="logo">DESIGN JIG</a>
+            <nav>
+                <ul class="nav-list">
+                    <li><a href="/guide" class="nav-link active">ABOUT</a></li>
+                    <li><a href="/columns" class="nav-link">COLUMNS</a></li>
+                    <li><a href="/portfolio" class="nav-link">PORTFOLIO</a></li>
+                    <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
     </header>
 
-    <!-- Section 1: Intro -->
-    <div class="content-section intro" style="text-align: center; padding-top: 3rem; padding-bottom: 5rem;">
-        <p class="slide-subtitle" style="font-size: 1.2rem; color:#444; margin-bottom: 2rem;">정밀한 기준으로 설계하는 공간</p>
-        <div style="width: 40px; height: 4px; background: #2563eb; margin: 0 auto 2rem;"></div>
-        <h2 class="slide-title" style="font-size: 2.2rem; line-height: 1.3; margin-bottom: 0;">
-            감각이 아닌<br>
-            <span class="highlight-blue">기준</span>으로 일합니다
+    <!-- 모바일 네비게이션 -->
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="/guide">ABOUT</a>
+        <a href="/columns">COLUMNS</a>
+        <a href="/portfolio">PORTFOLIO</a>
+        <a href="/quote" class="nav-cta">ASK A QUOTE</a>
+    </nav>
+
+    <main class="about-main">
+        <h1 class="brand-title">DESIGN JIG</h1>
+        <p class="brand-tagline">정밀한 기준으로 설계하는 공간</p>
+
+        <div class="divider"></div>
+
+        <h2 class="main-message">
+            DESIGN JIG는<br>
+            <strong>감각이 아닌 기준</strong>으로 일합니다
         </h2>
-    </div>
 
-    <!-- Section 2: Target Audience -->
-    <div class="content-section">
-        <h2 class="slide-title">이런 분들께 추천합니다</h2>
-        <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <div>
-                <strong>정확한 기준이 필요한 분</strong>
-                <p style="font-size:0.9rem; color:#666; margin-top:4px;">막연한 감각보다는 수치와 데이터에 기반한 설계를 원하시는 분</p>
-            </div>
-        </div>
-        <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <div>
-                <strong>투명한 견적을 원하시는 분</strong>
-                <p style="font-size:0.9rem; color:#666; margin-top:4px;">자재 하나, 공정 하나의 비용이 투명하게 공개되길 원하시는 분</p>
-            </div>
-        </div>
-        <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <div>
-                <strong>일관된 품질을 원하시는 분</strong>
-                <p style="font-size:0.9rem; color:#666; margin-top:4px;">작업자의 컨디션에 따라 달라지는 품질이 아닌, 시스템화된 품질을 원하시는 분</p>
-            </div>
-        </div>
-    </div>
+        <section class="features-section">
+            <h3 class="section-title">JIG의 의미</h3>
 
-    <!-- Section 3: Philosophy -->
-    <div class="content-section">
-        <h2 class="slide-title">JIG의 의미</h2>
-        <p class="slide-subtitle">제조업에서 부품을 가공할 때 사용하는 보조 기구</p>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <span class="feature-icon">🎯</span>
-                <div class="feature-title">정확도 (Accuracy)</div>
-                <div class="feature-desc">작업 위치를 정밀하게 안내하여 오차 없는 시공을 가능하게 합니다.</div>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🔄</span>
-                <div class="feature-title">일관성 (Consistency)</div>
-                <div class="feature-desc">누가 작업하더라도 동일한 고품질의 결과를 만들어냅니다.</div>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🛡️</span>
-                <div class="feature-title">신뢰 (Trust)</div>
-                <div class="feature-desc">전문가가 믿고 의지할 수 있는 기준 장비가 됩니다.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section 4: Fee Guide -->
-    <div class="content-section">
-        <h2 class="slide-title">실측 및 견적 비용 안내</h2>
-
-        <div class="price-card">
-            <p style="font-size:0.9rem; color:#666; margin-bottom:0.5rem;">실측·상세견적 진행비</p>
-            <div class="price-amount">300,000원</div>
-        </div>
-
-        <h3 style="font-size:1rem; margin-bottom:1rem; color:#111;">포함 항목</h3>
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem; margin-bottom:2rem;">
-            <div
-                style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem 0.5rem; text-align:center;">
-                <div style="font-size:1.5rem; margin-bottom:0.5rem;">💬</div>
-                <div style="font-size:0.8rem; font-weight:600; line-height:1.3;">현장 답사<br>및 상담</div>
-                <span
-                    style="background:#dcfce7; color:#166534; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:600; margin-top:4px; display:inline-block;">무료</span>
-            </div>
-            <div
-                style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem 0.5rem; text-align:center;">
-                <div style="font-size:1.5rem; margin-bottom:0.5rem;">📏</div>
-                <div style="font-size:0.8rem; font-weight:600; line-height:1.3;">현장 실측<br>및 상세 견적</div>
-            </div>
-            <div
-                style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem 0.5rem; text-align:center;">
-                <div style="font-size:1.5rem; margin-bottom:0.5rem;">📋</div>
-                <div style="font-size:0.8rem; font-weight:600; line-height:1.3;">공정별<br>세부 견적서</div>
-            </div>
-        </div>
-
-        <div style="margin-bottom:2rem;">
-            <h3 style="font-size:1rem; margin-bottom:0.8rem; display:flex; align-items:center;">
-                <span style="font-size:1.2rem; margin-right:6px;">💲</span> 별도 비용 항목
-            </h3>
-            <div style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1.2rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                    <strong style="font-size:1rem;">창호 정밀 실측</strong>
-                    <strong style="color:#333; font-size:1.1rem;">300,000원</strong>
+            <div class="features-grid">
+                <!-- 1. Accuracy -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <!-- Target Icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                    </div>
+                    <p class="feature-text">정확도를 높이기 위한<br>기준점</p>
                 </div>
-                <p style="font-size:0.85rem; color:#666;">창호 교체 또는 시공이 필요한 경우 필수</p>
-            </div>
-        </div>
 
-        <div style="background:#fffbf0; border:1px solid #fde68a; border-radius:12px; padding:1.2rem;">
-            <h3 style="font-size:0.95rem; color:#92400e; margin-bottom:0.8rem; display:flex; align-items:center;">
-                <span style="margin-right:6px;">⚠️</span> 환불 규정
-            </h3>
-            <ul style="font-size:0.85rem; color:#78350f; padding-left:1.2rem; line-height:1.6;">
-                <li>현장 답사 및 상담은 무료로 진행됩니다.</li>
-                <li>현장 실측 완료 후에는 환불이 불가합니다.</li>
-                <li>창호 정밀 실측 비용은 환불되지 않습니다.</li>
-            </ul>
-        </div>
-    </div>
+                <!-- 2. Consistency -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <!-- Refresh/Repeat Icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path
+                                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
+                        </svg>
+                    </div>
+                    <p class="feature-text">동일한 품질을<br>반복 가능하게 만드는 도구</p>
+                </div>
 
-    <!-- Section 5: Schedule -->
-    <div class="content-section">
-        <h2 class="slide-title">진행 프로세스</h2>
-        <div class="process-list">
-            <div class="process-line"></div>
+                <!-- 3. Trust -->
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <!-- Shield Icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <p class="feature-text">전문가가 신뢰하는<br>기준 장비</p>
+                </div>
+            </div>
 
-            <div class="process-item">
-                <div class="process-dot active"></div>
-                <div class="process-title">1. 문의 접수</div>
-                <div class="process-desc">온라인 폼 또는 전화 상담</div>
+            <div class="keywords-row">
+                <div class="keyword-chip">정밀함</div>
+                <div class="keyword-chip">기준</div>
+                <div class="keyword-chip">반복 가능성</div>
+                <div class="keyword-chip">시스템</div>
             </div>
-            <div class="process-item">
-                <div class="process-dot"></div>
-                <div class="process-title">2. 1차 미팅 (비대면/사무실)</div>
-                <div class="process-desc">대략적인 예산 및 니즈 파악</div>
-            </div>
-            <div class="process-item">
-                <div class="process-dot"></div>
-                <div class="process-title">3. 현장 실측 및 상세 견적</div>
-                <div class="process-desc">실측비 입금 후 진행, 디자인 제안</div>
-            </div>
-            <div class="process-item">
-                <div class="process-dot"></div>
-                <div class="process-title">4. 계약 및 공사 준비</div>
-                <div class="process-desc">자재 선정, 공정표 확정</div>
-            </div>
-            <div class="process-item">
-                <div class="process-dot"></div>
-                <div class="process-title">5. 시공 및 마감</div>
-                <div class="process-desc">데일리 리포트 전송, 준공 청소</div>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- Section 6: Principles -->
-    <div class="content-section">
-        <h2 class="slide-title">디자인지그의 원칙</h2>
-        <p class="slide-subtitle">타협하지 않는 시공 기준</p>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-title">1. 정품 자재 사용</div>
-                <div class="feature-desc">검증된 브랜드의 정품 자재만을 사용하며, 자재 내역을 투명하게 공개합니다.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-title">2. FM 시공 준수</div>
-                <div class="feature-desc">빠른 길보다는 바른 길을 택합니다. 제조사가 권장하는 표준 시공법을 준수합니다.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-title">3. 추가금 ZERO 지향</div>
-                <div class="feature-desc">정확한 초기 견적으로 공사 도중 불필요한 추가금이 발생하지 않도록 합니다.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section 7: Extra Costs -->
-    <div class="content-section">
-        <h2 class="slide-title">추가 비용 발생 기준</h2>
-        <p class="slide-subtitle">아래의 경우 부득이하게 추가 비용이 발생할 수 있습니다.</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
-                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">철거 후 히든 하자</strong>
-                <span style="font-size:0.8rem; color:#666;">누수, 곰팡이, 구조적 결함 등</span>
-            </div>
-            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
-                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">고객 요청 변경</strong>
-                <span style="font-size:0.8rem; color:#666;">자재 상향, 공정 추가 등</span>
-            </div>
-            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
-                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">엘리베이터 보양</strong>
-                <span style="font-size:0.8rem; color:#666;">관리소 규정에 따른 사용료</span>
-            </div>
-            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
-                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">민원/공사 지연</strong>
-                <span style="font-size:0.8rem; color:#666;">민원으로 인한 중단/야간 작업</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section 8: Warranty -->
-    <div class="content-section">
-        <h2 class="slide-title">A/S 및 보증 안내</h2>
-        <div style="font-size: 3rem; margin-bottom:1rem; text-align:center;">🛡️</div>
-        <h3 style="margin-bottom:1rem; font-size:1.4rem; text-align:center;">무상 보증 기간 1년</h3>
-        <p style="color:#666; margin-bottom:2rem; line-height:1.6; text-align:center;">
-            공사 완료 후 1년간 하자에 대한 무상 A/S를 제공합니다.<br>
-            (단, 고객 과실 및 소모품 제외)
-        </p>
-        <div style="background:#f8f9fa; padding:1.5rem; border-radius:12px;">
-            <strong style="display:block; margin-bottom:0.5rem;">A/S 접수 방법</strong>
-            <p style="font-size:0.9rem; color:#555; line-height:1.6;">
-                1. 하자가 발생한 부분의 사진 촬영<br>
-                2. 담당자에게 카카오톡 또는 문자로 전송<br>
-                3. 일정 조율 후 방문 처리
-            </p>
-        </div>
-    </div>
-
-    <!-- Section 9: Price Philosophy -->
-    <div class="content-section">
-        <h2 class="slide-title">가격이 아닌 가치</h2>
-        <p style="font-size:1.1rem; line-height:1.6; margin-bottom:2rem; font-weight:600;">
-            "얼마까지 해주시나요?"<br>
-            가격을 맞추기 위해 품질을 낮추는 공사는 하지 않습니다.
-        </p>
-        <p style="color:#666; line-height:1.6; word-break: keep-all;">
-            저렴한 견적은 저렴한 자재와 비숙련공을 의미합니다. 디자인지그는 <strong>제대로 된 자재</strong>와 <strong>숙련된 기술자</strong>의 인건비를 정당하게 지불하며,
-            그만큼의 <strong>퀄리티를 보장</strong>합니다.
-        </p>
-    </div>
-
-    <!-- Section 10: Communication -->
-    <div class="content-section">
-        <h2 class="slide-title">소통도 시스템입니다</h2>
-        <p class="slide-subtitle">불안하지 않은 인테리어 경험</p>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-title">💬 단톡방 개설</div>
-                <div class="feature-desc">모든 공정 내용을 실시간으로 공유합니다.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-title">📸 데일리 리포트</div>
-                <div class="feature-desc">매일 작업 종료 후 현장 사진과 진행 상황을 보고합니다.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section 11: Site Management -->
-    <div class="content-section">
-        <h2 class="slide-title">현장 관리 기준</h2>
-        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
-            <span class="check-icon">🚭</span> 금연 현장 원칙
-        </div>
-        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
-            <span class="check-icon">🧹</span> 매일 정리 정돈 및 청소
-        </div>
-        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
-            <span class="check-icon">👷</span> 안전 장비 착용 준수
-        </div>
-        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
-            <span class="check-icon">🔇</span> 소음 작업 시간 준수 (민원 최소화)
-        </div>
-    </div>
-
-    <!-- Section 12: Outro -->
-    <div class="content-section" style="text-align:center;">
-        <h2 class="slide-title">비교해 보셔도 좋습니다</h2>
-        <p style="margin-bottom:2rem; color:#666; line-height:1.6;">
-            여러 곳에서 상담을 받아보신 후,<br>
-            디자인지그의 기준이 필요하실 때 연락 주세요.
-        </p>
-
-        <div style="background:#eef4ff; padding:1.5rem; border-radius:12px; margin-bottom:2rem; text-align:left;">
-            <p style="color:#2563eb; font-weight:700; margin-bottom:0.5rem;">월 2개 현장 한정 진행</p>
-            <p style="font-size:0.9rem; color:#666;">
-                품질 유지를 위해 프로젝트 수를 제한합니다.<br>
-                여유 있게 문의주시면 꼼꼼하게 상담 도와드리겠습니다.
-            </p>
-        </div>
-
-        <a href="https://www.designjig.com/quote" class="btn-cta">상담 신청하기</a>
-    </div>
-
-    <!-- Footer -->
     <footer class="footer">
         <h2 class="footer-brand">디자인지그</h2>
         <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
@@ -630,40 +564,43 @@
             <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
         </div>
         <div class="footer-sns">
-            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" class="sns-link">
-                <!-- Blog Icon -->
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
+                <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
                 </svg>
             </a>
-            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" class="sns-link">
-                <!-- Cafe Icon -->
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
+                <svg viewBox="0 0 24 24" fill="currentColor">
                     <path
                         d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
                     <path d="M2 20h20v2H2z" />
                 </svg>
             </a>
-            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" class="sns-link">
-                <!-- Insta Icon -->
+            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round" width="18" height="18">
+                    stroke-linejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                </svg>
-            </a>
-            <a href="https://www.youtube.com/@designjig" target="_blank" title="유튜브" class="sns-link">
-                <!-- YouTube Icon -->
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                    <path
-                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                 </svg>
             </a>
         </div>
         <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
     </footer>
 
+    <script>
+        // 모바일 메뉴 토글
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+
+        if (mobileMenuBtn && mobileNav) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenuBtn.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+            });
+        }
+    </script>
 </body>
 
 </html>

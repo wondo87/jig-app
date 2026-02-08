@@ -2539,11 +2539,12 @@
         }
 
         .estimate-table td {
-            padding: 5px 4px;
+            padding: 2px 4px;
             border: 1px solid #e8e8ed;
             text-align: center;
             vertical-align: middle;
             overflow: visible;
+            line-height: 1.3;
         }
 
         /* No 셀 (1번째) */
@@ -2725,7 +2726,7 @@
 
         .estimate-table .qty-input {
             width: 45px;
-            padding: 5px 3px;
+            padding: 2px 3px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
             font-size: var(--font-size-md);
@@ -2776,11 +2777,12 @@
             min-width: 40px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            padding: 4px 6px;
+            padding: 2px 4px;
             font-size: 11px;
             resize: none;
             overflow-y: hidden;
             box-sizing: border-box;
+            line-height: 1.3;
         }
 
         .estimate-table .remark-editable {
@@ -11390,7 +11392,7 @@
                     onclick="selectCustomer('${c.customerId}')">
                     <div class="customer-item-header">
                         <span class="customer-item-id">${lockIcon}${c.customerId}${creatorInfo}</span>
-                        <span class="status-badge ${c.status}">${statusText}</span>
+                        <span class="status-badge ${statusKey}">${statusText}</span>
                     </div>
                     <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
                     <div class="customer-item-info">${subInfo}</div>
@@ -11539,7 +11541,7 @@
         function normalizeCustomerStatus(customerList) {
             const statusMapNormalizer = {
                 '상담중': 'consulting',
-                '견적': 'estimate',
+                '견적': 'estimate', '견적서': 'estimate',
                 '계약완료': 'contracted',
                 '공사중': 'in_progress',
                 '완료': 'completed',
@@ -12635,6 +12637,7 @@
                 inp.focus();
                 inp.select();
                 inp.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
                     if (e.key === 'Escape') {
                         specCell.innerHTML = savedHTML;
                         const restoredSelect = specCell.querySelector('select');
@@ -12642,6 +12645,7 @@
                         saveEstimateData();
                     }
                 });
+                inp.addEventListener('blur', function () { finalizeDirectSpecEdit(this); });
                 return;
             }
 
@@ -12655,6 +12659,7 @@
                 const inp = specCell.querySelector('input');
                 inp.focus();
                 inp.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
                     if (e.key === 'Escape') {
                         specCell.innerHTML = savedHTML;
                         // 드롭다운 복원 후 첫 번째 옵션 선택
@@ -12663,6 +12668,7 @@
                         saveEstimateData();
                     }
                 });
+                inp.addEventListener('blur', function () { finalizeDirectSpecEdit(this); });
                 return;
             }
 
@@ -12889,6 +12895,9 @@
             const val = input.value.trim();
             const cell = input.closest('.spec-cell');
             if (cell) {
+                cell.style.border = '';
+                cell.style.boxShadow = '';
+                cell.style.background = '';
                 cell.textContent = val || '-';
             }
             saveEstimateData();
@@ -12919,6 +12928,9 @@
             const val = input.value.trim();
             const cell = input.closest('.unit-cell');
             if (cell) {
+                cell.style.border = '';
+                cell.style.boxShadow = '';
+                cell.style.background = '';
                 cell.textContent = val || '-';
             }
             saveEstimateData();
@@ -12929,13 +12941,9 @@
             if (cell.querySelector('input')) return;
             const currentPrice = parseInt(cell.dataset.price) || 0;
             const originalPrice = currentPrice;
-            cell.innerHTML = `<div class="money-wrapper" style="justify-content:flex-end; align-items:center;">
-                <span style="font-size:12px; margin-right:4px;">₩</span>
-                <input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
-                placeholder="단가" oninput="onEstDirectPriceInput(this, '${catNo}')"
-                onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()"
-                style="text-align:right; width:80px; border:1px solid #0071e3; border-radius:4px; padding:2px;">
-                </div>`;
+            cell.innerHTML = `<input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
+                placeholder="단가 입력" oninput="onEstDirectPriceInput(this, '${catNo}')"
+                onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()">`;
             const inp = cell.querySelector('input');
             inp.focus();
             inp.addEventListener('keydown', function (e) {
@@ -12962,6 +12970,9 @@
             const price = parseNumber(input.value) || 0;
             const cell = input.closest('.price-cell');
             cell.dataset.price = price;
+            cell.style.border = '';
+            cell.style.boxShadow = '';
+            cell.style.background = '';
             cell.innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
             const row = cell.closest('tr');
             const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
@@ -12977,6 +12988,9 @@
             const val = input.value.trim();
             const td = input.closest('td');
             if (td) {
+                td.style.border = '';
+                td.style.boxShadow = '';
+                td.style.background = '';
                 td.innerHTML = `<span class="div-custom-text" style="cursor:pointer; display:block; text-align:center;">${val || '-'}</span>`;
                 td.dataset.customDiv = val || '';
                 // 클릭 시 다시 편집 가능
@@ -13000,6 +13014,9 @@
             const val = input.value.trim();
             const td = input.closest('td');
             if (td) {
+                td.style.border = '';
+                td.style.boxShadow = '';
+                td.style.background = '';
                 td.innerHTML = `<span class="name-custom-text" style="cursor:pointer; display:block;">${val || '-'}</span>`;
                 td.dataset.customName = val || '';
                 // 클릭 시 다시 편집 가능
@@ -13023,6 +13040,9 @@
             const val = input.value.trim();
             const cell = input.closest('.spec-cell');
             if (cell) {
+                cell.style.border = '';
+                cell.style.boxShadow = '';
+                cell.style.background = '';
                 cell.textContent = val || '-';
                 cell.dataset.customSpec = val || '';
             }
@@ -13034,6 +13054,9 @@
             const val = input.value.trim();
             const cell = input.closest('.unit-cell');
             if (cell) {
+                cell.style.border = '';
+                cell.style.boxShadow = '';
+                cell.style.background = '';
                 cell.textContent = val || '-';
                 cell.dataset.customUnit = val || '';
             }
@@ -13385,18 +13408,8 @@
                             unitCellContent = item.unit || '-';
                         }
 
-                        // 단가 셀 처리
-                        let priceCellContent;
-                        if (isCustomDiv || isCustomName) {
-                            priceCellContent = `<div class="money-wrapper" style="justify-content:flex-end; align-items:center;">
-                                <span style="font-size:12px; margin-right:4px;">₩</span>
-                                <input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
-                                placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onblur="finalizePriceEdit(this, '${cat.no}')" onchange="saveEstimateData()"
-                                style="text-align:right; width:80px; border:1px solid #0071e3; border-radius:4px; padding:2px;">
-                                </div>`;
-                        } else {
-                            priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                        }
+                        // 단가 셀 처리 (직접입력/일반 모두 동일한 완성 텍스트로 표시)
+                        const priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
 
                         const tr = document.createElement('tr');
                         tr.className = 'draggable-row';

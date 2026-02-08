@@ -652,7 +652,9 @@
                 /* Hide Panel Headers (Consolidated into Main Header) */
                 #panel-checklist .doc-header,
                 #panel-schedule .doc-header,
-                #panel-info .doc-header {
+                #panel-info .doc-header,
+                #panel-cover .doc-header,
+                #panel-estimate .doc-header {
                     display: none !important;
                 }
 
@@ -1920,6 +1922,98 @@
             gap: 4px;
         }
 
+        /* === 카테고리 탭 UI === */
+        .category-tabs {
+            display: flex;
+            background: #1d1d1f;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 12px;
+            gap: 4px;
+        }
+
+        .category-tab {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #86868b;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .category-tab:hover {
+            color: #f5f5f7;
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, #0071e3 0%, #00c7be 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+        }
+
+        .category-tab.active.contract {
+            background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+        }
+
+        .category-tab.active.estimate {
+            background: linear-gradient(135deg, #ff9500 0%, #ffcc00 100%);
+            box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+        }
+
+        .category-tab-label {
+            display: block;
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .category-count {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        /* 서브 필터 스타일 */
+        .sub-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f5f5f7;
+            border-radius: 10px;
+        }
+
+        .sub-filter-btn {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 1px solid #e8e8ed;
+            background: #fff;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .sub-filter-btn:hover {
+            background: #e8e8ed;
+        }
+
+        .sub-filter-btn.active {
+            background: #1d1d1f;
+            color: #fff;
+            border-color: #1d1d1f;
+        }
+
         .filter-btn {
             padding: 4px 8px;
             border-radius: 12px;
@@ -3109,6 +3203,46 @@
             .estimate-select-table th.col-div {
                 display: none;
             }
+        }
+
+        /* [New] Force Print Look for Estimate & Cover Panels on Mobile Screen */
+        #panel-estimate .no-print,
+        #panel-cover .no-print,
+        #panel-estimate .col-div,
+        #panel-estimate .del-btn-floating {
+            display: none !important;
+        }
+
+        #panel-estimate .estimate-table select,
+        #panel-estimate .estimate-table input,
+        #panel-estimate .estimate-table textarea {
+            border: none;
+            background: transparent;
+            /* appearance: none; */
+            /* Keep default for now to allow understanding it's interactable if needed, or remove to flatten completely */
+            box-shadow: none;
+            padding: 4px 0;
+            text-align: inherit;
+        }
+
+        #panel-estimate .estimate-table select {
+            -webkit-appearance: none;
+            appearance: none;
+            padding-right: 0;
+            text-align-last: center;
+            /* For centering selected text */
+        }
+
+        /* Input specific tweaks */
+        #panel-estimate .estimate-table .qty-input {
+            text-align: center;
+        }
+
+        #panel-cover input {
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            /* Make it look like final text */
         }
 
         @media print {
@@ -4450,6 +4584,150 @@
             .customer-tab {
                 white-space: nowrap;
             }
+
+            /* === 계약견적서 모바일 전용 레이아웃 === */
+
+            /* 상단 메모 카드 숨김 */
+            #panel-estimate .doc-content>div:first-child {
+                display: none !important;
+            }
+
+            /* doc-content 패딩 축소 */
+            #panel-estimate .doc-content {
+                padding: 4px !important;
+            }
+
+            #panel-estimate .doc-content>div {
+                padding: 6px !important;
+            }
+
+            /* 스크롤 완전 제거 */
+            #panel-estimate .table-scroll-wrapper,
+            #panel-estimate .estimate-scroll {
+                overflow-x: hidden !important;
+                overflow: hidden !important;
+                max-width: 100% !important;
+            }
+
+            /* colgroup 자체를 숨겨서 table-layout 계산에서 제외 */
+            #panel-estimate .estimate-table colgroup {
+                display: none !important;
+            }
+
+            /* 테이블: auto layout으로 전환 (fixed는 colgroup/첫행 기준이라 문제) */
+            #panel-estimate .table-scroll-wrapper table,
+            #panel-estimate .estimate-scroll table,
+            #panel-estimate .estimate-table {
+                min-width: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                table-layout: auto !important;
+            }
+
+            /* 숨길 컬럼: No(1), 구분(2), 단위(5), 비고(9=last-child) */
+            #panel-estimate .estimate-table th:nth-child(1),
+            #panel-estimate .estimate-table td:nth-child(1),
+            #panel-estimate .estimate-table th:nth-child(2),
+            #panel-estimate .estimate-table td:nth-child(2),
+            #panel-estimate .estimate-table th:nth-child(5),
+            #panel-estimate .estimate-table td:nth-child(5),
+            #panel-estimate .estimate-table th:nth-child(9),
+            #panel-estimate .estimate-table td:nth-child(9),
+            #panel-estimate .table-scroll-wrapper th:last-child,
+            #panel-estimate .table-scroll-wrapper td:last-child {
+                display: none !important;
+            }
+
+            /* 보이는 컬럼 너비: 품명(3) 17%, 상세내용(4) 25%, 수량(6) 7%, 단가(7) 23%, 금액(8) 28% */
+            #panel-estimate .estimate-table th:nth-child(3),
+            #panel-estimate .estimate-table td:nth-child(3) {
+                width: 17% !important;
+                min-width: 0 !important;
+            }
+
+            #panel-estimate .estimate-table th:nth-child(4),
+            #panel-estimate .estimate-table td:nth-child(4) {
+                width: 25% !important;
+                min-width: 0 !important;
+            }
+
+            #panel-estimate .estimate-table th:nth-child(6),
+            #panel-estimate .estimate-table td:nth-child(6) {
+                width: 7% !important;
+                min-width: 0 !important;
+            }
+
+            #panel-estimate .estimate-table th:nth-child(7),
+            #panel-estimate .estimate-table td:nth-child(7) {
+                width: 23% !important;
+                min-width: 0 !important;
+            }
+
+            #panel-estimate .estimate-table th:nth-child(8),
+            #panel-estimate .estimate-table td:nth-child(8) {
+                width: 28% !important;
+                min-width: 0 !important;
+            }
+
+            /* 셀 스타일 */
+            #panel-estimate .estimate-table th,
+            #panel-estimate .estimate-table td {
+                font-size: 11px !important;
+                padding: 4px 2px !important;
+                white-space: normal !important;
+                word-break: break-word !important;
+                vertical-align: middle !important;
+                overflow: hidden !important;
+            }
+
+            #panel-estimate .estimate-table td:nth-child(3),
+            #panel-estimate .estimate-table td:nth-child(4) {
+                text-align: left !important;
+                overflow: visible !important;
+            }
+
+            #panel-estimate .estimate-table td:nth-child(6) {
+                text-align: center !important;
+            }
+
+            #panel-estimate .estimate-table td:nth-child(7),
+            #panel-estimate .estimate-table td:nth-child(8) {
+                text-align: right !important;
+            }
+
+            /* input/select 스타일 */
+            #panel-estimate .estimate-table input,
+            #panel-estimate .estimate-table select,
+            #panel-estimate .estimate-table textarea {
+                font-size: 11px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                background: transparent !important;
+            }
+
+            /* 구분/품명 드롭다운: 선택된 값만 텍스트로 표시, 빈 값은 숨김 */
+            #panel-estimate .estimate-table .div-select,
+            #panel-estimate .estimate-table .name-select {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                pointer-events: none !important;
+            }
+
+            /* money-wrapper: ₩ 기호와 금액이 잘리지 않도록 */
+            #panel-estimate .money-wrapper {
+                padding: 0 2px !important;
+                gap: 1px !important;
+                font-size: 10px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+            }
+
+            #panel-estimate .money-wrapper span {
+                font-size: 10px !important;
+            }
         }
 
         /* 잠금 토글 버튼 */
@@ -4507,6 +4785,306 @@
                 100% {
                     transform: rotate(360deg);
                 }
+            }
+
+            /* Mobile Horizontal Scroll Wrapper */
+            .table-scroll-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                /* Smooth scroll on iOS */
+                margin-bottom: 14px;
+                padding-bottom: 5px;
+                /* Scrollbar space */
+            }
+
+            .table-scroll-wrapper table {
+                min-width: 600px !important;
+                /* Force width for scroll */
+                width: 100% !important;
+                table-layout: fixed !important;
+            }
+
+            .table-scroll-wrapper th,
+            .table-scroll-wrapper td {
+                white-space: nowrap;
+                /* Prevent wrapping */
+            }
+
+            /* Amount Cell Alignment */
+            .table-scroll-wrapper .amount-cell {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 0 4px;
+            }
+
+            .table-scroll-wrapper .currency {
+                margin-right: 4px;
+                color: #86868b;
+                font-size: 0.95em;
+            }
+
+            .table-scroll-wrapper .value {
+                font-weight: 600;
+                font-variant-numeric: tabular-nums;
+                flex-grow: 1;
+                text-align: right;
+            }
+
+            /* Specific column widths for mobile */
+            .table-scroll-wrapper th:nth-child(1),
+            .table-scroll-wrapper td:nth-child(1) {
+                width: 40px !important;
+            }
+
+            .table-scroll-wrapper th:nth-child(2),
+            .table-scroll-wrapper td:nth-child(2) {
+                width: auto !important;
+            }
+
+            .table-scroll-wrapper th:last-child,
+            .table-scroll-wrapper td:last-child {
+                width: 140px !important;
+                /* Increased width for better spacing */
+                display: table-cell !important;
+                visibility: visible !important;
+                padding: 8px 12px !important;
+                /* More padding */
+            }
+
+            /* Estimate Table Specific Scroll Settings (Read-Only & Fit to Screen) */
+            .table-scroll-wrapper.estimate-scroll table {
+                min-width: 0 !important;
+                /* Remove min-width to fit screen */
+                width: 100% !important;
+                table-layout: fixed !important;
+            }
+
+            .estimate-scroll th,
+            .estimate-scroll td {
+                white-space: normal !important;
+                /* Allow text wrapping */
+                word-break: break-word;
+                /* Break long words if needed */
+                vertical-align: top;
+                /* Top alignment for multi-line text */
+                font-size: 11px !important;
+                /* Slightly smaller font for dense info */
+                padding: 6px 4px !important;
+                /* Reduce padding */
+            }
+
+            /* Hide Buttons in Estimate Panel (Read-Only) */
+            #panel-estimate .add-btn-floating,
+            #panel-estimate .del-btn-floating,
+            #panel-estimate .add-row-btn {
+                display: none !important;
+            }
+
+            /* Disable Inputs/Selects in Estimate Panel (Read-Only Look) */
+            .estimate-scroll input,
+            .estimate-scroll select,
+            .estimate-scroll textarea {
+                border: none !important;
+                background: transparent !important;
+                pointer-events: none !important;
+                /* Disable interaction */
+                appearance: none !important;
+                /* Hide dropdown arrow */
+                -webkit-appearance: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                white-space: normal !important;
+                /* Text wrap in inputs/textareas */
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+
+            /* === 계약견적서: embedded style 블록 내 최종 override (모바일 전용) === */
+            @media (max-width: 768px) {
+
+                #panel-estimate .table-scroll-wrapper,
+                #panel-estimate .estimate-scroll {
+                    overflow-x: hidden !important;
+                    overflow: hidden !important;
+                    max-width: 100% !important;
+                }
+
+                #panel-estimate .table-scroll-wrapper table,
+                #panel-estimate .estimate-scroll table,
+                #panel-estimate .estimate-table {
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    table-layout: auto !important;
+                }
+
+                #panel-estimate .estimate-table colgroup {
+                    display: none !important;
+                }
+
+                /* 숨길 컬럼: No(1), 구분(2), 단위(5), 비고(9=last-child) */
+                #panel-estimate .table-scroll-wrapper th:last-child,
+                #panel-estimate .table-scroll-wrapper td:last-child,
+                #panel-estimate .estimate-table th:nth-child(1),
+                #panel-estimate .estimate-table td:nth-child(1),
+                #panel-estimate .estimate-table th:nth-child(2),
+                #panel-estimate .estimate-table td:nth-child(2),
+                #panel-estimate .estimate-table th:nth-child(5),
+                #panel-estimate .estimate-table td:nth-child(5),
+                #panel-estimate .estimate-table th:nth-child(9),
+                #panel-estimate .estimate-table td:nth-child(9) {
+                    display: none !important;
+                    width: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
+                }
+
+                /* REVERT to Fixed Layout for control */
+                #panel-estimate .table-scroll-wrapper table,
+                #panel-estimate .estimate-scroll table,
+                #panel-estimate .estimate-table {
+                    table-layout: fixed !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+
+                /* Widths (Sum = 100%) to fit perfectly */
+                #panel-estimate .estimate-table th:nth-child(3),
+                #panel-estimate .estimate-table td:nth-child(3) {
+                    width: 15% !important;
+                }
+
+                #panel-estimate .estimate-table th:nth-child(4),
+                #panel-estimate .estimate-table td:nth-child(4) {
+                    width: 20% !important;
+                }
+
+                #panel-estimate .estimate-table th:nth-child(6),
+                #panel-estimate .estimate-table td:nth-child(6) {
+                    width: 10% !important;
+                }
+
+                #panel-estimate .estimate-table th:nth-child(7),
+                #panel-estimate .estimate-table td:nth-child(7) {
+                    width: 22% !important;
+                }
+
+                #panel-estimate .estimate-table th:nth-child(8),
+                #panel-estimate .estimate-table td:nth-child(8) {
+                    width: 33% !important;
+                }
+
+                /* 셀 스타일 */
+                #panel-estimate .estimate-table th,
+                #panel-estimate .estimate-table td {
+                    font-size: 11px !important;
+                    padding: 4px 1px !important;
+                    white-space: normal !important;
+                    word-break: break-all !important;
+                    vertical-align: middle !important;
+                    box-sizing: border-box !important;
+                }
+
+                #panel-estimate .money-wrapper {
+                    padding: 0 !important;
+                    font-size: 10px !important;
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    /* Ensure no spillover */
+                    text-overflow: ellipsis !important;
+                }
+
+                #panel-estimate .money-wrapper span {
+                    font-size: 10px !important;
+                }
+
+                /* Aggressively Hide Remark Column */
+                #panel-estimate .estimate-table col:nth-child(9),
+                #panel-estimate .estimate-table col:last-child {
+                    display: none !important;
+                    width: 0 !important;
+                    visibility: collapse !important;
+                }
+
+                #panel-estimate .estimate-table .remark-cell,
+                #panel-estimate .estimate-table th.remark-cell,
+                #panel-estimate .estimate-table td.remark-cell,
+                #panel-estimate .estimate-table th:nth-child(9),
+                #panel-estimate .estimate-table td:nth-child(9),
+                #panel-estimate .estimate-table th:last-child,
+                #panel-estimate .estimate-table td:last-child {
+                    display: none !important;
+                    width: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    visibility: hidden !important;
+                    font-size: 0 !important;
+                }
+
+                /* Cleaned up: Removed conflicting global pixel-based widths that were overriding mobile percentages */
+            }
+
+            /* Ensure Money Wrapper has minimal padding too */
+            .estimate-scroll .money-wrapper {
+                padding: 0 2px !important;
+            }
+
+
+            /* Hide Div column in Estimate Table (Already covered but enabling generic .col-div hide) */
+            .estimate-scroll .col-div,
+            .estimate-scroll th.col-div,
+            .estimate-scroll td.col-div {
+                display: none !important;
+            }
+
+            /* Cover Contract Table Specifics (Fit to Screen) */
+            .cover-scroll table {
+                min-width: 0 !important;
+                /* Remove min-width constraint */
+                width: 100% !important;
+                table-layout: fixed !important;
+            }
+
+            .cover-scroll th,
+            .cover-scroll td {
+                white-space: normal !important;
+                /* Allow text wrapping */
+                word-break: keep-all;
+                /* Keep words together if possible */
+                vertical-align: middle;
+            }
+
+            /* Cover Table Column Widths */
+            .cover-scroll th:nth-child(1),
+            .cover-scroll td:nth-child(1) {
+                width: 35px !important;
+            }
+
+            /* No */
+            .cover-scroll th:nth-child(2),
+            .cover-scroll td:nth-child(2) {
+                width: auto !important;
+            }
+
+            /* Item Name (Auto) */
+            .cover-scroll th:last-child,
+            .cover-scroll td:last-child {
+                width: 110px !important;
+                /* Fixed Amount Width */
+                padding-right: 4px !important;
+            }
+
+            /* Amount Alignment in Cover Table */
+            .cover-scroll .amount-cell {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
             }
         </style>
     </div>
@@ -4694,8 +5272,42 @@
                     <option value="12">12월</option>
                 </select>
             </div>
-            <!-- 상태 필터 -->
-            <div class="status-filter">
+            <!-- 카테고리 탭 -->
+            <div class="category-tabs">
+                <button class="category-tab contract active" data-category="contract"
+                    onclick="setCategoryFilter('contract')">
+                    계약완료
+                    <span class="category-tab-label">(공사중 현장)</span>
+                </button>
+                <button class="category-tab estimate" data-category="estimate" onclick="setCategoryFilter('estimate')">
+                    계약상담
+                    <span class="category-tab-label">(견적서 작업)</span>
+                </button>
+            </div>
+            <!-- 서브 필터 -->
+            <div class="sub-filter" id="subFilterContract">
+                <button class="sub-filter-btn" data-status="all" onclick="setSubFilter('all')">전체</button>
+                <button class="sub-filter-btn" data-status="contracted"
+                    onclick="setSubFilter('contracted')">계약완료</button>
+                <button class="sub-filter-btn active" data-status="in_progress"
+                    onclick="setSubFilter('in_progress')">공사중</button>
+                <button class="sub-filter-btn" data-status="completed" onclick="setSubFilter('completed')">공사완료</button>
+                <button class="sub-filter-btn" data-status="as_done" onclick="setSubFilter('as_done')">A/S</button>
+            </div>
+            <div class="sub-filter" id="subFilterEstimate" style="display:none;">
+                <button class="sub-filter-btn" data-status="all" onclick="setSubFilter('all')">전체</button>
+                <button class="sub-filter-btn" data-status="consulting"
+                    onclick="setSubFilter('consulting')">상담중</button>
+                <button class="sub-filter-btn active" data-status="estimate"
+                    onclick="setSubFilter('estimate')">견적서</button>
+                <button class="sub-filter-btn" data-status="hold" onclick="setSubFilter('hold')">보류</button>
+                <button class="sub-filter-btn" data-status="budget_over"
+                    onclick="setSubFilter('budget_over')">예산초과</button>
+                <button class="sub-filter-btn" data-status="other_company"
+                    onclick="setSubFilter('other_company')">타업체</button>
+            </div>
+            <!-- 기존 상태 필터 (숨김) -->
+            <div class="status-filter" style="display:none;">
                 <button class="filter-btn active" data-status="all" onclick="setStatusFilter('all')">전체</button>
                 <button class="filter-btn" data-status="consulting" onclick="setStatusFilter('consulting')">상담중</button>
                 <button class="filter-btn" data-status="estimate" onclick="setStatusFilter('estimate')">견적서</button>
@@ -5332,77 +5944,104 @@
 
                 <!-- 표지계약서 패널 -->
                 <div class="tab-panel" id="panel-cover">
-                    <div class="document-wrapper" id="coverDoc">
-                        <div class="doc-header">
+                    <div class="document-wrapper" id="coverDoc"
+                        style="max-width:1000px; margin:0 auto; background:transparent;">
+                        <div class="doc-header"
+                            style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: #ffffff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                             <div>
                                 <div
-                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
+                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#fff;">
                                     DESIGN JIG</div>
-                                <h1>공사도급 표지계약서</h1>
-                                <div class="subtitle">Construction Contract Summary</div>
+                                <h1 style="color:#fff; margin:0; font-size:24px;">공사도급 표지계약서</h1>
+                                <div class="subtitle" style="color:#fff; font-size:14px; opacity:0.9;">Construction
+                                    Contract Summary</div>
                             </div>
-                            <button class="pdf-btn" onclick="downloadPDF('coverDoc', '표지계약서')">🖨️ 인쇄/PDF</button>
+                            <button class="pdf-btn" onclick="downloadPDF('coverDoc', '표지계약서')"
+                                style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️ 인쇄/PDF</button>
                         </div>
-                        <div class="doc-content">
-                            <div class="info-grid" style="margin-bottom:16px;">
-                                <div class="info-item full"><label>공사명</label>
-                                    <div class="synced-display" data-sync="projectName"
-                                        style="font-size:12px;font-weight:500;padding:3px 0;">-</div>
-                                </div>
-                                <div class="info-item full"><label>현장주소</label>
-                                    <div class="synced-display" data-sync="siteAddress"
-                                        style="font-size:12px;font-weight:500;padding:3px 0;">-</div>
-                                </div>
-                                <div class="info-item"><label>고객명</label>
-                                    <div class="synced-display" data-sync="clientName"
-                                        style="font-size:12px;font-weight:500;padding:3px 0;">-</div>
-                                </div>
-                                <div class="info-item"><label>공사기간</label>
-                                    <div class="synced-display" data-sync="constructionPeriod"
-                                        style="font-size:12px;font-weight:500;padding:3px 0;">-</div>
+
+                        <!-- [Refactor] Card UI Style for Cover Panel -->
+                        <div class="doc-content" style="padding: 16px; background: #f5f5f7;">
+
+                            <!-- 1. Basic Info Card -->
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div class="info-grid" style="margin-bottom:0;">
+                                    <div class="info-item full"><label>공사명</label>
+                                        <div class="synced-display" data-sync="projectName"
+                                            style="font-size:14px;font-weight:500;padding:3px 0;">-</div>
+                                    </div>
+                                    <div class="info-item full"><label>현장주소</label>
+                                        <div class="synced-display" data-sync="siteAddress"
+                                            style="font-size:14px;font-weight:500;padding:3px 0;">-</div>
+                                    </div>
+                                    <div class="info-item"><label>고객명</label>
+                                        <div class="synced-display" data-sync="clientName"
+                                            style="font-size:14px;font-weight:500;padding:3px 0;">-</div>
+                                    </div>
+                                    <div class="info-item"><label>공사기간</label>
+                                        <div class="synced-display" data-sync="constructionPeriod"
+                                            style="font-size:14px;font-weight:500;padding:3px 0;">-</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="section-title"><span class="section-number">01</span> 공사 항목별 계약금액</div>
-                            <table class="summary-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width:30px;">No</th>
-                                        <th>공사 항목</th>
-                                        <th style="width:100px;text-align:right;">계약 금액</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="coverTableBody"></tbody>
-                            </table>
-
-                            <div class="date-box">
-                                <label>계약 체결일</label>
-                                <div class="synced-display" data-sync="contractDate"
-                                    style="font-size:13px;font-weight:600;">-</div>
+                            <!-- 2. Contract Amount Table Card -->
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div
+                                    style="font-size: 13px; font-weight: 700; color: #0071e3; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span
+                                        style="background: #0071e3; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px;">01</span>
+                                    공사 항목별 계약금액
+                                </div>
+                                <div class="table-scroll-wrapper cover-scroll">
+                                    <table class="summary-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:30px;">No</th>
+                                                <th>공사 항목</th>
+                                                <th style="width:100px;text-align:right;">계약 금액</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="coverTableBody"></tbody>
+                                    </table>
+                                </div>
                             </div>
 
-                            <div class="signature-grid">
-                                <div class="signature-card">
-                                    <h4>발주자 (갑)</h4>
-                                    <div class="sig-row">
-                                        <div class="sig-field"><label>성명</label><input type="text" class="synced-input"
-                                                data-sync="clientName" readonly></div>
-                                        <div class="sig-field"><label>연락처</label><input type="text" class="synced-input"
-                                                data-sync="clientPhone" readonly></div>
-                                    </div>
-                                    <div class="signature-box">서명 또는 날인</div>
-                                    <div class="stamp-warning">⚠ 지장(직인) 필수</div>
+                            <!-- 3. Date & Signature Card -->
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div class="date-box" style="margin-top:0; margin-bottom:16px; text-align:center;">
+                                    <label style="display:block; color:#86868b; font-size:12px; margin-bottom:4px;">계약
+                                        체결일</label>
+                                    <div class="synced-display" data-sync="contractDate"
+                                        style="font-size:16px;font-weight:600; color:#1d1d1f;">-</div>
                                 </div>
-                                <div class="signature-card">
-                                    <h4>수급인 (을)</h4>
-                                    <div class="sig-row">
-                                        <div class="sig-field"><label>상호</label><input type="text" value="디자인지그"
-                                                readonly></div>
-                                        <div class="sig-field"><label>대표자</label><input type="text" class="company-sync"
-                                                data-sync="companyRep" readonly></div>
+
+                                <div class="signature-grid">
+                                    <div class="signature-card" style="box-shadow:none; border:1px solid #e5e5ea;">
+                                        <h4>발주자 (갑)</h4>
+                                        <div class="sig-row">
+                                            <div class="sig-field"><label>성명</label><input type="text"
+                                                    class="synced-input" data-sync="clientName" readonly></div>
+                                            <div class="sig-field"><label>연락처</label><input type="text"
+                                                    class="synced-input" data-sync="clientPhone" readonly></div>
+                                        </div>
+                                        <div class="signature-box">서명 또는 날인</div>
+                                        <div class="stamp-warning">⚠ 지장(직인) 필수</div>
                                     </div>
-                                    <div class="signature-box">서명 또는 날인</div>
-                                    <div class="stamp-warning">⚠ 지장(직인) 필수</div>
+                                    <div class="signature-card" style="box-shadow:none; border:1px solid #e5e5ea;">
+                                        <h4>수급인 (을)</h4>
+                                        <div class="sig-row">
+                                            <div class="sig-field"><label>상호</label><input type="text" value="디자인지그"
+                                                    readonly></div>
+                                            <div class="sig-field"><label>대표자</label><input type="text"
+                                                    class="company-sync" data-sync="companyRep" readonly></div>
+                                        </div>
+                                        <div class="signature-box">서명 또는 날인</div>
+                                        <div class="stamp-warning">⚠ 지장(직인) 필수</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -5411,54 +6050,83 @@
 
                 <!-- 계약견적서 패널 -->
                 <div class="tab-panel" id="panel-estimate">
-                    <div class="document-wrapper" id="estimateDoc">
-                        <div class="doc-header">
+                    <div class="document-wrapper" id="estimateDoc"
+                        style="max-width:1000px; margin:0 auto; background:transparent;">
+                        <div class="doc-header"
+                            style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: #ffffff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                             <div>
                                 <div
-                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px;">
+                                    style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#fff;">
                                     DESIGN JIG</div>
-                                <h1>계약 견적서</h1>
-                                <div class="subtitle">Contract Estimate</div>
+                                <h1 style="color:#fff; margin:0; font-size:24px;">계약 견적서</h1>
+                                <div class="subtitle" style="color:#fff; font-size:14px; opacity:0.9;">Contract Estimate
+                                </div>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <button class="sample-btn no-print" onclick="openSampleEstimateModal()"
                                     style="background: #ff9500; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
                                     title="샘플 견적서">📋 샘플</button>
-                                <button class="pdf-btn" onclick="downloadPDF('estimateDoc', '계약견적서')">🖨️
+                                <button class="pdf-btn" onclick="downloadPDF('estimateDoc', '계약견적서')"
+                                    style="background: rgba(255,255,255,0.2); color:white; border:none;">🖨️
                                     인쇄/PDF</button>
                             </div>
                         </div>
-                        <div class="doc-content">
-                            <p class="no-print"
-                                style="background:#e8f4fd; padding:10px 14px; border-radius:6px; margin-bottom:16px; font-size:11px; color:#0071e3;">
-                                ℹ️ 구분과 품명을 선택하면 단가가 자동 입력됩니다. 수량만 조정 가능하며, 단가 수정은 원가관리표에서 진행하세요.
-                            </p>
-                            <div id="estimateCategories"></div>
-                            <div class="grand-total">
-                                <div class="total-row"><label>공급가액 합계</label>
-                                    <div class="amount" id="estimateSubtotal">₩ 0</div>
-                                </div>
-                                <div class="total-row profit-rate-row">
-                                    <label>기업이윤율</label>
-                                    <div class="profit-rate-input">
-                                        <input type="number" id="estimateProfitRate" value="15" min="0" max="100"
-                                            onchange="updateEstimateTotals()">
-                                        <span>%</span>
+
+                        <!-- [Refactor] Card UI Style for Estimate Panel -->
+                        <div class="doc-content" style="padding: 16px; background: #f5f5f7;">
+
+                            <!-- 1. Memo / Info Card (if any, reusing existing banner for now inside a card) -->
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <h3
+                                    style="font-size: 14px; font-weight: 700; color: #1d1d1f; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                                    📝 메모
+                                </h3>
+                                <p class="no-print"
+                                    style="background:#f5f5f7; padding:12px; border-radius:8px; font-size:12px; color:#666; line-height:1.5;">
+                                    ℹ️ 구분과 품명을 선택하면 단가가 자동 입력됩니다.<br>수량만 조정 가능하며, 단가 수정은 원가관리표에서 진행하세요.
+                                </p>
+                            </div>
+
+                            <!-- 2. Estimate Items Card -->
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div id="estimateCategories"></div>
+                            </div>
+
+                            <!-- 3. Totals Card -->
+                            <div
+                                style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <div class="grand-total" style="border:none; padding:0; background:transparent;">
+                                    <div class="total-row"><label>공급가액 합계</label>
+                                        <div class="amount" id="estimateSubtotal">₩ 0</div>
+                                    </div>
+                                    <div class="total-row profit-rate-row">
+                                        <label>기업이윤율</label>
+                                        <div class="profit-rate-input">
+                                            <input type="number" id="estimateProfitRate" value="15" min="0" max="100"
+                                                onchange="updateEstimateTotals()">
+                                            <span>%</span>
+                                        </div>
+                                    </div>
+                                    <div class="total-row"><label>기업이윤</label>
+                                        <div class="amount" id="estimateProfit">₩ 0</div>
+                                    </div>
+                                    <div class="total-row"><label>부가가치세 (VAT 10%)</label>
+                                        <div class="amount" id="estimateVat">₩ 0</div>
+                                    </div>
+                                    <div class="total-row main"
+                                        style="margin-top:12px; padding-top:12px; border-top:1px solid #e5e5ea;"><label
+                                            style="font-size:16px;">총 견적금액</label>
+                                        <div class="amount" id="estimateTotal" style="font-size:20px; color:#0071e3;">₩
+                                            0</div>
                                     </div>
                                 </div>
-                                <div class="total-row"><label>기업이윤</label>
-                                    <div class="amount" id="estimateProfit">₩ 0</div>
-                                </div>
-                                <div class="total-row"><label>부가가치세 (VAT 10%)</label>
-                                    <div class="amount" id="estimateVat">₩ 0</div>
-                                </div>
-                                <div class="total-row main"><label>총 견적금액</label>
-                                    <div class="amount" id="estimateTotal">₩ 0</div>
-                                </div>
                             </div>
-                            <!-- 작성자 표시 -->
+
+                            <!-- 4. Author / Footer -->
                             <div class="estimate-author no-print"
-                                style="text-align:right; margin-top:16px; padding:12px 16px; background:#f5f5f7; border-radius:8px; font-size:12px; color:#666;">
+                                style="text-align:right; margin-top:0; padding:0 8px; font-size:12px; color:#86868b;">
                                 📝 작성자: <span id="estimateAuthor">-</span>
                             </div>
                         </div>
@@ -7851,6 +8519,7 @@
         let currentData = {};
         let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
         let currentStatusFilter = 'in_progress'; // Default: Show Active Projects Only
+        const ESTIMATE_ALLOWED_TABS = ['info', 'cover', 'estimate']; // 견적서 고객 허용 탭
         let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
         // 페이징 관련 변수
@@ -8538,6 +9207,112 @@
             toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
         }
 
+        // 카테고리 필터 상태
+        let currentCategory = 'contract'; // 'contract' or 'estimate'
+        const CATEGORY_STATUSES = {
+            contract: ['contracted', 'in_progress', 'completed', 'as_done'],
+            estimate: ['consulting', 'estimate', 'hold', 'budget_over', 'other_company']
+        };
+
+        // 카테고리 탭 필터
+        function setCategoryFilter(category) {
+            currentCategory = category;
+
+            // 카테고리 탭 활성화
+            document.querySelectorAll('.category-tab').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.category === category) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // 서브필터 표시/숨김
+            document.getElementById('subFilterContract').style.display = category === 'contract' ? 'flex' : 'none';
+            document.getElementById('subFilterEstimate').style.display = category === 'estimate' ? 'flex' : 'none';
+
+            // 서브필터 기본값 설정: 계약→공사중, 견적→견적서
+            const defaultStatus = category === 'contract' ? 'in_progress' : 'estimate';
+            const activeSubFilter = document.querySelector(`#subFilter${category === 'contract' ? 'Contract' : 'Estimate'}`);
+            if (activeSubFilter) {
+                activeSubFilter.querySelectorAll('.sub-filter-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.status === defaultStatus);
+                });
+            }
+
+            // 기본 상태로 필터링
+            currentStatusFilter = defaultStatus;
+            updateCustomerList();
+        }
+
+        // 서브 필터
+        function setSubFilter(status) {
+            // 현재 활성 서브필터 컨테이너
+            const containerId = currentCategory === 'contract' ? 'subFilterContract' : 'subFilterEstimate';
+            const container = document.getElementById(containerId);
+
+            container.querySelectorAll('.sub-filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.status === status);
+            });
+
+            // 필터 적용
+            if (status === 'all') {
+                updateCustomerListByCategory();
+            } else {
+                currentStatusFilter = status;
+                updateCustomerList();
+            }
+        }
+
+        // 카테고리별 고객 목록 업데이트
+        function updateCustomerListByCategory() {
+            const container = document.getElementById('customerList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+            const allowedStatuses = CATEGORY_STATUSES[currentCategory];
+
+            // 필터링
+            filteredCustomers = customers.filter(c => {
+                if (!c.customerId) return false;
+                if (c.status === 'trash') return false;
+
+                const matchSearch = [c.clientName, c.clientPhone, c.siteAddress, c.projectName].join(' ').toLowerCase().includes(searchTerm);
+                const matchCategory = allowedStatuses.includes(c.status);
+
+                // 년/월 필터
+                let matchDate = true;
+                if (yearFilter || monthFilter) {
+                    const idParts = (c.customerId || '').split('-')[0];
+                    if (idParts && idParts.length >= 4) {
+                        const year = '20' + idParts.substring(0, 2);
+                        const month = idParts.substring(2, 4);
+                        if (yearFilter && year !== yearFilter) matchDate = false;
+                        if (monthFilter && month !== monthFilter) matchDate = false;
+                    }
+                }
+
+                return matchSearch && matchCategory && matchDate;
+            });
+
+            console.log(`📂 [Category] ${currentCategory}: ${filteredCustomers.length}명`);
+
+            // 정렬 (최신순)
+            filteredCustomers.sort((a, b) => {
+                if (a.createdAt && b.createdAt) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+                const aId = a.customerId || '';
+                const bId = b.customerId || '';
+                const [aDate, aNum] = aId.split('-');
+                const [bDate, bNum] = bId.split('-');
+                if (aDate !== bDate) return bDate.localeCompare(aDate);
+                return parseInt(bNum || 0) - parseInt(aNum || 0);
+            });
+
+            // 렌더링
+            renderCustomerItems(container, filteredCustomers);
+        }
+
         // 상태 필터
         function setStatusFilter(status) {
             currentStatusFilter = status;
@@ -8552,6 +9327,13 @@
         let isCostUnlocked = false;
 
         function showCustomerTab(tabId) {
+            // [계약상담 카테고리] 허용 탭만 접근 가능
+            const ESTIMATE_CATEGORY_STATUSES = ['consulting', 'estimate', 'hold', 'budget_over', 'other_company'];
+            if (currentData && ESTIMATE_CATEGORY_STATUSES.includes(currentData.status) && !ESTIMATE_ALLOWED_TABS.includes(tabId)) {
+                showToast('계약상담 고객은 이 탭을 사용할 수 없습니다.', 'info');
+                return;
+            }
+
             // [SECURITY CHECK] Cost Management Tab
             // 메인관리자(isMainAdmin)는 패스; 일반관리자만 비밀번호 체크
             if (tabId === 'cost' && !isMainAdmin() && !isCostUnlocked) {
@@ -8576,32 +9358,37 @@
                 }
             });
 
-            // Mobile Header Title Update
+            // [Refactor] Mobile Header Title Sync Logic
+            // We now use updateMobileCustomerInfo(currentData, title) to update the blue header title
+            let mobileTitle = 'Checklist'; // Default
+            if (tabId === 'checklist') mobileTitle = 'Checklist';
+            else if (tabId === 'schedule') mobileTitle = 'Schedule';
+            else if (tabId === 'customer') mobileTitle = 'Customer Information';
+            else if (tabId === 'cover') mobileTitle = 'Construction Contract';
+            else if (tabId === 'estimate') mobileTitle = 'Project Estimate';
+            else if (tabId === 'stats') mobileTitle = '현황 및 통계';
+            else if (tabId === 'expenses') mobileTitle = '비용 관리';
+            else if (tabId === 'files') mobileTitle = '파일함';
+            else if (tabId === 'cost') mobileTitle = '원가 관리';
+            else if (tabId === 'as_list') mobileTitle = 'A/S 관리';
+            else if (tabId === 'settlement') mobileTitle = '정산 관리';
+
+            // Sync title to header immediately (for desktop/mobile shared logic)
             const headerTitleEl = document.getElementById('headerMobileTitle');
             if (headerTitleEl) {
-                let titleText = '';
-                if (tabId === 'checklist') titleText = 'Checklist';
-                else if (tabId === 'schedule') titleText = 'Schedule';
-                else if (tabId === 'customer') titleText = 'Customer Information';
-                else if (tabId === 'stats') titleText = '현황 및 통계';
-                else if (tabId === 'expenses') titleText = '비용 관리';
-                else if (tabId === 'files') titleText = '파일함';
-                else if (tabId === 'estimate') titleText = '견적서';
-                else if (tabId === 'cost') titleText = '원가 관리';
-                else if (tabId === 'as_list') titleText = 'A/S 관리';
-                else if (tabId === 'settlement') titleText = '정산 관리';
-
-                headerTitleEl.innerText = titleText;
-                headerTitleEl.style.display = titleText ? 'block' : 'none';
+                headerTitleEl.innerText = mobileTitle;
+                headerTitleEl.style.display = mobileTitle ? 'block' : 'none';
             }
 
             syncAllFields();
 
-            // 고객정보 탭 표시 시 데이터 재적용 (모바일 화면 대응)
-            if (tabId === 'customer' && currentData) {
-                console.log('🔄 [Tab Switch] 고객정보 탭 표시, 데이터 재적용');
+            // [Refactor] Update Mobile Header AND Customer Info when specific tabs are shown
+            // This ensures the blue header persists with the correct title
+            if (currentData && ['customer', 'cover', 'estimate', 'checklist'].includes(tabId)) {
+                // Delay slightly for DOM readiness if needed, but direct call is usually fine
+                updateMobileCustomerInfo(currentData, mobileTitle);
 
-                // DOM이 완전히 렌더링된 후 데이터 적용
+                // Additional DOM refresh for inputs
                 setTimeout(() => {
                     document.querySelectorAll('.customer-field').forEach(f => {
                         const fieldName = f.dataset.field;
@@ -8613,10 +9400,27 @@
                             f.textContent = fieldValue || '-';
                         }
                     });
-                }, 100);
+                }, 50);
             }
 
-            if (tabId === 'estimate') updateEstimateFromCost();
+            if (tabId === 'estimate') {
+                updateEstimateFromCost();
+                // [모바일] colgroup 인라인 style 제거 + 테이블 레이아웃 강제 적용
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        document.querySelectorAll('#panel-estimate .estimate-table').forEach(table => {
+                            // colgroup 인라인 style 제거 (CSS가 적용되도록)
+                            table.querySelectorAll('colgroup col').forEach(col => col.removeAttribute('style'));
+                            // 드롭다운 select 숨김 (선택/내용수정/직접작성 빈칸 처리)
+                            table.querySelectorAll('.div-select, .name-select').forEach(sel => {
+                                if (!sel.value || sel.value === '' || sel.selectedIndex <= 0) {
+                                    sel.style.display = 'none';
+                                }
+                            });
+                        });
+                    }, 100);
+                }
+            }
             if (tabId === 'schedule') loadScheduleForCustomer();
             if (tabId === 'as_list') loadASList();
             if (tabId === 'settlement') {
@@ -11006,6 +11810,76 @@
 
             currentData = { ...customer };
 
+            // [계약상담 카테고리] 탭 버튼 표시/숨김 + 읽기 전용 + 순서 변경
+            // 포함: consulting, estimate, hold, budget_over, other_company
+            const ESTIMATE_CATEGORY_STATUSES = ['consulting', 'estimate', 'hold', 'budget_over', 'other_company'];
+            const isEstimateCategoryCustomer = ESTIMATE_CATEGORY_STATUSES.includes(customer.status);
+
+            const tabsContainer = document.querySelector('.customer-tabs');
+            if (tabsContainer) {
+                if (isEstimateCategoryCustomer) {
+                    // 계약상담: 탭 3개만 표시하므로 wrap 및 넓은 간격
+                    tabsContainer.style.display = 'flex';
+                    tabsContainer.style.flexWrap = 'wrap';
+                    tabsContainer.style.gap = '8px';
+                    tabsContainer.style.justifyContent = 'center';
+                    tabsContainer.style.overflowX = 'visible';
+                } else {
+                    // 계약완료: 탭 많음 -> 가로 스크롤 및 좁은 간격 (기존 스타일 복원)
+                    tabsContainer.style.display = 'flex';
+                    tabsContainer.style.flexWrap = 'nowrap';
+                    tabsContainer.style.gap = '2px';
+                    tabsContainer.style.justifyContent = 'flex-start';
+                    tabsContainer.style.overflowX = 'auto';
+                }
+            }
+
+            document.querySelectorAll('.customer-tab').forEach(btn => {
+                const match = (btn.getAttribute('onclick') || '').match(/showCustomerTab\('(\w+)'\)/);
+                if (match) {
+                    const tabId = match[1];
+                    // 표시 여부 설정
+                    if (isEstimateCategoryCustomer && !ESTIMATE_ALLOWED_TABS.includes(tabId)) {
+                        btn.style.display = 'none';
+                    } else {
+                        btn.style.display = '';
+                    }
+
+                    // 순서 설정 (Flex Order)
+                    if (isEstimateCategoryCustomer) {
+                        if (tabId === 'cover') btn.style.order = 1;
+                        else if (tabId === 'estimate') btn.style.order = 2;
+                        else if (tabId === 'info') btn.style.order = 3;
+                        else btn.style.order = 99;
+                    } else {
+                        btn.style.order = 0;
+                    }
+                }
+            });
+
+            if (isEstimateCategoryCustomer) {
+                // 읽기 전용 설정
+                ['#panel-info', '#panel-cover', '#panel-estimate'].forEach(panelId => {
+                    document.querySelectorAll(`${panelId} input, ${panelId} select, ${panelId} textarea`).forEach(el => {
+                        el.disabled = true;
+                        el.readOnly = true;
+                    });
+                });
+                // 삭제 버튼 숨기기
+                const delBtn2 = document.querySelector('.delete-btn');
+                if (delBtn2) delBtn2.style.visibility = 'hidden';
+            } else {
+                // 계약완료 카테고리: 편집 가능으로 복원
+                ['#panel-info', '#panel-cover', '#panel-estimate'].forEach(panelId => {
+                    document.querySelectorAll(`${panelId} input, ${panelId} select, ${panelId} textarea`).forEach(el => {
+                        el.disabled = false;
+                        el.readOnly = false;
+                    });
+                });
+                const delBtn2 = document.querySelector('.delete-btn');
+                if (delBtn2) delBtn2.style.visibility = 'visible';
+            }
+
             // 접근 제한 확인
             if (document.getElementById('accessDeniedOverlay')) {
                 const isLocked = isCustomerLocked();
@@ -11083,11 +11957,32 @@
 
             updateCustomerList(false); // Do not reset page
 
-            // [모바일 UX] 고객 선택 시 기본으로 '공정별 체크리스트' 탭 열기
+            // [모바일 UX] 고객 선택 시 기본 탭 열기
+            // 계약상담 카테고리(Estimate Status): Info 탭
+            // 계약완료/진행중(Others): Checklist 탭
             if (window.innerWidth <= 768) {
                 setTimeout(() => {
-                    const checklistTab = document.querySelector('button[onclick*="showCustomerTab(\'checklist\')"]');
-                    if (checklistTab) checklistTab.click();
+                    const estStatuses = ['consulting', 'estimate', 'hold', 'budget_over', 'other_company'];
+
+                    // Default logic: Estimate Customer -> info | Other -> checklist
+                    const defaultTab = estStatuses.includes(currentData.status) ? 'info' : 'checklist';
+
+                    // Mapping for fallback
+                    let tabBtn = document.querySelector(`.customer-tab[data-tab="${defaultTab}"]`);
+
+                    // If default tab button not found, try to open Info as safely default
+                    if (!tabBtn) {
+                        tabBtn = document.querySelector(`.customer-tab[data-tab="info"]`);
+                    }
+
+                    if (tabBtn) {
+                        tabBtn.click();
+
+                        // Also trigger panel switch specifically for mobile logic
+                        if (defaultTab === 'checklist') navigateToChecklist();
+                        else if (defaultTab === 'info') navigateToCustomerInfo();
+                    }
+
                 }, 200);
             }
 
@@ -11458,7 +12353,7 @@
                     style="cursor: pointer;">
                     <div class="customer-item-header">
                         <span class="customer-item-id">${lockIcon}${c.customerId}${creatorInfo}</span>
-                        <span class="status-badge ${c.status}">${statusText}</span>
+                        <span class="status-badge ${statusKey}">${statusText}</span>
                     </div>
                     <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
                     <div class="customer-item-info">${subInfo}</div>
@@ -11642,7 +12537,7 @@
         function normalizeCustomerStatus(customerList) {
             const statusMapNormalizer = {
                 '상담중': 'consulting',
-                '견적': 'estimate',
+                '견적': 'estimate', '견적서': 'estimate',
                 '계약완료': 'contracted',
                 '공사중': 'in_progress',
                 '완료': 'completed', '공사완료': 'completed',
@@ -11665,11 +12560,10 @@
             if (!silent) setAppBusy(true, '최신 현장 불러오는 중...');
 
             try {
-                // [Mobile Optimization] Fetch ONLY 'In Progress' customers to minimize data
+                // [Mobile] 공사중 + 견적서 고객 모두 불러오기
                 const params = new URLSearchParams({
                     sheet: '고객관리_견적서',
-                    status: 'in_progress', // Server-side filtering
-                    limit: '500',          // Limit to a reasonable number of active projects
+                    limit: '500',
                     t: Date.now()
                 });
 
@@ -11699,7 +12593,7 @@
                 initYearFilter();
 
                 if (!silent) {
-                    showToast(`동기화 완료 (공사중 ${customers.length}명)`, 'success');
+                    showToast(`동기화 완료 (${customers.length}명)`, 'success');
                 }
 
                 return true;
@@ -11898,32 +12792,57 @@
         function createCoverTable() {
             const tbody = document.getElementById('coverTableBody');
             let html = categories.map((cat, i) => `
-                <tr >
-                <td class="no">${i + 1}</td>
-                <td>${cat.name}</td>
-                <td class="amount" id="coverCat${cat.no}">₩ 0</td>
-            </tr>
-                `).join('');
+                <tr>
+                    <td class="no">${i + 1}</td>
+                    <td>${cat.name}</td>
+                    <td class="amount" id="coverCat${cat.no}">
+                        <div class="amount-cell">
+                            <span class="currency">₩</span>
+                            <span class="value">0</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
             html += `
-                <tr class="subtotal" >
+            <tr class="subtotal">
                 <td></td>
                 <td>소계 (공급가액)</td>
-                <td class="amount" id="coverSubtotal">₩ 0</td>
+                <td class="amount" id="coverSubtotal">
+                    <div class="amount-cell">
+                        <span class="currency">₩</span>
+                        <span class="value">0</span>
+                    </div>
+                </td>
             </tr>
             <tr style="background:#f0f7ff;">
                 <td></td>
                 <td>기업이윤 (<span id="coverProfitRate">0</span>%)</td>
-                <td class="amount" id="coverProfit">₩ 0</td>
+                <td class="amount" id="coverProfit">
+                    <div class="amount-cell">
+                        <span class="currency">₩</span>
+                        <span class="value">0</span>
+                    </div>
+                </td>
             </tr>
             <tr class="vat">
                 <td></td>
                 <td>부가가치세 (VAT 10%)</td>
-                <td class="amount" id="coverVat">₩ 0</td>
+                <td class="amount" id="coverVat">
+                    <div class="amount-cell">
+                        <span class="currency">₩</span>
+                        <span class="value">0</span>
+                    </div>
+                </td>
             </tr>
             <tr class="total">
                 <td></td>
                 <td>총 계약금액</td>
-                <td class="amount" id="coverTotal">₩ 0</td>
+                <td class="amount" id="coverTotal">
+                    <div class="amount-cell">
+                        <span class="currency">₩</span>
+                        <span class="value">0</span>
+                    </div>
+                </td>
             </tr>
             `;
             tbody.innerHTML = html;
@@ -12047,57 +12966,61 @@
                     <h3><span class="cat-no">${cat.no}</span> ${cat.name}</h3>
                     <div class="subtotal">₩ <span id="estSubtotal${cat.no}">0</span></div>
                 </div>
-                <table class="estimate-table">
-                    <colgroup>
-                        <col><!-- No-->
-                        <col class="col-div"><!-- 구분 (인쇄시 숨김) -->
-                        <col><!-- 품명 -->
-                        <col><!-- 상세내용 -->
-                        <col><!-- 단위 -->
-                        <col><!-- 수량 -->
-                        <col><!-- 단가 -->
-                        <col><!-- 금액 -->
-                        <col><!-- 비고 -->
-
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th class="col-div">구분</th>
-                            <th>품명</th>
-                            <th>상세내용</th>
-                            <th>단위</th>
-                            <th>수량</th>
-                            <th>단가</th>
-                            <th>금액</th>
-                            <th>비고</th>
-
-                        </tr>
-                    </thead>
-                    <tbody id="estBody${cat.no}">
-                        <tr>
-                            <td style="position: relative;">
-                                <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
-                                     <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
-                                </button>
-                                1
-                            </td>
-                            <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
-                                    <option value="">선택</option>
-                                </select></td>
-                            <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" disabled>
-                                    <option value="">구분 먼저 선택</option>
-                                </select></td>
-                            <td class="spec-cell">-</td>
-                            <td class="unit-cell">-</td>
-                            <td><input type="number" class="qty-input" value="1" min="0"
-                                    onchange="onEstQtyChange(this, '${cat.no}')"></td>
-                            <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
-                            <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
-                            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- [Refactor] Scroll Wrapper for Estimate Table -->
+                <div class="table-scroll-wrapper estimate-scroll">
+                    <table class="estimate-table">
+                        <colgroup>
+                            <col><!-- No-->
+                            <col class="col-div"><!-- 구분 -->
+                            <col><!-- 품명 -->
+                            <col><!-- 상세내용 -->
+                            <col><!-- 단위 -->
+                            <col><!-- 수량 -->
+                            <col><!-- 단가 -->
+                            <col><!-- 금액 -->
+                            <col><!-- 비고 -->
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th class="col-div">구분</th>
+                                <th>품명</th>
+                                <th>상세내용</th>
+                                <th>단위</th>
+                                <th>수량</th>
+                                <th>단가</th>
+                                <th>금액</th>
+                                <th>비고</th>
+                            </tr>
+                        </thead>
+                        <tbody id="estBody${cat.no}">
+                            <tr>
+                                <td style="position: relative;">
+                                    <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
+                                         <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
+                                    </button>
+                                    1
+                                </td>
+                                <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
+                                        <option value="">선택</option>
+                                    </select></td>
+                                <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" disabled>
+                                        <option value="">구분 먼저 선택</option>
+                                    </select></td>
+                                <td class="spec-cell">-</td>
+                                <td class="unit-cell">-</td>
+                                <td><input type="number" class="qty-input" value="1" min="0" hiding-spin-button
+                                        onchange="onEstQtyChange(this, '${cat.no}')"></td>
+                                <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
+                                <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
+                                <td class="remark-cell"><input type="text" class="remark-input" placeholder="비고"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="add-btn-floating no-print" onclick="addEstimateRow('${cat.no}')" title="추가">
+                        <span style="font-size: 18px; font-weight: bold; line-height: 0;">+</span>
+                    </button>
+                </div>
                 <div class="estimate-memo" id="estMemo${cat.no}">
                     <div style="color:#0071e3; font-weight:600; margin-bottom:6px;">📝 메모</div>
                     <textarea class="memo-textarea" id="estMemoText${cat.no}" placeholder="메모 입력..."
@@ -12470,7 +13393,16 @@
                 const el = document.getElementById(`coverCat${cat.no}`);
                 if (el) {
                     const amount = categoryTotals[cat.no] || 0;
-                    el.textContent = amount > 0 ? '₩ ' + formatNumber(amount) : '-';
+                    // [Modified] Use innerHTML to maintain structure if needed, or update value span
+                    const displayAmount = amount > 0 ? formatNumber(amount) : '0';
+                    el.innerHTML = `
+                        <div class="amount-cell">
+                            <span class="currency">₩</span>
+                            <span class="value">${displayAmount}</span>
+                        </div>
+                    `;
+                    // If amount is 0, we might want to show '-' or just '0', user code showed '-' before but 0 might be cleaner with '₩'.
+                    // Retaining '0' for alignment as per new design request. 
                 }
             });
 
@@ -12481,11 +13413,19 @@
             const coverVat = document.getElementById('coverVat');
             const coverTotal = document.getElementById('coverTotal');
 
-            if (coverSubtotal) coverSubtotal.textContent = '₩ ' + formatNumber(subtotal);
+            if (coverSubtotal) {
+                coverSubtotal.innerHTML = `<div class="amount-cell"><span class="currency">₩</span><span class="value">${formatNumber(subtotal)}</span></div>`;
+            }
             if (coverProfitRate) coverProfitRate.textContent = profitRate;
-            if (coverProfit) coverProfit.textContent = '₩ ' + formatNumber(profit);
-            if (coverVat) coverVat.textContent = '₩ ' + formatNumber(vat);
-            if (coverTotal) coverTotal.textContent = '₩ ' + formatNumber(total);
+            if (coverProfit) {
+                coverProfit.innerHTML = `<div class="amount-cell"><span class="currency">₩</span><span class="value">${formatNumber(profit)}</span></div>`;
+            }
+            if (coverVat) {
+                coverVat.innerHTML = `<div class="amount-cell"><span class="currency">₩</span><span class="value">${formatNumber(vat)}</span></div>`;
+            }
+            if (coverTotal) {
+                coverTotal.innerHTML = `<div class="amount-cell"><span class="currency">₩</span><span class="value">${formatNumber(total)}</span></div>`;
+            }
         }
 
         // 도급계약서 대금지급 자동 계산
@@ -12498,7 +13438,7 @@
             const payment5 = total - payment1 - payment2 - payment3 - payment4; // 나머지 잔금
 
             // currentData에 저장
-            currentData.payment1 = '₩ ' + formatNumber(payment1) + ' (27%)';
+            currentData.payment1 = '₩ ' + formatNumber(payment1);
             currentData.payment2 = '₩ ' + formatNumber(payment2) + ' (23%)';
             currentData.payment3 = '₩ ' + formatNumber(payment3) + ' (23%)';
             currentData.payment4 = '₩ ' + formatNumber(payment4) + ' (23%)';
@@ -13640,8 +14580,22 @@
                 background: white;
             }
 
-            /* Header Styles */
-            .doc-header {
+            /* [Refactor] Hide internal headers for Cover/Estimate to use Global Blue Header */
+            #panel-cover .doc-header,
+            #panel-estimate .doc-header {
+                display: none !important;
+            }
+
+            /* [Refactor] Add padding to avoid content hiding behind fixed header */
+            #panel-cover,
+            #panel-estimate {
+                padding-top: 110px !important; /* Adjusted for Fixed Header + Tabs */
+                padding-bottom: 80px;
+                box-sizing: border-box;
+            }
+
+            /* Common Panel Styles */
+            #panel-customer-info {
                 background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%) !important;
                 color: #ffffff !important;
                 padding: 20px 24px !important;
@@ -18050,6 +19004,10 @@
             if (panelId === 'panel-checklist') btnId = 'btn-checklist';
             else if (panelId === 'panel-schedule') btnId = 'btn-schedule';
             else if (panelId === 'panel-customer-info') btnId = 'btn-customer-info'; // [Fix]
+            else if (panelId === 'panel-cover') btnId = 'btn-cover';
+            else if (panelId === 'panel-estimate') btnId = 'btn-estimate';
+            else if (panelId === 'panel-cover') btnId = 'btn-cover';
+            else if (panelId === 'panel-estimate') btnId = 'btn-estimate';
 
             if (btnId) {
                 const activeBtn = document.getElementById(btnId);
@@ -18282,7 +19240,8 @@
                         updateMobileCustomerInfo(customer);
 
                         // 체크리스트 패널 이동
-                        setTimeout(() => mobileGoToPanel('panel-checklist'), 10);
+                        // [Refactor] Removed hardcoded navigation to checklist to allow conditional default tab logic in selectCustomer
+                        // setTimeout(() => mobileGoToPanel('panel-checklist'), 10);
 
                         // 성공 토스트 (필요시)
                         // showToast('고객 정보 로드됨', 'success');
@@ -18370,46 +19329,63 @@
         // [New] Mobile Header Refinement Logic
 
         // 1. Header Rendering Function
+        // 1. Header Rendering Function
         function updateMobileHeaderActions() {
             const container = document.getElementById('mobileHeaderIcons');
             if (!container) return;
 
-            // Define Buttons (Order: Customer List -> Checklist -> Schedule -> Customer Info -> Hamburger)
-            const buttons = [
+            // [New] Estimate Customer Check
+            const estStatuses = ['consulting', 'estimate', 'hold', 'budget_over', 'other_company'];
+            const isEstimate = (typeof currentData !== 'undefined' && currentData) && estStatuses.includes(currentData.status);
+
+            let buttons = [];
+
+            // [Refactor] Unified Mobile Header Actions
+            // Order: List -> Info -> Cover -> Estimate -> Schedule -> Checklist
+            buttons.push({
+                id: 'btn-customer-list',
+                title: '고객 목록',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+                action: 'navigateToInProgressCustomers()'
+            });
+
+            buttons.push(
                 {
-                    id: 'btn-customer-list',
-                    title: '공사중 고객',
-                    // User/List Icon
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
-                    action: 'navigateToInProgressCustomers()'
+                    id: 'btn-customer-info',
+                    title: '고객 정보',
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+                    action: 'navigateToCustomerInfo()'
                 },
                 {
-                    id: 'btn-checklist',
-                    title: '공정별 체크리스트',
-                    // Checklist Icon
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
-                    action: 'navigateToChecklist()'
+                    id: 'btn-cover',
+                    title: '표지계약서',
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>`,
+                    action: "showCustomerTab('cover'); mobileGoToPanel('panel-cover');"
+                },
+                {
+                    id: 'btn-estimate',
+                    title: '계약견적서',
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+                    action: "showCustomerTab('estimate'); mobileGoToPanel('panel-estimate');"
                 },
                 {
                     id: 'btn-schedule',
                     title: '공사 스케줄',
-                    // Calendar Icon
                     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
                     action: 'navigateToSchedule()'
                 },
                 {
-                    id: 'btn-customer-info',
-                    title: '고객 정보',
-                    // Info Icon
-                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
-                    action: 'navigateToCustomerInfo()'
+                    id: 'btn-checklist',
+                    title: '공정별 체크리스트',
+                    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
+                    action: 'navigateToChecklist()'
                 }
-            ];
+            );
 
             // Render buttons
             // [Fix] Only show Customer Context buttons if a customer is selected
             const buttonsToRender = buttons.filter(btn => {
-                if (btn.id === 'btn-checklist' || btn.id === 'btn-schedule' || btn.id === 'btn-customer-info') {
+                if (['btn-checklist', 'btn-schedule', 'btn-customer-info', 'btn-cover', 'btn-estimate'].includes(btn.id)) {
                     return !!currentCustomerId;
                 }
                 return true;
@@ -18489,7 +19465,7 @@
             }
         }
 
-        function updateMobileCustomerInfo(customer) {
+        function updateMobileCustomerInfo(customer, titleText) {
             if (!customer) return;
 
             console.log('[Mobile] Updating customer info:', customer);
@@ -18524,6 +19500,7 @@
             const headerClientName = document.getElementById('headerClientName');
             const headerClientPhone = document.getElementById('headerClientPhone');
             const headerPeriod = document.getElementById('headerConstructionPeriod');
+            const headerTitle = document.getElementById('headerMobileTitle'); // [Refactor]
 
             const address = customer.siteAddress || (customer.field4 ? customer.field4 : '현장주소 없음');
             const name = customer.clientName || '고객명 없음';
@@ -18535,14 +19512,18 @@
             if (headerClientPhone) headerClientPhone.innerText = phone;
             if (headerPeriod) headerPeriod.innerText = period;
 
+            // [Refactor] Update Header Title dynamically (default to 'Checklist' for backward compatibility)
+            if (headerTitle) {
+                headerTitle.innerText = titleText || 'Checklist';
+                headerTitle.style.display = 'block';
+            }
+
             console.log('[Mobile] Customer info and Header updated successfully (Direct Data Binding)');
         }
 
         // [New] Helper to Copy Panel Data to Header (Source of Truth: DOM)
         function syncHeaderDataFromPanel() {
             const headerSiteAddress = document.getElementById('headerSiteAddress');
-            const headerClientName = document.getElementById('headerClientName');
-            const headerClientPhone = document.getElementById('headerClientPhone');
             const headerPeriod = document.getElementById('headerConstructionPeriod');
 
             // Sources in Panel
