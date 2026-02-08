@@ -2874,6 +2874,20 @@
             color: #999;
         }
 
+        /* 드래그 앤 드롭 행 스타일 */
+        .draggable-row.dragging {
+            opacity: 0.5;
+            background-color: #f0f0f0;
+        }
+
+        .estimate-table .drag-handle {
+            cursor: grab;
+        }
+
+        .estimate-table .drag-handle:active {
+            cursor: grabbing;
+        }
+
         @media print {
 
             .estimate-table .col-div,
@@ -12032,8 +12046,8 @@
                         </tr>
                     </thead>
                     <tbody id="estBody${cat.no}">
-                        <tr>
-                            <td style="position: relative;">
+                        <tr class="draggable-row" draggable="true" ondragstart="onEstRowDragStart(event)" ondragover="onEstRowDragOver(event)" ondragend="onEstRowDragEnd(event)">
+                            <td class="drag-handle" style="position: relative;">
                                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
                                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                                 </button>
@@ -12310,8 +12324,13 @@
             const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
 
             const tr = document.createElement('tr');
+            tr.className = 'draggable-row';
+            tr.draggable = true;
+            tr.ondragstart = onEstRowDragStart;
+            tr.ondragover = onEstRowDragOver;
+            tr.ondragend = onEstRowDragEnd;
             tr.innerHTML = `
-            <td style="position: relative;">
+            <td class="drag-handle" style="position: relative;">
                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                 </button>
@@ -12343,16 +12362,7 @@
             row.remove();
 
             // 번호 재정렬 및 삭제 버튼 유지
-            tbody.querySelectorAll('tr').forEach((tr, i) => {
-                const firstTd = tr.querySelector('td:first-child');
-                firstTd.style.position = 'relative'; // 안전장치
-                firstTd.innerHTML = `
-                <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
-                     <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
-                </button>
-                ${i + 1}
-                `;
-            });
+            renumberEstimateRows(tbody, catNo);
 
             updateCategorySubtotal(catNo);
             updateEstimateTotals();
@@ -13377,8 +13387,13 @@
                         }
 
                         const tr = document.createElement('tr');
+                        tr.className = 'draggable-row';
+                        tr.draggable = true;
+                        tr.ondragstart = onEstRowDragStart;
+                        tr.ondragover = onEstRowDragOver;
+                        tr.ondragend = onEstRowDragEnd;
                         tr.innerHTML = `
-            <td style="position: relative;">
+            <td class="drag-handle" style="position: relative;">
                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                 </button>
@@ -13488,6 +13503,81 @@
                     estMemoTextarea.value = costMemo;
                     autoResizeTextarea(estMemoTextarea);
                 }
+            });
+        }
+
+        // ------------------------------------------------------------------------------------------------
+        // 드래그 앤 드롭 행 순서 변경 (계약견적서)
+        // ------------------------------------------------------------------------------------------------
+
+        let estDragSrcEl = null;
+        let isEstDragHandleClicked = false;
+
+        // 드래그 핸들(NO 컬럼) 클릭 여부 확인
+        document.addEventListener('mousedown', function (e) {
+            isEstDragHandleClicked = !!e.target.closest('.drag-handle');
+        });
+
+        function onEstRowDragStart(e) {
+            // 핸들을 클릭한 경우에만 드래그 시작
+            if (!isEstDragHandleClicked) {
+                e.preventDefault();
+                return;
+            }
+
+            estDragSrcEl = e.target.closest('tr');
+            if (estDragSrcEl) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', estDragSrcEl.innerHTML);
+                estDragSrcEl.classList.add('dragging');
+            }
+        }
+
+        function onEstRowDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetRow = e.target.closest('tr');
+            if (targetRow && targetRow !== estDragSrcEl && estDragSrcEl && targetRow.parentElement === estDragSrcEl.parentElement) {
+                const bounding = targetRow.getBoundingClientRect();
+                const offset = bounding.y + (bounding.height / 2);
+                if (e.clientY - offset > 0) {
+                    targetRow.after(estDragSrcEl);
+                } else {
+                    targetRow.before(estDragSrcEl);
+                }
+            }
+            return false;
+        }
+
+        function onEstRowDragEnd(e) {
+            if (estDragSrcEl) {
+                estDragSrcEl.classList.remove('dragging');
+
+                const tbody = estDragSrcEl.parentElement;
+                if (tbody) {
+                    const catNo = tbody.id.replace('estBody', '');
+                    renumberEstimateRows(tbody, catNo);
+                    saveEstimateData();
+                }
+            }
+            estDragSrcEl = null;
+        }
+
+        function renumberEstimateRows(tbody, catNo) {
+            tbody.querySelectorAll('tr').forEach((row, index) => {
+                const td = row.querySelector('td:first-child');
+                // 기존 버튼 HTML 보존하며 번호만 변경
+                td.innerHTML = `
+                    <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
+                         <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
+                    </button>
+                    ${index + 1}
+                `;
+                td.classList.add('drag-handle');
+                td.style.position = 'relative';
             });
         }
 
