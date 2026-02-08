@@ -6688,12 +6688,24 @@
         let asListItems = []; // A/S 관리 리스트 데이터
 
         const categories = [
-            { no: '01', name: '가설공사' }, { no: '00', name: '설계 및 관리비' }, { no: '02', name: '철거공사' },
-            { no: '03', name: '설비/방수공사' }, { no: '04', name: '확장/단열공사' }, { no: '05', name: '창호공사' },
-            { no: '06', name: '전기/조명공사' }, { no: '07', name: '에어컨공사' }, { no: '08', name: '목공/도어공사' },
-            { no: '09', name: '필름공사' }, { no: '10', name: '타일공사' }, { no: '11', name: '욕실공사' },
-            { no: '12', name: '도장공사' }, { no: '13', name: '도배공사' }, { no: '14', name: '바닥재공사' },
-            { no: '15', name: '가구공사' }, { no: '16', name: '마감공사' }, { no: '17', name: '기타공사' }
+            { no: '01', name: '가설공사' },
+            { no: '02', name: '설계 및 관리비' },
+            { no: '03', name: '철거공사' },
+            { no: '04', name: '설비/방수공사' },
+            { no: '05', name: '확장/단열공사' },
+            { no: '06', name: '창호공사' },
+            { no: '07', name: '전기/조명공사' },
+            { no: '08', name: '에어컨공사' },
+            { no: '09', name: '목공/도어공사' },
+            { no: '10', name: '필름공사' },
+            { no: '11', name: '타일공사' },
+            { no: '12', name: '욕실공사' },
+            { no: '13', name: '도장공사' },
+            { no: '14', name: '도배공사' },
+            { no: '15', name: '바닥재공사' },
+            { no: '16', name: '가구공사' },
+            { no: '17', name: '마감공사' },
+            { no: '18', name: '기타공사' }
         ];
 
 
@@ -13322,7 +13334,44 @@
         }
 
         // 견적 데이터 로드
+        // [New] 견적 데이터 마이그레이션 (00번 설계 -> 02번 설계 등 순서 변경 대응)
+        function migrateEstimateData(data) {
+            if (!data || !data.estimateData) return;
+
+            if (data.estimateData['00']) {
+                console.log('Migrating estimate data from old order to new order...');
+                const newData = {};
+                const newMemos = {};
+                const pad = (n) => n.toString().padStart(2, '0');
+
+                Object.keys(data.estimateData).forEach(oldKey => {
+                    let newKey = oldKey;
+                    const n = parseInt(oldKey, 10);
+
+                    if (oldKey === '00') {
+                        newKey = '02';
+                    } else if (oldKey === '01') {
+                        newKey = '01';
+                    } else if (n >= 2 && n <= 17) {
+                        newKey = pad(n + 1);
+                    }
+
+                    newData[newKey] = data.estimateData[oldKey];
+
+                    if (data[`estMemo_${oldKey}`]) {
+                        newMemos[`estMemo_${newKey}`] = data[`estMemo_${oldKey}`];
+                        delete data[`estMemo_${oldKey}`];
+                    }
+                });
+
+                data.estimateData = newData;
+                Object.assign(data, newMemos);
+                showToast('견적 데이터가 새로운 순서로 자동 변환되었습니다. 확인 후 저장해주세요.', 'info');
+            }
+        }
+
         function loadEstimateData() {
+            migrateEstimateData(currentData);
             const profitRateInput = document.getElementById('estimateProfitRate');
 
             // 기업이윤율 로드
@@ -13805,23 +13854,23 @@
 
             const categoryMap = {
                 '가설공사': '01', '가설': '01',
-                '설계 및 관리비': '00', '설계': '00', '관리비': '00', '설계비': '00',
-                '철거공사': '02', '철거': '02',
-                '설비/방수공사': '03', '설비': '03', '방수': '03',
-                '확장/단열공사': '04', '확장': '04', '단열': '04',
-                '창호공사': '05', '창호': '05', '샤시': '05', '샷시': '05',
-                '전기/조명공사': '06', '전기': '06', '조명': '06', '콘센트': '06',
-                '에어컨공사': '07', '에어컨 공사': '07', '에어컨': '07',
-                '목공/도어공사': '08', '목공': '08', '도어': '08', '몰딩': '08', '걸레받이': '08',
-                '필름공사': '09', '필름': '09', '인테리어필름': '09',
-                '타일공사': '10', '타일': '10',
-                '욕실공사': '11', '욕실': '11', '도기': '11', '수전': '11', '세면': '11', '양변기': '11', '욕조': '11', '젠다이': '11', '파티션': '11',
-                '도장공사': '12', '도장': '12', '페인트': '12', '탄성': '12',
-                '도배공사': '13', '도배': '13', '벽지': '13',
-                '바닥재공사': '14', '바닥': '14', '바닥재': '14', '마루': '14', '장판': '14', '데코타일': '14',
-                '가구공사': '15', '가구': '15', '싱크대': '15', '신발장': '15', '붙박이장': '15',
-                '마감공사': '16', '마감': '16', '입주청소': '16', '준공청소': '16',
-                '기타공사': '17', '기타': '17'
+                '설계 및 관리비': '02', '설계': '02', '관리비': '02', '설계비': '02',
+                '철거공사': '03', '철거': '03',
+                '설비/방수공사': '04', '설비': '04', '방수': '04',
+                '확장/단열공사': '05', '확장': '05', '단열': '05',
+                '창호공사': '06', '창호': '06', '샤시': '06', '샷시': '06',
+                '전기/조명공사': '07', '전기': '07', '조명': '07', '콘센트': '07',
+                '에어컨공사': '08', '에어컨 공사': '08', '에어컨': '08',
+                '목공/도어공사': '09', '목공': '09', '도어': '09', '몰딩': '09', '걸레받이': '09',
+                '필름공사': '10', '필름': '10', '인테리어필름': '10',
+                '타일공사': '11', '타일': '11',
+                '욕실공사': '12', '욕실': '12', '도기': '12', '수전': '12', '세면': '12', '양변기': '12', '욕조': '12', '젠다이': '12', '파티션': '12',
+                '도장공사': '13', '도장': '13', '페인트': '13', '탄성': '13',
+                '도배공사': '14', '도배': '14', '벽지': '14',
+                '바닥재공사': '15', '바닥': '15', '바닥재': '15', '마루': '15', '장판': '15', '데코타일': '15',
+                '가구공사': '16', '가구': '16', '싱크대': '16', '신발장': '16', '붙박이장': '16',
+                '마감공사': '17', '마감': '17', '입주청소': '17', '준공청소': '17',
+                '기타공사': '18', '기타': '18'
             };
 
             // 1. 완전 일치 또는 매핑 테이블 검색
@@ -13829,23 +13878,23 @@
 
             // 2. 키워드 부분 일치 검색 (우선순위에 주의)
             // 설계 및 관리비 키워드 체크
-            if (name.includes('설계') || name.includes('관리비')) return '00';
+            if (name.includes('설계') || name.includes('관리비')) return '02';
             // 욕실 관련 키워드를 가장 먼저 체크 (욕실공사에 다양한 세부 공정이 포함됨)
             if (name.includes('욕실') || name.includes('UBR') || name.includes('수도') ||
                 name.includes('조적') || name.includes('참고') || name.includes('악세') ||
                 name.includes('액세') || name.includes('라디에이터') || name.includes('돔') ||
                 name.includes('천장') || name.includes('환풍') || name.includes('변기') ||
-                name.includes('세면') || name.includes('샤워') || name.includes('욕조')) return '11';
-            if (name.includes('타일')) return '10';
-            if (name.includes('목공') || name.includes('도어') || name.includes('문')) return '08';
-            if (name.includes('필름')) return '09';
-            if (name.includes('도배')) return '13';
-            if (name.includes('바닥') || name.includes('마루') || name.includes('장판')) return '14';
-            if (name.includes('가구') || name.includes('싱크')) return '15';
-            if (name.includes('전기') || name.includes('조명') || name.includes('스위치')) return '06';
-            if (name.includes('설비') || name.includes('방수') || name.includes('보일러')) return '03';
-            if (name.includes('철거')) return '02';
-            if (name.includes('창호') || name.includes('샤시') || name.includes('샷시')) return '05';
+                name.includes('세면') || name.includes('샤워') || name.includes('욕조')) return '12';
+            if (name.includes('타일')) return '11';
+            if (name.includes('목공') || name.includes('도어') || name.includes('문')) return '09';
+            if (name.includes('필름')) return '10';
+            if (name.includes('도배')) return '14';
+            if (name.includes('바닥') || name.includes('마루') || name.includes('장판')) return '15';
+            if (name.includes('가구') || name.includes('싱크')) return '16';
+            if (name.includes('전기') || name.includes('조명') || name.includes('스위치')) return '07';
+            if (name.includes('설비') || name.includes('방수') || name.includes('보일러')) return '04';
+            if (name.includes('철거')) return '03';
+            if (name.includes('창호') || name.includes('샤시') || name.includes('샷시')) return '06';
             if (name.includes('에어컨')) return '07';
             if (name.includes('도장') || name.includes('페인트')) return '12';
             if (name.includes('마감') || name.includes('청소')) return '16';
