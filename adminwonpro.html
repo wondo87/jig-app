@@ -25,6 +25,24 @@
             // 페이지는 열람 모드로 볼 수 있음
             // 관리자 로그인은 헤더의 로그인 버튼 통해 진행
             sessionStorage.setItem('DJ_admin_page_auth', 'true');
+
+            // [Mobile Redirect]
+            // 모바일 기기로 접속 시 모바일 전용 페이지로 리다이렉트 (단, ?desktop=true 파라미터가 없을 경우)
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const urlParams = new URLSearchParams(window.location.search);
+            const isDesktopMode = urlParams.get('desktop') === 'true';
+
+            if (isMobile && !isDesktopMode && window.innerWidth <= 768) {
+                const currentPath = window.location.pathname;
+                // Vercel에서 /adminwonpro 경로로 접근 시에도 리다이렉트
+                if (currentPath.endsWith('adminwonpro.html') || currentPath.endsWith('adminwonpro') || currentPath === '/') {
+                    // 루트 경로인 경우, 메인 페이지가 adminwonpro라면 리다이렉트 (상황에 따라 다름)
+                    // 여기서는 명시적으로 adminwonpro 관련 접근만 처리
+                }
+
+                // 더 강력한 리다이렉트 조건: 현재 파일이 데스크탑 뷰인데 모바일 환경이면 무조건 이동
+                window.location.href = 'adminwonpro_mobile.html' + window.location.search;
+            }
         })();
     </script>
 
