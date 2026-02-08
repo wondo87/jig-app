@@ -12138,7 +12138,7 @@
             // select 더블클릭 감지 (select는 브라우저가 dblclick을 먹으므로 mousedown 타이밍으로 처리)
             let lastSelectClick = { time: 0, target: null };
             container.addEventListener('mousedown', function (e) {
-                const selectEl = e.target.closest('select.div-select, select.name-select');
+                const selectEl = e.target.closest('select.div-select, select.name-select, select.spec-select');
                 if (!selectEl) { lastSelectClick = { time: 0, target: null }; return; }
 
                 const now = Date.now();
@@ -12153,6 +12153,8 @@
                         convertDivSelectToInput(selectEl, row, catNo);
                     } else if (selectEl.classList.contains('name-select')) {
                         convertNameSelectToInput(selectEl, row, catNo);
+                    } else if (selectEl.classList.contains('spec-select')) {
+                        convertSpecSelectToInput(selectEl.closest('.spec-cell'), catNo);
                     }
                     lastSelectClick = { time: 0, target: null };
                 } else {
@@ -12165,7 +12167,9 @@
                 const sel = e.target;
                 if (sel.tagName === 'SELECT' && (sel.classList.contains('div-select') || sel.classList.contains('name-select') || sel.classList.contains('spec-select'))) {
                     sel._prevValue = sel.value;
-                    sel._prevText = sel.selectedOptions[0]?.textContent?.trim() || '';
+                    const opt = sel.selectedOptions[0];
+                    // spec-select의 경우 data-spec 우선, 그 외는 textContent
+                    sel._prevText = opt?.dataset?.spec || opt?.textContent?.trim() || '';
                 }
             }, true);
 
