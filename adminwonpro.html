@@ -2882,6 +2882,47 @@
                 display: none !important;
             }
 
+            /* 인쇄 시 컬럼 너비 조정 (1: No, 2: Div, 3: Name, 4: Spec, 5: Unit, 6: Qty, 7: Price, 8: Amount, 9: Remark) */
+            /* 참고: 2번 구분 컬럼은 인쇄 시 숨겨짐 */
+            .estimate-table col:nth-child(1) {
+                width: 4% !important;
+            }
+
+            .estimate-table col:nth-child(3) {
+                width: 18% !important;
+            }
+
+            .estimate-table col:nth-child(4) {
+                width: 20% !important;
+            }
+
+            /* 상세내용 */
+            .estimate-table col:nth-child(5) {
+                width: 8% !important;
+            }
+
+            /* 단위 (확대) */
+            .estimate-table col:nth-child(6) {
+                width: 8% !important;
+            }
+
+            /* 수량 (확대) */
+            .estimate-table col:nth-child(7) {
+                width: 11% !important;
+            }
+
+            /* 단가 (확대) */
+            .estimate-table col:nth-child(8) {
+                width: 11% !important;
+            }
+
+            /* 금액 (확대) */
+            .estimate-table col:nth-child(9) {
+                width: 20% !important;
+            }
+
+            /* 비고 (상세내용과 1:1) */
+
             /* 인쇄 시 메모 컨테이너 스타일 확인 (대괄호 같은 파란 선 복구: 둥근 모서리) */
             .estimate-memo {
                 border: 3px solid transparent !important;
