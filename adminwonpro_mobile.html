@@ -19475,6 +19475,10 @@
             if (isMobile()) {
                 // showCustomerTab('estimate'); // If tab exists
                 mobileGoToPanel('panel-estimate');
+                if (typeof loadEstimateData === 'function') {
+                    // Slight delay to ensure panel is visible before render
+                    setTimeout(() => loadEstimateData(), 50);
+                }
             } else {
                 // Desktop logic if needed
             }
