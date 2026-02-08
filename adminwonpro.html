@@ -2844,31 +2844,6 @@
             line-height: 1.6;
         }
 
-        /* contenteditable 메모 영역 (서식 적용 가능) */
-        .estimate-memo .memo-editable {
-            width: 100%;
-            min-height: 50px;
-            padding: 8px;
-            border: 1px solid #d2d2d7;
-            border-radius: 4px;
-            font-size: 11px;
-            font-family: inherit;
-            line-height: 1.6;
-            outline: none;
-            white-space: pre-wrap;
-            word-break: keep-all;
-        }
-
-        .estimate-memo .memo-editable:focus {
-            border-color: #0071e3;
-            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
-        }
-
-        .estimate-memo .memo-editable:empty:before {
-            content: attr(data-placeholder);
-            color: #999;
-        }
-
         @media print {
 
             .estimate-table .col-div,
@@ -11932,8 +11907,8 @@
                 </table>
                 <div class="estimate-memo" id="estMemo${cat.no}">
                     <div style="color:#0071e3; font-weight:600; margin-bottom:6px;">📝 메모</div>
-                    <div class="memo-editable text-formattable" id="estMemoText${cat.no}" contenteditable="true"
-                        data-placeholder="메모 입력..." oninput="saveEstimateData()"></div>
+                    <textarea class="memo-textarea" id="estMemoText${cat.no}" placeholder="메모 입력..."
+                        oninput="autoResizeTextarea(this); saveEstimateData()"></textarea>
                 </div>
                 <button class="add-row-btn no-print" onclick="addEstimateRowTo('${cat.no}')">+ 항목 추가</button>
             </div>
@@ -13126,10 +13101,10 @@
 
                 estimateData[cat.no] = rows;
 
-                // 메모 저장 (contenteditable div)
-                const memoDiv = document.getElementById(`estMemoText${cat.no}`);
-                if (memoDiv) {
-                    currentData[`estMemo_${cat.no}`] = memoDiv.innerHTML;
+                // 메모 저장 (textarea)
+                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
+                if (memoTextarea) {
+                    currentData[`estMemo_${cat.no}`] = memoTextarea.value;
                 }
             });
 
@@ -13317,11 +13292,12 @@
                 });
             }
 
-            // 메모 로드 (contenteditable div)
+            // 메모 로드 (textarea)
             categories.forEach(cat => {
-                const memoDiv = document.getElementById(`estMemoText${cat.no}`);
-                if (memoDiv && currentData[`estMemo_${cat.no}`] !== undefined) {
-                    memoDiv.innerHTML = currentData[`estMemo_${cat.no}`];
+                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
+                if (memoTextarea && currentData[`estMemo_${cat.no}`] !== undefined) {
+                    memoTextarea.value = currentData[`estMemo_${cat.no}`];
+                    autoResizeTextarea(memoTextarea);
                 }
             });
 
