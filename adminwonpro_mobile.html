@@ -4614,14 +4614,14 @@
                 display: none !important;
             }
 
-            /* 테이블: auto layout으로 전환 (fixed는 colgroup/첫행 기준이라 문제) */
+            /* 테이블: layout 고정 */
             #panel-estimate .table-scroll-wrapper table,
             #panel-estimate .estimate-scroll table,
             #panel-estimate .estimate-table {
                 min-width: 0 !important;
                 max-width: 100% !important;
                 width: 100% !important;
-                table-layout: auto !important;
+                table-layout: fixed !important;
             }
 
             /* 숨길 컬럼: No(1), 구분(2), 단위(5) — 비고는 JS에서 DOM 제거 */
@@ -4634,34 +4634,39 @@
                 display: none !important;
             }
 
-            /* 보이는 컬럼 너비: 품명(3) 17%, 상세내용(4) 25%, 수량(6) 7%, 단가(7) 23%, 금액(8) 28% */
+            /* 보이는 컬럼 너비: 품명(3) 25%, 상세내용(4) 46%, 수량(6) 5%, 단가(7) 12%, 금액(8) 12% */
             #panel-estimate .estimate-table th:nth-child(3),
             #panel-estimate .estimate-table td:nth-child(3) {
-                width: 17% !important;
+                width: 25% !important;
+                white-space: normal !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(4),
             #panel-estimate .estimate-table td:nth-child(4) {
-                width: 25% !important;
+                width: 46% !important;
+                white-space: normal !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(6),
             #panel-estimate .estimate-table td:nth-child(6) {
-                width: 7% !important;
+                width: 5% !important;
+                white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(7),
             #panel-estimate .estimate-table td:nth-child(7) {
-                width: 23% !important;
+                width: 12% !important;
+                white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(8),
             #panel-estimate .estimate-table td:nth-child(8) {
-                width: 28% !important;
+                width: 12% !important;
+                white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
@@ -4704,21 +4709,40 @@
                 background: transparent !important;
             }
 
-            /* 구분/품명 드롭다운: 선택된 값만 텍스트로 표시, 빈 값은 숨김 */
             #panel-estimate .estimate-table .div-select,
             #panel-estimate .estimate-table .name-select {
                 -webkit-appearance: none !important;
                 appearance: none !important;
                 pointer-events: none !important;
+                display: none !important;
+                /* 모바일에서 드롭다운은 기본적으로 숨김 */
             }
 
-            /* money-wrapper: ₩ 기호와 금액이 잘리지 않도록 */
+            .name-display-wrapper {
+                width: 100% !important;
+                position: relative !important;
+                display: block !important;
+            }
+
+            #panel-estimate .name-text {
+                display: block !important;
+                font-size: 11px !important;
+                line-height: 1.2 !important;
+                padding: 2px 0 !important;
+                width: 100% !important;
+                word-break: break-all !important;
+            }
+
+            /* money-wrapper: 텍스트 너비만큼만 차지하도록 */
             #panel-estimate .money-wrapper {
-                padding: 0 2px !important;
-                gap: 1px !important;
+                display: inline-flex !important;
+                width: auto !important;
+                padding: 0 4px !important;
+                gap: 2px !important;
                 font-size: 10px !important;
                 white-space: nowrap !important;
                 overflow: hidden !important;
+                justify-content: space-between !important;
             }
 
             #panel-estimate .money-wrapper span {
@@ -4945,30 +4969,29 @@
                     box-sizing: border-box !important;
                 }
 
-                /* Widths (Sum = 100%) to fit perfectly */
                 #panel-estimate .estimate-table th:nth-child(3),
                 #panel-estimate .estimate-table td:nth-child(3) {
-                    width: 15% !important;
+                    width: 24% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(4),
                 #panel-estimate .estimate-table td:nth-child(4) {
-                    width: 20% !important;
+                    width: 40% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(6),
                 #panel-estimate .estimate-table td:nth-child(6) {
-                    width: 10% !important;
+                    width: 6% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(7),
                 #panel-estimate .estimate-table td:nth-child(7) {
-                    width: 22% !important;
+                    width: 15% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(8),
                 #panel-estimate .estimate-table td:nth-child(8) {
-                    width: 33% !important;
+                    width: 15% !important;
                 }
 
                 /* 셀 스타일 */
@@ -4983,12 +5006,15 @@
                 }
 
                 #panel-estimate .money-wrapper {
-                    padding: 0 !important;
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    width: 100% !important;
+                    padding: 0 2px !important;
                     font-size: 10px !important;
                     white-space: nowrap !important;
                     overflow: hidden !important;
-                    /* Ensure no spillover */
                     text-overflow: ellipsis !important;
+                    box-sizing: border-box !important;
                 }
 
                 #panel-estimate .money-wrapper span {
@@ -9397,9 +9423,23 @@
                         document.querySelectorAll('#panel-estimate .estimate-table').forEach(table => {
                             // colgroup 인라인 style 제거 (CSS가 적용되도록)
                             table.querySelectorAll('colgroup col').forEach(col => col.removeAttribute('style'));
-                            // 드롭다운 select 숨김 (선택/내용수정/직접작성 빈칸 처리)
+                            // 드롭다운 select 숨김 (모바일에서는 텍스트 우선 표시)
                             table.querySelectorAll('.div-select, .name-select').forEach(sel => {
-                                if (!sel.value || sel.value === '' || sel.selectedIndex <= 0) {
+                                const row = sel.closest('tr');
+                                const nameText = row.querySelector('.name-text');
+
+                                // 품명의 경우 시각적 중복(스팬+셀렉트) 방지를 위해 셀렉트 숨김
+                                if (sel.classList.contains('name-select') && nameText) {
+                                    if (sel.value && sel.value !== '') {
+                                        nameText.textContent = sel.selectedOptions[0]?.textContent || sel.value;
+                                        nameText.style.display = 'block';
+                                        sel.style.display = 'none'; // 드롭다운은 숨김 (중복 방지)
+                                    } else {
+                                        nameText.style.display = 'none';
+                                        sel.style.display = 'none';
+                                    }
+                                } else {
+                                    // 기타(구분 등) 드롭다운 숨김 처리
                                     sel.style.display = 'none';
                                 }
                             });
@@ -12990,9 +13030,14 @@
                                 <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                                         <option value="">선택</option>
                                     </select></td>
-                                <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" disabled>
-                                        <option value="">구분 먼저 선택</option>
-                                    </select></td>
+                                <td>
+                                    <div class="name-display-wrapper">
+                                        <span class="name-text"></span>
+                                        <select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" disabled>
+                                            <option value="">구분 먼저 선택</option>
+                                        </select>
+                                    </div>
+                                </td>
                                 <td class="spec-cell">-</td>
                                 <td class="unit-cell">-</td>
                                 <td><input type="number" class="qty-input" value="1" min="0" hiding-spin-button
@@ -13122,9 +13167,14 @@
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                     <option value="">선택</option>${divOptions}
                 </select></td>
-            <td><select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
-                    <option value="">구분 먼저 선택</option>
-                </select></td>
+            <td>
+                <div class="name-display-wrapper">
+                    <span class="name-text"></span>
+                    <select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
+                        <option value="">구분 먼저 선택</option>
+                    </select>
+                </div>
+            </td>
             <td class="spec-cell">-</td>
             <td class="unit-cell">-</td>
             <td><input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
@@ -13192,6 +13242,11 @@
                 `<option value="${name}">${name}</option>`
             ).join('');
             nameSelect.disabled = false;
+
+            // [모바일] 품명 텍스트 초기화
+            const nameText = row.querySelector('.name-text');
+            if (nameText) nameText.textContent = '';
+
             resetEstRowValues(row);
         }
 
@@ -13201,8 +13256,16 @@
             const option = select.selectedOptions[0];
 
             if (!option || !option.value) {
+                const nameText = row.querySelector('.name-text');
+                if (nameText) nameText.textContent = '';
                 resetEstRowValues(row);
                 return;
+            }
+
+            // [모바일] 품명 텍스트 동기화
+            const nameText = row.querySelector('.name-text');
+            if (nameText) {
+                nameText.textContent = option.textContent || option.value;
             }
 
             const selectedName = option.value.trim(); // 선택된 품명 (value가 품명 이름)
@@ -13676,8 +13739,14 @@
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                     <option value="">선택</option>${divOptions.replace(`"${item.div}"`, `"${item.div}" selected`)}
                 </select></td>
-            <td><select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
-                            }>${item.div ? '<option value="">품명 선택</option>' + nameOptions : '<option value="">구분 먼저 선택</option>'}</select></td>
+            <td>
+                <div class="name-display-wrapper">
+                    <span class="name-text">${item.name || ''}</span>
+                    <select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'}>
+                        ${item.div ? '<option value="">품명 선택</option>' + nameOptions : '<option value="">구분 먼저 선택</option>'}
+                    </select>
+                </div>
+            </td>
             <td class="spec-cell">${specCellContent}</td>
             <td class="unit-cell">${item.unit || '-'}</td>
             <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
