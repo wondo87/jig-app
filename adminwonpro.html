@@ -64,48 +64,185 @@
             display: none !important;
         }
 
-        /* 글씨 크기 조절 UI */
-        .font-size-control {
+        /* ⚙️ 설정 드롭다운 패널 */
+        .settings-toggle-btn {
+            background: rgba(255, 255, 255, 0.12);
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .settings-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .settings-panel {
+            display: none !important;
+            visibility: hidden;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 6px;
+            background: #1d1d1f;
+            border-radius: 12px;
+            padding: 14px 16px;
+            min-width: 260px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+        }
+
+        .settings-panel.show {
+            display: block !important;
+            visibility: visible;
+        }
+
+        .settings-panel .sp-title {
+            color: #86868b;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .settings-panel .sp-row {
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 6px 12px;
-            border-radius: 8px;
-            margin-right: 16px;
+            margin-bottom: 6px;
         }
 
-        .font-size-control label {
+        .settings-panel .sp-row label {
             color: rgba(255, 255, 255, 0.7);
             font-size: 11px;
+            min-width: 36px;
             white-space: nowrap;
         }
 
-        .font-size-control input[type="range"] {
-            width: 80px;
-            height: 4px;
+        .settings-panel .sp-row input[type="range"] {
+            flex: 1;
+            height: 3px;
             -webkit-appearance: none;
             appearance: none;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 2px;
             cursor: pointer;
         }
 
-        .font-size-control input[type="range"]::-webkit-slider-thumb {
+        .settings-panel .sp-row input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             background: #0071e3;
             border-radius: 50%;
             cursor: pointer;
         }
 
-        .font-size-value {
+        .settings-panel .sp-val {
             color: #fff;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            min-width: 32px;
-            text-align: center;
+            min-width: 28px;
+            text-align: right;
+        }
+
+        .settings-panel .sp-divider {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+        }
+
+        .settings-panel .sp-format-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .settings-panel .sp-format-row button {
+            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        .settings-panel .sp-format-row button:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .fmt-bold {
+            color: #fff !important;
+            font-weight: 900 !important;
+        }
+
+        .fmt-red {
+            color: #ff3b30 !important;
+        }
+
+        .fmt-blue {
+            color: #007aff !important;
+        }
+
+        .fmt-orange {
+            color: #ff9500 !important;
+        }
+
+        .fmt-underline {
+            color: #fff !important;
+            text-decoration: underline !important;
+        }
+
+        .fmt-strike {
+            color: #fff !important;
+            text-decoration: line-through !important;
+        }
+
+        .fmt-italic {
+            color: #fff !important;
+            font-style: italic !important;
+        }
+
+        /* 텍스트 서식 플로팅 툴바 (드래그 선택 시) */
+        .text-format-toolbar {
+            display: none;
+            visibility: hidden;
+            position: fixed;
+            background: #1d1d1f;
+            border-radius: 8px;
+            padding: 4px 6px;
+            gap: 2px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            align-items: center;
+        }
+
+        .text-format-toolbar.show {
+            display: flex;
+            visibility: visible;
+        }
+
+        .text-format-toolbar button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            transition: background 0.15s;
+        }
+
+        .text-format-toolbar button:hover {
+            background: rgba(255, 255, 255, 0.15);
         }
 
         /* 토스트 알림 */
@@ -2382,7 +2519,7 @@
         .estimate-table th {
             background: #f5f5f7;
             padding: 8px 4px;
-            text-align: center;
+            text-align: center !important;
             font-weight: 600;
             border: 1px solid #e8e8ed;
             font-size: var(--font-size-sm);
@@ -2424,7 +2561,6 @@
             text-align: left;
             width: auto;
             min-width: 250px;
-            /* 너비 대폭 확대 */
         }
 
         .estimate-table .spec-cell {
@@ -2533,16 +2669,38 @@
 
         /* 비고 셀 (9번째) */
         .estimate-table th:nth-child(9) {
-            text-align: center;
+            text-align: center !important;
         }
 
         .estimate-table td:nth-child(9) {
             text-align: left;
             white-space: pre-wrap;
             word-break: keep-all;
+            overflow: visible;
         }
 
 
+
+        /* 컬럼 리사이즈 핸들 */
+        .estimate-table th {
+            position: relative;
+        }
+
+        .estimate-table th .col-resize-handle {
+            position: absolute;
+            right: -3px;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            cursor: col-resize;
+            z-index: 10;
+            background: transparent;
+        }
+
+        .estimate-table th .col-resize-handle:hover,
+        .estimate-table th .col-resize-handle.resizing {
+            background: rgba(0, 113, 227, 0.3);
+        }
 
         .estimate-table select {
             width: 100%;
@@ -2604,14 +2762,40 @@
         /* 비고 입력칸 스타일 */
         .estimate-table .remark-input {
             width: 100%;
-            min-width: 100px;
+            min-width: 40px;
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 4px 6px;
             font-size: 11px;
             resize: none;
             overflow-y: hidden;
+            box-sizing: border-box;
         }
+
+        .estimate-table .remark-editable {
+            width: 100%;
+            min-width: 60px;
+            min-height: 24px;
+            padding: 4px 6px;
+            font-size: 11px;
+            outline: none;
+            white-space: pre-wrap;
+            word-break: keep-all;
+            line-height: 1.4;
+            box-sizing: border-box;
+        }
+
+        .estimate-table .remark-editable:focus {
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .estimate-table .remark-editable:empty:before {
+            content: '';
+            color: #999;
+        }
+
+
 
         .estimate-table .del-btn {
             background: none;
@@ -2647,6 +2831,31 @@
             resize: vertical;
             font-family: inherit;
             line-height: 1.6;
+        }
+
+        /* contenteditable 메모 영역 (서식 적용 가능) */
+        .estimate-memo .memo-editable {
+            width: 100%;
+            min-height: 50px;
+            padding: 8px;
+            border: 1px solid #d2d2d7;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: inherit;
+            line-height: 1.6;
+            outline: none;
+            white-space: pre-wrap;
+            word-break: keep-all;
+        }
+
+        .estimate-memo .memo-editable:focus {
+            border-color: #0071e3;
+            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
+        }
+
+        .estimate-memo .memo-editable:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
         }
 
         @media print {
@@ -3441,6 +3650,11 @@
 
             /* 금액 */
 
+            /* 견적서 헤더 가운데 정렬 (인쇄) */
+            .estimate-table th {
+                text-align: center !important;
+            }
+
             /* 셀 내용 줄바꿈 방지 */
             .data-table td,
             .estimate-table td,
@@ -3611,6 +3825,62 @@
             .clause-content {
                 font-size: 9px !important;
             }
+
+            /* 서명 그리드 2열 유지 (인쇄) */
+            .signature-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+            }
+
+            .signature-card {
+                background: #fbfbfd !important;
+                border-radius: 8px !important;
+                padding: 14px !important;
+                border: 1px solid #e8e8ed !important;
+            }
+
+            .signature-card h4 {
+                text-align: center !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                margin-bottom: 10px !important;
+                padding-bottom: 6px !important;
+                border-bottom: 1px solid #e8e8ed !important;
+            }
+
+            .sig-row {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px !important;
+            }
+
+            .signature-box {
+                margin-top: 8px !important;
+                padding: 14px !important;
+                border: 2px dashed #d2d2d7 !important;
+                border-radius: 6px !important;
+                text-align: center !important;
+            }
+
+            .stamp-warning {
+                margin-top: 6px !important;
+                background: #fff9e6 !important;
+                border: 2px solid #ffcc00 !important;
+                border-radius: 4px !important;
+                padding: 5px !important;
+                text-align: center !important;
+                font-weight: 500 !important;
+            }
+
+            .date-box {
+                text-align: center !important;
+                padding: 16px !important;
+                background: #fbfbfd !important;
+                border-radius: 8px !important;
+                margin: 16px 0 !important;
+                border: 1px solid #e8e8ed !important;
+            }
         }
 
         /* 멀티 셀렉트 UI 스타일 */
@@ -3720,6 +3990,14 @@
             .customer-tab {
                 white-space: nowrap;
             }
+
+            /* 모바일에서 설정 버튼/패널/서식 툴바 숨기기 */
+            .settings-toggle-btn,
+            .settings-panel,
+            .text-format-toolbar,
+            .col-resize-handle {
+                display: none !important;
+            }
         }
 
         /* 잠금 토글 버튼 */
@@ -3803,17 +4081,70 @@
                 <span class="admin-badge viewer" id="adminBadge">👁 열람 모드</span>
                 <button class="admin-login-btn" onclick="showAdminModal()">🔐 관리자 로그인</button>
             </div>
-            <div class="font-size-control">
-                <label>글씨 크기</label>
-                <input type="range" id="fontSizeSlider" min="10" max="16" value="12"
-                    onchange="changeFontSize(this.value)" oninput="changeFontSize(this.value)">
-                <span class="font-size-value" id="fontSizeValue">12px</span>
+            <div style="position:relative;">
+                <button class="settings-toggle-btn no-print" onclick="toggleSettingsPanel(event)"
+                    title="글씨 크기 · 서식 설정">⚙️</button>
+                <div class="settings-panel no-print" id="settingsPanel">
+                    <div class="sp-title">글씨 크기</div>
+                    <div class="sp-row">
+                        <label>전체</label>
+                        <input type="range" id="fontSizeSlider" min="8" max="18" value="12"
+                            oninput="changeFontSize(this.value)">
+                        <span class="sp-val" id="fontSizeValue">12px</span>
+                    </div>
+                    <div class="sp-row">
+                        <label>헤더</label>
+                        <input type="range" id="fsCatHeader" min="8" max="18" value="13"
+                            oninput="changePartFontSize('catHeader', this.value)">
+                        <span class="sp-val" id="fsCatHeaderVal">13px</span>
+                    </div>
+                    <div class="sp-row">
+                        <label>행헤더</label>
+                        <input type="range" id="fsColHeader" min="8" max="18" value="10"
+                            oninput="changePartFontSize('colHeader', this.value)">
+                        <span class="sp-val" id="fsColHeaderVal">10px</span>
+                    </div>
+                    <div class="sp-row">
+                        <label>내용</label>
+                        <input type="range" id="fsContent" min="8" max="18" value="11"
+                            oninput="changePartFontSize('content', this.value)">
+                        <span class="sp-val" id="fsContentVal">11px</span>
+                    </div>
+                    <div class="sp-row">
+                        <label>메모</label>
+                        <input type="range" id="fsMemo" min="8" max="18" value="11"
+                            oninput="changePartFontSize('memo', this.value)">
+                        <span class="sp-val" id="fsMemoVal">11px</span>
+                    </div>
+                    <hr class="sp-divider">
+                    <div class="sp-title">텍스트 서식 (드래그 후 적용)</div>
+                    <div class="sp-format-row">
+                        <button class="fmt-bold" onclick="applyTextFormat('bold')" title="굵게">B</button>
+                        <button class="fmt-red" onclick="applyTextFormat('color','#ff3b30')" title="빨간색">A</button>
+                        <button class="fmt-blue" onclick="applyTextFormat('color','#007aff')" title="파란색">A</button>
+                        <button class="fmt-orange" onclick="applyTextFormat('color','#ff9500')" title="주황색">A</button>
+                        <button class="fmt-underline" onclick="applyTextFormat('underline')" title="밑줄">U</button>
+                        <button class="fmt-strike" onclick="applyTextFormat('strikethrough')" title="취소선">S</button>
+                        <button class="fmt-italic" onclick="applyTextFormat('italic')" title="기울임">I</button>
+                    </div>
+                </div>
             </div>
             <button class="header-btn secondary" onclick="exportAllData()">📊 Excel 내보내기</button>
             <button class="header-btn secondary" onclick="importData()">📥 불러오기</button>
             <button class="header-btn secondary" onclick="exportCurrentCustomerData()">💾 고객저장(JSON)</button>
         </div>
     </header>
+
+    <!-- 텍스트 서식 플로팅 툴바 -->
+    <div class="text-format-toolbar no-print" id="textFormatToolbar">
+        <button class="fmt-bold" onclick="applyTextFormat('bold')" title="굵게">B</button>
+        <button class="fmt-red" onclick="applyTextFormat('color','#ff3b30')" title="빨간색">A</button>
+        <button class="fmt-blue" onclick="applyTextFormat('color','#007aff')" title="파란색">A</button>
+        <button class="fmt-orange" onclick="applyTextFormat('color','#ff9500')" title="주황색">A</button>
+        <button class="fmt-underline" onclick="applyTextFormat('underline')" title="밑줄">U</button>
+        <button class="fmt-strike" onclick="applyTextFormat('strikethrough')" title="취소선">S</button>
+        <button class="fmt-italic" onclick="applyTextFormat('italic')" title="기울임">I</button>
+    </div>
 
     <!-- 관리자 로그인 모달 -->
     <div class="admin-modal" id="adminModal">
@@ -7633,12 +7964,65 @@
         }
 
 
+        // 설정 패널 토글
+        function toggleSettingsPanel(event) {
+            if (event) event.stopPropagation();
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('show');
+        }
+
+        // (설정 패널은 톱니바퀴 클릭으로만 열고 닫음 - 외부 클릭으로 닫지 않음)
+
         // 글씨 크기 조절
         function changeFontSize(size) {
             document.documentElement.style.setProperty('--font-size-base', size + 'px');
             document.getElementById('fontSizeValue').textContent = size + 'px';
             localStorage.setItem('DJ_fontsize', size);
             document.body.style.fontSize = size + 'px';
+        }
+
+        // 영역별 글씨 크기 조절 (모든 탭 적용)
+        function changePartFontSize(part, size) {
+            const s = size + 'px';
+            document.getElementById('fs' + part.charAt(0).toUpperCase() + part.slice(1) + 'Val').textContent = s;
+            switch (part) {
+                case 'catHeader':
+                    // 견적서 + 원가관리 카테고리 헤더 (div + h3 모두)
+                    document.querySelectorAll('.category-header').forEach(h => h.style.fontSize = s);
+                    document.querySelectorAll('.category-header h3').forEach(h => h.style.fontSize = s);
+                    document.querySelectorAll('.category-header .subtotal').forEach(h => h.style.fontSize = s);
+                    // 문서 섹션 타이틀
+                    document.querySelectorAll('.section-title').forEach(h => h.style.fontSize = s);
+                    break;
+                case 'colHeader':
+                    // 모든 테이블 thead
+                    document.querySelectorAll('.estimate-table thead th, .data-table thead th, .summary-table thead th').forEach(th => th.style.fontSize = s);
+                    break;
+                case 'content':
+                    // 모든 테이블 tbody
+                    document.querySelectorAll('.estimate-table tbody td, .data-table tbody td, .summary-table tbody td').forEach(td => td.style.fontSize = s);
+                    document.querySelectorAll('.estimate-table tbody input, .estimate-table tbody select, .estimate-table tbody textarea, .data-table tbody input, .data-table tbody select').forEach(el => el.style.fontSize = s);
+                    // 문서 내 info-item, clause, sig-field 등
+                    document.querySelectorAll('.info-item input, .info-item select, .info-item span, .clause-content, .sig-field input').forEach(el => el.style.fontSize = s);
+                    break;
+                case 'memo':
+                    document.querySelectorAll('.estimate-memo, .estimate-memo textarea, .estimate-memo .memo-content, .category-memo, .category-memo textarea, .special-note textarea').forEach(el => el.style.fontSize = s);
+                    break;
+            }
+            localStorage.setItem('DJ_fs_' + part, size);
+        }
+
+        function loadPartFontSizes() {
+            ['catHeader', 'colHeader', 'content', 'memo'].forEach(part => {
+                const defaults = { catHeader: '13', colHeader: '10', content: '11', memo: '11' };
+                const saved = localStorage.getItem('DJ_fs_' + part) || defaults[part];
+                const sliderId = 'fs' + part.charAt(0).toUpperCase() + part.slice(1);
+                const slider = document.getElementById(sliderId);
+                if (slider) {
+                    slider.value = saved;
+                    changePartFontSize(part, saved);
+                }
+            });
         }
 
         function loadFontSize() {
@@ -7648,10 +8032,133 @@
             document.documentElement.style.setProperty('--font-size-base', savedSize + 'px');
         }
 
+        // ===== 텍스트 서식 (드래그 선택 후 색상/밑줄/취소선) =====
+        let savedSelection = null;
+
+        function applyTextFormat(type, value) {
+            const toolbar = document.getElementById('textFormatToolbar');
+            if (!savedSelection) { toolbar.classList.remove('show'); return; }
+
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedSelection);
+
+            try {
+                if (type === 'clear') {
+                    // 서식 제거: 선택 영역의 format span 풀기
+                    const range = savedSelection;
+                    const container = range.commonAncestorContainer;
+                    const parent = container.nodeType === 3 ? container.parentElement : container;
+                    // execCommand 시도 (contenteditable 내에서만 작동)
+                    if (parent.closest('[contenteditable="true"]')) {
+                        document.execCommand('removeFormat', false, null);
+                    } else {
+                        // 수동 서식 제거
+                        const fragment = range.extractContents();
+                        const tempDiv = document.createElement('div');
+                        tempDiv.appendChild(fragment);
+                        const plainText = tempDiv.textContent;
+                        range.insertNode(document.createTextNode(plainText));
+                    }
+                } else {
+                    // 스타일 span 감싸기 (execCommand 없이 작동)
+                    const range = savedSelection;
+                    const span = document.createElement('span');
+                    if (type === 'color') {
+                        span.style.color = value;
+                    } else if (type === 'underline') {
+                        span.style.textDecoration = 'underline';
+                    } else if (type === 'strikethrough') {
+                        span.style.textDecoration = 'line-through';
+                    } else if (type === 'bold') {
+                        span.style.fontWeight = '700';
+                    } else if (type === 'italic') {
+                        span.style.fontStyle = 'italic';
+                    }
+                    try {
+                        range.surroundContents(span);
+                    } catch (e) {
+                        // 다중 노드 선택 시 extractContents 사용
+                        const fragment = range.extractContents();
+                        span.appendChild(fragment);
+                        range.insertNode(span);
+                    }
+                }
+            } catch (e) { console.warn('텍스트 서식 적용 실패:', e); }
+
+            toolbar.classList.remove('show');
+            savedSelection = null;
+            saveEstimateData();
+        }
+
+        // mouseup 시 선택 영역 확인 후 툴바 표시 (모든 탭에서 작동, 모바일 제외)
+        document.addEventListener('mouseup', function (e) {
+            const toolbar = document.getElementById('textFormatToolbar');
+            if (!toolbar) return;
+
+            // 모바일(터치 디바이스)에서는 서식 툴바 비활성화
+            const isMobile = /android|ipad|iphone|ipod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            if (isMobile) return;
+
+            // 툴바 또는 설정 패널 클릭 시 무시
+            if (toolbar.contains(e.target)) return;
+            if (e.target.closest('.settings-panel')) return;
+
+            setTimeout(() => {
+                const sel = window.getSelection();
+                if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+                    toolbar.classList.remove('show');
+                    savedSelection = null;
+                    return;
+                }
+
+                // 선택된 텍스트의 위치 확인
+                const anchorNode = sel.anchorNode;
+                const parentEl = anchorNode?.nodeType === 3 ? anchorNode.parentElement : anchorNode;
+
+                // text-formattable 클래스가 있는 영역(사용자 편집 가능 영역)에서만 서식 적용 가능
+                const isFormattableArea = parentEl?.closest('.text-formattable');
+
+                // 입력 필드, 모달, 로그인 화면에서는 서식 적용 불가
+                const isFormElement = parentEl?.closest('input, select, textarea');
+                const isModalArea = parentEl?.closest('.modal, .login-overlay, #loginOverlay, #initialSyncOverlay');
+
+                // 편집 가능 영역이 아니거나 제외 영역인 경우 툴바 숨김
+                if (!isFormattableArea || isFormElement || isModalArea) {
+                    toolbar.classList.remove('show');
+                    savedSelection = null;
+                    return;
+                }
+
+                savedSelection = sel.getRangeAt(0).cloneRange();
+
+                const rect = sel.getRangeAt(0).getBoundingClientRect();
+                let left = rect.left + rect.width / 2 - 110;
+                let top = rect.top - 44;
+                if (top < 10) top = rect.bottom + 8;
+                if (left < 5) left = 5;
+                if (left + 240 > window.innerWidth) left = window.innerWidth - 250;
+
+                toolbar.style.left = left + 'px';
+                toolbar.style.top = top + 'px';
+                toolbar.classList.add('show');
+                console.log('서식 툴바 표시:', sel.toString());
+            }, 10);
+        });
+
+        // 다른 곳 클릭 시 툴바 숨기기
+        document.addEventListener('mousedown', function (e) {
+            const toolbar = document.getElementById('textFormatToolbar');
+            if (toolbar && !toolbar.contains(e.target) && !e.target.closest('.settings-panel')) {
+                toolbar.classList.remove('show');
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', async function () {
             // UI 초기화
             initLoginScreen();
             loadFontSize();
+            loadPartFontSizes();
             createCostCategories();
             createEstimateCategories();
             createCoverTable();
@@ -11406,14 +11913,14 @@
                                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
                             <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
                             <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
-                            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
+                            <td><div class="remark-editable text-formattable" contenteditable="true" oninput="saveEstimateData()"></div></td>
                         </tr>
                     </tbody>
                 </table>
                 <div class="estimate-memo" id="estMemo${cat.no}">
                     <div style="color:#0071e3; font-weight:600; margin-bottom:6px;">📝 메모</div>
-                    <textarea class="memo-textarea" id="estMemoText${cat.no}" placeholder="메모 입력..."
-                        oninput="autoResizeTextarea(this); saveEstimateData()"></textarea>
+                    <div class="memo-editable text-formattable" id="estMemoText${cat.no}" contenteditable="true"
+                        data-placeholder="메모 입력..." oninput="saveEstimateData()"></div>
                 </div>
                 <button class="add-row-btn no-print" onclick="addEstimateRowTo('${cat.no}')">+ 항목 추가</button>
             </div>
@@ -11509,6 +12016,9 @@
                     sel._prevText = sel.selectedOptions[0]?.textContent?.trim() || '';
                 }
             }, true);
+
+            // 컬럼 리사이즈 핸들 초기화
+            initColumnResize();
         }
 
         // 구분 select → input 전환 (더블클릭용)
@@ -11538,6 +12048,7 @@
                     saveEstimateData();
                 }
             });
+            inp.addEventListener('blur', function () { finalizeDirectDivEdit(this, catNo); });
         }
 
         // 품명 select → input 전환 (더블클릭용)
@@ -11574,6 +12085,7 @@
                     saveEstimateData();
                 }
             });
+            inp.addEventListener('blur', function () { finalizeDirectNameEdit(this, catNo); });
         }
 
         // 상세내용 select → input 전환 (더블클릭용)
@@ -11681,7 +12193,7 @@
             </td>
             <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
             <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
-            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
+            <td><div class="remark-editable text-formattable" contenteditable="true" oninput="saveEstimateData()"></div></td>
             `;
             tbody.appendChild(tr);
         }
@@ -11729,13 +12241,15 @@
                 editInput.focus();
                 editInput.select();
                 editInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') { e.preventDefault(); editInput.blur(); }
+                    else if (e.key === 'Escape') {
                         td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                             <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
                         if (prevSelected) td.querySelector('.div-select').value = prevSelected;
                         saveEstimateData();
                     }
                 });
+                editInput.addEventListener('blur', function () { finalizeDirectDivEdit(this, catNo); });
                 return;
             }
 
@@ -11750,7 +12264,8 @@
                 const divInput = td.querySelector('input');
                 divInput.focus();
                 divInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') { e.preventDefault(); divInput.blur(); }
+                    else if (e.key === 'Escape') {
                         td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                             <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
                         // 품명도 다시 select로
@@ -11762,13 +12277,15 @@
                         saveEstimateData();
                     }
                 });
+                divInput.addEventListener('blur', function () { finalizeDirectDivEdit(this, catNo); });
                 // 품명도 직접입력 모드로
                 const nameTd = nameSelect.closest('td');
                 nameTd.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
                     onchange="saveEstimateData()">`;
                 const nameInput = nameTd.querySelector('input');
                 nameInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); }
+                    else if (e.key === 'Escape') {
                         const divSel = row.querySelector('.div-select');
                         const curDiv = divSel ? divSel.value : '';
                         nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
@@ -11778,6 +12295,7 @@
                         saveEstimateData();
                     }
                 });
+                nameInput.addEventListener('blur', function () { finalizeDirectNameEdit(this, catNo); });
                 resetEstRowValues(row);
                 enableDirectEditCells(row, catNo);
                 return;
@@ -11823,7 +12341,8 @@
                 nameInput.focus();
                 nameInput.select();
                 nameInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); }
+                    else if (e.key === 'Escape') {
                         td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                             ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
                         if (prevVal) {
@@ -11833,6 +12352,7 @@
                         saveEstimateData();
                     }
                 });
+                nameInput.addEventListener('blur', function () { finalizeDirectNameEdit(this, catNo); });
                 return;
             }
 
@@ -11849,7 +12369,8 @@
                 const nameInput = td.querySelector('input');
                 nameInput.focus();
                 nameInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); }
+                    else if (e.key === 'Escape') {
                         td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                             ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
                         resetEstRowValues(row);
@@ -11857,6 +12378,7 @@
                         saveEstimateData();
                     }
                 });
+                nameInput.addEventListener('blur', function () { finalizeDirectNameEdit(this, catNo); });
                 resetEstRowValues(row);
                 enableDirectEditCells(row, catNo);
                 return;
@@ -12062,6 +12584,59 @@
             row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
         }
 
+        // ===== 견적서 테이블 컬럼 수동 너비 조절 =====
+        function initColumnResize() {
+            document.querySelectorAll('.estimate-table').forEach(table => {
+                const ths = table.querySelectorAll('thead th');
+                // 기존 핸들 제거
+                table.querySelectorAll('.col-resize-handle').forEach(h => h.remove());
+
+                ths.forEach((th, idx) => {
+                    // col-div(구분)는 인쇄시 숨겨지므로 제외 가능하나, 화면에선 포함
+                    const handle = document.createElement('div');
+                    handle.className = 'col-resize-handle no-print';
+                    th.appendChild(handle);
+
+                    let startX, startWidth, colIndex;
+
+                    handle.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startX = e.pageX;
+                        startWidth = th.offsetWidth;
+                        colIndex = idx;
+                        handle.classList.add('resizing');
+                        document.body.style.cursor = 'col-resize';
+                        document.body.style.userSelect = 'none';
+
+                        function onMouseMove(e2) {
+                            const diff = e2.pageX - startX;
+                            const newWidth = Math.max(20, startWidth + diff);
+                            // colgroup의 col 또는 th 직접 설정
+                            const cols = table.querySelectorAll('colgroup col');
+                            if (cols[colIndex]) {
+                                cols[colIndex].style.width = newWidth + 'px';
+                            }
+                            th.style.width = newWidth + 'px';
+                            th.style.minWidth = newWidth + 'px';
+                            th.style.maxWidth = newWidth + 'px';
+                        }
+
+                        function onMouseUp() {
+                            handle.classList.remove('resizing');
+                            document.body.style.cursor = '';
+                            document.body.style.userSelect = '';
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                        }
+
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    });
+                });
+            });
+        }
+
         // 직접입력 모드: 상세내용, 단위, 단가를 입력 필드로 전환
         function enableDirectEditCells(row, catNo) {
             const specCell = row.querySelector('.spec-cell');
@@ -12071,20 +12646,27 @@
             specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
                 onchange="saveEstimateData()">`;
             specCell.querySelector('input').addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') { specCell.textContent = '-'; saveEstimateData(); }
+                if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                else if (e.key === 'Escape') { specCell.textContent = '-'; saveEstimateData(); }
             });
+            specCell.querySelector('input').addEventListener('blur', function () { finalizeDirectSpecEdit(this); });
 
             unitCell.innerHTML = `<input type="text" class="editable-input" placeholder="단위" style="width:100%; text-align:center;"
                 onchange="saveEstimateData()">`;
             unitCell.querySelector('input').addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') { unitCell.textContent = '-'; saveEstimateData(); }
+                if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                else if (e.key === 'Escape') { unitCell.textContent = '-'; saveEstimateData(); }
             });
+            unitCell.querySelector('input').addEventListener('blur', function () { finalizeDirectUnitEdit(this); });
 
             priceCell.innerHTML = `<input type="text" class="editable-price-input" placeholder="단가" value=""
-                oninput="onEstDirectPriceInput(this, '${catNo}')" onchange="saveEstimateData()">`;
+                oninput="onEstDirectPriceInput(this, '${catNo}')" onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()">`;
             priceCell.dataset.price = '0';
             priceCell.querySelector('input').addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.blur();
+                } else if (e.key === 'Escape') {
                     priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
                     priceCell.dataset.price = '0';
                     row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
@@ -12234,6 +12816,74 @@
             saveEstimateData();
         }
 
+        // 직접입력 구분 blur 시 텍스트로 변환 (파란 테두리 제거)
+        function finalizeDirectDivEdit(input, catNo) {
+            const val = input.value.trim();
+            const td = input.closest('td');
+            if (td) {
+                td.innerHTML = `<span class="div-custom-text" style="cursor:pointer; display:block; text-align:center;">${val || '-'}</span>`;
+                td.dataset.customDiv = val || '';
+                // 클릭 시 다시 편집 가능
+                td.querySelector('.div-custom-text').addEventListener('click', function () {
+                    td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${val}" placeholder="구분 입력"
+                        onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
+                    const newInp = td.querySelector('input');
+                    newInp.focus();
+                    newInp.select();
+                    newInp.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') { e.preventDefault(); newInp.blur(); }
+                    });
+                    newInp.addEventListener('blur', function () { finalizeDirectDivEdit(this, catNo); });
+                });
+            }
+            saveEstimateData();
+        }
+
+        // 직접입력 품명 blur 시 텍스트로 변환 (파란 테두리 제거)
+        function finalizeDirectNameEdit(input, catNo) {
+            const val = input.value.trim();
+            const td = input.closest('td');
+            if (td) {
+                td.innerHTML = `<span class="name-custom-text" style="cursor:pointer; display:block;">${val || '-'}</span>`;
+                td.dataset.customName = val || '';
+                // 클릭 시 다시 편집 가능
+                td.querySelector('.name-custom-text').addEventListener('click', function () {
+                    td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${val}" placeholder="품명 입력"
+                        onchange="saveEstimateData()">`;
+                    const newInp = td.querySelector('input');
+                    newInp.focus();
+                    newInp.select();
+                    newInp.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') { e.preventDefault(); newInp.blur(); }
+                    });
+                    newInp.addEventListener('blur', function () { finalizeDirectNameEdit(this, catNo); });
+                });
+            }
+            saveEstimateData();
+        }
+
+        // 직접입력 상세내용 blur 시 텍스트로 변환 (파란 테두리 제거)
+        function finalizeDirectSpecEdit(input) {
+            const val = input.value.trim();
+            const cell = input.closest('.spec-cell');
+            if (cell) {
+                cell.textContent = val || '-';
+                cell.dataset.customSpec = val || '';
+            }
+            saveEstimateData();
+        }
+
+        // 직접입력 단위 blur 시 텍스트로 변환 (파란 테두리 제거)
+        function finalizeDirectUnitEdit(input) {
+            const val = input.value.trim();
+            const cell = input.closest('.unit-cell');
+            if (cell) {
+                cell.textContent = val || '-';
+                cell.dataset.customUnit = val || '';
+            }
+            saveEstimateData();
+        }
+
         // 카테고리 소계 업데이트
         function updateCategorySubtotal(catNo) {
             const tbody = document.getElementById(`estBody${catNo}`);
@@ -12376,22 +13026,33 @@
                     const qtyInput = row.querySelector('.qty-input');
                     const specCell = row.querySelector('.spec-cell');
 
-                    // 구분 값: select 또는 직접입력
+                    // 구분 값: select 또는 직접입력 또는 텍스트 변환 후
                     let divValue = '';
                     let isCustomDiv = false;
+                    const divCustomText = row.querySelector('.div-custom-text');
                     if (divCustomInput) {
                         divValue = divCustomInput.value || '';
+                        isCustomDiv = true;
+                    } else if (divCustomText) {
+                        divValue = divCustomText.textContent?.trim() || '';
+                        if (divValue === '-') divValue = '';
                         isCustomDiv = true;
                     } else if (divSelect) {
                         divValue = divSelect.value || '';
                     }
 
-                    // 품명 값: select 또는 직접입력
+                    // 품명 값: select 또는 직접입력 또는 텍스트 변환 후
                     let nameValue = '';
                     let nameIndexValue = '';
                     let isCustomName = false;
+                    const nameCustomText = row.querySelector('.name-custom-text');
                     if (nameCustomInput) {
                         nameValue = nameCustomInput.value || '';
+                        nameIndexValue = '';
+                        isCustomName = true;
+                    } else if (nameCustomText) {
+                        nameValue = nameCustomText.textContent?.trim() || '';
+                        if (nameValue === '-') nameValue = '';
                         nameIndexValue = '';
                         isCustomName = true;
                     } else if (nameSelect) {
@@ -12422,9 +13083,9 @@
                         unitValue = unitInput ? (unitInput.value || '-') : (unitCell.textContent || '-');
                     }
 
-                    // 비고 입력값 가져오기
-                    const remarkInput = row.querySelector('.remark-input');
-                    const remarkValue = remarkInput?.value || '';
+                    // 비고 입력값 가져오기 (contenteditable div)
+                    const remarkDiv = row.querySelector('.remark-editable');
+                    const remarkValue = remarkDiv?.innerHTML || '';
 
                     // 단가: input 또는 dataset
                     const priceCell = row.querySelector('.price-cell');
@@ -12452,9 +13113,10 @@
 
                 estimateData[cat.no] = rows;
 
-                // 메모 저장
-                if (memoTextarea) {
-                    currentData[`estMemo_${cat.no}`] = memoTextarea.value;
+                // 메모 저장 (contenteditable div)
+                const memoDiv = document.getElementById(`estMemoText${cat.no}`);
+                if (memoDiv) {
+                    currentData[`estMemo_${cat.no}`] = memoDiv.innerHTML;
                 }
             });
 
@@ -12571,7 +13233,7 @@
                         let priceCellContent;
                         if (isCustomDiv || isCustomName) {
                             priceCellContent = `<input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
-                                placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onchange="saveEstimateData()">`;
+                                placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onblur="finalizePriceEdit(this, '${cat.no}')" onchange="saveEstimateData()">`;
                         } else {
                             priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
                         }
@@ -12592,9 +13254,47 @@
                     onchange="onEstQtyChange(this, '${cat.no}')"></td>
             <td class="price-cell" data-price="${price}">${priceCellContent}</td>
             <td class="amount-cell"><div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
-            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
+            <td><div class="remark-editable text-formattable" contenteditable="true" oninput="saveEstimateData()">${item.remark || ''}</div></td>
                         `;
                         tbody.appendChild(tr);
+
+                        // 로드된 직접입력 필드에 Enter키/blur 이벤트 바인딩
+                        if (isCustomDiv || isCustomName) {
+                            const divInp = tr.querySelector('.div-custom-input');
+                            if (divInp) {
+                                divInp.addEventListener('blur', function () { finalizeDirectDivEdit(this, cat.no); });
+                                divInp.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                                });
+                            }
+                            const nameInp = tr.querySelector('.name-custom-input');
+                            if (nameInp) {
+                                nameInp.addEventListener('blur', function () { finalizeDirectNameEdit(this, cat.no); });
+                                nameInp.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                                });
+                            }
+                            const priceInp = tr.querySelector('.editable-price-input');
+                            if (priceInp) {
+                                priceInp.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                                });
+                            }
+                            const specInp = tr.querySelector('.spec-cell .editable-input');
+                            if (specInp) {
+                                specInp.addEventListener('blur', function () { finalizeDirectSpecEdit(this); });
+                                specInp.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                                });
+                            }
+                            const unitInp = tr.querySelector('.unit-cell .editable-input');
+                            if (unitInp) {
+                                unitInp.addEventListener('blur', function () { finalizeDirectUnitEdit(this); });
+                                unitInp.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+                                });
+                            }
+                        }
                     });
                 });
             } else {
@@ -12604,20 +13304,15 @@
                 });
             }
 
-            // 메모 로드
+            // 메모 로드 (contenteditable div)
             categories.forEach(cat => {
-                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
-                if (memoTextarea && currentData[`estMemo_${cat.no}`] !== undefined) {
-                    memoTextarea.value = currentData[`estMemo_${cat.no}`];
-                    autoResizeTextarea(memoTextarea);
+                const memoDiv = document.getElementById(`estMemoText${cat.no}`);
+                if (memoDiv && currentData[`estMemo_${cat.no}`] !== undefined) {
+                    memoDiv.innerHTML = currentData[`estMemo_${cat.no}`];
                 }
             });
 
             updateEstimateTotals();
-            // 로드된 비고란 높이 자동 조절
-            document.querySelectorAll('.estimate-table .remark-input').forEach(textarea => {
-                autoResizeTextarea(textarea);
-            });
 
             syncCostMemoToEstimate(); // 원가관리표 메모를 견적서에 동기화
 
@@ -12626,6 +13321,9 @@
             if (authorSpan) {
                 authorSpan.textContent = currentData?.createdBy || '-';
             }
+
+            // 컬럼 리사이즈 핸들 초기화
+            initColumnResize();
         }
 
         // textarea 자동 높이 조절
@@ -13026,6 +13724,19 @@
             // element 복제
             const clonedElement = element.cloneNode(true);
 
+            // 수동 조절된 컬럼 너비를 colgroup col에 인라인 스타일로 동기화
+            element.querySelectorAll('.estimate-table').forEach((origTable, tableIdx) => {
+                const clonedTable = clonedElement.querySelectorAll('.estimate-table')[tableIdx];
+                if (!clonedTable) return;
+                const origThs = origTable.querySelectorAll('thead th');
+                const clonedCols = clonedTable.querySelectorAll('colgroup col');
+                origThs.forEach((th, i) => {
+                    if (clonedCols[i]) {
+                        clonedCols[i].style.width = th.offsetWidth + 'px';
+                    }
+                });
+            });
+
             // 인쇄에 불필요한 요소 제거 (노션 버튼, 아이콘 등)
             clonedElement.querySelectorAll('.no-print, .btn, .pdf-btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
 
@@ -13181,6 +13892,10 @@
                    }
 
                                                 /* ===== 견적서 테이블 컬럼별 설정 ===== */
+                                                /* 헤더 가운데 정렬 */
+                                                .estimate-table th {
+                                                    text-align: center !important;
+                   }
                                                 /* No (1번째) */
                                                 .estimate-table th:nth-child(1),
                                                 .estimate-table td:nth-child(1) {
@@ -13392,17 +14107,101 @@
                    }
 
                                                 /* 서명 영역 */
+                                                .signature-grid {
+                                                    display: grid !important;
+                                                    grid-template-columns: repeat(2, 1fr) !important;
+                                                    gap: 12px !important;
+                   }
+
+                                                .signature-card {
+                                                    background: #fbfbfd !important;
+                                                    border-radius: 8px !important;
+                                                    padding: 14px !important;
+                                                    border: 1px solid #e8e8ed !important;
+                   }
+
                                                 .signature-card h4 {
-                                                    font-size: 9px !important;
+                                                    font-size: 11px !important;
+                                                    text-align: center !important;
+                                                    font-weight: 700 !important;
+                                                    margin-bottom: 10px !important;
+                                                    padding-bottom: 6px !important;
+                                                    border-bottom: 1px solid #e8e8ed !important;
+                   }
+
+                                                .sig-row {
+                                                    display: grid !important;
+                                                    grid-template-columns: repeat(2, 1fr) !important;
+                                                    gap: 8px !important;
+                                                    margin-bottom: 6px !important;
+                   }
+
+                                                .sig-field {
+                                                    margin-bottom: 4px !important;
                    }
 
                                                 .sig-field label {
-                                                    font-size: 7px !important;
+                                                    font-size: 8px !important;
+                                                    display: block !important;
+                                                    color: #86868b !important;
+                                                    font-weight: 600 !important;
+                                                    margin-bottom: 2px !important;
                    }
 
                                                 .sig-field input,
                                                 .sig-field span {
-                                                    font-size: 8px !important;
+                                                    font-size: 10px !important;
+                                                    border: none !important;
+                                                    border-bottom: 1px solid #d2d2d7 !important;
+                                                    padding: 3px 0 !important;
+                                                    font-weight: 500 !important;
+                   }
+
+                                                .signature-box {
+                                                    margin-top: 8px !important;
+                                                    padding: 14px !important;
+                                                    background: #fff !important;
+                                                    border: 2px dashed #d2d2d7 !important;
+                                                    border-radius: 6px !important;
+                                                    text-align: center !important;
+                                                    color: #86868b !important;
+                                                    font-size: 10px !important;
+                   }
+
+                                                .stamp-warning {
+                                                    margin-top: 6px !important;
+                                                    background: #fff9e6 !important;
+                                                    border: 2px solid #ffcc00 !important;
+                                                    border-radius: 4px !important;
+                                                    padding: 5px !important;
+                                                    text-align: center !important;
+                                                    font-size: 10px !important;
+                                                    color: #1d1d1f !important;
+                                                    font-weight: 500 !important;
+                   }
+
+                                                .date-box {
+                                                    text-align: center !important;
+                                                    padding: 16px !important;
+                                                    background: #fbfbfd !important;
+                                                    border-radius: 8px !important;
+                                                    margin: 16px 0 !important;
+                                                    border: 1px solid #e8e8ed !important;
+                   }
+
+                                                .date-box label {
+                                                    font-size: 9px !important;
+                                                    color: #86868b !important;
+                                                    font-weight: 600 !important;
+                                                    display: block !important;
+                                                    margin-bottom: 4px !important;
+                   }
+
+                                                .date-box input,
+                                                .date-box .synced-display {
+                                                    font-size: 13px !important;
+                                                    font-weight: 600 !important;
+                                                    text-align: center !important;
                    }
 
                                                 /* 조항 */

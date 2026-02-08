@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>가이드 - 디자인 지그</title>
+    <meta name="description" content="디자인 지그 고객 가이드. 정밀한 기준으로 설계하는 공간.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.designjig.com/guide">
+    <meta property="og:title" content="고객 가이드 - 디자인 지그">
+    <meta property="og:description" content="디자인 지그는 감각이 아닌 기준으로 일합니다.">
+    <meta property="og:image"
+        content="https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+
+    <!-- Redirection Script -->
+    <script>
+        (function () {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            var isMobile = /android|ipad|iphone|ipod/i.test(userAgent) && !window.MSStream;
+
+            // If NOT mobile, redirect to Figma
+            if (!isMobile) {
+                window.location.replace("https://www.figma.com/make/adL0DjRqABoH6ADRvxLnCb/%EA%B3%A0%EA%B0%9D%EC%83%81%EB%8B%B4--Community-?fullscreen=1&t=7wcrmkHiN5imEdK8-1");
+            }
+        })();
+    </script>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=Oswald:wght@700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* Reset & Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+            background-color: #f5f5f5;
+            /* Desktop background */
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #fff;
+            color: #333;
+            line-height: 1.5;
+            max-width: 600px;
+            /* Mobile width constraint for desktop testing/viewing */
+            margin: 0 auto;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            padding-top: 60px;
+            /* Header height */
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            line-height: 1.3;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #eee;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #111;
+            letter-spacing: -0.02em;
+        }
+
+        /* Content Sections (Previously Slides) */
+        .content-section {
+            padding: 4rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: auto;
+            /* Allow content to dictate height */
+        }
+
+        /* Intro Section Special Styling */
+        .content-section.intro {
+            text-align: left;
+            padding-top: 2rem;
+            padding-bottom: 4rem;
+        }
+
+        .slide-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.03em;
+            word-break: keep-all;
+        }
+
+        .slide-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .highlight-blue {
+            color: #2563eb;
+        }
+
+        /* Checklist Styles */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1.25rem;
+            background-color: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+        }
+
+        .check-icon {
+            color: #2563eb;
+            font-weight: bold;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .feature-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #111;
+        }
+
+        .feature-desc {
+            font-size: 0.95rem;
+            color: #555;
+            word-break: keep-all;
+            line-height: 1.5;
+        }
+
+        /* Price Card */
+        .price-card {
+            background-color: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .price-amount {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #2563eb;
+            font-family: 'Inter', sans-serif;
+            margin-top: 0.5rem;
+        }
+
+        /* Process Steps */
+        .process-list {
+            position: relative;
+            padding-left: 20px;
+            margin: 1rem 0;
+        }
+
+        .process-line {
+            position: absolute;
+            left: 5px;
+            top: 10px;
+            bottom: 30px;
+            width: 2px;
+            background: #e5e7eb;
+        }
+
+        .process-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .process-dot {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #d1d5db;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #d1d5db;
+            z-index: 2;
+        }
+
+        .process-dot.active {
+            background: #2563eb;
+            box-shadow: 0 0 0 1px #2563eb;
+        }
+
+        .process-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .process-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Footer */
+        .footer {
+            background: #f8f8f8;
+            padding: 3rem 1.5rem;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-brand {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .footer-info {
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+
+        .footer-info p {
+            margin-bottom: 0.4rem;
+        }
+
+        .footer-sns {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .sns-link {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            transition: all 0.2s;
+        }
+
+        .footer-copyright {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .btn-cta {
+            display: block;
+            width: 100%;
+            padding: 1.1rem;
+            background: #111;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            font-size: 1.05rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <a href="/" class="logo">DESIGN JIG</a>
+    </header>
+
+    <!-- Section 1: Intro -->
+    <div class="content-section intro" style="text-align: center; padding-top: 3rem; padding-bottom: 5rem;">
+        <p class="slide-subtitle" style="font-size: 1.2rem; color:#444; margin-bottom: 2rem;">정밀한 기준으로 설계하는 공간</p>
+        <div style="width: 40px; height: 4px; background: #2563eb; margin: 0 auto 2rem;"></div>
+        <h2 class="slide-title" style="font-size: 2.2rem; line-height: 1.3; margin-bottom: 0;">
+            감각이 아닌<br>
+            <span class="highlight-blue">기준</span>으로 일합니다
+        </h2>
+    </div>
+
+    <!-- Section 2: Target Audience -->
+    <div class="content-section">
+        <h2 class="slide-title">이런 분들께 추천합니다</h2>
+        <div class="checklist-item">
+            <span class="check-icon">✓</span>
+            <div>
+                <strong>정확한 기준이 필요한 분</strong>
+                <p style="font-size:0.9rem; color:#666; margin-top:4px;">막연한 감각보다는 수치와 데이터에 기반한 설계를 원하시는 분</p>
+            </div>
+        </div>
+        <div class="checklist-item">
+            <span class="check-icon">✓</span>
+            <div>
+                <strong>투명한 견적을 원하시는 분</strong>
+                <p style="font-size:0.9rem; color:#666; margin-top:4px;">자재 하나, 공정 하나의 비용이 투명하게 공개되길 원하시는 분</p>
+            </div>
+        </div>
+        <div class="checklist-item">
+            <span class="check-icon">✓</span>
+            <div>
+                <strong>일관된 품질을 원하시는 분</strong>
+                <p style="font-size:0.9rem; color:#666; margin-top:4px;">작업자의 컨디션에 따라 달라지는 품질이 아닌, 시스템화된 품질을 원하시는 분</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Philosophy -->
+    <div class="content-section">
+        <h2 class="slide-title">JIG의 의미</h2>
+        <p class="slide-subtitle">제조업에서 부품을 가공할 때 사용하는 보조 기구</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🎯</span>
+                <div class="feature-title">정확도 (Accuracy)</div>
+                <div class="feature-desc">작업 위치를 정밀하게 안내하여 오차 없는 시공을 가능하게 합니다.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <div class="feature-title">일관성 (Consistency)</div>
+                <div class="feature-desc">누가 작업하더라도 동일한 고품질의 결과를 만들어냅니다.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🛡️</span>
+                <div class="feature-title">신뢰 (Trust)</div>
+                <div class="feature-desc">전문가가 믿고 의지할 수 있는 기준 장비가 됩니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Fee Guide -->
+    <div class="content-section">
+        <h2 class="slide-title">실측 및 견적 비용 안내</h2>
+
+        <div class="price-card">
+            <p style="font-size:0.9rem; color:#666; margin-bottom:0.5rem;">실측·상세견적 진행비</p>
+            <div class="price-amount">300,000원</div>
+        </div>
+
+        <h3 style="font-size:1rem; margin-bottom:1rem; color:#111;">포함 항목</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem; margin-bottom:2rem;">
+            <div
+                style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem 0.5rem; text-align:center;">
+                <div style="font-size:1.5rem; margin-bottom:0.5rem;">💬</div>
+                <div style="font-size:0.8rem; font-weight:600; line-height:1.3;">현장 답사<br>및 상담</div>
+                <span
+                    style="background:#dcfce7; color:#166534; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:600; margin-top:4px; display:inline-block;">무료</span>
+            </div>
+            <div
+                style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem 0.5rem; text-align:center;">
+                <div style="font-size:1.5rem; margin-bottom:0.5rem;">📏</div>
+                <div style="font-size:0.8rem; font-weight:600; line-height:1.3;">현장 실측<br>및 상세 견적</div>
+            </div>
+            <div
+                style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem 0.5rem; text-align:center;">
+                <div style="font-size:1.5rem; margin-bottom:0.5rem;">📋</div>
+                <div style="font-size:0.8rem; font-weight:600; line-height:1.3;">공정별<br>세부 견적서</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom:2rem;">
+            <h3 style="font-size:1rem; margin-bottom:0.8rem; display:flex; align-items:center;">
+                <span style="font-size:1.2rem; margin-right:6px;">💲</span> 별도 비용 항목
+            </h3>
+            <div style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1.2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <strong style="font-size:1rem;">창호 정밀 실측</strong>
+                    <strong style="color:#333; font-size:1.1rem;">300,000원</strong>
+                </div>
+                <p style="font-size:0.85rem; color:#666;">창호 교체 또는 시공이 필요한 경우 필수</p>
+            </div>
+        </div>
+
+        <div style="background:#fffbf0; border:1px solid #fde68a; border-radius:12px; padding:1.2rem;">
+            <h3 style="font-size:0.95rem; color:#92400e; margin-bottom:0.8rem; display:flex; align-items:center;">
+                <span style="margin-right:6px;">⚠️</span> 환불 규정
+            </h3>
+            <ul style="font-size:0.85rem; color:#78350f; padding-left:1.2rem; line-height:1.6;">
+                <li>현장 답사 및 상담은 무료로 진행됩니다.</li>
+                <li>현장 실측 완료 후에는 환불이 불가합니다.</li>
+                <li>창호 정밀 실측 비용은 환불되지 않습니다.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Section 5: Schedule -->
+    <div class="content-section">
+        <h2 class="slide-title">진행 프로세스</h2>
+        <div class="process-list">
+            <div class="process-line"></div>
+
+            <div class="process-item">
+                <div class="process-dot active"></div>
+                <div class="process-title">1. 문의 접수</div>
+                <div class="process-desc">온라인 폼 또는 전화 상담</div>
+            </div>
+            <div class="process-item">
+                <div class="process-dot"></div>
+                <div class="process-title">2. 1차 미팅 (비대면/사무실)</div>
+                <div class="process-desc">대략적인 예산 및 니즈 파악</div>
+            </div>
+            <div class="process-item">
+                <div class="process-dot"></div>
+                <div class="process-title">3. 현장 실측 및 상세 견적</div>
+                <div class="process-desc">실측비 입금 후 진행, 디자인 제안</div>
+            </div>
+            <div class="process-item">
+                <div class="process-dot"></div>
+                <div class="process-title">4. 계약 및 공사 준비</div>
+                <div class="process-desc">자재 선정, 공정표 확정</div>
+            </div>
+            <div class="process-item">
+                <div class="process-dot"></div>
+                <div class="process-title">5. 시공 및 마감</div>
+                <div class="process-desc">데일리 리포트 전송, 준공 청소</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 6: Principles -->
+    <div class="content-section">
+        <h2 class="slide-title">디자인지그의 원칙</h2>
+        <p class="slide-subtitle">타협하지 않는 시공 기준</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-title">1. 정품 자재 사용</div>
+                <div class="feature-desc">검증된 브랜드의 정품 자재만을 사용하며, 자재 내역을 투명하게 공개합니다.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-title">2. FM 시공 준수</div>
+                <div class="feature-desc">빠른 길보다는 바른 길을 택합니다. 제조사가 권장하는 표준 시공법을 준수합니다.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-title">3. 추가금 ZERO 지향</div>
+                <div class="feature-desc">정확한 초기 견적으로 공사 도중 불필요한 추가금이 발생하지 않도록 합니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 7: Extra Costs -->
+    <div class="content-section">
+        <h2 class="slide-title">추가 비용 발생 기준</h2>
+        <p class="slide-subtitle">아래의 경우 부득이하게 추가 비용이 발생할 수 있습니다.</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
+                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">철거 후 히든 하자</strong>
+                <span style="font-size:0.8rem; color:#666;">누수, 곰팡이, 구조적 결함 등</span>
+            </div>
+            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
+                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">고객 요청 변경</strong>
+                <span style="font-size:0.8rem; color:#666;">자재 상향, 공정 추가 등</span>
+            </div>
+            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
+                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">엘리베이터 보양</strong>
+                <span style="font-size:0.8rem; color:#666;">관리소 규정에 따른 사용료</span>
+            </div>
+            <div style="background:#fff4f4; padding:1rem; border-radius:8px;">
+                <strong style="display:block; margin-bottom:4px; font-size:0.95rem;">민원/공사 지연</strong>
+                <span style="font-size:0.8rem; color:#666;">민원으로 인한 중단/야간 작업</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 8: Warranty -->
+    <div class="content-section">
+        <h2 class="slide-title">A/S 및 보증 안내</h2>
+        <div style="font-size: 3rem; margin-bottom:1rem; text-align:center;">🛡️</div>
+        <h3 style="margin-bottom:1rem; font-size:1.4rem; text-align:center;">무상 보증 기간 1년</h3>
+        <p style="color:#666; margin-bottom:2rem; line-height:1.6; text-align:center;">
+            공사 완료 후 1년간 하자에 대한 무상 A/S를 제공합니다.<br>
+            (단, 고객 과실 및 소모품 제외)
+        </p>
+        <div style="background:#f8f9fa; padding:1.5rem; border-radius:12px;">
+            <strong style="display:block; margin-bottom:0.5rem;">A/S 접수 방법</strong>
+            <p style="font-size:0.9rem; color:#555; line-height:1.6;">
+                1. 하자가 발생한 부분의 사진 촬영<br>
+                2. 담당자에게 카카오톡 또는 문자로 전송<br>
+                3. 일정 조율 후 방문 처리
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 9: Price Philosophy -->
+    <div class="content-section">
+        <h2 class="slide-title">가격이 아닌 가치</h2>
+        <p style="font-size:1.1rem; line-height:1.6; margin-bottom:2rem; font-weight:600;">
+            "얼마까지 해주시나요?"<br>
+            가격을 맞추기 위해 품질을 낮추는 공사는 하지 않습니다.
+        </p>
+        <p style="color:#666; line-height:1.6; word-break: keep-all;">
+            저렴한 견적은 저렴한 자재와 비숙련공을 의미합니다. 디자인지그는 <strong>제대로 된 자재</strong>와 <strong>숙련된 기술자</strong>의 인건비를 정당하게 지불하며,
+            그만큼의 <strong>퀄리티를 보장</strong>합니다.
+        </p>
+    </div>
+
+    <!-- Section 10: Communication -->
+    <div class="content-section">
+        <h2 class="slide-title">소통도 시스템입니다</h2>
+        <p class="slide-subtitle">불안하지 않은 인테리어 경험</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-title">💬 단톡방 개설</div>
+                <div class="feature-desc">모든 공정 내용을 실시간으로 공유합니다.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-title">📸 데일리 리포트</div>
+                <div class="feature-desc">매일 작업 종료 후 현장 사진과 진행 상황을 보고합니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 11: Site Management -->
+    <div class="content-section">
+        <h2 class="slide-title">현장 관리 기준</h2>
+        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
+            <span class="check-icon">🚭</span> 금연 현장 원칙
+        </div>
+        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
+            <span class="check-icon">🧹</span> 매일 정리 정돈 및 청소
+        </div>
+        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
+            <span class="check-icon">👷</span> 안전 장비 착용 준수
+        </div>
+        <div class="checklist-item" style="border:none; background:none; padding:0.5rem 0;">
+            <span class="check-icon">🔇</span> 소음 작업 시간 준수 (민원 최소화)
+        </div>
+    </div>
+
+    <!-- Section 12: Outro -->
+    <div class="content-section" style="text-align:center;">
+        <h2 class="slide-title">비교해 보셔도 좋습니다</h2>
+        <p style="margin-bottom:2rem; color:#666; line-height:1.6;">
+            여러 곳에서 상담을 받아보신 후,<br>
+            디자인지그의 기준이 필요하실 때 연락 주세요.
+        </p>
+
+        <div style="background:#eef4ff; padding:1.5rem; border-radius:12px; margin-bottom:2rem; text-align:left;">
+            <p style="color:#2563eb; font-weight:700; margin-bottom:0.5rem;">월 2개 현장 한정 진행</p>
+            <p style="font-size:0.9rem; color:#666;">
+                품질 유지를 위해 프로젝트 수를 제한합니다.<br>
+                여유 있게 문의주시면 꼼꼼하게 상담 도와드리겠습니다.
+            </p>
+        </div>
+
+        <a href="https://www.designjig.com/quote" class="btn-cta">상담 신청하기</a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <h2 class="footer-brand">디자인지그</h2>
+        <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
+        <div class="footer-info">
+            <p>경기도 화성시 반송동 3-10</p>
+            <p>연락처: <a href="tel:010-8695-7013">010-8695-7013</a></p>
+            <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
+        </div>
+        <div class="footer-sns">
+            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" class="sns-link">
+                <!-- Blog Icon -->
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                </svg>
+            </a>
+            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" class="sns-link">
+                <!-- Cafe Icon -->
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                    <path
+                        d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                    <path d="M2 20h20v2H2z" />
+                </svg>
+            </a>
+            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" class="sns-link">
+                <!-- Insta Icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" width="18" height="18">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </a>
+            <a href="https://www.youtube.com/@designjig" target="_blank" title="유튜브" class="sns-link">
+                <!-- YouTube Icon -->
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                    <path
+                        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+            </a>
+        </div>
+        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
+    </footer>
+
+</body>
+
+</html>
