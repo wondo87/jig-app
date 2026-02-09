@@ -3531,6 +3531,8 @@
         .estimate-memo .memo-textarea {
             width: 100%;
             min-height: 50px;
+            max-height: none;
+            height: auto;
             padding: 8px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
@@ -3538,7 +3540,7 @@
             resize: none;
             font-family: inherit;
             line-height: 1.6;
-            overflow-y: hidden;
+            overflow: hidden;
         }
 
         @media print {
@@ -4455,11 +4457,11 @@
             }
 
             .memo-textarea {
-                overflow-y: hidden !important;
-                /* 스크롤바 숨김 */
+                overflow: hidden !important;
                 resize: none !important;
-                /* 사용자 임의 조절 방지 */
-                min-height: 60px;
+                min-height: 20px;
+                max-height: none !important;
+                height: auto !important;
             }
 
             /* 서명 영역 */
@@ -13114,11 +13116,10 @@
         // 견적서 비고 컬럼을 DOM에서 물리적으로 제거 (remark 값은 hidden input으로 보존)
         function removeEstimateRemarkColumns() {
             document.querySelectorAll('#panel-estimate .estimate-table').forEach(table => {
-                // colgroup 9번째 col 제거
-                // column index logic needs update because we removed one column
-                // Original: 9 cols. Now: 8 cols. Remark is last (index 7).
+                // 이미 비고 컬럼이 제거된 테이블은 건너뜀 (멱등성 보장)
+                if (table.dataset.remarkRemoved === 'true') return;
 
-                // colgroup 8번째 col 제거 (index 7)
+                // colgroup 8번째 col 제거 (index 7 = 비고)
                 const cols = table.querySelectorAll('colgroup col');
                 if (cols.length >= 8) cols[7].remove();
                 // thead th 8번째 제거
@@ -13141,6 +13142,8 @@
                     // 비고 td 제거
                     td8.remove();
                 });
+
+                table.dataset.remarkRemoved = 'true';
             });
         }
 
@@ -13253,16 +13256,19 @@
             const tbody = row.closest('tbody');
             row.remove();
 
-            // 번호 재정렬 및 삭제 버튼 유지
+            // 번호 재정렬 및 삭제 버튼 유지 (hidden input 보존)
             tbody.querySelectorAll('tr').forEach((tr, i) => {
                 const firstTd = tr.querySelector('td:first-child');
-                firstTd.style.position = 'relative'; // 안전장치
+                firstTd.style.position = 'relative';
+                // hidden input 보존
+                const hiddenInputs = firstTd.querySelectorAll('input[type="hidden"]');
                 firstTd.innerHTML = `
                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                 </button>
                 ${i + 1}
                 `;
+                hiddenInputs.forEach(h => firstTd.appendChild(h));
             });
 
             updateCategorySubtotal(catNo);
@@ -13852,21 +13858,25 @@
 
         // 원가관리표 메모를 계약견적서에 동기화
         function syncCostMemoToEstimate() {
-            // 원가관리표 메모를 기본값으로 사용 (항상 표시) (Phase 2: In-memory 사용)
-            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
-
+            // 원가관리표 메모를 기본값으로 사용 (견적서 메모가 비어있을 때만)
             categories.forEach(cat => {
                 const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
                 const costMemoTextarea = document.getElementById(`costMemo${cat.no}`);
 
                 if (estMemoTextarea) {
-                    // 원가관리표 메모 (기본값으로 항상 표시)
+                    // 견적서에 이미 메모가 있으면 덮어쓰지 않음
+                    if (estMemoTextarea.value && estMemoTextarea.value.trim() !== '') {
+                        autoResizeTextarea(estMemoTextarea);
+                        return;
+                    }
+                    // 견적서 메모가 비어있을 때만 원가관리표 메모를 기본값으로 표시
                     const costMemo = globalCostData[`costMemo_${cat.no}`] ||
                         (costMemoTextarea ? costMemoTextarea.value : '') || '';
 
-                    // 항상 원가관리표 메모 표시
-                    estMemoTextarea.value = costMemo;
-                    autoResizeTextarea(estMemoTextarea);
+                    if (costMemo) {
+                        estMemoTextarea.value = costMemo;
+                        autoResizeTextarea(estMemoTextarea);
+                    }
                 }
             });
         }
@@ -14600,10 +14610,14 @@
                    }
 
                                                 .estimate-memo .memo-content,
+                                                .estimate-memo .memo-textarea,
                                                 .category-memo textarea {
                                                     white-space: pre-wrap !important;
                                                 word-break: break-word !important;
                                                 font-size: 8px !important;
+                                                overflow: hidden !important;
+                                                max-height: none !important;
+                                                height: auto !important;
                    }
 
                                                 /* 서명 영역 */
