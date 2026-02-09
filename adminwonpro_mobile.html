@@ -3343,10 +3343,11 @@
             text-align: left;
         }
 
-        /* 단위 셀 (5번째) */
+        /* 수량 셀 (5번째 = 단위+수량 통합) - 중앙정렬 */
         .estimate-table th:nth-child(5),
         .estimate-table td:nth-child(5) {
-            width: 35px;
+            width: 65px;
+            text-align: center;
         }
 
         .estimate-table .unit-cell {
@@ -3355,17 +3356,16 @@
             text-align: center;
         }
 
-        /* 수량 셀 (6번째) - 중앙정렬 */
+        /* 단가 셀 (6번째) */
         .estimate-table th:nth-child(6),
         .estimate-table td:nth-child(6) {
-            width: 50px;
-            text-align: center;
+            width: 90px;
         }
 
-        /* 단가 셀 (7번째) - 너비 축소, 중앙정렬 */
+        /* 금액 셀 (7번째) */
         .estimate-table th:nth-child(7),
         .estimate-table td:nth-child(7) {
-            width: 80px;
+            width: 100px;
         }
 
         .estimate-table .price-cell {
@@ -3389,12 +3389,7 @@
             white-space: nowrap;
         }
 
-        /* 금액 셀 (8번째) - 너비 축소, 중앙정렬 */
-        .estimate-table th:nth-child(8),
-        .estimate-table td:nth-child(8) {
-            width: 100px;
-            /* 금액이 잘리지 않도록 너비 확보 */
-        }
+        /* 비고 제거 후 8번째는 없음 - 예비 */
 
 
 
@@ -3406,16 +3401,7 @@
 
 
 
-        /* 비고 셀 (9번째) */
-        .estimate-table th:nth-child(9) {
-            text-align: center;
-        }
-
-        .estimate-table td:nth-child(9) {
-            text-align: left;
-            white-space: pre-wrap;
-            word-break: keep-all;
-        }
+        /* 비고 셀 - DOM에서 제거됨 (hidden input으로 보존) */
 
 
 
@@ -4662,17 +4648,15 @@
                 table-layout: fixed !important;
             }
 
-            /* 숨길 컬럼: No(1), 구분(2), 단위(5) — 비고는 JS에서 DOM 제거 */
+            /* 숨길 컬럼: No(1), 구분(2) — 비고는 JS에서 DOM 제거됨 → 7컬럼 구조 */
             #panel-estimate .estimate-table th:nth-child(1),
             #panel-estimate .estimate-table td:nth-child(1),
             #panel-estimate .estimate-table th:nth-child(2),
-            #panel-estimate .estimate-table td:nth-child(2),
-            #panel-estimate .estimate-table th:nth-child(5),
-            #panel-estimate .estimate-table td:nth-child(5) {
+            #panel-estimate .estimate-table td:nth-child(2) {
                 display: none !important;
             }
 
-            /* 보이는 컬럼 너비: 품명(3) 25%, 상세내용(4) 46%, 수량(6) 5%, 단가(7) 12%, 금액(8) 12% */
+            /* 보이는 컬럼 너비 (7컬럼 기준): 품명(3) 25%, 상세내용(4) 41%, 수량(5) 8%, 단가(6) 13%, 금액(7) 13% */
             #panel-estimate .estimate-table th:nth-child(3),
             #panel-estimate .estimate-table td:nth-child(3) {
                 width: 25% !important;
@@ -4682,28 +4666,28 @@
 
             #panel-estimate .estimate-table th:nth-child(4),
             #panel-estimate .estimate-table td:nth-child(4) {
-                width: 46% !important;
+                width: 41% !important;
                 white-space: normal !important;
+                min-width: 0 !important;
+            }
+
+            #panel-estimate .estimate-table th:nth-child(5),
+            #panel-estimate .estimate-table td:nth-child(5) {
+                width: 8% !important;
+                white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(6),
             #panel-estimate .estimate-table td:nth-child(6) {
-                width: 5% !important;
+                width: 13% !important;
                 white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(7),
             #panel-estimate .estimate-table td:nth-child(7) {
-                width: 12% !important;
-                white-space: nowrap !important;
-                min-width: 0 !important;
-            }
-
-            #panel-estimate .estimate-table th:nth-child(8),
-            #panel-estimate .estimate-table td:nth-child(8) {
-                width: 12% !important;
+                width: 13% !important;
                 white-space: nowrap !important;
                 min-width: 0 !important;
             }
@@ -4985,13 +4969,11 @@
                     display: none !important;
                 }
 
-                /* 숨길 컬럼: No(1), 구분(2), 단위(5) — 비고는 JS에서 DOM 제거 */
+                /* 숨길 컬럼: No(1), 구분(2) — 비고는 JS에서 DOM 제거됨 → 7컬럼 구조 */
                 #panel-estimate .estimate-table th:nth-child(1),
                 #panel-estimate .estimate-table td:nth-child(1),
                 #panel-estimate .estimate-table th:nth-child(2),
-                #panel-estimate .estimate-table td:nth-child(2),
-                #panel-estimate .estimate-table th:nth-child(5),
-                #panel-estimate .estimate-table td:nth-child(5) {
+                #panel-estimate .estimate-table td:nth-child(2) {
                     display: none !important;
                     width: 0 !important;
                     padding: 0 !important;
@@ -5007,6 +4989,7 @@
                     box-sizing: border-box !important;
                 }
 
+                /* 보이는 컬럼 너비 (7컬럼 기준): 품명(3) 24%, 상세내용(4) 40%, 수량(5) 8%, 단가(6) 14%, 금액(7) 14% */
                 #panel-estimate .estimate-table th:nth-child(3),
                 #panel-estimate .estimate-table td:nth-child(3) {
                     width: 24% !important;
@@ -5017,19 +5000,19 @@
                     width: 40% !important;
                 }
 
+                #panel-estimate .estimate-table th:nth-child(5),
+                #panel-estimate .estimate-table td:nth-child(5) {
+                    width: 8% !important;
+                }
+
                 #panel-estimate .estimate-table th:nth-child(6),
                 #panel-estimate .estimate-table td:nth-child(6) {
-                    width: 6% !important;
+                    width: 14% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(7),
                 #panel-estimate .estimate-table td:nth-child(7) {
-                    width: 15% !important;
-                }
-
-                #panel-estimate .estimate-table th:nth-child(8),
-                #panel-estimate .estimate-table td:nth-child(8) {
-                    width: 15% !important;
+                    width: 14% !important;
                 }
 
                 /* 셀 스타일 */
