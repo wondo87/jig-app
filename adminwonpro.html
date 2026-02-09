@@ -4167,6 +4167,95 @@
             color: #ff3b30;
         }
     </style>
+    <style>
+        /* Editable Dropdown & Rich Text Input Styles */
+        .editable-cell-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .editable-content {
+            flex: 1;
+            min-height: 24px;
+            padding: 4px;
+            border: 1px solid transparent;
+            outline: none;
+            transition: border-color 0.2s;
+            white-space: pre-wrap;
+            word-break: break-all;
+            cursor: text;
+            font-size: 12px;
+        }
+
+        .editable-content:focus {
+            border-bottom: 2px solid #0071e3;
+            background: rgba(0, 113, 227, 0.05);
+        }
+
+        .editable-content:empty::before {
+            content: attr(placeholder);
+            color: #c7c7cc;
+            pointer-events: none;
+        }
+
+        .dropdown-toggle-btn {
+            width: 20px;
+            height: 100%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #86868b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            padding: 0;
+        }
+
+        .dropdown-toggle-btn:hover {
+            color: #0071e3;
+            background: #f5f5f7;
+            border-radius: 3px;
+        }
+
+        .custom-dropdown-portal {
+            position: fixed;
+            z-index: 9999;
+            background: #fff;
+            border: 1px solid #d2d2d7;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .custom-dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #1d1d1f;
+            transition: background 0.1s;
+            border-bottom: 1px solid #f5f5f7;
+        }
+
+        .custom-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .custom-dropdown-item:hover {
+            background: #f5f5f7;
+            color: #0071e3;
+        }
+
+        .custom-dropdown-item.selected {
+            background: #e8f4fd;
+            color: #0071e3;
+            font-weight: 600;
+        }
+    </style>
 </head>
 
 <body>
@@ -8881,6 +8970,90 @@
             syncAllFields();
         }
 
+        // [New] Dropdown Toggle Helper (Portal Version)
+        window.toggleScheduleDropdown = function (btn, event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+
+            // Close existing portal if any
+            const existingPortal = document.querySelector('.custom-dropdown-portal');
+            if (existingPortal) {
+                existingPortal.remove();
+                // If clicking the same button, just close it
+                if (existingPortal.dataset.triggerId === btn.id) return;
+            }
+
+            // Generate unique ID for button if not exists
+            if (!btn.id) btn.id = 'dropdown-btn-' + Date.now() + Math.random().toString(36).substr(2, 9);
+
+            const hiddenList = btn.nextElementSibling;
+            if (!hiddenList) {
+                console.warn('Dropdown list source not found');
+                return;
+            }
+
+            // Create Portal
+            const portal = document.createElement('div');
+            portal.className = 'custom-dropdown-portal';
+            portal.dataset.triggerId = btn.id;
+            portal.innerHTML = hiddenList.innerHTML;
+
+            // Style Portal
+            const rect = btn.getBoundingClientRect();
+            Object.assign(portal.style, {
+                top: (rect.bottom + 2) + 'px', // Add slight gap
+                left: rect.left + 'px',
+                minWidth: Math.max(rect.width, 140) + 'px', // Ensure minimum width
+                display: 'block'
+            });
+
+            document.body.appendChild(portal);
+        };
+
+        // Global click handler to close dropdown portal
+        document.addEventListener('mousedown', function (e) {
+            if (!e.target.closest('.custom-dropdown-portal') && !e.target.closest('.dropdown-toggle-btn')) {
+                const portal = document.querySelector('.custom-dropdown-portal');
+                if (portal) portal.remove();
+            }
+        });
+
+        // Close on scroll to prevent detachment
+        window.addEventListener('scroll', function () {
+            const portal = document.querySelector('.custom-dropdown-portal');
+            if (portal) portal.remove();
+        }, true);
+
+        // [New] Dropdown Selection Helper
+        window.selectScheduleOption = function (index, field, value) {
+            const portal = document.querySelector('.custom-dropdown-portal');
+            if (portal) portal.remove();
+
+            // Update the data model logic
+            if (field === 'category') {
+                onScheduleCategoryChange(index, value);
+            } else if (field === 'name') {
+                onScheduleProcessChange(index, value);
+            } else if (field === 'inCharge') {
+                updateScheduleRow(index, 'inCharge', value);
+                renderScheduleTable(); // Re-render to update UI consistency
+                saveScheduleToCustomer();
+            } else {
+                updateScheduleRow(index, field, value);
+                renderScheduleTable();
+            }
+        };
+
+        // [New] Direct Input Handler (ContentEditable)
+        window.updateScheduleRowContent = function (el, index, field) {
+            if (scheduleRows[index]) {
+                // Save rich text content
+                scheduleRows[index][field] = el.innerHTML;
+            }
+        };
+
         function renderScheduleTable() {
             const tbody = document.getElementById('scheduleTableBody');
             const empty = document.getElementById('scheduleEmptyState');
@@ -8896,7 +9069,6 @@
 
             // Extract unique values for dropdowns
             const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
 
             // [수정] 담당자 목록 추출 (유니크)
             const managers = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
@@ -8907,15 +9079,13 @@
                     managers.push(row.inCharge);
                 }
             });
+
             tbody.innerHTML = scheduleRows.map((row, index) => {
                 // 현재 행의 카테고리로 공정명 필터링
                 const processes = defaultScheduleSteps.filter(s => s.category === row.category);
 
                 // [수정] 공정명 중복 제거 (순수 이름만 표시)
                 const uniqueProcessNames = [...new Set(processes.map(p => p.name))];
-                const processOptions = uniqueProcessNames.map(name =>
-                    `<option value="${name}" ${row.name === name ? 'selected' : ''}>${name}</option>`
-                ).join('');
 
                 // [수정] 담당자 목록 동적 필터링 (카테고리+공정명 종속)
                 let availableManagers = [];
@@ -8942,9 +9112,42 @@
                     availableManagers.push(row.inCharge);
                 }
 
-                const currentManagerOptions = availableManagers.map(m =>
-                    `<option value="${m}" ${row.inCharge === m ? 'selected' : ''}>${m}</option>`
-                ).join('');
+                // Helper to render editable dropdown cell
+                const renderEditableDropdown = (value, options, fieldName, index, placeholder = '') => {
+                    const listHtml = options.map(opt =>
+                        `<div class="custom-dropdown-item ${value === opt ? 'selected' : ''}" 
+                              onmousedown="selectScheduleOption(${index}, '${fieldName}', '${opt}')">${opt}</div>`
+                    ).join('');
+
+                    return `
+                        <div class="editable-cell-wrapper">
+                            <div contenteditable="false" class="text-formattable editable-content" 
+                                 style="text-align:center;"
+                                 ondblclick="this.contentEditable=true;this.focus();"
+                                 onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
+                                 oninput="updateScheduleRowContent(this, ${index}, '${fieldName}')"
+                                 onblur="this.contentEditable=false;saveScheduleToCustomer()"
+                                 placeholder="${placeholder}">${value || ''}</div>
+                            <button class="dropdown-toggle-btn no-print" onmousedown="toggleScheduleDropdown(this, event)">▼</button>
+                            <div class="custom-dropdown-list-source" style="display:none;">
+                                ${listHtml}
+                            </div>
+                        </div>
+                    `;
+                };
+
+                // Helper for plain editable cell (Checkpoint, Memo)
+                const renderEditableCell = (value, fieldName, index, placeholder = '', textAlign = 'left') => {
+                    return `
+                        <div contenteditable="false" class="text-formattable editable-content"
+                             style="text-align:${textAlign};"
+                             ondblclick="this.contentEditable=true;this.focus();"
+                             onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
+                             oninput="updateScheduleRowContent(this, ${index}, '${fieldName}')"
+                             onblur="this.contentEditable=false;saveScheduleToCustomer()"
+                             placeholder="${placeholder}">${value || ''}</div>
+                    `;
+                };
 
                 return `
     <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
@@ -8963,28 +9166,17 @@
 
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
-                <option value="">선택</option>
-                ${categoryOptions.split('><').join('>\n<').replace(`value="${row.category}"`, `value="${row.category}" selected`)}
-            </select>
+            ${renderEditableDropdown(row.category, categories, 'category', index, '선택')}
         </td>
 
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
-                ${row.category ? '' : 'disabled'}
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
-                <option value="">${row.category ? '선택' : '카테고리 먼저 선택'}</option>
-                ${processOptions}
-            </select>
+            ${renderEditableDropdown(row.name, uniqueProcessNames, 'name', index, '공정명')}
         </td>
 
         <!-- Checkpoint -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.checkPoint || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
+            ${renderEditableCell(row.checkPoint, 'checkPoint', index, '체크포인트')}
         </td>
 
         <td style="padding:5px; border:1px solid #d2d2d7;">
@@ -8997,18 +9189,15 @@
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
-        <!-- [수정] Manager Dropdown (Dynamic) -->
+        
+        <!-- Manager -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <select class="manager-select" onchange="updateScheduleRow(${index}, 'inCharge', this.value)"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
-                <option value="">담당자 선택</option>
-                ${currentManagerOptions}
-            </select>
+            ${renderEditableDropdown(row.inCharge, availableManagers, 'inCharge', index, '담당자')}
         </td>
+        
+        <!-- Memo -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
-            <input type="text" value="${row.memo || ''}" class="customer-field"
-                style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
-                onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
+            ${renderEditableCell(row.memo, 'memo', index, '비고', 'center')}
         </td>
     </tr>
                 `;
