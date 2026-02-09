@@ -1,5 +1,10 @@
 {
+    "cleanUrls": true,
     "rewrites": [
+        {
+            "source": "/guide",
+            "destination": "/guide.html"
+        },
         {
             "source": "/adminwonpro",
             "destination": "/adminwonpro.html"
