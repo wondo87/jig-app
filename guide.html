@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABOUT - 디자인 지그</title>
-    <meta name="description" content="디자인 지그는 감각이 아닌 기준으로 일합니다. 정밀한 기준으로 설계하는 공간.">
+    <title>고객 상담 가이드 - 디자인 지그</title>
+    <meta name="description" content="디자인 지그 고객 상담 가이드. 견적, 절차, A/S 기준을 확인하세요.">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.designjig.com/about">
-    <meta property="og:title" content="ABOUT - 디자인 지그">
-    <meta property="og:description" content="디자인 지그는 감각이 아닌 기준으로 일합니다.">
+    <meta property="og:url" content="https://www.designjig.com/guide">
+    <meta property="og:title" content="고객 상담 가이드 - 디자인 지그">
+    <meta property="og:description" content="정밀한 기준으로 설계하는 공간, 디자인 지그의 작업 방식과 기준을 소개합니다.">
     <meta property="og:image"
         content="https://res.cloudinary.com/designjig/image/upload/v1769232218/sfugtbfiuyi8ehvtkzcs.png">
     <meta property="og:site_name" content="디자인 지그">
@@ -22,23 +22,23 @@
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
     <link rel="manifest" href="/manifest.json">
 
-    <!-- 폰트 최적화 -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript>
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
-            rel="stylesheet">
-    </noscript>
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&family=Oswald:wght@700&display=swap"
+        rel="stylesheet">
 
-    <script src="js/protection.js"></script>
     <style>
-        /* 기본 스타일 및 헤더 (portfolio.html과 동일) */
+        :root {
+            --primary-color: #2563eb;
+            --text-dark: #1a1a1a;
+            --text-gray: #4b5563;
+            --bg-light: #f8f9fa;
+            --white: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -46,561 +46,816 @@
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: #1a1a1a;
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, sans-serif;
+            color: var(--text-dark);
+            background-color: var(--white);
             line-height: 1.6;
-            background: #f8f9fa;
-            /* 배경색 살짝 변경 (피그마 느낌) */
-        }
-
-        /* Header */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            padding: 1.5rem 3rem;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1a1a1a;
-            text-decoration: none;
-        }
-
-        .nav-list {
-            display: flex;
-            gap: 2.5rem;
-            list-style: none;
-        }
-
-        .nav-link {
-            color: #1a1a1a;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.3s ease;
-            letter-spacing: 0.05em;
-        }
-
-        .nav-link:hover {
-            color: #2563eb;
-            /* 피그마 블루 */
-        }
-
-        .nav-link.active {
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 4px;
-        }
-
-        .nav-link-cta {
-            color: #2563eb;
-        }
-
-        /* 모바일 메뉴 버튼 */
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.5rem;
-            z-index: 1001;
-        }
-
-        .mobile-menu-btn span {
-            display: block;
-            width: 24px;
-            height: 2px;
-            background: #1a1a1a;
-            margin: 5px 0;
-            transition: 0.3s;
-        }
-
-        .mobile-menu-btn.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .mobile-menu-btn.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .mobile-menu-btn.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(5px, -5px);
-        }
-
-        /* 모바일 네비게이션 오버레이 */
-        .mobile-nav {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.98);
-            z-index: 1000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2rem;
-        }
-
-        .mobile-nav.active {
-            display: flex;
-        }
-
-        .mobile-nav a {
-            font-size: 1.5rem;
-            color: #1a1a1a;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .mobile-nav a:hover {
-            color: #2563eb;
-        }
-
-        @media (max-width: 768px) {
-            .nav-list {
-                display: none;
-            }
-
-            .mobile-menu-btn {
-                display: block;
-            }
-        }
-
-        /* [MAIN CONTENT STYLES] - Figma Implementation */
-        .about-main {
-            padding-top: 100px;
-            /* 헤더 높이 확보 */
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding-bottom: 80px;
-            background: radial-gradient(circle at center, #ffffff 0%, #f0f4ff 100%);
-            /* 미묘한 블루 글로우 효과 */
-        }
-
-        .brand-title {
-            font-family: 'Oswald', 'Impact', sans-serif;
-            /* 강한 고딕 폰트 */
-            font-size: 4rem;
-            font-weight: 900;
-            letter-spacing: -0.02em;
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-            color: #000;
-            line-height: 1;
-        }
-
-        .brand-tagline {
-            font-size: 1.25rem;
-            color: #666;
-            margin-bottom: 3rem;
-            font-weight: 500;
-        }
-
-        .divider {
-            width: 60px;
-            height: 4px;
-            background: #2563eb;
-            /* Blue Accent */
-            margin: 0 auto 3rem;
-            border-radius: 2px;
-        }
-
-        .main-message {
-            font-size: 2rem;
-            font-weight: 400;
-            color: #1a1a1a;
-            margin-bottom: 5rem;
             word-break: keep-all;
-            padding: 0 1rem;
-            line-height: 1.4;
         }
 
-        .main-message strong {
-            font-weight: 800;
-            color: #2563eb;
-            /* Blue highlight */
+        .container {
+            max-width: 600px;
+            /* Mobile-focused width */
+            margin: 0 auto;
+            background: var(--white);
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
         }
 
-        /* Features Grid */
-        .features-section {
-            width: 100%;
-            max-width: 1200px;
-            padding: 0 2rem;
+        /* Section Styles */
+        section {
+            padding: 4rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+            text-align: center;
         }
 
         .section-title {
-            font-size: 1.1rem;
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            color: var(--text-gray);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* 1. Hero / Intro */
+        .hero {
+            padding-top: 6rem;
+            text-align: center;
+            background: radial-gradient(circle at center, #ffffff 0%, #eff6ff 100%);
+        }
+
+        .brand-logo {
+            font-family: 'Oswald', sans-serif;
+            font-size: 3rem;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 3rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            /* Reduced gap since cards are smaller */
-            margin-bottom: 4rem;
+        .hero p {
+            font-size: 1.125rem;
+            color: var(--text-gray);
+            font-weight: 500;
         }
 
-        .feature-card {
+        /* 2. Target Audience */
+        .target-card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .target-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
+            gap: 0.5rem;
+        }
+
+        .check-icon {
+            color: var(--primary-color);
+        }
+
+        /* 3. Philosophy */
+        .philosophy-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .highlight {
+            color: var(--primary-color);
+            position: relative;
+            display: inline-block;
+        }
+
+        .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: rgba(37, 99, 235, 0.1);
+            z-index: -1;
+        }
+
+        /* 4. Service / Cost */
+        .price-box {
+            border: 2px solid var(--primary-color);
             padding: 2rem;
-            /* background: white; */
-            /* 투명 배경 */
-            /* border-radius: 16px; */
-            /* box-shadow: 0 10px 30px rgba(0,0,0,0.05); */
-            transition: transform 0.3s;
+            text-align: center;
+            border-radius: 16px;
+            margin-top: 1.5rem;
         }
 
-        /* .feature-card:hover { transform: translateY(-5px); } */
+        .price-amount {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
 
-        .icon-box {
-            width: 80px;
-            height: 80px;
-            background: #eef4ff;
-            /* Light Blue Bg */
-            border-radius: 20px;
+        .service-list {
+            list-style: none;
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+
+        .service-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--border-color);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2563eb;
+            justify-content: space-between;
+        }
+
+        /* 5. Process */
+        .process-visual {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .process-visual::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .process-step {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .process-step::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid var(--white);
+        }
+
+        .process-step h4 {
+            font-size: 1.1rem;
             margin-bottom: 0.5rem;
         }
 
-        .icon-box svg {
-            width: 40px;
-            height: 40px;
-            stroke-width: 1.5;
-        }
-
-        .feature-text {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #444;
-            max-width: 240px;
-            line-height: 1.5;
-            word-break: keep-all;
-        }
-
-        /* Keywords / Chips */
-        .keywords-row {
-            display: flex;
-            justify-content: center;
+        /* 6. Extra Costs */
+        .warning-grid {
+            display: grid;
+            grid-template-columns: 1fr;
             gap: 1rem;
-            flex-wrap: wrap;
         }
 
-        .keyword-chip {
-            padding: 0.6rem 1.5rem;
-            background: white;
-            border: 1px solid #e5e7eb;
+        .warning-item {
+            background: #fff0f0;
+            padding: 1rem;
+            border-radius: 8px;
+            color: #991b1b;
+            font-size: 0.95rem;
+        }
+
+        .warning-item strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        /* 7. Warranty */
+        .warranty-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .warranty-table th,
+        .warranty-table td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .warranty-table th {
+            color: var(--text-gray);
+            font-weight: 500;
+            width: 40%;
+        }
+
+        .warranty-table td {
+            font-weight: 700;
+        }
+
+        /* Footer CTA */
+        .cta-footer {
+            background: var(--text-dark);
+            color: var(--white);
+            text-align: center;
+            padding: 4rem 1.5rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--primary-color);
+            color: var(--white);
+            font-weight: 700;
+            padding: 1rem 2rem;
             border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:active {
+            transform: scale(0.98);
+        }
+
+        .home-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
             font-size: 0.9rem;
             font-weight: 600;
-            color: #666;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s;
-        }
-
-        .keyword-chip:hover {
-            border-color: #2563eb;
-            color: #2563eb;
-            transform: translateY(-2px);
-        }
-
-
-        /* Footer (portfolio.html과 동일) */
-        .footer {
-            background: #f8f8f8;
-            color: #333;
-            padding: 30px 2rem;
-            text-align: center;
-            border-top: 1px solid #eee;
-        }
-
-        .footer-brand {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 0.2rem;
-            color: #1a1a1a;
-        }
-
-        .footer-tagline {
-            font-size: 0.7rem;
-            color: #666;
-            margin-bottom: 1rem;
-        }
-
-        .footer-info {
-            margin-bottom: 1rem;
-        }
-
-        .footer-info p {
-            color: #666;
-            font-size: 0.7rem;
-            margin: 0.2rem 0;
-        }
-
-        .footer-info a {
-            color: #666;
-            text-decoration: none;
-        }
-
-        .footer-info a:hover {
-            color: #2563eb;
-        }
-
-        .footer-sns {
-            display: flex;
-            gap: 0.8rem;
-            justify-content: center;
-            margin: 1rem 0;
-        }
-
-        .footer-sns a {
-            color: #666;
-            transition: color 0.3s, transform 0.3s;
-        }
-
-        .footer-sns a:hover {
-            color: #2563eb;
-            transform: translateY(-2px);
-        }
-
-        .footer-sns svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        .footer-copyright {
-            color: #999;
-            font-size: 0.65rem;
-            margin-top: 1rem;
-            border-top: 1px solid #eee;
-            padding-top: 1rem;
-        }
-
-        /* [MOBILE RESPONSIVE] */
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem 1.5rem;
-            }
-
-            .about-main {
-                padding-top: 80px;
-                padding-bottom: 60px;
-                justify-content: flex-start;
-                /* 모바일에서는 위에서부터 자연스럽게 */
-            }
-
-            .brand-title {
-                font-size: 2.5rem;
-                margin-top: 2rem;
-            }
-
-            .brand-tagline {
-                font-size: 1rem;
-                margin-bottom: 2rem;
-            }
-
-            .main-message {
-                font-size: 1.4rem;
-                margin-bottom: 3rem;
-                padding: 0 1.5rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-                /* 1열로 변경 */
-                gap: 3rem;
-                margin-bottom: 3rem;
-            }
-
-            .feature-card {
-                padding: 0;
-                gap: 1rem;
-            }
-
-            .keywords-row {
-                padding: 0 1rem;
-            }
-
-            .keyword-chip {
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
-            }
+            color: var(--text-dark);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
         }
     </style>
-    <!-- Oswald Font for Brand Title (Strong Gothic) -->
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <header class="header">
-        <div class="header-container">
-            <a href="/" class="logo">DESIGN JIG</a>
-            <nav>
-                <ul class="nav-list">
-                    <li><a href="/guide" class="nav-link active">ABOUT</a></li>
-                    <li><a href="/columns" class="nav-link">COLUMNS</a></li>
-                    <li><a href="/portfolio" class="nav-link">PORTFOLIO</a></li>
-                    <li><a href="/quote" class="nav-link nav-link-cta">ASK A QUOTE</a></li>
-                </ul>
-            </nav>
-            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </header>
+    <div class="container">
+        <a href="/" class="home-link">Home</a>
 
-    <!-- 모바일 네비게이션 -->
-    <nav class="mobile-nav" id="mobileNav">
-        <a href="/guide">ABOUT</a>
-        <a href="/columns">COLUMNS</a>
-        <a href="/portfolio">PORTFOLIO</a>
-        <a href="/quote" class="nav-cta">ASK A QUOTE</a>
-    </nav>
+        <!-- 1. Intro (고객 상담 가이드) -->
+        <section class="hero">
+            <div class="brand-logo">DESIGN JIG</div>
+            <p>정밀한 기준으로 설계하는 공간<br>제대로 된 시작을 위한 가이드</p>
+        </section>
 
-    <main class="about-main">
-        <h1 class="brand-title">DESIGN JIG</h1>
-        <p class="brand-tagline">정밀한 기준으로 설계하는 공간</p>
-
-        <div class="divider"></div>
-
-        <h2 class="main-message">
-            DESIGN JIG는<br>
-            <strong>감각이 아닌 기준</strong>으로 일합니다
-        </h2>
-
-        <section class="features-section">
-            <h3 class="section-title">JIG의 의미</h3>
-
-            <div class="features-grid">
-                <!-- 1. Accuracy -->
-                <div class="feature-card">
-                    <div class="icon-box">
-                        <!-- Target Icon -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <circle cx="12" cy="12" r="6"></circle>
-                            <circle cx="12" cy="12" r="2"></circle>
-                        </svg>
-                    </div>
-                    <p class="feature-text">정확도를 높이기 위한<br>기준점</p>
-                </div>
-
-                <!-- 2. Consistency -->
-                <div class="feature-card">
-                    <div class="icon-box">
-                        <!-- Refresh/Repeat Icon -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <path
-                                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
-                        </svg>
-                    </div>
-                    <p class="feature-text">동일한 품질을<br>반복 가능하게 만드는 도구</p>
-                </div>
-
-                <!-- 3. Trust -->
-                <div class="feature-card">
-                    <div class="icon-box">
-                        <!-- Shield Icon -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                    </div>
-                    <p class="feature-text">전문가가 신뢰하는<br>기준 장비</p>
-                </div>
+        <!-- 2. Target (이런 고객님과 함께하고 싶습니다) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">이런 고객님과 함께하고 싶습니다</h2>
+                <p class="section-subtitle">합리적이고 명확한 기준을 선호하시는 분</p>
             </div>
-
-            <div class="keywords-row">
-                <div class="keyword-chip">정밀함</div>
-                <div class="keyword-chip">기준</div>
-                <div class="keyword-chip">반복 가능성</div>
-                <div class="keyword-chip">시스템</div>
+            <div class="target-card">
+                <h3><span class="check-icon">✓</span> 합리적인 예산</h3>
+                <p>무조건 싼 견적이 아닌, 제값을 하는 품질을 원하시는 분</p>
+            </div>
+            <div class="target-card">
+                <h3><span class="check-icon">✓</span> 명확한 소통</h3>
+                <p>공사 과정과 자재에 대해 투명하게 알고 싶으신 분</p>
+            </div>
+            <div class="target-card">
+                <h3><span class="check-icon">✓</span> 실용주의</h3>
+                <p>화려한 겉모습보다 단열, 구조 등 기본기에 충실한 집</p>
             </div>
         </section>
-    </main>
 
-    <footer class="footer">
-        <h2 class="footer-brand">디자인지그</h2>
-        <p class="footer-tagline">기준으로 완성하는, 오래 가는 인테리어.</p>
-        <div class="footer-info">
-            <p>경기도 화성시 반송동 3-10</p>
-            <p>연락처: <a href="tel:010-8695-7013">010-8695-7013</a></p>
-            <p>이메일: <a href="mailto:designjig.office@gmail.com">designjig.office@gmail.com</a></p>
-        </div>
-        <div class="footer-sns">
-            <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
-                </svg>
-            </a>
-            <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
-                    <path d="M2 20h20v2H2z" />
-                </svg>
-            </a>
-            <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                </svg>
-            </a>
-        </div>
-        <p class="footer-copyright">Copyright Rimdesign interior. All Right Reserved.</p>
-    </footer>
+        <!-- 3. Site Management Philosophy (현장 관리 철학) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">현장 관리 철학</h2>
+                <p class="section-subtitle">책임지는 시공 관리</p>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                <div class="target-card">
+                    <div
+                        style="background: #1e293b; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.5rem;">
+                        <!-- Icon: User -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 700;">담당 소장 직접 관리</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-gray); word-break: keep-all;">책임자가 처음부터 끝까지 현장 관리
+                    </p>
+                </div>
+                <div class="target-card">
+                    <div
+                        style="background: #1e293b; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.5rem;">
+                        <!-- Icon: Clipboard -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 700;">데이터와 체크리스트 기반 점검</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-gray); word-break: keep-all;">감각이 아닌 기준으로 품질 확인</p>
+                </div>
+                <div class="target-card">
+                    <div
+                        style="background: #1e293b; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.5rem;">
+                        <!-- Icon: Alert/Shield -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 700;">하자 최소화</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-gray); word-break: keep-all;">문제 발생 전 사전 예방</p>
+                </div>
+                <div class="target-card">
+                    <div
+                        style="background: #1e293b; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.5rem;">
+                        <!-- Icon: Clock -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 700;">시간이 지나도 문제없는 공간</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-gray); word-break: keep-all;">단기적 마감이 아닌 장기적 내구성</p>
+                </div>
+            </div>
+            <!-- Dark Blue Box -->
+            <div
+                style="background: #1e293b; color: white; padding: 2rem; border-radius: 12px; text-align: center; margin-top: 2rem;">
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">세밀한 관리, 확실한 결과</h3>
+                <p style="font-size: 0.9rem; opacity: 0.8; word-break: keep-all;">체계적인 프로세스와 담당 소장의 책임감으로 처음부터 끝까지 함께합니다
+                </p>
+            </div>
+        </section>
 
-    <script>
-        // 모바일 메뉴 토글
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileNav = document.getElementById('mobileNav');
+        <!-- 4. Communication System (공사 중 소통 방식) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">공사 중 소통 방식</h2>
+                <p class="section-subtitle">투명한 커뮤니케이션</p>
+            </div>
 
-        if (mobileMenuBtn && mobileNav) {
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenuBtn.classList.toggle('active');
-                mobileNav.classList.toggle('active');
-                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
-            });
-        }
-    </script>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                <div class="target-card" style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div
+                        style="background: #eff6ff; color: var(--primary-color); padding: 0.8rem; border-radius: 12px; font-size: 1.5rem;">
+                        📷</div>
+                    <div>
+                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">매일 현장 사진 공유</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">카카오톡을 통해 공사 현장 사진을 매일 공유하여 진행 상황을 실시간으로
+                            확인하실 수 있습니다.</p>
+                    </div>
+                </div>
+
+                <div class="target-card" style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div
+                        style="background: #eff6ff; color: var(--primary-color); padding: 0.8rem; border-radius: 12px; font-size: 1.5rem;">
+                        💬</div>
+                    <div>
+                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">주요 공정 완료 시 브리핑</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">공정 단계별 완료 시점마다 진행 내용과 다음 일정을 상세히 안내드립니다.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="target-card" style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div
+                        style="background: #eff6ff; color: var(--primary-color); padding: 0.8rem; border-radius: 12px; font-size: 1.5rem;">
+                        📋</div>
+                    <div>
+                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">146개 공정 체크리스트 운영</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">공사 전·중·후 전 과정을 146개 항목의 체크리스트로 체계적으로
+                            관리합니다.</p>
+                    </div>
+                </div>
+
+                <div class="target-card" style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <div
+                        style="background: #eff6ff; color: var(--primary-color); padding: 0.8rem; border-radius: 12px; font-size: 1.5rem;">
+                        🔗</div>
+                    <div>
+                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">실시간 공정 확인 시스템</h3>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">별도로 안내되는 전용 URL을 통해 공정 진행 현황과 체크리스트 항목을
+                            언제든지 확인하실 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blue Footer Box -->
+            <div
+                style="background: #eff6ff; padding: 2rem; border-radius: 12px; text-align: center; margin-top: 1rem; border: 1px solid #bfdbfe;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">숨김 없는 투명한 공사</h3>
+                <p style="line-height: 1.6; color: var(--text-dark);">
+                    모든 공정은 기록되고 공유됩니다.<br>
+                    고객님이 모르는 공사는 없습니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 5. Space Philosophy (DESIGN JIG의 공간 철학) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">DESIGN JIG의 공간 철학</h2>
+                <p class="section-subtitle">우리가 공간을 대하는 방식</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Card 1 -->
+                <div class="target-card" style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="background: #eff6ff; padding: 1rem; border-radius: 12px; color: var(--primary-color); font-size: 1.5rem; flex-shrink: 0;">
+                        <!-- Icon: Layers -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                    </div>
+                    <div style="font-weight: 600; word-break: keep-all; font-size: 1rem;">화려한 마감보다 구조·단열·설비 같은 기본기 우선
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="target-card" style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="background: #eff6ff; padding: 1rem; border-radius: 12px; color: var(--primary-color); font-size: 1.5rem; flex-shrink: 0;">
+                        <!-- Icon: Chart -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                    </div>
+                    <div style="font-weight: 600; word-break: keep-all; font-size: 1rem;">수치와 데이터 기반의 설명 가능한 기준</div>
+                </div>
+                <!-- Card 3 -->
+                <div class="target-card" style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="background: #eff6ff; padding: 1rem; border-radius: 12px; color: var(--primary-color); font-size: 1.5rem; flex-shrink: 0;">
+                        <!-- Icon: File/Check -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <path d="M9 15l2 2 4-4" />
+                        </svg>
+                    </div>
+                    <div style="font-weight: 600; word-break: keep-all; font-size: 1rem;">공사 완료 후에도 '왜 이 선택을 했는지' 설명 가능
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="target-card" style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="background: #eff6ff; padding: 1rem; border-radius: 12px; color: var(--primary-color); font-size: 1.5rem; flex-shrink: 0;">
+                        <!-- Icon: Clock -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div>
+                    <div style="font-weight: 600; word-break: keep-all; font-size: 1rem;">유행이 아닌, 시간이 지나도 가치 있는 공간</div>
+                </div>
+            </div>
+            <!-- Bottom Slogan -->
+            <div
+                style="background: var(--primary-color); color: white; padding: 1.5rem; border-radius: 12px; text-align: center; margin-top: 1.5rem; font-weight: 700; font-size: 1.1rem; word-break: keep-all;">
+                "보이지 않는 부분까지 설명할 수 있는 공사를 지향합니다"
+            </div>
+        </section>
+
+        <!-- 6. Limited Construction (월 2~3건 한정 시공) -->
+        <section style="background: #f0f9ff;">
+            <div style="text-align: center;">
+                <div style="color: var(--primary-color); font-size: 3rem; margin-bottom: 1rem;">
+                    <!-- Icon: Calendar using emoji or svg? Using SVG for consistency -->
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="display: inline-block;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem;">월 2~3건 한정 시공</h2>
+                <p style="font-size: 1.1rem; color: var(--text-gray); word-break: keep-all; line-height: 1.6;">
+                    한 프로젝트에 집중하기 위해<br>
+                    매달 제한된 건수만 진행합니다
+                </p>
+            </div>
+        </section>
+
+        <!-- 7. Price Philosophy (견적에 대한 DESIGN JIG의 기준) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">견적에 대한<br>DESIGN JIG의 기준</h2>
+                <p class="section-subtitle">우리의 가격 철학</p>
+            </div>
+
+            <div class="target-card" style="text-align: center; font-weight: 500;">
+                <p style="margin-bottom: 0.5rem;">• 가격 경쟁을 하지 않음</p>
+                <p style="margin-bottom: 0.5rem;">• 저가 수주를 위한 품질 타협 없음</p>
+                <p style="margin-bottom: 0.5rem;">• 광고·중개 수수료 거품 배제</p>
+                <p>• 공정 품질과 현장 관리에 비용 집중</p>
+            </div>
+
+            <!-- Blue Slogan Box -->
+            <div
+                style="background: var(--primary-color); color: white; padding: 2rem; border-radius: 12px; text-align: center; margin: 2rem 0;">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">◎</div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; word-break: keep-all;">경쟁 상대는 다른 업체가 아니라 '시간'</h3>
+                <p style="font-size: 0.9rem; opacity: 0.9;">시간이 지나도 만족할 수 있는 공간을 만듭니다</p>
+            </div>
+
+            <!-- Do vs Don't -->
+            <div style="display: grid; gap: 1rem; grid-template-columns: 1fr 1fr;">
+                <div style="background: #fff5f5; padding: 1.5rem; border-radius: 12px; border: 1px solid #fed7d7;">
+                    <h4 style="color: #e53e3e; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>✕</span> 하지 않는 것
+                    </h4>
+                    <ul style="list-style: none; font-size: 0.9rem; color: #c53030; line-height: 1.6;">
+                        <li>무리한 저가 견적</li>
+                        <li>중개 수수료 포함</li>
+                        <li>품질 타협</li>
+                    </ul>
+                </div>
+                <div style="background: #f0fff4; padding: 1.5rem; border-radius: 12px; border: 1px solid #c6f6d5;">
+                    <h4 style="color: #38a169; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>✓</span> 집중하는 것
+                    </h4>
+                    <ul style="list-style: none; font-size: 0.9rem; color: #2f855a; line-height: 1.6;">
+                        <li>공정 품질 관리</li>
+                        <li>현장 전담 감리</li>
+                        <li>기본기 있는 시공</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Paid Estimation (유료 견적 안내) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">유료 견적 안내</h2>
+                <p class="section-subtitle">정확한 진단을 위한 필수 과정</p>
+            </div>
+
+            <p style="text-align: center; color: var(--text-gray); margin-bottom: 2rem;">
+                현장 실측과 디테일한 견적 산출을 위해<br>
+                최소한의 비용을 책정하고 있습니다.
+            </p>
+
+            <div class="price-box">
+                <p>실측·상세견적 진행비</p>
+                <div class="price-amount">300,000 원</div>
+                <p style="font-size: 0.9rem; color: var(--text-gray);">(부가세 별도)</p>
+            </div>
+
+            <ul class="service-list">
+                <li>
+                    <span>기본 상담</span>
+                    <span>무료</span>
+                </li>
+                <li>
+                    <span>현장실측 (동탄, 수원, 용인, 분당)</span>
+                    <span>포함</span>
+                </li>
+                <li>
+                    <span>공정별 상세 견적서</span>
+                    <span>포함</span>
+                </li>
+            </ul>
+
+            <!-- Process Shortcut (formerly Step 1-3) -->
+            <div style="margin-top: 2rem;">
+                <div class="process-visual">
+                    <div class="process-step">
+                        <h4>Step 1. 사전 준비 (2~4주)</h4>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">
+                            상담 및 계약<br>
+                            현장 실측 및 레이아웃 제안<br>
+                            자재 선정 및 3D 시뮬레이션
+                        </p>
+                    </div>
+                    <div class="process-step">
+                        <h4>Step 2. 공사 진행 (4~6주)</h4>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">
+                            철거 및 설비<br>
+                            목공, 전기, 타일 등 각 공정 진행<br>
+                            마감 및 입주 청소
+                        </p>
+                    </div>
+                    <div class="process-step">
+                        <h4>Step 3. 사후 관리</h4>
+                        <p style="font-size: 0.95rem; color: var(--text-gray);">
+                            프로젝트 완료 보고<br>
+                            1년간 하자 보수 및 유지 관리
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Extra Costs (추가 비용 발생 기준) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">추가 비용 발생 기준</h2>
+                <p class="section-subtitle">예상치 못한 현장 변수 4가지</p>
+            </div>
+            <div class="warning-grid">
+                <div class="warning-item">
+                    <strong>1. 구조/설비 결함</strong>
+                    누수, 배관 노후 등 철거 후 발견되는 중대 결함
+                </div>
+                <div class="warning-item">
+                    <strong>2. 단열 문제</strong>
+                    심각한 곰팡이, 결로 등으로 인한 단열 보강 필요 시
+                </div>
+                <div class="warning-item">
+                    <strong>3. 전기 안전</strong>
+                    노후 배선 교체, 승압 공사 등 안전상 필수적인 경우
+                </div>
+                <div class="warning-item">
+                    <strong>4. 고객 요청 변경</strong>
+                    자재 등급 상향, 디자인 변경, 공정 추가 등
+                </div>
+            </div>
+
+            <!-- Extra Cost Procedure Visual -->
+            <div
+                style="margin-top: 2rem; background-color: #eff6ff; padding: 2rem; border-radius: 16px; text-align: center;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 2rem; word-break: keep-all;">모든 추가 비용은 다음
+                    절차를 거칩니다</h3>
+
+                <div style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 1rem; font-size: 1.05rem; font-weight: 500;">
+                        <span style="font-size: 1.5rem; color: #2563eb;">📷</span>
+                        <span>현장 사진 공유</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; font-size: 1.05rem; font-weight: 500;">
+                        <span style="font-size: 1.5rem; color: #2563eb;">💬</span>
+                        <span>사전 설명</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; font-size: 1.05rem; font-weight: 500;">
+                        <span style="font-size: 1.5rem; color: #2563eb;">👍</span>
+                        <span>고객 동의 후 진행</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Separate Cost Items & Refund Policy -->
+            <div style="margin-top: 2rem;">
+                <div class="price-box" style="border-color: #ddd; background-color: #fcfcfc;">
+                    <div
+                        style="display: flex; align-items: start; gap: 0.5rem; justify-content: center; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 600;">$ 별도 비용 항목</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 1rem; margin-top: 0.5rem; text-align: left;">
+                        <div>
+                            <strong style="display: block; font-size: 1rem;">창호 정밀 실측</strong>
+                            <span style="font-size: 0.85rem; color: #666;">창호 교체 또는 시공이 필요한 경우 필수</span>
+                        </div>
+                        <div style="font-weight: 700; font-size: 1.1rem;">300,000원</div>
+                    </div>
+                </div>
+
+                <div
+                    style="margin-top: 1rem; background-color: #fff9e6; padding: 1.5rem; border-radius: 12px; border: 1px solid #ffeeba;">
+                    <h3
+                        style="font-size: 1.1rem; margin-bottom: 1rem; color: #b7791f; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>!</span> 환불 규정
+                    </h3>
+                    <ul style="list-style: none; padding: 0; font-size: 0.95rem; color: #744210;">
+                        <li style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
+                            <span>•</span> 현장 답사 및 상담은 무료로 진행됩니다.
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
+                            <span>•</span> 현장 실측이 완료된 이후에는 세부 견적서 수령 여부와 관계없이 환불이 불가합니다.
+                        </li>
+                        <li style="display: flex; gap: 0.5rem;">
+                            <span>•</span> 창호 정밀 실측이 진행된 경우 해당 비용은 환불되지 않습니다.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. A/S Policy (A/S 기준) -->
+        <section>
+            <div class="section-header">
+                <h2 class="section-title">A/S 기준</h2>
+            </div>
+            <table class="warranty-table">
+                <tr>
+                    <th>제품 하자</th>
+                    <td>1년</td>
+                </tr>
+                <tr>
+                    <th>시공 하자</th>
+                    <td>1년</td>
+                </tr>
+                <tr>
+                    <th>방수 공사</th>
+                    <td>2년</td>
+                </tr>
+            </table>
+            <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
+                * 고객 과실로 인한 파손은 유상 처리됩니다.
+            </p>
+        </section>
+
+        <!-- Footer / Contact -->
+        <footer class="cta-footer">
+            <h2 class="cta-brand"
+                style="font-family: 'Oswald', sans-serif; font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">
+                DESIGN JIG</h2>
+            <p style="opacity: 0.8; margin-bottom: 3rem;">기준으로 완성하는, 오래 가는 인테리어.</p>
+
+            <!-- Consultation Inquiry with Blue Phone Button -->
+            <p style="margin-bottom: 1rem; font-weight:600; font-size: 1.1rem;">상담 문의</p>
+            <a href="tel:010-4650-7013"
+                style="display: inline-block; background: #2563eb; color: white; font-weight: 800; padding: 1rem 3rem; border-radius: 50px; text-decoration: none; font-size: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                010-4650-7013
+            </a>
+
+            <div style="margin-bottom: 2.5rem;">
+                <!-- URL Shortcut Button -->
+                <a href="https://www.designjig.com/quote" class="cta-button"
+                    style="background: transparent; border: 1px solid rgba(255,255,255,0.3); font-size: 1rem; padding: 0.8rem 1.5rem;">견적
+                    문의 바로가기 &rarr;</a>
+            </div>
+
+            <!-- SNS Links (White) -->
+            <div class="footer-sns" style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+                <a href="https://blog.naver.com/sweet00700" target="_blank" title="네이버 블로그" aria-label="네이버 블로그"
+                    style="color: white;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+                    </svg>
+                </a>
+                <a href="https://cafe.naver.com/supermanhome" target="_blank" title="네이버 카페" aria-label="네이버 카페"
+                    style="color: white;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path
+                            d="M4 4h13v2h1c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-1v1c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V4zm13 7h1V8h-1v3zM6 6v8c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V6H6z" />
+                        <path d="M2 20h20v2H2z" />
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/design__jig" target="_blank" title="인스타그램" aria-label="인스타그램"
+                    style="color: white;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="24" height="24">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="https://www.youtube.com/@designjig" target="_blank" title="유튜브" aria-label="유튜브"
+                    style="color: white;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path
+                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Address & Info -->
+            <div class="footer-info"
+                style="margin-top: 3rem; margin-bottom: 2rem; opacity: 0.6; font-size: 0.85rem; line-height: 1.8;">
+                <p>경기도 화성시 반송동 3-10</p>
+                <p>연락처: <a href="tel:010-4650-7013" style="color: white; text-decoration: none;">010-4650-7013</a></p>
+                <p>이메일: <a href="mailto:designjig.office@gmail.com"
+                        style="color: white; text-decoration: none;">designjig.office@gmail.com</a></p>
+            </div>
+
+            <p class="footer-copyright" style="font-size: 0.8rem; opacity: 0.4;">
+                Copyright Design Jig. All Rights Reserved.
+            </p>
+        </footer>
+    </div>
 </body>
 
 </html>
