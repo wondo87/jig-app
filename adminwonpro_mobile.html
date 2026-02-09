@@ -3238,6 +3238,17 @@
             text-align: center;
         }
 
+        /* Hide spin buttons for input type number */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         #panel-cover input {
             border: none;
             background: transparent;
@@ -3418,8 +3429,22 @@
             cursor: pointer;
         }
 
+        .estimate-table .qty-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .estimate-table .unit-text {
+            font-size: 11px;
+            color: #86868b;
+            white-space: nowrap;
+        }
+
         .estimate-table .qty-input {
-            width: 45px;
+            width: 50px;
+            /* Increased from 45px */
             padding: 5px 3px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
@@ -13010,8 +13035,7 @@
                             <col class="col-div"><!-- 구분 -->
                             <col><!-- 품명 -->
                             <col><!-- 상세내용 -->
-                            <col><!-- 단위 -->
-                            <col><!-- 수량 -->
+                            <col><!-- 수량(단위) -->
                             <col><!-- 단가 -->
                             <col><!-- 금액 -->
                             <col><!-- 비고 -->
@@ -13022,7 +13046,6 @@
                                 <th class="col-div">구분</th>
                                 <th>품명</th>
                                 <th>상세내용</th>
-                                <th>단위</th>
                                 <th>수량</th>
                                 <th>단가</th>
                                 <th>금액</th>
@@ -13049,9 +13072,13 @@
                                     </div>
                                 </td>
                                 <td class="spec-cell">-</td>
-                                <td class="unit-cell">-</td>
-                                <td><input type="number" class="qty-input" value="1" min="0" hiding-spin-button
-                                        onchange="onEstQtyChange(this, '${cat.no}')"></td>
+                                <td class="qty-cell">
+                                    <div class="qty-wrapper">
+                                        <span class="unit-text">-</span>
+                                        <input type="number" class="qty-input" value="1" min="0" hiding-spin-button
+                                        onchange="onEstQtyChange(this, '${cat.no}')">
+                                    </div>
+                                </td>
                                 <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
                                 <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
                                 <td class="remark-cell"><input type="text" class="remark-input" placeholder="비고"></td>
@@ -13082,16 +13109,20 @@
         function removeEstimateRemarkColumns() {
             document.querySelectorAll('#panel-estimate .estimate-table').forEach(table => {
                 // colgroup 9번째 col 제거
+                // column index logic needs update because we removed one column
+                // Original: 9 cols. Now: 8 cols. Remark is last (index 7).
+
+                // colgroup 8번째 col 제거 (index 7)
                 const cols = table.querySelectorAll('colgroup col');
-                if (cols.length >= 9) cols[8].remove();
-                // thead th 9번째 제거
+                if (cols.length >= 8) cols[7].remove();
+                // thead th 8번째 제거
                 table.querySelectorAll('thead tr').forEach(tr => {
-                    const th9 = tr.children[8];
-                    if (th9) th9.remove();
+                    const th8 = tr.children[7];
+                    if (th8) th8.remove();
                 });
-                // tbody 각 행의 9번째 td 처리
+                // tbody 각 행의 8번째 td 처리
                 table.querySelectorAll('tbody tr').forEach(tr => {
-                    const td9 = tr.children[8];
+                    const td8 = tr.children[7];
                     if (!td9) return;
                     // remark-input 값 보존: hidden input으로 첫 번째 td에 이동
                     const remarkEl = td9.querySelector('.remark-input');
@@ -13186,8 +13217,11 @@
                 </div>
             </td>
             <td class="spec-cell">-</td>
-            <td class="unit-cell">-</td>
-            <td><input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
+            <td class="qty-cell">
+                <div class="qty-wrapper">
+                    <span class="unit-text">-</span>
+                    <input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
+                </div>
             </td>
             <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
             <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
@@ -13304,7 +13338,7 @@
             `;
 
                 // 단위/단가/금액은 아직 선택 안 됨
-                row.querySelector('.unit-cell').textContent = '-';
+                row.querySelector('.unit-text').textContent = '-';
                 row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
                 row.querySelector('.price-cell').dataset.price = '0';
                 row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
@@ -13328,7 +13362,7 @@
                 const amount = price * qty;
 
                 row.querySelector('.spec-cell').textContent = spec;
-                row.querySelector('.unit-cell').textContent = unit;
+                row.querySelector('.unit-text').textContent = unit;
                 row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
                 row.querySelector('.price-cell').dataset.price = price;
                 row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
@@ -13368,7 +13402,7 @@
             }
 
             if (!option || !option.value) {
-                row.querySelector('.unit-cell').textContent = '-';
+                row.querySelector('.unit-text').textContent = '-';
                 row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
                 row.querySelector('.price-cell').dataset.price = '0';
                 row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
@@ -13391,7 +13425,7 @@
 
             const amount = price * qty;
 
-            row.querySelector('.unit-cell').textContent = unit;
+            row.querySelector('.unit-text').textContent = unit;
             row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
             row.querySelector('.price-cell').dataset.price = price;
             row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
@@ -13427,7 +13461,7 @@
         // 행 값 초기화
         function resetEstRowValues(row) {
             row.querySelector('.spec-cell').textContent = '-';
-            row.querySelector('.unit-cell').textContent = '-';
+            row.querySelector('.unit-text').textContent = '-';
             row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
             row.querySelector('.price-cell').dataset.price = '0';
             row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
@@ -13603,7 +13637,7 @@
                         nameIndex: nameSelect?.value || '',
                         name: nameSelect?.selectedOptions[0]?.textContent || '',
                         spec: specValue,
-                        unit: row.querySelector('.unit-cell')?.textContent || '-',
+                        unit: row.querySelector('.unit-text')?.textContent || '-',
                         qty: qtyInput?.value || '1',
                         price: row.querySelector('.price-cell')?.dataset.price || '0',
                         remark: remarkValue
@@ -13758,9 +13792,13 @@
                 </div>
             </td>
             <td class="spec-cell">${specCellContent}</td>
-            <td class="unit-cell">${item.unit || '-'}</td>
-            <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
-                    onchange="onEstQtyChange(this, '${cat.no}')"></td>
+            <td class="qty-cell">
+                <div class="qty-wrapper">
+                    <span class="unit-text">${item.unit || '-'}</span>
+                    <input type="number" class="qty-input" value="${item.qty || 1}" min="0"
+                    onchange="onEstQtyChange(this, '${cat.no}')">
+                </div>
+            </td>
             <td class="price-cell" data-price="${price}"><div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
             <td class="amount-cell"><div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
