@@ -13129,9 +13129,9 @@
                 // tbody 각 행의 8번째 td 처리
                 table.querySelectorAll('tbody tr').forEach(tr => {
                     const td8 = tr.children[7];
-                    if (!td9) return;
+                    if (!td8) return;
                     // remark-input 값 보존: hidden input으로 첫 번째 td에 이동
-                    const remarkEl = td9.querySelector('.remark-input');
+                    const remarkEl = td8.querySelector('.remark-input');
                     const remarkVal = remarkEl ? remarkEl.value : '';
                     const hidden = document.createElement('input');
                     hidden.type = 'hidden';
@@ -13139,7 +13139,7 @@
                     hidden.value = remarkVal;
                     tr.children[0].appendChild(hidden);
                     // 비고 td 제거
-                    td9.remove();
+                    td8.remove();
                 });
             });
         }
