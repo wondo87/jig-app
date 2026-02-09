@@ -4426,6 +4426,14 @@
                 font-size: 9px !important;
             }
 
+            .memo-textarea {
+                overflow-y: hidden !important;
+                /* 스크롤바 숨김 */
+                resize: none !important;
+                /* 사용자 임의 조절 방지 */
+                min-height: 60px;
+            }
+
             /* 서명 영역 */
             .signature-card h4 {
                 font-size: 10px !important;
@@ -13055,7 +13063,7 @@
                 <div class="estimate-memo" id="estMemo${cat.no}">
                     <div style="color:#0071e3; font-weight:600; margin-bottom:6px;">📝 메모</div>
                     <textarea class="memo-textarea" id="estMemoText${cat.no}" placeholder="메모 입력..."
-                        oninput="autoResizeTextarea(this); saveEstimateData()"></textarea>
+                        oninput="autoResizeTextarea(this); saveEstimateData()" rows="1"></textarea>
                 </div>
                 <button class="add-row-btn no-print" onclick="addEstimateRowTo('${cat.no}')">+ 항목 추가</button>
             </div>
