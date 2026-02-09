@@ -3343,11 +3343,10 @@
             text-align: left;
         }
 
-        /* 수량 셀 (5번째 = 단위+수량 통합) - 중앙정렬 */
+        /* 단위 셀 (5번째) */
         .estimate-table th:nth-child(5),
         .estimate-table td:nth-child(5) {
-            width: 65px;
-            text-align: center;
+            width: 35px;
         }
 
         .estimate-table .unit-cell {
@@ -3356,16 +3355,17 @@
             text-align: center;
         }
 
-        /* 단가 셀 (6번째) */
+        /* 수량 셀 (6번째) - 중앙정렬 */
         .estimate-table th:nth-child(6),
         .estimate-table td:nth-child(6) {
-            width: 90px;
+            width: 50px;
+            text-align: center;
         }
 
-        /* 금액 셀 (7번째) */
+        /* 단가 셀 (7번째) */
         .estimate-table th:nth-child(7),
         .estimate-table td:nth-child(7) {
-            width: 100px;
+            width: 80px;
         }
 
         .estimate-table .price-cell {
@@ -3389,7 +3389,11 @@
             white-space: nowrap;
         }
 
-        /* 비고 제거 후 8번째는 없음 - 예비 */
+        /* 금액 셀 (8번째) */
+        .estimate-table th:nth-child(8),
+        .estimate-table td:nth-child(8) {
+            width: 100px;
+        }
 
 
 
@@ -4648,7 +4652,7 @@
                 table-layout: fixed !important;
             }
 
-            /* 숨길 컬럼: No(1), 구분(2) — 비고는 JS에서 DOM 제거됨 → 7컬럼 구조 */
+            /* 숨길 컬럼: No(1), 구분(2) — 비고는 템플릿에서 제거됨 → 8컬럼 구조 */
             #panel-estimate .estimate-table th:nth-child(1),
             #panel-estimate .estimate-table td:nth-child(1),
             #panel-estimate .estimate-table th:nth-child(2),
@@ -4656,38 +4660,45 @@
                 display: none !important;
             }
 
-            /* 보이는 컬럼 너비 (7컬럼 기준): 품명(3) 25%, 상세내용(4) 41%, 수량(5) 8%, 단가(6) 13%, 금액(7) 13% */
+            /* 보이는 컬럼: 품명(3) 20%, 상세내용(4) 38%, 단위(5) 6%, 수량(6) 6%, 단가(7) 15%, 금액(8) 15% */
             #panel-estimate .estimate-table th:nth-child(3),
             #panel-estimate .estimate-table td:nth-child(3) {
-                width: 25% !important;
+                width: 20% !important;
                 white-space: normal !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(4),
             #panel-estimate .estimate-table td:nth-child(4) {
-                width: 41% !important;
+                width: 38% !important;
                 white-space: normal !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(5),
             #panel-estimate .estimate-table td:nth-child(5) {
-                width: 8% !important;
+                width: 6% !important;
                 white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(6),
             #panel-estimate .estimate-table td:nth-child(6) {
-                width: 13% !important;
+                width: 6% !important;
                 white-space: nowrap !important;
                 min-width: 0 !important;
             }
 
             #panel-estimate .estimate-table th:nth-child(7),
             #panel-estimate .estimate-table td:nth-child(7) {
-                width: 13% !important;
+                width: 15% !important;
+                white-space: nowrap !important;
+                min-width: 0 !important;
+            }
+
+            #panel-estimate .estimate-table th:nth-child(8),
+            #panel-estimate .estimate-table td:nth-child(8) {
+                width: 15% !important;
                 white-space: nowrap !important;
                 min-width: 0 !important;
             }
@@ -4969,7 +4980,7 @@
                     display: none !important;
                 }
 
-                /* 숨길 컬럼: No(1), 구분(2) — 비고는 JS에서 DOM 제거됨 → 7컬럼 구조 */
+                /* 숨길 컬럼: No(1), 구분(2) — 비고는 템플릿에서 제거됨 → 8컬럼 구조 */
                 #panel-estimate .estimate-table th:nth-child(1),
                 #panel-estimate .estimate-table td:nth-child(1),
                 #panel-estimate .estimate-table th:nth-child(2),
@@ -4989,30 +5000,34 @@
                     box-sizing: border-box !important;
                 }
 
-                /* 보이는 컬럼 너비 (7컬럼 기준): 품명(3) 24%, 상세내용(4) 40%, 수량(5) 8%, 단가(6) 14%, 금액(7) 14% */
                 #panel-estimate .estimate-table th:nth-child(3),
                 #panel-estimate .estimate-table td:nth-child(3) {
-                    width: 24% !important;
+                    width: 20% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(4),
                 #panel-estimate .estimate-table td:nth-child(4) {
-                    width: 40% !important;
+                    width: 42% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(5),
                 #panel-estimate .estimate-table td:nth-child(5) {
-                    width: 8% !important;
+                    width: 6% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(6),
                 #panel-estimate .estimate-table td:nth-child(6) {
-                    width: 14% !important;
+                    width: 6% !important;
                 }
 
                 #panel-estimate .estimate-table th:nth-child(7),
                 #panel-estimate .estimate-table td:nth-child(7) {
-                    width: 14% !important;
+                    width: 13% !important;
+                }
+
+                #panel-estimate .estimate-table th:nth-child(8),
+                #panel-estimate .estimate-table td:nth-child(8) {
+                    width: 13% !important;
                 }
 
                 /* 셀 스타일 */
@@ -9441,8 +9456,6 @@
 
             if (tabId === 'estimate') {
                 updateEstimateFromCost();
-                // 비고 컬럼 DOM 제거
-                removeEstimateRemarkColumns();
                 // [모바일] colgroup 인라인 style 제거 + 테이블 레이아웃 강제 적용
                 if (window.innerWidth <= 768) {
                     setTimeout(() => {
@@ -9470,7 +9483,18 @@
                                 }
                             });
                         });
+                        // 메모 textarea 자동 높이 조절 (탭 전환 후 DOM이 보이는 상태에서)
+                        document.querySelectorAll('#panel-estimate .memo-textarea').forEach(ta => {
+                            if (ta.value) autoResizeTextarea(ta);
+                        });
                     }, 100);
+                } else {
+                    // 데스크톱에서도 메모 높이 재조정
+                    setTimeout(() => {
+                        document.querySelectorAll('#panel-estimate .memo-textarea').forEach(ta => {
+                            if (ta.value) autoResizeTextarea(ta);
+                        });
+                    }, 50);
                 }
             }
             if (tabId === 'schedule') loadScheduleForCustomer();
@@ -13027,9 +13051,10 @@
                             <col><!-- 품명 -->
                             <col><!-- 상세내용 -->
                             <col><!-- 수량(단위) -->
+                            <col><!-- 단위 -->
+                            <col><!-- 수량 -->
                             <col><!-- 단가 -->
                             <col><!-- 금액 -->
-                            <col><!-- 비고 -->
                         </colgroup>
                         <thead>
                             <tr>
@@ -13037,10 +13062,10 @@
                                 <th class="col-div">구분</th>
                                 <th>품명</th>
                                 <th>상세내용</th>
+                                <th>단위</th>
                                 <th>수량</th>
                                 <th>단가</th>
                                 <th>금액</th>
-                                <th>비고</th>
                             </tr>
                         </thead>
                         <tbody id="estBody${cat.no}">
@@ -13050,6 +13075,7 @@
                                          <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                                     </button>
                                     1
+                                    <input type="hidden" class="remark-input" value="">
                                 </td>
                                 <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                                         <option value="">선택</option>
@@ -13063,16 +13089,11 @@
                                     </div>
                                 </td>
                                 <td class="spec-cell">-</td>
-                                <td class="qty-cell">
-                                    <div class="qty-wrapper">
-                                        <span class="unit-text">-</span>
-                                        <input type="number" class="qty-input" value="1" min="0" hiding-spin-button
-                                        onchange="onEstQtyChange(this, '${cat.no}')">
-                                    </div>
-                                </td>
+                                <td class="unit-cell">-</td>
+                                <td><input type="number" class="qty-input" value="1" min="0" hiding-spin-button
+                                        onchange="onEstQtyChange(this, '${cat.no}')"></td>
                                 <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
                                 <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
-                                <td class="remark-cell"><input type="text" class="remark-input" placeholder="비고"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -13092,41 +13113,6 @@
             // 각 카테고리별 구분 옵션 초기화
             categories.forEach(cat => {
                 updateDivOptions(cat.no);
-            });
-            removeEstimateRemarkColumns();
-        }
-
-        // 견적서 비고 컬럼을 DOM에서 물리적으로 제거 (remark 값은 hidden input으로 보존)
-        function removeEstimateRemarkColumns() {
-            document.querySelectorAll('#panel-estimate .estimate-table').forEach(table => {
-                // 이미 비고 컬럼이 제거된 테이블은 건너뜀 (멱등성 보장)
-                if (table.dataset.remarkRemoved === 'true') return;
-
-                // colgroup 8번째 col 제거 (index 7 = 비고)
-                const cols = table.querySelectorAll('colgroup col');
-                if (cols.length >= 8) cols[7].remove();
-                // thead th 8번째 제거
-                table.querySelectorAll('thead tr').forEach(tr => {
-                    const th8 = tr.children[7];
-                    if (th8) th8.remove();
-                });
-                // tbody 각 행의 8번째 td 처리
-                table.querySelectorAll('tbody tr').forEach(tr => {
-                    const td8 = tr.children[7];
-                    if (!td8) return;
-                    // remark-input 값 보존: hidden input으로 첫 번째 td에 이동
-                    const remarkEl = td8.querySelector('.remark-input');
-                    const remarkVal = remarkEl ? remarkEl.value : '';
-                    const hidden = document.createElement('input');
-                    hidden.type = 'hidden';
-                    hidden.className = 'remark-input';
-                    hidden.value = remarkVal;
-                    tr.children[0].appendChild(hidden);
-                    // 비고 td 제거
-                    td8.remove();
-                });
-
-                table.dataset.remarkRemoved = 'true';
             });
         }
 
@@ -13196,6 +13182,7 @@
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                 </button>
                 ${rowCount}
+                <input type="hidden" class="remark-input" value="">
             </td>
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                     <option value="">선택</option>${divOptions}
@@ -13209,28 +13196,12 @@
                 </div>
             </td>
             <td class="spec-cell">-</td>
-            <td class="qty-cell">
-                <div class="qty-wrapper">
-                    <span class="unit-text">-</span>
-                    <input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')">
-                </div>
-            </td>
+            <td class="unit-cell">-</td>
+            <td><input type="number" class="qty-input" value="1" min="0" onchange="onEstQtyChange(this, '${catNo}')"></td>
             <td class="price-cell" data-price="0"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
             <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
-            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             `;
             tbody.appendChild(tr);
-            // 추가된 행의 비고 td 제거 (remark 값을 hidden으로 보존)
-            const lastTd = tr.lastElementChild;
-            if (lastTd) {
-                const remarkEl = lastTd.querySelector('.remark-input');
-                const hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.className = 'remark-input';
-                hidden.value = remarkEl ? remarkEl.value : '';
-                tr.children[0].appendChild(hidden);
-                lastTd.remove();
-            }
         }
 
         // 견적 행 삭제
@@ -13333,7 +13304,7 @@
             `;
 
                 // 단위/단가/금액은 아직 선택 안 됨
-                row.querySelector('.unit-text').textContent = '-';
+                row.querySelector('.unit-cell').textContent = '-';
                 row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
                 row.querySelector('.price-cell').dataset.price = '0';
                 row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
@@ -13357,7 +13328,7 @@
                 const amount = price * qty;
 
                 row.querySelector('.spec-cell').textContent = spec;
-                row.querySelector('.unit-text').textContent = unit;
+                row.querySelector('.unit-cell').textContent = unit;
                 row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
                 row.querySelector('.price-cell').dataset.price = price;
                 row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
@@ -13397,7 +13368,7 @@
             }
 
             if (!option || !option.value) {
-                row.querySelector('.unit-text').textContent = '-';
+                row.querySelector('.unit-cell').textContent = '-';
                 row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
                 row.querySelector('.price-cell').dataset.price = '0';
                 row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
@@ -13420,7 +13391,7 @@
 
             const amount = price * qty;
 
-            row.querySelector('.unit-text').textContent = unit;
+            row.querySelector('.unit-cell').textContent = unit;
             row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
             row.querySelector('.price-cell').dataset.price = price;
             row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
@@ -13456,7 +13427,7 @@
         // 행 값 초기화
         function resetEstRowValues(row) {
             row.querySelector('.spec-cell').textContent = '-';
-            row.querySelector('.unit-text').textContent = '-';
+            row.querySelector('.unit-cell').textContent = '-';
             row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
             row.querySelector('.price-cell').dataset.price = '0';
             row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
@@ -13632,7 +13603,7 @@
                         nameIndex: nameSelect?.value || '',
                         name: nameSelect?.selectedOptions[0]?.textContent || '',
                         spec: specValue,
-                        unit: row.querySelector('.unit-text')?.textContent || '-',
+                        unit: row.querySelector('.unit-cell')?.textContent || '-',
                         qty: qtyInput?.value || '1',
                         price: row.querySelector('.price-cell')?.dataset.price || '0',
                         remark: remarkValue
@@ -13774,6 +13745,7 @@
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                 </button>
                 ${i + 1}
+                <input type="hidden" class="remark-input" value="${(item.remark || '').replace(/"/g, '&quot;')}">
             </td>
             <td class="col-div"><select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                     <option value="">선택</option>${divOptions.replace(`"${item.div}"`, `"${item.div}" selected`)}
@@ -13787,16 +13759,11 @@
                 </div>
             </td>
             <td class="spec-cell">${specCellContent}</td>
-            <td class="qty-cell">
-                <div class="qty-wrapper">
-                    <span class="unit-text">${item.unit || '-'}</span>
-                    <input type="number" class="qty-input" value="${item.qty || 1}" min="0"
-                    onchange="onEstQtyChange(this, '${cat.no}')">
-                </div>
-            </td>
+            <td class="unit-cell">${item.unit || '-'}</td>
+            <td><input type="number" class="qty-input" value="${item.qty || 1}" min="0"
+                    onchange="onEstQtyChange(this, '${cat.no}')"></td>
             <td class="price-cell" data-price="${price}"><div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
             <td class="amount-cell"><div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
-            <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
                         `;
                         tbody.appendChild(tr);
                     });
@@ -13818,10 +13785,6 @@
             });
 
             updateEstimateTotals();
-            // 로드된 비고란 높이 자동 조절
-            document.querySelectorAll('.estimate-table .remark-input').forEach(textarea => {
-                autoResizeTextarea(textarea);
-            });
 
             syncCostMemoToEstimate(); // 원가관리표 메모를 견적서에 동기화
 
@@ -13830,7 +13793,6 @@
             if (authorSpan) {
                 authorSpan.textContent = currentData?.createdBy || '-';
             }
-            removeEstimateRemarkColumns();
         }
 
         // textarea 자동 높이 조절
