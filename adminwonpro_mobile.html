@@ -3433,19 +3433,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 2px;
+            gap: 1px;
         }
 
         .estimate-table .unit-text {
             font-size: 11px;
             color: #86868b;
             white-space: nowrap;
+            margin-right: 2px;
+            flex-shrink: 0;
         }
 
         .estimate-table .qty-input {
-            width: 50px;
-            /* Increased from 45px */
-            padding: 5px 3px;
+            width: 55px;
+            /* Increased from 50px */
+            padding: 5px 1px;
             border: 1px solid #d2d2d7;
             border-radius: 4px;
             font-size: var(--font-size-md);
@@ -9238,7 +9240,11 @@
 
         // 토스트 알림
         let toastTimer = null;
-        function showToast(message, type = 'success', duration = 1500) {
+        function showToast(message, type = 'success', duration = 3000) {
+            // [Modified] Filter logic: Only allow Error, Save (저장), Notion (노션)
+            if (type !== 'error' && !message.includes('저장') && !message.includes('노션')) {
+                return; // Ignore other toasts
+            }
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
