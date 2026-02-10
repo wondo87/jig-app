@@ -19551,8 +19551,10 @@
 
             // Render buttons
             // [Fix] Only show Customer Context buttons if a customer is selected
+            // 견적서, 체크리스트는 하단 네비게이션 사용 → 상단 헤더에서 숨김
             const buttonsToRender = buttons.filter(btn => {
-                if (['btn-checklist', 'btn-schedule', 'btn-customer-info', 'btn-cover', 'btn-estimate'].includes(btn.id)) {
+                if (['btn-estimate', 'btn-checklist'].includes(btn.id)) return false;
+                if (['btn-schedule', 'btn-customer-info', 'btn-cover'].includes(btn.id)) {
                     return !!currentCustomerId;
                 }
                 return true;
