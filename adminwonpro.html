@@ -4212,6 +4212,12 @@
             justify-content: center;
             font-size: 10px;
             padding: 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .editable-cell-wrapper:hover .dropdown-toggle-btn {
+            opacity: 1;
         }
 
         .dropdown-toggle-btn:hover {
@@ -5928,7 +5934,10 @@
                                         📥 유의사항 불러오기
                                     </button>
                                 </div>
-                                <ul id="scheduleGuidelinesList"
+                                <ul id="scheduleGuidelinesList" class="text-formattable" contenteditable="false"
+                                    ondblclick="this.contentEditable=true;this.focus();"
+                                    onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
+                                    onblur="this.contentEditable=false;"
                                     style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                     <li>공사는 기상, 자재 수급, 공정 간섭 등 현장 상황에 따라 일정이 일부 조정될 수 있습니다.</li>
                                     <li>고객님께서 직접 발주하신 자재 또는 시공 항목은 반드시 사전 협의 후 진행 부탁드립니다.<br>
@@ -9020,10 +9029,12 @@
             }
         });
 
-        // Close on scroll to prevent detachment
-        window.addEventListener('scroll', function () {
+        // Close on scroll to prevent detachment, but allow scrolling inside the dropdown itself
+        window.addEventListener('scroll', function (e) {
             const portal = document.querySelector('.custom-dropdown-portal');
-            if (portal) portal.remove();
+            if (portal && e.target !== portal && !portal.contains(e.target)) {
+                portal.remove();
+            }
         }, true);
 
         // [New] Dropdown Selection Helper
@@ -9124,7 +9135,11 @@
                             <div contenteditable="false" class="text-formattable editable-content" 
                                  style="text-align:center;"
                                  ondblclick="this.contentEditable=true;this.focus();"
-                                 onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
+                                 onkeydown="if(event.key==='Escape'){
+                                     this.contentEditable=false;
+                                     this.blur();
+                                     toggleScheduleDropdown(this.nextElementSibling, event);
+                                 }"
                                  oninput="updateScheduleRowContent(this, ${index}, '${fieldName}')"
                                  onblur="this.contentEditable=false;saveScheduleToCustomer()"
                                  placeholder="${placeholder}">${value || ''}</div>
