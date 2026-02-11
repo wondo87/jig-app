@@ -9134,6 +9134,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async function () {
+            const _initStart = performance.now();
             try {
                 // [DEBUG] Check Critical Configuration
                 if (typeof CUSTOMER_SYNC_URL === 'undefined') {
@@ -9141,8 +9142,44 @@
                 }
                 console.log('✅ [Init] Configuration Check Passed. URL:', CUSTOMER_SYNC_URL);
 
-                // UI 초기화
-                initLoginScreen();
+                // ======================================
+                // 0단계: 자동 로그인 즉시 실행 (네트워크 불필요)
+                // ======================================
+                let autoLoggedIn = false;
+                const trust = checkDeviceTrust();
+                if (trust) {
+                    const now = Date.now();
+                    const lastLogin = trust.lastLoginTime || 0;
+                    const autoLoginExpiry = lastLogin + (AUTO_LOGIN_DAYS * 24 * 60 * 60 * 1000);
+
+                    if (now < autoLoginExpiry) {
+                        // 즉시 자동 로그인 (localStorage만 사용 — 0ms)
+                        console.log('⚡ [FastLogin] 자동 로그인 즉시 실행');
+                        currentAdmin = {
+                            id: trust.adminId,
+                            role: trust.adminRole,
+                            name: trust.adminName
+                        };
+                        trust.lastLoginTime = now;
+                        localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trust));
+
+                        // 로그인 오버레이 즉시 숨김
+                        const loginOv = document.getElementById('loginOverlay');
+                        if (loginOv) loginOv.style.display = 'none';
+                        activateAdminMode();
+                        autoLoggedIn = true;
+                        console.log(`⚡ [FastLogin] ${trust.adminName || trust.adminId}님 즉시 로그인 완료 (${(performance.now() - _initStart).toFixed(0)}ms)`);
+                    }
+                }
+
+                // 자동 로그인 안 됐으면 기존 로그인 화면 표시
+                if (!autoLoggedIn) {
+                    initLoginScreen();
+                }
+
+                // ======================================
+                // 1단계: 필수 UI 초기화 (DOM 조작만, 네트워크 없음)
+                // ======================================
                 loadFontSize();
                 createCostCategories();
                 createEstimateCategories();
@@ -9152,7 +9189,6 @@
                 // 모바일에서는 기본 필터를 "공사중"으로 설정
                 if (window.innerWidth <= 768) {
                     currentStatusFilter = 'in_progress';
-                    // 필터 버튼 UI 업데이트
                     document.querySelectorAll('.filter-btn').forEach(btn => {
                         btn.classList.toggle('active', btn.dataset.status === 'in_progress');
                     });
@@ -9160,29 +9196,46 @@
 
                 updateCustomerList();
 
+                // ======================================
+                // 2단계: 데이터 동기화 (네트워크)
+                // ======================================
                 const statusEl = document.getElementById('initialSyncStatus');
                 const overlay = document.getElementById('initialSyncOverlay');
 
                 try {
-                    statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
+                    statusEl.textContent = autoLoggedIn ? '데이터 동기화 중...' : '고객 및 기초 데이터를 동기화 중...';
                     console.log('🚀 [Init] Starting initial sync...');
 
-                    // [Phase 2 Sync Gate] 필수 데이터 동기화 대기
                     const isMobile = window.innerWidth <= 768;
 
-                    // 모바일: 고객 + 체크리스트 + 관리자만 (원가/운영비 제외 - 속도 최적화)
+                    // 모바일: 고객 + 체크리스트만 우선 (관리자는 이미 로그인되었으면 후순위)
                     // 데스크톱: 전체 로드
-                    const syncTasks = isMobile ? [
-                        syncFromCloud(true),      // 고객
-                        syncChecklistFromCloud(), // 체크리스트
-                        syncAdminsFromCloud()     // 관리자
-                    ] : [
-                        syncFromCloud(true),      // 고객
-                        syncCostFromCloud(),      // 원가
-                        syncChecklistFromCloud(), // 체크리스트
-                        syncExpensesFromCloud(),  // 운영비
-                        syncAdminsFromCloud()     // 관리자
-                    ];
+                    let syncTasks, labels;
+                    if (isMobile) {
+                        if (autoLoggedIn) {
+                            // 자동 로그인 성공 시: 고객 데이터만 우선, 나머지 지연 로드
+                            syncTasks = [
+                                syncFromCloud(true)       // 고객 (필수)
+                            ];
+                            labels = ['고객'];
+                        } else {
+                            syncTasks = [
+                                syncFromCloud(true),      // 고객
+                                syncChecklistFromCloud(), // 체크리스트
+                                syncAdminsFromCloud()     // 관리자
+                            ];
+                            labels = ['고객', '체크리스트', '관리자'];
+                        }
+                    } else {
+                        syncTasks = [
+                            syncFromCloud(true),      // 고객
+                            syncCostFromCloud(),      // 원가
+                            syncChecklistFromCloud(), // 체크리스트
+                            syncExpensesFromCloud(),  // 운영비
+                            syncAdminsFromCloud()     // 관리자
+                        ];
+                        labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
+                    }
 
                     const results = await Promise.allSettled(syncTasks);
 
@@ -9190,16 +9243,33 @@
                     const allSuccess = results.every(r => r.status === 'fulfilled' && r.value === true);
 
                     if (allSuccess) {
-                        // 동기화 성공 시 클린업 실행
                         runPhase2Cleanup();
 
                         // 오버레이 제거
                         overlay.style.opacity = '0';
-                        setTimeout(() => overlay.style.display = 'none', 500);
-                        console.log(isMobile ? '✅ [Mobile] 동기화 완료 (원가/운영비 제외)' : '✅ 전역 데이터 동기화 완료');
+                        setTimeout(() => overlay.style.display = 'none', 300);
+
+                        const elapsed = (performance.now() - _initStart).toFixed(0);
+                        console.log(isMobile
+                            ? `✅ [Mobile] 동기화 완료 (${elapsed}ms)`
+                            : `✅ 전역 데이터 동기화 완료 (${elapsed}ms)`);
+
+                        // 자동 로그인이었으면 지연된 데이터 백그라운드 로드
+                        if (autoLoggedIn && isMobile) {
+                            setTimeout(() => {
+                                console.log('🔄 [Deferred] 백그라운드 데이터 로드 시작');
+                                Promise.allSettled([
+                                    syncChecklistFromCloud(),
+                                    syncAdminsFromCloud()
+                                ]).then(() => {
+                                    console.log('✅ [Deferred] 백그라운드 데이터 로드 완료');
+                                    if (typeof renderChecklistItems === 'function') {
+                                        renderChecklistItems();
+                                    }
+                                });
+                            }, 100);
+                        }
                     } else {
-                        // 어떤 데이터가 실패했는지 로깅
-                        const labels = isMobile ? ['고객', '체크리스트', '관리자'] : ['고객', '원가', '체크리스트', '운영비', '관리자'];
                         const failedDetails = results.map((r, i) => {
                             if (r.status !== 'fulfilled' || r.value !== true) {
                                 return `${labels[i]} (${r.reason || 'False returned'})`;
@@ -9223,7 +9293,7 @@
 
                 } catch (err) {
                     console.error('❌ 초기 동기화 트랜잭션 실패:', err);
-                    throw err; // Re-throw to outer catch
+                    throw err;
                 }
             } catch (err) {
                 console.error('❌ [CRITICAL] 초기화 중 치명적 오류:', err);
