@@ -5177,7 +5177,7 @@
                             </div>
 
                             <!-- 3. 원가/정산 요약 (클릭 시 원가관리표로 이동) -->
-                            <button class="dashboard-card card-cost-summary" onclick="showCustomerTab('cost')">
+                            <button class="dashboard-card card-cost-summary" onclick="showCustomerTab('stats')">
                                 <h3>💰 운영 원가 요약 <span
                                         style="font-size:12px; font-weight:400; opacity:0.7; margin-left:auto;">클릭하여 상세
                                         보기 →</span></h3>
@@ -11446,11 +11446,6 @@
             syncAllFields();
             updateLockUI(); // 잠금 상태 및 작성자 표시
 
-            // Main Dashboard Renewal: Default to Dashboard
-            showCustomerTab('dashboard');
-            if (typeof renderDashboard === 'function') renderDashboard();
-
-
             // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
             // Convert any stored dots (YYYY.MM.DD) to dashes.
             ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
@@ -11476,6 +11471,10 @@
                 document.getElementById('constructionStartInput').value = '';
                 document.getElementById('constructionEndInput').value = '';
             }
+
+            // Main Dashboard Renewal: Default to Dashboard
+            showCustomerTab('dashboard');
+            if (typeof renderDashboard === 'function') renderDashboard();
         }
 
         function updateConstructionPeriod() {
