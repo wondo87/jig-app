@@ -6939,7 +6939,8 @@
             let found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
 
             // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
-            if (!found) {
+            // 이미 초기 동기화가 완료된 경우 중복 호출 방지
+            if (!found && !adminsSyncedOnce) {
                 await syncAdminsFromCloud();
                 admins = getRegularAdmins();
                 found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
@@ -7872,6 +7873,7 @@
 
         // 일반관리자 목록 (Phase 2: In-memory 전용)
         let regularAdminsRows = [];
+        let adminsSyncedOnce = false; // 관리자 동기화 완료 여부 (performLogin 중복 호출 방지)
 
         function getRegularAdmins() {
 
@@ -7895,6 +7897,7 @@
                 const cloudAdmins = await response.json();
                 if (Array.isArray(cloudAdmins)) {
                     saveRegularAdmins(cloudAdmins);
+                    adminsSyncedOnce = true; // 동기화 완료 플래그
                     if (cloudAdmins.length > 0) {
                         console.log('✅ [Admin Sync] 관리자 동기화 완료:', cloudAdmins.length + '명');
                     } else {
@@ -8622,54 +8625,62 @@
             const overlay = document.getElementById('initialSyncOverlay');
 
             try {
-                statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
+                const syncStartTime = performance.now();
+                statusEl.textContent = '고객 및 관리자 데이터를 동기화 중...';
 
-                // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
-                const results = await Promise.allSettled([
+                // [Phase 1] 필수 데이터만 먼저 동기화 (고객 + 관리자)
+                const criticalResults = await Promise.allSettled([
                     syncFromCloud(true),      // 고객
-                    syncCostFromCloud(),      // 원가
-                    syncChecklistFromCloud(), // 체크리스트
-                    syncExpensesFromCloud(),  // 운영비
                     syncAdminsFromCloud()     // 관리자
                 ]);
 
-                // 필수 데이터 성공 여부 확인
-                // 필수 데이터 성공 여부 확인 (고객, 관리자만 필수로 변경 - 체크리스트 공백 허용)
-                const criticalSuccess = (results[0].status === 'fulfilled' && results[0].value === true) &&
-                    (results[4].status === 'fulfilled' && results[4].value === true);
+                const criticalSuccess = (criticalResults[0].status === 'fulfilled' && criticalResults[0].value === true) &&
+                    (criticalResults[1].status === 'fulfilled' && criticalResults[1].value === true);
 
                 if (criticalSuccess) {
-                    // 비필수 데이터 실패 로깅
-                    const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
-                    results.forEach((r, i) => {
-                        if (r.status !== 'fulfilled' || r.value !== true) {
-                            console.warn(`⚠️ [Non-Critical Sync Warning] ${labels[i]} 데이터 동기화 실패 (앱 실행 계속)`);
-                        }
-                    });
+                    const phase1Time = Math.round(performance.now() - syncStartTime);
+                    console.log(`✅ [Phase 1] 필수 동기화 완료 (${phase1Time}ms)`);
 
                     // 동기화 성공 시 클린업 실행
                     runPhase2Cleanup();
 
-                    // 오버레이 제거
+                    // 오버레이 즉시 제거 (빠른 전환)
                     overlay.style.opacity = '0';
-                    setTimeout(() => overlay.style.display = 'none', 500);
-                    console.log('✅ 전역 데이터 동기화 및 클린업 완료');
+                    setTimeout(() => overlay.style.display = 'none', 300);
+
+                    // [Phase 2] 비필수 데이터는 백그라운드 동기화 (UI 차단 없음)
+                    Promise.allSettled([
+                        syncCostFromCloud(),      // 원가
+                        syncChecklistFromCloud(), // 체크리스트
+                        syncExpensesFromCloud()   // 운영비
+                    ]).then(bgResults => {
+                        const phase2Time = Math.round(performance.now() - syncStartTime);
+                        const bgLabels = ['원가', '체크리스트', '운영비'];
+                        bgResults.forEach((r, i) => {
+                            if (r.status !== 'fulfilled' || r.value !== true) {
+                                console.warn(`⚠️ [Phase 2] ${bgLabels[i]} 백그라운드 동기화 실패 (앱 실행 계속)`);
+                            }
+                        });
+                        console.log(`✅ [Phase 2] 백그라운드 동기화 완료 (총 ${phase2Time}ms)`);
+
+                        // 체크리스트 렌더링 (백그라운드 동기화 후)
+                        if (typeof renderChecklistItems === 'function') {
+                            renderChecklistItems();
+                            if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
+                        }
+                    });
+
                 } else {
                     // 필수 데이터 실패 시 에러 처리
                     const failedLabels = [];
-                    if (results[0].status !== 'fulfilled' || results[0].value !== true) failedLabels.push('고객');
-                    if (results[4].status !== 'fulfilled' || results[4].value !== true) failedLabels.push('관리자');
+                    if (criticalResults[0].status !== 'fulfilled' || criticalResults[0].value !== true) failedLabels.push('고객');
+                    if (criticalResults[1].status !== 'fulfilled' || criticalResults[1].value !== true) failedLabels.push('관리자');
                     throw new Error(`${failedLabels.join(', ')} 필수 데이터 동기화에 실패했습니다.`);
                 }
 
-                // 부가 로직
+                // 부가 로직 (Phase 1 완료 후 즉시 실행)
                 fetchScheduleTemplate();
                 fetchSettlementMaster();
-
-                if (typeof renderChecklistItems === 'function') {
-                    renderChecklistItems();
-                    if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
-                }
 
             } catch (err) {
                 console.error('❌ 초기 동기화 실패:', err);
