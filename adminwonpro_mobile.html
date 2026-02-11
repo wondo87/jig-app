@@ -5,20 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>디자인지그 모바일 (최신 버전)</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=final_orig_file">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
-    <!-- Cache Version: dz-mobile-v1.2.0 (2026-02-10) -->
-    <script>
-        console.log('🚀 [System] Mobile Version: v1.2.0 (2026-02-10)');
-        // CORS mitigation for file:// protocol
-        if (window.location.protocol === 'file:') {
-            console.warn('⚠️ [System] Local file protocol detected. Some features (Manifest, SW) are disabled to prevent CORS errors.');
-        } else {
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = 'manifest.json?v=final_orig_file';
-            document.head.appendChild(link);
-        }
-    </script>
+    <!-- Cache Version: dz-admin-v15 (2026-01-22) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"
         onerror="console.warn('Cloudinary widget failed to load')"></script>
@@ -1270,7 +1264,6 @@
 
 
 
-
         /* 헤더 고정 및 너비 100% 보장 (상태바 대응) - 상단 통합됨 */
 
         /* 상세 화면: 불필요한 데스크톱 툴바 숨김 */
@@ -2040,9 +2033,7 @@
             border-color: #0071e3;
         }
 
-        .customer-list {
-            /* 전체 화면으로 표시되도록 스크롤 제거 */
-        }
+
 
         .customer-item {
             padding: 12px 14px;
@@ -3253,6 +3244,7 @@
 
         input[type=number] {
             -moz-appearance: textfield;
+            appearance: textfield;
         }
 
         #panel-cover input {
@@ -5765,7 +5757,7 @@
                                     <div class="info-item">
                                         <label>공사 담당자</label>
                                         <input type="text" class="customer-field" data-field="manager"
-                                            placeholder="원프로 소장 (010-7653-5386)" value="원프로 소장 (010-7653-5386)"
+                                            placeholder="원프로 소장 (010-4650-7013)" value="원프로 소장 (010-4650-7013)"
                                             oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
@@ -6360,7 +6352,7 @@
                                 </button>
 
                                 <button class="restore-btn no-print"
-                                    onclick="syncChecklistFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
+                                    onclick="syncFromCloud().then(() => { if (currentCustomerId) { selectCustomer(currentCustomerId); renderChecklistItems(); } })"
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
@@ -6369,7 +6361,7 @@
                                 <button class="sync-sch-btn no-print" onclick="syncChecklistFromSchedule()"
                                     style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="일정표에 있는 공정을 체크리스트에 자동 추가합니다">
-                                    <span>📅 일정표 연동</span>
+                                    📅 일정표 연동
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
                                     style="background: #000; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
@@ -6579,7 +6571,7 @@
                                             <input type="text" class="sch-input" id="schManagerInput"
                                                 data-field="manager"
                                                 style="width:100%; border:none; outline:none; text-align:center; background:transparent;"
-                                                value="원프로 소장 (010-7653-5386)">
+                                                value="원프로 소장 (010-4650-7013)">
                                         </td>
                                         <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">공사기간(시작~종료)
                                         </th>
@@ -6953,7 +6945,7 @@
                                     style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                     <li>기본 A/S 기간은 공사 완료일로부터 12개월입니다.</li>
                                     <li>자재 A/S는 자재 입고일 기준 1년이며, 제조사 기준이 우선 적용됩니다.</li>
-                                    <li>화장실 누수 A/S는 잔금일로부터 24개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
+                                    <li>화장실 누수 A/S는 공사 완료일로부터 최대 30개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
                                     <li>사용 부주의, 자연 노후, 고객 직접 발주 자재로 인한 하자는 A/S 대상에서 제외됩니다.</li>
                                     <li>A/S 접수는 관련 이미지 및 동영상을 반드시 첨부해 주셔야 원활하게 진행됩니다.</li>
                                     <li>A/S 기간 만료 후에는 사전에 안내드린 고객센터를 통해 접수해 주셔야 합니다.</li>
@@ -9678,7 +9670,7 @@
                 const managerInput = document.getElementById('schManagerInput');
                 if (managerInput) {
                     if (!currentData.manager || currentData.manager.trim() === '') {
-                        currentData.manager = '원프로 소장 (010-7653-5386)';
+                        currentData.manager = '원프로 소장 (010-4650-7013)';
                     }
                     managerInput.value = currentData.manager;
 
@@ -9918,7 +9910,6 @@
         <!-- Category -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="category-select" onchange="onScheduleCategoryChange(${index}, this.value)"
-                onmousedown="event.stopPropagation();"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
                 <option value="">선택</option>
                 ${categoryOptions.split('><').join('>\n<').replace(`value="${row.category}"`, `value="${row.category}" selected`)}
@@ -9928,7 +9919,6 @@
         <!-- Process Name -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="process-select" onchange="onScheduleProcessChange(${index}, this.value)"
-                onmousedown="event.stopPropagation();"
                 ${row.category ? '' : 'disabled'}
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
                 <option value="">${row.category ? '선택' : '카테고리 먼저 선택'}</option>
@@ -9939,27 +9929,23 @@
         <!-- Checkpoint -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.checkPoint || ''}" class="customer-field"
-                onmousedown="event.stopPropagation();"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'checkPoint', this.value)" placeholder="체크포인트">
         </td>
 
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="date" value="${row.start || ''}" class="customer-field"
-                onmousedown="event.stopPropagation();"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="handleStartDateChange(${index}, this.value)">
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="date" value="${row.end || ''}" class="customer-field"
-                onmousedown="event.stopPropagation();"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;"
                 onchange="updateScheduleRow(${index}, 'end', this.value)">
         </td>
         <!-- [수정] Manager Dropdown (Dynamic) -->
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <select class="manager-select" onchange="updateScheduleRow(${index}, 'inCharge', this.value)"
-                onmousedown="event.stopPropagation();"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px; text-align:center;">
                 <option value="">담당자 선택</option>
                 ${currentManagerOptions}
@@ -9967,7 +9953,6 @@
         </td>
         <td style="padding:5px; border:1px solid #d2d2d7;">
             <input type="text" value="${row.memo || ''}" class="customer-field"
-                onmousedown="event.stopPropagation();"
                 style="width:100%; border:none; background:transparent; font-size:12px; padding:5px;"
                 onchange="updateScheduleRow(${index}, 'memo', this.value)" placeholder="비고 항목">
         </td>
@@ -10275,7 +10260,7 @@
                     checkPoint: '',
                     start: '',
                     end: '',
-                    inCharge: currentData.manager || '원프로 소장 (010-7653-5386)',
+                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
                     memo: ''
                 };
             } else {
@@ -10286,7 +10271,7 @@
 
                 if (template) {
                     // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
-                    let inChargeValue = '원프로 소장 (010-7653-5386)';
+                    let inChargeValue = '원프로 소장 (010-4650-7013)';
                     if (template.inCharge && template.inCharge.trim()) {
                         inChargeValue = template.inCharge;
                     } else if (currentData.manager && currentData.manager.trim()) {
@@ -10352,6 +10337,8 @@
         function saveScheduleToCustomer() {
             currentData.schedules = [...scheduleRows];
             syncAllFields();
+            if (typeof renderChecklistItems === 'function') renderChecklistItems();
+            if (typeof saveCustomers === 'function') saveCustomers();
         }
 
         // [New] A/S List Logic
@@ -10376,23 +10363,21 @@
             // Let's call syncAllFields() just in case OR just handle the specific ID for bathroom leak.
             // We'll rely on syncAllFields() for the standard ones, but calculate bathroom leak.
 
-            // Calculate Bathroom Leak A/S (Balance Payment Date + 24 months)
+            // Calculate Bathroom Leak A/S (General A/S + 18 months)
             const leakEl = document.getElementById('bathroomLeakWarranty');
             if (leakEl) {
-                // Priority: Balance Payment Date (finalPaymentDate), fallback to asEndDate
-                let endDate = currentData.finalPaymentDate || currentData.asEndDate || '';
-                let addMonths = currentData.finalPaymentDate ? 24 : 12; // If using asEndDate (which is already +12m), add another 12m to reach 24m total
-
-                // If no date found yet, try to parse from warrantyPeriod string
+                let endDate = currentData.asEndDate || '';
+                // If no asEndDate, try to parse from warrantyPeriod string if it ends with date
                 if (!endDate && currentData.warrantyPeriod) {
+                    // Try to match date pattern like "~YY.MM.DD" or "~YYYY.MM.DD" or "YYYY.MM.DD"
                     const matches = currentData.warrantyPeriod.match(/(\d{2,4})[-\.](\d{2})[-\.](\d{2})$/);
                     if (matches) {
+                        // Reconstruct full date
                         let year = parseInt(matches[1]);
                         if (year < 100) year += 2000;
                         const month = matches[2];
                         const day = matches[3];
                         endDate = `${year}-${month}-${day}`;
-                        addMonths = 12; // parsed date from warrantyPeriod is usually asEndDate
                     }
                 }
 
@@ -10400,8 +10385,8 @@
                     try {
                         const date = new Date(endDate);
                         if (!isNaN(date.getTime())) {
-                            // Add required months to reach 24 months total from start
-                            date.setMonth(date.getMonth() + addMonths);
+                            // Add 18 months
+                            date.setMonth(date.getMonth() + 18);
 
                             // Format
                             const yy = String(date.getFullYear()).slice(-2);
@@ -11762,7 +11747,7 @@
                     profitRate: '15%',
                     createdBy: currentAdmin?.id || 'unknown',
                     isLocked: false,
-                    manager: '원프로 소장 (010-7653-5386)'
+                    manager: '원프로 소장 (010-4650-7013)'
                 };
 
                 // 3. Save to Cloud Immediately (Source of Truth)
@@ -11901,7 +11886,7 @@
 
 
             if (!customer.manager || customer.manager.trim() === '') {
-                customer.manager = '원프로 소장 (010-7653-5386)';
+                customer.manager = '원프로 소장 (010-4650-7013)';
             }
 
 
@@ -16074,7 +16059,7 @@
                 checkPoint: step.checkPoint || '',
                 start: '', // Date is usually empty in template
                 end: '',
-                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-7653-5386)',
+                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
                 memo: step.memo || ''
             }));
 
@@ -16246,6 +16231,81 @@
         // Phase 2: 업무 데이터 로컬 저장 금지
 
         // 체크리스트 데이터 불러오기 (현재 고객의 저장된 데이터만)
+        /** [Sync] 일정표 데이터를 기반으로 체크리스트 항목을 자동 선택/해제 */
+        function syncChecklistFromSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
+
+            // checklistMasterData 확인
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                showToast('데이터가 없습니다. 먼저 저장내용불러오기를 해주세요.', 'error');
+                return;
+            }
+
+            // 일정표 데이터 확인
+            if (!scheduleRows || scheduleRows.length === 0) {
+                if (!confirm('일정표 데이터가 비어있습니다. 체크리스트를 초기화하시겠습니까?')) return;
+            } else {
+                if (!confirm('체크리스트를 일정표 기준으로 재설정합니다. 계속하시겠습니까?')) return;
+            }
+
+            const currentChecklistData = currentData.checklistData || {};
+            const newChecklistData = {};
+
+            const activeKeywords = new Set();
+            scheduleRows.forEach(row => {
+                if (row.name && row.name.trim()) activeKeywords.add(row.name.trim());
+                if (row.category && row.category.trim()) activeKeywords.add(row.category.trim());
+            });
+
+            let addedCount = 0;
+            let removedCount = 0;
+
+            checklistMasterData.forEach(item => {
+                const itemNo = String(item.번호);
+                const category = (item.카테고리 || '').trim();
+                const itemName = (item.항목 || '').trim();
+
+                let isMatch = false;
+                if (activeKeywords.size > 0) {
+                    for (const keyword of activeKeywords) {
+                        if (category && (category.includes(keyword) || keyword.includes(category)) && category.length > 0) { isMatch = true; break; }
+                        if (itemName && (itemName.includes(keyword) || keyword.includes(itemName)) && itemName.length > 0) { isMatch = true; break; }
+                    }
+                }
+
+                if (isMatch) {
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        newChecklistData[itemNo] = currentChecklistData[itemNo];
+                    } else {
+                        newChecklistData[itemNo] = false;
+                        addedCount++;
+                    }
+                } else {
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        removedCount++;
+                    }
+                }
+            });
+
+            currentData.checklistData = newChecklistData;
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex !== -1) {
+                customers[customerIndex].checklistData = JSON.parse(JSON.stringify(newChecklistData));
+            }
+
+            saveCustomers();
+            renderChecklistItems();
+
+            if (addedCount > 0 || removedCount > 0) {
+                showToast(`일정표 연동 완료: ${addedCount}개 추가, ${removedCount}개 제외됨`, 'success');
+            } else {
+                showToast('변화가 없습니다.', 'info');
+            }
+        }
+
         async function syncChecklistFromCloud() {
             const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
             const originalHTML = btn ? btn.innerHTML : '🔄 불러오기';
@@ -16390,78 +16450,6 @@
 
             // saveCustomers()를 호출하여 전체 고객 데이터 저장 (checklistData 포함)
             await saveCustomers();
-        }
-
-        /**
-         * [New] 일정표 데이터를 기반으로 체크리스트를 엄격하게 동기화합니다. (Strict Sync)
-         */
-        function syncChecklistFromSchedule() {
-            if (!currentData || !currentData.customerId) {
-                showToast('고객을 먼저 선택하세요', 'error');
-                return;
-            }
-
-            if (!checklistMasterData || checklistMasterData.length === 0) {
-                showToast('체크리스트 데이터가 없어서 연동할 수 없습니다. 먼저 불러오기를 해주세요.', 'error');
-                return;
-            }
-
-            if (!scheduleRows || scheduleRows.length === 0) {
-                if (!confirm('일정표 데이터가 비어있습니다. 체크리스트를 초기화하시겠습니까?')) return;
-            } else {
-                if (!confirm('체크리스트를 일정표 기준으로 재설정합니다. 일정표에 없는 항목은 삭제됩니다. 계속하시겠습니까?')) return;
-            }
-
-            const currentChecklistData = currentData.checklistData || {};
-            const newChecklistData = {};
-
-            const activeKeywords = new Set();
-            scheduleRows.forEach(row => {
-                if (row.name && row.name.trim()) activeKeywords.add(row.name.trim());
-                if (row.category && row.category.trim()) activeKeywords.add(row.category.trim());
-            });
-
-            let keptCount = 0;
-            let addedCount = 0;
-            let removedCount = 0;
-
-            checklistMasterData.forEach(item => {
-                const itemNo = String(item.번호);
-                const category = (item.카테고리 || '').trim();
-                const itemName = (item.항목명 || item.항목 || '').trim();
-
-                let isMatch = false;
-                if (activeKeywords.size > 0) {
-                    for (const keyword of activeKeywords) {
-                        if (category && category.includes(keyword)) { isMatch = true; break; }
-                        if (itemName && itemName.includes(keyword)) { isMatch = true; break; }
-                    }
-                }
-
-                if (isMatch) {
-                    if (currentChecklistData.hasOwnProperty(itemNo)) {
-                        newChecklistData[itemNo] = currentChecklistData[itemNo];
-                        keptCount++;
-                    } else {
-                        newChecklistData[itemNo] = false;
-                        addedCount++;
-                    }
-                } else {
-                    if (currentChecklistData.hasOwnProperty(itemNo)) {
-                        removedCount++;
-                    }
-                }
-            });
-
-            currentData.checklistData = newChecklistData;
-            saveCustomers();
-            renderChecklistItems();
-
-            if (addedCount > 0 || removedCount > 0) {
-                showToast(`연동 완료! (추가: ${addedCount}, 삭제: ${removedCount}, 유지: ${keptCount})`, 'success');
-            } else {
-                showToast(`변경 사항이 없습니다. (유지: ${keptCount})`, 'info');
-            }
         }
 
 
@@ -16749,8 +16737,61 @@
                                 userRemarks = undefined;
                             }
 
-                            // Date Logic from Schedule (Linked by Name)
-                            const relatedSchedule = (typeof scheduleRows !== 'undefined') ? scheduleRows.find(s => s.name === item.항목) : null;
+                            // [Sync] 카테고리 + 같은 단어 기반 날짜 연동
+                            const itemName = (item.항목 || '').trim();
+                            const itemCategory = (item.카테고리 || '').trim();
+
+                            const relatedSchedule = (() => {
+                                // scheduleRows 또는 currentData.schedules fallback
+                                let rows = (typeof scheduleRows !== 'undefined' && scheduleRows.length > 0) ? scheduleRows : [];
+                                if (rows.length === 0 && typeof currentData !== 'undefined' && currentData && currentData.schedules) {
+                                    rows = currentData.schedules;
+                                }
+                                if (rows.length === 0 || !itemCategory) return null;
+
+                                // 1단계: 같은 카테고리 필터
+                                const sameCategoryRows = rows.filter(s => {
+                                    const sCategory = (s.category || '').trim();
+                                    return sCategory && sCategory === itemCategory;
+                                });
+                                if (sameCategoryRows.length === 0) return null;
+
+                                // 2단계: 같은 단어가 있는 항목 찾기 (세부공정명 + 체크포인트)
+                                const itemWords = itemName.split(/[\s,·\/\-()]+/).filter(w => w.length > 1);
+                                let bestMatch = null;
+                                let bestCount = 0;
+
+                                sameCategoryRows.forEach(s => {
+                                    const sName = (s.name || '').trim();
+                                    const sCP = (s.checkPoint || '').trim();
+
+                                    // 정확히 일치하면 바로 선택
+                                    if (sName === itemName) { bestMatch = s; bestCount = 999; return; }
+
+                                    // 세부공정명 + 체크포인트에서 단어 추출
+                                    const sWords = (sName + ' ' + sCP).split(/[\s,·\/\-()]+/).filter(w => w.length > 1);
+
+                                    // 같은 단어 개수 세기
+                                    let matchCount = 0;
+                                    itemWords.forEach(iw => {
+                                        if (sWords.some(sw => sw === iw || sw.includes(iw) || iw.includes(sw))) matchCount++;
+                                    });
+
+                                    if (matchCount > bestCount) {
+                                        bestCount = matchCount;
+                                        bestMatch = s;
+                                    }
+                                });
+
+                                // 같은 단어가 1개라도 있으면 연동
+                                if (bestMatch && bestCount > 0) return bestMatch;
+
+                                // 카테고리에 항목 1개뿐이면 자동 매칭
+                                if (sameCategoryRows.length === 1) return sameCategoryRows[0];
+
+                                return null;
+                            })();
+
                             const dateStr = relatedSchedule ? formatMobileDateRange(relatedSchedule.start, relatedSchedule.end) : '';
                             const catColor = getCategoryColor(item.카테고리);
 
@@ -16784,8 +16825,8 @@
                                         ${checkBtn}
                                         <div class="mobile-card-title">${titleCheck}${item.항목}</div>
                                     </div>
-                                    <div class="mobile-date-text">${dateStr}</div>
                                 </div>
+                                ${dateStr ? `<div style="margin-left:34px; margin-bottom:4px; font-size:12px; color:#007aff; font-weight:500;">📅 ${dateStr}</div>` : ''}
 
                                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; margin-left: 34px;">
                                     <div class="mobile-chip chip-category" style="background:${catColor.bg}; color:${catColor.text};">${item.카테고리 || '미분류'}</div>
@@ -19072,7 +19113,6 @@
     </script>
     <script>
         // PWA Service Worker 등록
-        // PWA Service Worker 등록
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
@@ -19180,7 +19220,7 @@
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <span>스케줄</span>
+            <span>공사일정</span>
         </button>
         <button class="success" onclick="if(typeof syncChecklistToCloud==='function')syncChecklistToCloud();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -19646,11 +19686,8 @@
             // [Fix] Only show Customer Context buttons if a customer is selected
             // 견적서, 체크리스트는 하단 네비게이션 사용 → 상단 헤더에서 숨김
             const buttonsToRender = buttons.filter(btn => {
-                // [Modified] Swap: Schedule is now in bottom nav, Estimate is in header
-                if (['btn-schedule', 'btn-checklist'].includes(btn.id)) return false;
-
-                // Estimate need a customer selected to be shown (moved from hidden list)
-                if (['btn-estimate', 'btn-customer-info', 'btn-cover'].includes(btn.id)) {
+                if (['btn-estimate', 'btn-checklist'].includes(btn.id)) return false;
+                if (['btn-schedule', 'btn-customer-info', 'btn-cover'].includes(btn.id)) {
                     return !!currentCustomerId;
                 }
                 return true;
