@@ -1651,6 +1651,212 @@
             grid-template-columns: repeat(3, 1fr);
         }
 
+        /* [NEW] Cost Summary Block Design */
+        .cost-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .cost-block {
+            background: #2c2c2e;
+            /* Darker block within dark card */
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .cost-block:hover {
+            transform: translateY(-2px);
+            background: #3a3a3c;
+        }
+
+        .cost-block-title {
+            font-size: 14px;
+            color: #a1a1a6;
+            /* Lighter gray for better contrast */
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .cost-block-value {
+            font-size: 26px;
+            /* Larger font */
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .cost-block-sub {
+            font-size: 13px;
+            /* Larger sub-text */
+            color: #b0b0b5;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        /* New Per Pyeong Design */
+        .cost-block-badge {
+            margin-top: auto;
+            /* Push to bottom */
+            font-size: 14px;
+            font-weight: 600;
+            color: #64d2ff;
+            /* Brighter blue */
+            background: transparent;
+            padding: 4px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            padding-top: 12px;
+        }
+
+        .cost-block-badge.profit {
+            color: #30d158;
+            background: transparent;
+        }
+
+        .cost-block-badge.loss {
+            color: #ff453a;
+            background: transparent;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cost-summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ========================= */
+        /* 공정별 수익금 (Profit Analysis) */
+        /* ========================= */
+        .profit-summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .profit-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 14px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        .profit-card-highlight {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1.5px solid #86efac;
+        }
+
+        .profit-card-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .profit-card-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .profit-analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            background: #fff;
+        }
+
+        .profit-analysis-table thead tr {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #fff;
+        }
+
+        .profit-analysis-table th {
+            padding: 10px 8px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .profit-analysis-table td {
+            padding: 8px 8px;
+            border: 1px solid #e5e7eb;
+            text-align: right;
+            color: #374151;
+        }
+
+        .profit-analysis-table td:nth-child(1),
+        .profit-analysis-table td:nth-child(2),
+        .profit-analysis-table td:nth-child(3),
+        .profit-analysis-table td:nth-child(4),
+        .profit-analysis-table td:nth-child(5) {
+            text-align: center;
+        }
+
+        .profit-analysis-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .profit-cat-header td {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%) !important;
+            font-weight: 700 !important;
+            color: #4338ca !important;
+            font-size: 13px !important;
+            padding: 10px 8px !important;
+            border-bottom: 2px solid #667eea !important;
+        }
+
+        .profit-cat-subtotal td {
+            background: #f0f4ff !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            border-top: 1.5px solid #667eea !important;
+        }
+
+        .profit-final-row td {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+            color: #fff !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            padding: 12px 8px !important;
+            border: none !important;
+        }
+
+        .profit-positive {
+            color: #16a34a !important;
+        }
+
+        .profit-negative {
+            color: #dc2626 !important;
+        }
+
+        .profit-zero {
+            color: #6b7280 !important;
+        }
+
+        @media (max-width: 768px) {
+            .profit-summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         .info-grid.cols-4 {
             grid-template-columns: repeat(4, 1fr);
         }
@@ -4879,8 +5085,8 @@
                         A/S 관리 리스트</button>
                     <button class="customer-tab" onclick="showCustomerTab('settlement')" data-tab="settlement">💰
                         정산 관리 대장</button>
-                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats">📋 현황 및
-                        작업기록</button>
+                    <button class="customer-tab" onclick="showCustomerTab('stats')" data-tab="stats">📊 공정별
+                        수익금</button>
                 </div>
 
                 <!-- 대시보드 패널 (New) -->
@@ -4975,22 +5181,57 @@
                                 <h3>💰 운영 원가 요약 <span
                                         style="font-size:12px; font-weight:400; opacity:0.7; margin-left:auto;">클릭하여 상세
                                         보기 →</span></h3>
-                                <div class="cost-summary-grid">
-                                    <div class="cost-stat-item">
-                                        <div class="cost-stat-label">총 계약금액</div>
-                                        <div class="cost-stat-value" id="dashTotalAmount">0</div>
-                                    </div>
-                                    <div class="cost-stat-item">
-                                        <div class="cost-stat-label">총 지출(원가)</div>
-                                        <div class="cost-stat-value" id="dashTotalCost">0</div>
-                                    </div>
-                                    <div class="cost-stat-item profit">
-                                        <div class="cost-stat-label">예상 순이익</div>
-                                        <div class="cost-stat-value" id="dashNetProfit">0</div>
-                                    </div>
-                                    <div class="cost-stat-item">
-                                        <div class="cost-stat-label">수익률</div>
-                                        <div class="cost-stat-value" id="dashProfitRate">0%</div>
+                                <div class="card-content">
+                                    <div class="cost-summary-grid">
+                                        <div class="cost-block">
+                                            <div class="cost-block-title">총 계약금액</div>
+                                            <div class="cost-block-value" id="dashTotalAmount">0원</div>
+                                            <div class="cost-block-sub">
+                                                공급 <span id="dashTotalSupply">0</span><br>
+                                                부가세 <span id="dashTotalVat">0</span>
+                                            </div>
+                                            <div class="cost-block-badge">
+                                                평당 <span id="dashTotalPerPy">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="cost-block">
+                                            <div class="cost-block-title">총 지출(원가)</div>
+                                            <div class="cost-block-value" id="dashTotalCost">0원</div>
+                                            <div class="cost-block-sub">
+                                                -<br>
+                                                -
+                                            </div>
+                                            <div class="cost-block-badge">
+                                                평당 <span id="dashCostPerPy">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="cost-block">
+                                            <div class="cost-block-title">예상 순이익 (설계+이윤, VAT 별도)</div>
+                                            <div class="cost-block-value" id="dashNetProfit">0원</div>
+                                            <div class="cost-block-sub">
+                                                수익률 <span id="dashEstRate"
+                                                    style="font-weight:600; color:#30d158;">0%</span> <span
+                                                    style="font-size:11px; opacity:0.7;">(VAT 별도)</span><br>
+                                                부가세 <span id="dashProfitVat">0</span> 별도
+                                            </div>
+                                            <div class="cost-block-badge profit">
+                                                평당 <span id="dashProfitPerPy">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="cost-block">
+                                            <div class="cost-block-title">실제 순이익 (계약-지출)</div>
+                                            <div class="cost-block-value" id="dashActualProfit">0원</div>
+                                            <div class="cost-block-sub">
+                                                수익률 <span id="dashActualRate">0%</span><br>
+                                                차이 <span id="dashProfitDiff">0</span>
+                                            </div>
+                                            <div class="cost-block-badge" id="dashActualPerPyBadge">
+                                                평당 <span id="dashActualPerPy">0</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </button>
@@ -5548,102 +5789,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 통계분석 패널 -->
-                <div class="tab-panel" id="panel-stats">
-                    <div class="stats-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-
-                        <!-- 1. 정산 현황 섹션 -->
-                        <section class="settlement-stats-section" style="margin-bottom: 40px;">
-                            <h2
-                                style="font-size: 20px; font-weight: 700; color: #1d1d1f; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-                                <span>💰</span> 정산 현황
-                            </h2>
-
-                            <!-- 미수금 현황 카드 -->
-                            <div class="settlement-overview"
-                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 30px;">
-                                <div class="stat-card"
-                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
-                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">총 계약금액</div>
-                                    <div class="value" id="stats-total-contract"
-                                        style="font-size: 28px; font-weight: 700;">₩0</div>
-                                </div>
-                                <div class="stat-card"
-                                    style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
-                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">정산 완료</div>
-                                    <div class="value" id="stats-settled" style="font-size: 28px; font-weight: 700;">₩0
-                                    </div>
-                                </div>
-                                <div class="stat-card"
-                                    style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);">
-                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">미수금</div>
-                                    <div class="value" id="stats-outstanding"
-                                        style="font-size: 28px; font-weight: 700;">₩0</div>
-                                </div>
-                                <div class="stat-card"
-                                    style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);">
-                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">정산 진행률</div>
-                                    <div class="value" id="stats-settlement-rate"
-                                        style="font-size: 28px; font-weight: 700;">0%</div>
-                                </div>
-                            </div>
-
-                            <!-- 공정별 이윤 차트 -->
-                            <div
-                                style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px;">
-                                <h3 style="font-size: 16px; font-weight: 600; color: #1d1d1f; margin-bottom: 20px;">📊
-                                    공정별 원가 vs 이윤 분석</h3>
-                                <canvas id="processChart" style="max-height: 400px;"></canvas>
-                            </div>
-
-                            <!-- 전체 수익성 요약 -->
-                            <div
-                                style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
-                                <h3 style="font-size: 16px; font-weight: 600; color: #1d1d1f; margin-bottom: 16px;">💼
-                                    전체 수익성 분석</h3>
-                                <div
-                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                                    <div>
-                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">총 견적금액</div>
-                                        <div id="stats-total-estimate"
-                                            style="font-size: 20px; font-weight: 600; color: #1d1d1f;">₩0</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">총 원가</div>
-                                        <div id="stats-total-cost"
-                                            style="font-size: 20px; font-weight: 600; color: #1d1d1f;">₩0</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">총 이익금</div>
-                                        <div id="stats-total-profit"
-                                            style="font-size: 20px; font-weight: 600; color: #34c759;">₩0</div>
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 13px; color: #8e8e93; margin-bottom: 4px;">이익률</div>
-                                        <div id="stats-profit-rate"
-                                            style="font-size: 20px; font-weight: 600; color: #007aff;">0%</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- 2. 편집 정보 섹션 -->
-                        <section class="edit-history-section">
-                            <h2
-                                style="font-size: 20px; font-weight: 700; color: #1d1d1f; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-                                <span>📝</span> 편집 정보
-                            </h2>
-                            <div id="edit-history-timeline"
-                                style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
-                                <div style="text-align: center; color: #8e8e93; padding: 40px;">
-                                    편집 이력이 없습니다.
-                                </div>
-                            </div>
-                        </section>
-
                     </div>
                 </div>
 
@@ -6234,90 +6379,98 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-
-
-    <!-- [신규] 작업기록 패널 -->
-    <div class="tab-panel" id="panel-stats">
-        <div class="document-wrapper" style="min-height: 500px;">
-            <div class="doc-header" style="border-bottom: 2px solid #e5e7eb;">
-                <div>
-                    <div
-                        style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#667eea;">
-                        DESIGN JIG</div>
-                    <h1 style="margin:0 0 8px 0;">📋 작업기록</h1>
-                    <div
-                        style="background:#f0f4ff; border-left:4px solid #667eea; padding:12px 16px; border-radius:0 8px 8px 0; margin-top:12px;">
-                        <div style="font-size:13px; font-weight:600; color:#1d1d1f; margin-bottom:6px;">📝 시스템 작업 로그
+            <!-- [신규] 공정별 수익금 패널 -->
+            <div class="tab-panel" id="panel-stats">
+                <div class="document-wrapper"
+                    style="width:100%; max-width:1200px; margin:0 auto; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.08); border-radius:12px; overflow:hidden;">
+                    <div class="doc-header"
+                        style="background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%); color: #ffffff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                        <div>
+                            <div
+                                style="font-size:11px; font-weight:600; opacity:0.8; margin-bottom:4px; letter-spacing:1px; color:#fff;">
+                                DESIGN JIG</div>
+                            <h1 style="color: #fff; margin: 0; font-size: 24px;"><span class="emoji-icon">📊</span> 공정별
+                                수익금</h1>
+                            <div class="subtitle" style="color: #fff; font-size: 14px; opacity: 0.9;">Profit by Process
+                            </div>
                         </div>
-                        <div style="font-size:12px; color:#6b7280; line-height:1.6;">
-                            저장, 불러오기, 인쇄, 노션 내보내기 등 모든 작업이 자동으로 기록됩니다.<br>
-                            <span style="color:#667eea; font-weight:500;">※ 최근 50건까지 표시됩니다.</span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="pdf-btn no-print" onclick="downloadPDF('panel-stats', '공정별수익금')"
+                                style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                🖨️ 인쇄/PDF</button>
+                        </div>
+                    </div>
+                    <div style="padding:20px;">
+                        <!-- 요약 카드 -->
+                        <div class="profit-summary-cards" id="profitSummaryCards">
+                            <div class="profit-card">
+                                <div class="profit-card-label">총 견적비용</div>
+                                <div class="profit-card-value" id="profitTotalEstimate">0원</div>
+                            </div>
+                            <div class="profit-card">
+                                <div class="profit-card-label">총 지출비용</div>
+                                <div class="profit-card-value" id="profitTotalExpense" style="color:#ff9500;">0원</div>
+                            </div>
+                            <div class="profit-card profit-card-highlight">
+                                <div class="profit-card-label">총 수익금</div>
+                                <div class="profit-card-value" id="profitTotalProfit" style="color:#34c759;">0원</div>
+                            </div>
+                            <div class="profit-card">
+                                <div class="profit-card-label">총 수익률</div>
+                                <div class="profit-card-value" id="profitTotalRate" style="color:#007aff;">0%</div>
+                            </div>
+                        </div>
+                        <!-- 수익금 분석 테이블 -->
+                        <div style="overflow-x:auto; border-radius:12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+                            <table class="profit-analysis-table" id="profitAnalysisTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;">No</th>
+                                        <th style="width:100px;">구분</th>
+                                        <th>품명</th>
+                                        <th style="width:50px;">수량</th>
+                                        <th style="width:50px;">단위</th>
+                                        <th style="width:100px;">견적단가</th>
+                                        <th style="width:110px;">견적금액</th>
+                                        <th style="width:110px;">실행금액</th>
+                                        <th style="width:110px;">차이</th>
+                                        <th style="width:70px;">수익률</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="profitAnalysisBody">
+                                    <!-- JS 렌더링 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- 차트 영역 -->
+                        <div style="margin-top:32px;">
+                            <h3
+                                style="font-size:18px; font-weight:700; color:#1d1d1f; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                                <span>📈</span> 공정별 수익 분석 차트
+                            </h3>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+                                <div
+                                    style="background:#f8f9fa; border-radius:16px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                                    <h4
+                                        style="font-size:14px; font-weight:600; color:#666; margin-bottom:16px; text-align:center;">
+                                        공정별 견적 vs 실행 비교</h4>
+                                    <div style="position:relative; height:350px;">
+                                        <canvas id="profitBarChart"></canvas>
+                                    </div>
+                                </div>
+                                <div
+                                    style="background:#f8f9fa; border-radius:16px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                                    <h4
+                                        style="font-size:14px; font-weight:600; color:#666; margin-bottom:16px; text-align:center;">
+                                        공정별 견적 비중</h4>
+                                    <div style="position:relative; height:350px;">
+                                        <canvas id="profitDoughnutChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div style="padding:20px;">
-                <!-- 고객 현황 요약 -->
-                <div id="customerStatusSummary"
-                    style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
-                    <div
-                        style="font-size:11px; opacity:0.8; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">
-                        📊 고객 현황 요약</div>
-                    <div
-                        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                        <div style="text-align:center;">
-                            <div style="font-size:12px; opacity:0.85;">고객명</div>
-                            <div id="logCustomerName" style="font-size:18px; font-weight:700;">-</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="font-size:12px; opacity:0.85;">상태</div>
-                            <div id="logCustomerStatus" style="font-size:16px; font-weight:600;">-</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="font-size:12px; opacity:0.85;">등록일</div>
-                            <div id="logCustomerCreated" style="font-size:14px;">-</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="font-size:12px; opacity:0.85;">총 계약금액</div>
-                            <div id="logCustomerAmount" style="font-size:16px; font-weight:600;">₩0</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="font-size:12px; opacity:0.85;">작업 기록 수</div>
-                            <div id="logEditCount" style="font-size:16px; font-weight:600;">0건</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 작업 기록 테이블 섹션 -->
-                <div style="margin-bottom:12px;">
-                    <h3
-                        style="margin:0 0 8px 0; font-size:15px; color:#1d1d1f; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:18px;">📝</span> 작업기록 (최근 50건)
-                    </h3>
-                    <p style="margin:0; font-size:12px; color:#6b7280;">저장, 불러오기, 인쇄, 노션 내보내기 등 모든 작업이 기록됩니다.</p>
-                </div>
-                <table class="data-table"
-                    style="width:100%; border-collapse:collapse; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                    <thead>
-                        <tr
-                            style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-bottom:2px solid #667eea;">
-                            <th
-                                style="width:160px; padding:12px 10px; border:1px solid #e2e8f0; font-size:12px; font-weight:600; color:#334155;">
-                                📅 작업일시 (날짜/시간)</th>
-                            <th
-                                style="width:100px; padding:12px 10px; border:1px solid #e2e8f0; font-size:12px; font-weight:600; color:#334155;">
-                                👤 관리자 ID</th>
-                            <th
-                                style="padding:12px 10px; border:1px solid #e2e8f0; font-size:12px; font-weight:600; color:#334155;">
-                                🔧 작업내용 (UI 버튼 적용 내용)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="auditLogTableBody">
-                        <!-- JS 렌더링 -->
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -8634,7 +8787,7 @@
                 if (typeof renderExpensesTable === 'function') renderExpensesTable();
             }
             if (tabId === 'stats') {
-                if (typeof renderAuditLog === 'function') renderAuditLog(currentCustomerId ? currentCustomerId : null);
+                if (typeof renderProfitAnalysis === 'function') renderProfitAnalysis();
             }
             if (tabId === 'dashboard') {
                 if (typeof renderDashboard === 'function') renderDashboard();
@@ -8771,36 +8924,117 @@
             if (activeStepId) document.getElementById(activeStepId).classList.add('active');
             document.getElementById('dashProgressWidth').style.width = progress + '%';
 
-            // 3. Cost Summary (수정: 정산 관리 대장 기준)
+            // 3. Cost Summary (Modified: Detail Breakdown & Per Pyeong)
             // Get Total Amount
             const totalAmtInput = document.querySelector('.customer-field[data-field="totalAmount"]');
             const totalAmtStr = totalAmtInput ? totalAmtInput.value.replace(/[^0-9]/g, '') : '0';
             const totalAmt = parseInt(totalAmtStr) || 0;
-            document.getElementById('dashTotalAmount').innerText = totalAmt.toLocaleString() + '원';
 
-            // Get Total Expenditure (Cost) from Settlement Ledger (정산 관리 대장)
-            // [변경] 원가관리표가 아닌 정산 관리 대장의 '지출' 합계를 사용
+            // Area Calculation
+            const areaStr = (currentData.area || '').toString().replace(/[^0-9.]/g, '');
+            const area = parseFloat(areaStr) || 0;
+
+            // 1. Total Amount Breakdown
+            const totalSupply = Math.round(totalAmt / 1.1);
+            const totalVat = totalAmt - totalSupply;
+
+            document.getElementById('dashTotalAmount').innerText = totalAmt.toLocaleString() + '원';
+            if (document.getElementById('dashTotalSupply')) document.getElementById('dashTotalSupply').innerText = totalSupply.toLocaleString();
+            if (document.getElementById('dashTotalVat')) document.getElementById('dashTotalVat').innerText = totalVat.toLocaleString();
+
+            const totalPerPy = area > 0 ? Math.round(totalAmt / area) : 0;
+            if (document.getElementById('dashTotalPerPy')) document.getElementById('dashTotalPerPy').innerText = totalPerPy.toLocaleString() + '원';
+
+            // 2. Total Expenditure (Cost)
             let totalCost = 0;
             if (currentData.settlementRows && currentData.settlementRows.length > 0) {
                 currentData.settlementRows.forEach(row => {
-                    // expense 필드가 '지출' 금액임
                     const expense = parseInt((row.expense || '0').replace(/[^0-9]/g, '')) || 0;
                     totalCost += expense;
                 });
             }
-
             document.getElementById('dashTotalCost').innerText = totalCost.toLocaleString() + '원';
 
-            // Net Profit
-            const netProfit = totalAmt - totalCost;
-            document.getElementById('dashNetProfit').innerText = netProfit.toLocaleString() + '원';
-            if (netProfit < 0) document.getElementById('dashNetProfit').style.color = '#ff3b30';
-            else document.getElementById('dashNetProfit').style.color = '#34c759';
+            const costPerPy = area > 0 ? Math.round(totalCost / area) : 0;
+            if (document.getElementById('dashCostPerPy')) document.getElementById('dashCostPerPy').innerText = costPerPy.toLocaleString() + '원';
 
-            // Profit Rate
-            let rate = 0;
-            if (totalAmt > 0) rate = (netProfit / totalAmt) * 100;
-            document.getElementById('dashProfitRate').innerText = rate.toFixed(1) + '%';
+            // 3. Estimated Net Profit (Design/Mgmt + Corp Profit)
+            // Need to calculate Corporate Profit and Design Fee from estimateData
+            let estCorpProfit = 0;
+            let estDesignFee = 0;
+
+            // Calculate mostly from currentData.estimateData if available, else 0
+            // Re-use updateEstimateTotals logic if possible, or manual calc
+            // Manual calc to be safe without affecting DOM
+            let grandTotalSafe = 0;
+            const savedEst = currentData.estimateData || {};
+
+            Object.keys(savedEst).forEach(catNo => {
+                const rows = savedEst[catNo] || [];
+                let catTotal = 0;
+                rows.forEach(r => {
+                    const p = parseInt(r.price) || 0;
+                    const q = parseInt(r.qty) || 0;
+                    catTotal += p * q;
+
+                    // Check if Design/Mgmt (Cat 02 or name check)
+                    // Checking Cat 02
+                    if (catNo === '02') {
+                        estDesignFee += p * q; // This is supply price
+                    }
+                });
+                grandTotalSafe += catTotal;
+            });
+
+            const profitRateVal = parseFloat(currentData.estimateProfitRate) || 15;
+            estCorpProfit = Math.round(grandTotalSafe * profitRateVal / 100);
+
+            // Supply: Design + Corp Profit
+            const estProfitSupply = estDesignFee + estCorpProfit;
+            const estProfitVat = Math.round(estProfitSupply * 0.1);
+            const estNetProfit = estProfitSupply + estProfitVat;
+
+            document.getElementById('dashNetProfit').innerText = estProfitSupply.toLocaleString() + '원';
+
+            // [New] Calc Est Profit Rate (VAT Excluded)
+            let estRate = 0;
+            // Use totalSupply (Contract Supply) as denominator
+            if (totalSupply > 0) estRate = (estProfitSupply / totalSupply) * 100;
+
+            if (document.getElementById('dashEstRate')) {
+                document.getElementById('dashEstRate').innerText = estRate.toFixed(1) + '%';
+            }
+
+            // dashProfitSupply removed from HTML
+            if (document.getElementById('dashProfitVat')) document.getElementById('dashProfitVat').innerText = estProfitVat.toLocaleString();
+
+            const estProfitPerPy = area > 0 ? Math.round(estProfitSupply / area) : 0;
+            if (document.getElementById('dashProfitPerPy')) document.getElementById('dashProfitPerPy').innerText = estProfitPerPy.toLocaleString() + '원';
+
+            // 4. Actual Net Profit
+            const actualNetProfit = totalAmt - totalCost;
+            let actualRate = 0;
+            if (totalAmt > 0) actualRate = (actualNetProfit / totalAmt) * 100;
+
+            if (document.getElementById('dashActualProfit')) {
+                document.getElementById('dashActualProfit').innerText = actualNetProfit.toLocaleString() + '원';
+                document.getElementById('dashActualProfit').style.color = actualNetProfit >= 0 ? '#34c759' : '#ff3b30';
+            }
+
+            if (document.getElementById('dashActualRate')) document.getElementById('dashActualRate').innerText = actualRate.toFixed(1) + '%';
+
+            const profitDiff = actualNetProfit - estNetProfit;
+            if (document.getElementById('dashProfitDiff')) {
+                const diffSign = profitDiff > 0 ? '+' : '';
+                document.getElementById('dashProfitDiff').innerText = `${diffSign}${profitDiff.toLocaleString()}`;
+                document.getElementById('dashProfitDiff').style.color = profitDiff >= 0 ? '#34c759' : '#ff3b30';
+            }
+
+            const actualPerPy = area > 0 ? Math.round(actualNetProfit / area) : 0;
+            if (document.getElementById('dashActualPerPy')) {
+                document.getElementById('dashActualPerPy').innerText = actualPerPy.toLocaleString() + '원';
+                document.getElementById('dashActualPerPy').style.color = actualNetProfit >= 0 ? '#0071e3' : '#ff3b30';
+            }
         }
 
         // Helper to calc total cost from global data
@@ -16139,6 +16373,26 @@
                     currentData.estimateData = sample.estimateData || {};
                     currentData.estimateProfitRate = sample.estimateProfitRate || 15;
 
+                    // [Smart Load] If unit is 'py' or '평', use current customer's area
+                    const customerArea = parseFloat((currentData.area || '').toString().replace(/[^0-9.]/g, '')) || 0;
+
+                    if (customerArea > 0 && currentData.estimateData) {
+                        Object.keys(currentData.estimateData).forEach(catNo => {
+                            const rows = currentData.estimateData[catNo];
+                            if (Array.isArray(rows)) {
+                                rows.forEach(item => {
+                                    if (item.unit === 'py' || item.unit === '평') {
+                                        item.qty = customerArea;
+                                        // Recalculate amount if needed, though loadEstimateData does it on render
+                                        // But good to update data model strictly
+                                        // item.price is string or number? Usually string in this app.
+                                        // Let's leave amount calc to loadEstimateData() to avoid type issues here
+                                    }
+                                });
+                            }
+                        });
+                    }
+
                     // 메모 적용
                     if (sample.estimateMemos) {
                         Object.keys(sample.estimateMemos).forEach(catNo => {
@@ -18259,6 +18513,320 @@
         });
 
         // ============================
+        // [신규] 공정별 수익금 분석 (Profit by Process)
+        // ============================
+        function renderProfitAnalysis() {
+            const tbody = document.getElementById('profitAnalysisBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const estData = currentData.estimateData || {};
+            const settRows = currentData.settlementRows || settlementRows || [];
+
+            // 정산 데이터를 카테고리별로 합산
+            const settlementByCategory = {};
+            settRows.forEach(row => {
+                const cat = (row.category || '').trim();
+                if (!cat) return;
+                const amount = parseInt(String(row.payAmount || 0).replace(/[^0-9-]/g, '')) || 0;
+                if (!settlementByCategory[cat]) settlementByCategory[cat] = 0;
+                settlementByCategory[cat] += amount;
+            });
+
+            let grandEstimate = 0;
+            let grandExpense = 0;
+            let rowNum = 0;
+            const chartData = []; // 차트용 카테고리 데이터 수집
+
+            categories.forEach(cat => {
+                const catRows = estData[cat.no] || [];
+                if (catRows.length === 0) return; // 빈 카테고리 건너뜀
+
+                // 견적 항목이 실제로 금액이 있는지 체크
+                let catEstTotal = 0;
+                const validRows = [];
+                catRows.forEach(r => {
+                    const qty = parseFloat(r.qty) || 0;
+                    const price = parseInt(String(r.price || 0).replace(/[^0-9-]/g, '')) || 0;
+                    const amount = qty * price;
+                    if (r.name || price > 0) {
+                        validRows.push({ ...r, qty, price, amount });
+                        catEstTotal += amount;
+                    }
+                });
+
+                if (validRows.length === 0) return;
+
+                // 정산 합계 (카테고리명으로 매칭)
+                const catExpense = settlementByCategory[cat.name] || 0;
+                const catDiff = catEstTotal - catExpense;
+                const catRate = catEstTotal > 0 ? ((catDiff / catEstTotal) * 100).toFixed(1) : '-';
+
+                // 차트 데이터 수집
+                chartData.push({ name: cat.name, estimate: catEstTotal, expense: catExpense, profit: catDiff });
+
+                // 카테고리 헤더
+                const headerTr = document.createElement('tr');
+                headerTr.className = 'profit-cat-header';
+                headerTr.innerHTML = `
+                    <td colspan="10" style="text-align:left; padding-left:12px;">
+                        📁 ${cat.no}. ${cat.name}
+                    </td>
+                `;
+                tbody.appendChild(headerTr);
+
+                // 개별 항목
+                validRows.forEach(r => {
+                    rowNum++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${rowNum}</td>
+                        <td>${r.div || '-'}</td>
+                        <td style="text-align:left; padding-left:8px;">${r.name || '-'}</td>
+                        <td>${r.qty || '-'}</td>
+                        <td>${r.unit || '-'}</td>
+                        <td>${r.price ? r.price.toLocaleString() : '-'}</td>
+                        <td>${r.amount ? r.amount.toLocaleString() : '-'}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 카테고리 소계
+                const subtotalTr = document.createElement('tr');
+                subtotalTr.className = 'profit-cat-subtotal';
+                const diffClass = catDiff > 0 ? 'profit-positive' : catDiff < 0 ? 'profit-negative' : 'profit-zero';
+                const rateClass = parseFloat(catRate) > 0 ? 'profit-positive' : parseFloat(catRate) < 0 ? 'profit-negative' : 'profit-zero';
+                subtotalTr.innerHTML = `
+                    <td></td>
+                    <td colspan="5" style="text-align:left; padding-left:12px;">📊 ${cat.name} 소계</td>
+                    <td style="font-weight:700;">${catEstTotal.toLocaleString()}</td>
+                    <td style="font-weight:700; color:#ff9500;">${catExpense.toLocaleString()}</td>
+                    <td class="${diffClass}" style="font-weight:700;">${catDiff.toLocaleString()}</td>
+                    <td class="${rateClass}" style="font-weight:700;">${catRate}%</td>
+                `;
+                tbody.appendChild(subtotalTr);
+
+                grandEstimate += catEstTotal;
+                grandExpense += catExpense;
+            });
+
+            // 정산에만 있고 견적에 없는 카테고리 표시
+            Object.keys(settlementByCategory).forEach(cat => {
+                const matched = categories.some(c => c.name === cat);
+                if (!matched && settlementByCategory[cat] > 0) {
+                    const amt = settlementByCategory[cat];
+                    const headerTr = document.createElement('tr');
+                    headerTr.className = 'profit-cat-header';
+                    headerTr.innerHTML = `<td colspan="10" style="text-align:left; padding-left:12px;">📁 ${cat} (정산만 존재)</td>`;
+                    tbody.appendChild(headerTr);
+
+                    const subtotalTr = document.createElement('tr');
+                    subtotalTr.className = 'profit-cat-subtotal';
+                    subtotalTr.innerHTML = `
+                        <td></td>
+                        <td colspan="5" style="text-align:left; padding-left:12px;">📊 ${cat} 소계</td>
+                        <td>0</td>
+                        <td style="font-weight:700; color:#ff9500;">${amt.toLocaleString()}</td>
+                        <td class="profit-negative" style="font-weight:700;">${(-amt).toLocaleString()}</td>
+                        <td class="profit-negative" style="font-weight:700;">-</td>
+                    `;
+                    tbody.appendChild(subtotalTr);
+                    grandExpense += amt;
+                    chartData.push({ name: cat, estimate: 0, expense: amt, profit: -amt });
+                }
+            });
+
+            // 최종 합계
+            const grandDiff = grandEstimate - grandExpense;
+            const grandRate = grandEstimate > 0 ? ((grandDiff / grandEstimate) * 100).toFixed(1) : '0.0';
+            const finalTr = document.createElement('tr');
+            finalTr.className = 'profit-final-row';
+            finalTr.innerHTML = `
+                <td></td>
+                <td colspan="5" style="text-align:left; padding-left:12px;">🏁 최종 합계</td>
+                <td>${grandEstimate.toLocaleString()}</td>
+                <td>${grandExpense.toLocaleString()}</td>
+                <td>${grandDiff.toLocaleString()}</td>
+                <td>${grandRate}%</td>
+            `;
+            tbody.appendChild(finalTr);
+
+            // 상단 요약 카드 업데이트
+            const elEst = document.getElementById('profitTotalEstimate');
+            const elExp = document.getElementById('profitTotalExpense');
+            const elProfit = document.getElementById('profitTotalProfit');
+            const elRate = document.getElementById('profitTotalRate');
+
+            if (elEst) elEst.innerText = grandEstimate.toLocaleString() + '원';
+            if (elExp) {
+                elExp.innerText = grandExpense.toLocaleString() + '원';
+                elExp.style.color = '#ff9500';
+            }
+            if (elProfit) {
+                elProfit.innerText = grandDiff.toLocaleString() + '원';
+                elProfit.style.color = grandDiff >= 0 ? '#34c759' : '#ff3b30';
+            }
+            if (elRate) {
+                elRate.innerText = grandRate + '%';
+                elRate.style.color = parseFloat(grandRate) >= 0 ? '#007aff' : '#ff3b30';
+            }
+
+            // ===== 차트 렌더링 =====
+            renderProfitCharts(chartData);
+        }
+
+        // 차트 인스턴스 저장
+        let profitBarChartInstance = null;
+        let profitDoughnutChartInstance = null;
+
+        function renderProfitCharts(chartData) {
+            if (!chartData || chartData.length === 0) return;
+            if (typeof Chart === 'undefined') return;
+
+            const labels = chartData.map(d => d.name.length > 6 ? d.name.substring(0, 6) + '…' : d.name);
+            const estimateValues = chartData.map(d => d.estimate);
+            const expenseValues = chartData.map(d => d.expense);
+            const profitValues = chartData.map(d => d.profit);
+
+            // 색상 팔레트
+            const colors = [
+                '#0071e3', '#34c759', '#ff9500', '#ff3b30', '#5856d6',
+                '#af52de', '#007aff', '#ff2d55', '#5ac8fa', '#ffcc00',
+                '#4cd964', '#8e8e93', '#ff6b6b', '#48dbfb', '#feca57'
+            ];
+
+            // ===== 1. 바 차트: 견적 vs 실행 비교 =====
+            const barCtx = document.getElementById('profitBarChart');
+            if (barCtx) {
+                if (profitBarChartInstance) profitBarChartInstance.destroy();
+                profitBarChartInstance = new Chart(barCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '견적금액',
+                                data: estimateValues,
+                                backgroundColor: 'rgba(0, 113, 227, 0.7)',
+                                borderColor: '#0071e3',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.7,
+                                categoryPercentage: 0.8
+                            },
+                            {
+                                label: '실행금액',
+                                data: expenseValues,
+                                backgroundColor: 'rgba(255, 149, 0, 0.7)',
+                                borderColor: '#ff9500',
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.7,
+                                categoryPercentage: 0.8
+                            },
+                            {
+                                label: '수익금',
+                                data: profitValues,
+                                backgroundColor: profitValues.map(v => v >= 0 ? 'rgba(52, 199, 89, 0.7)' : 'rgba(255, 59, 48, 0.7)'),
+                                borderColor: profitValues.map(v => v >= 0 ? '#34c759' : '#ff3b30'),
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barPercentage: 0.7,
+                                categoryPercentage: 0.8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 11, family: "'SF Pro Display', sans-serif" }, padding: 16, usePointStyle: true, pointStyleWidth: 10 }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleFont: { size: 12 },
+                                bodyFont: { size: 11 },
+                                padding: 10,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + '원';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 10 }, maxRotation: 45 }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0,0,0,0.05)' },
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: function (v) {
+                                        if (v >= 10000000) return (v / 10000000).toFixed(0) + '천만';
+                                        if (v >= 10000) return (v / 10000).toFixed(0) + '만';
+                                        return v.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // ===== 2. 도넛 차트: 견적 비중 =====
+            const doughnutCtx = document.getElementById('profitDoughnutChart');
+            if (doughnutCtx) {
+                if (profitDoughnutChartInstance) profitDoughnutChartInstance.destroy();
+                const bgColors = chartData.map((_, i) => colors[i % colors.length]);
+                profitDoughnutChartInstance = new Chart(doughnutCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartData.map(d => d.name),
+                        datasets: [{
+                            data: estimateValues,
+                            backgroundColor: bgColors,
+                            borderColor: '#fff',
+                            borderWidth: 2,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 10, family: "'SF Pro Display', sans-serif" }, padding: 10, usePointStyle: true, pointStyleWidth: 8 }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                padding: 10,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function (ctx) {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                                        return ctx.label + ': ' + ctx.parsed.toLocaleString() + '원 (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ============================
         // [신규] 현황 및 작업기록 (System Action Log)
         // ============================
         // 서버 연동 방식으로 변경됨
@@ -18283,12 +18851,8 @@
                 }).then(res => res.json())
                     .then(data => {
                         console.log('Log saved:', data);
-                        // 현재 작업기록 탭을 보고 있다면 갱신
-                        if (document.getElementById('panel-stats') &&
-                            (document.getElementById('panel-stats').style.display === 'block' ||
-                                document.getElementById('panel-stats').classList.contains('active'))) {
-                            renderActionLog();
-                        }
+                        // 로그 저장 완료 알림
+                        console.log('Action log saved successfully');
                     })
                     .catch(err => console.error('Log save error:', err));
             } catch (e) {
@@ -18335,14 +18899,7 @@
         async function renderActionLog(targetId) {
             const reqId = targetId || currentCustomerId;
             let tbody = document.getElementById('auditLogTableBody');
-
-            if (!tbody) {
-                const panel = document.getElementById('panel-stats');
-                if (panel) {
-                    const tbl = panel.querySelector('tbody');
-                    if (tbl) tbody = tbl;
-                }
-            }
+            // panel-stats는 이제 공정별 수익금 탭이므로 fallback 제거
 
             if (!tbody) return;
 
