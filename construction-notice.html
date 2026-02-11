@@ -1,374 +1,457 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>공사 안내</title>
-<!-- Noto Sans KR -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-:root{
---a4-w: 210mm;
---a4-h: 297mm;
---pad-x: 18mm;
---pad-top: 16mm;
---text: #111;
---sub: #6b6b6b;
---line: #e6e6e6;
---blue: #1f4aa8;
---panel: rgba(217,217,217,0.24);
-}
-*{ box-sizing: border-box; }
-body{
-margin: 0;
-background: #fff;
-font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-color: var(--text);
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-}
-/* 화면에서 '종이'처럼 보이게 */
-.wrap{
-min-height: 100vh;
-display: grid;
-place-items: start center;
-padding: 24px 12px;
-}
-.paper{
-width: min(820px, 100%);
-margin: 0 auto;
-background: #fff;
-}
-.page{
-padding: var(--pad-top) var(--pad-x) 14mm;
-}
-/* 타이틀 */
-.title{
-text-align:center;
-font-weight:400;
-font-size:40px;
-letter-spacing:14px;
-margin:0;
-}
-.title-line{
-width:40px;height:2px;
-background:#111;
-margin:18px auto 28px;
-opacity:.85;
-}
-.lead{
-margin: 0 0 18px;
-font-size: 16px;
-line-height: 1.9;
-color: #1a1a1a;
-}
-.panel{
-background: rgba(217,217,217,0.24);
-border-radius: 10px;
-padding: 18px 18px;
-}
-.panel p{
-margin:0;
-color:#3a3a3a;
-line-height:1.9;
-font-size:15px;
-}
-/* 섹션 타이틀 라인 형태 */
-.section{
-margin-top: 28px;
-padding-top: 22px;
-border-top: 1px solid var(--line);
-}
-.section-head{
-display:grid;
-grid-template-columns: 92px 1fr;
-gap:14px;
-align-items:center;
-margin: 22px 0 14px;
-}
-.section-head .label{ font-size:13px; font-weight:500; color:#1a1a1a; }
-.section-head .rule{ height:1px; background: linear-gradient(to right, #e6e6e6, transparent); }
-/* 공사 기간 */
-.period{
-text-align: center;
-font-size: 30px;
-font-weight: 700;
-letter-spacing: .5px;
-margin: 10px 0 0;
-}
-.period .dots{
-font-weight: 500;
-letter-spacing: 2px;
-}
-/* 소음 공정 안내 */
-.subhead{
-margin-top: 24px;
-padding-top: 18px;
-border-top: 1px solid var(--line);
-}
-.subhead .kicker{
-color: var(--blue);
-font-weight: 700;
-font-size: 14px;
-margin: 0 0 10px;
-}
-.subhead .desc{
-margin: 0 0 18px;
-color: #6b6b6b;
-font-size: 14px;
-line-height: 1.8;
-}
-.grid{
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 22px 48px;
-border-top: 1px solid #e6e6e6;
-border-bottom: none;
-padding: 12px 0 0;
-}
-.row{
-display: grid;
-grid-template-columns: 1fr 190px;
-align-items: center;
-padding: 10px 0;
-font-size: 15px;
-border-bottom: 1px solid #f2f2f2;
-}
-.grid .row:last-child{
-border-bottom: none;
-}
-.row .item{
-font-weight: 700;
-color: #222;
-}
-.row .date{
-text-align: right;
-color: #777;
-letter-spacing: 0;
-white-space: nowrap;
-}
-.note{
-margin-top: 12px;
-font-size: 12px;
-color: #8a8a8a;
-text-align: right;
-}
-/* 문의 */
-.contact{
-margin-top: 26px;
-margin-bottom: 32px;
-padding-top: 18px;
-border-top: 1px solid var(--line);
-}
-.contact-wrap{
-display: grid;
-grid-template-columns: 1fr 160px;
-gap: 24px;
-align-items: stretch;
-margin-top: 12px;
-}
-.contact-grid{
-display: grid;
-grid-template-columns: 130px 1fr;
-row-gap: 10px;
-column-gap: 18px;
-align-items: center;
-}
-.contact-grid .k{
-color: #6b6b6b;
-font-size: 13px;
-}
-.contact-grid .v{
-font-size: 18px;
-font-weight: 700;
-color: #1a1a1a;
-}
-.contact .foot{
-margin-top: 14px;
-font-size: 13px;
-color: #6b6b6b;
-}
-.contact-head .rule{
-display: none;
-}
-.contact .qr{
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-align-items: center;
-}
-.contact .qr-box{
-width: 120px;
-height: 120px;
-margin-top: 4px;
-margin-bottom: 6px;
-}
-.contact .qr-box img{
-width: 100%;
-height: 100%;
-display: block;
-}
-.contact .qr-caption{
-font-size: 12px;
-color: #9a9a9a;
-font-weight: 500;
-margin-bottom: 6px;
-}
-.unit{
-text-align: center;
-margin: 0 0 22px;
-font-size: 14px;
-color: #6b6b6b;
-letter-spacing: .2px;
-}
-/* 하단 띠 + QR */
-.bottom-divider{
-border-top: 2px solid #111;
-margin-top: 48px;
-}
-.bottom-band{
-padding: 26px var(--pad-x) 36px;
-}
-.bottom-band .msg{
-font-size: 16px;
-line-height: 1.9;
-color: #1a1a1a;
-margin: 0;
-font-weight: 500;
-}
-.bottom-band .thanks{
-margin-top: 18px;
-font-weight: 800;
-font-size: 18px;
-}
-/* 인쇄(A4) */
-@media print{
-.paper{ width: var(--a4-w); }
-@page{ size: A4; margin: 0; }
-}
-/* 모바일 */
-@media (max-width: 820px){
-.paper{ width: 100%; }
-.page{ padding: 46px 22px 40px; }
-.bottom-band{ padding: 24px 22px 30px; }
-.title{ font-size: 34px; letter-spacing: 14px; }
-.period{ font-size: 24px; }
-.grid{ grid-template-columns: 1fr; gap: 12px; }
-.contact-wrap{
-grid-template-columns: 1fr;
-}
-.contact-qr{
-margin-top: 18px;
-text-align: left;
-}
-}
-</style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>공사 안내</title>
+    <!-- Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --a4-w: 210mm;
+            --a4-h: 297mm;
+            --pad-x: 18mm;
+            --pad-top: 16mm;
+            --text: #111;
+            --sub: #6b6b6b;
+            --line: #e6e6e6;
+            --blue: #1f4aa8;
+            --panel: rgba(217, 217, 217, 0.24);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #fff;
+            font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 화면에서 '종이'처럼 보이게 */
+        .wrap {
+            min-height: 100vh;
+            display: grid;
+            place-items: start center;
+            padding: 24px 12px;
+        }
+
+        .paper {
+            width: min(820px, 100%);
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        .page {
+            padding: var(--pad-top) var(--pad-x) 14mm;
+        }
+
+        /* 타이틀 */
+        .title {
+            text-align: center;
+            font-weight: 400;
+            font-size: 40px;
+            letter-spacing: 14px;
+            margin: 0;
+        }
+
+        .title-line {
+            width: 40px;
+            height: 2px;
+            background: #111;
+            margin: 18px auto 28px;
+            opacity: .85;
+        }
+
+        .lead {
+            margin: 0 0 18px;
+            font-size: 16px;
+            line-height: 1.9;
+            color: #1a1a1a;
+        }
+
+        .panel {
+            background: rgba(217, 217, 217, 0.24);
+            border-radius: 10px;
+            padding: 18px 18px;
+        }
+
+        .panel p {
+            margin: 0;
+            color: #3a3a3a;
+            line-height: 1.9;
+            font-size: 15px;
+        }
+
+        /* 섹션 타이틀 라인 형태 */
+        .section {
+            margin-top: 28px;
+            padding-top: 22px;
+            border-top: 1px solid var(--line);
+        }
+
+        .section-head {
+            display: grid;
+            grid-template-columns: 92px 1fr;
+            gap: 14px;
+            align-items: center;
+            margin: 22px 0 14px;
+        }
+
+        .section-head .label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .section-head .rule {
+            height: 1px;
+            background: linear-gradient(to right, #e6e6e6, transparent);
+        }
+
+        /* 공사 기간 */
+        .period {
+            text-align: center;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            margin: 10px 0 0;
+        }
+
+        .period .dots {
+            font-weight: 500;
+            letter-spacing: 2px;
+        }
+
+        /* 소음 공정 안내 */
+        .subhead {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+        }
+
+        .subhead .kicker {
+            color: var(--blue);
+            font-weight: 700;
+            font-size: 14px;
+            margin: 0 0 10px;
+        }
+
+        .subhead .desc {
+            margin: 0 0 18px;
+            color: #6b6b6b;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px 48px;
+            border-top: 1px solid #e6e6e6;
+            border-bottom: none;
+            padding: 12px 0 0;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 190px;
+            align-items: center;
+            padding: 10px 0;
+            font-size: 15px;
+            border-bottom: 1px solid #f2f2f2;
+        }
+
+        .grid .row:last-child {
+            border-bottom: none;
+        }
+
+        .row .item {
+            font-weight: 700;
+            color: #222;
+        }
+
+        .row .date {
+            text-align: right;
+            color: #777;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        .note {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #8a8a8a;
+            text-align: right;
+        }
+
+        /* 문의 */
+        .contact {
+            margin-top: 26px;
+            margin-bottom: 32px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+        }
+
+        .contact-wrap {
+            display: grid;
+            grid-template-columns: 1fr 160px;
+            gap: 24px;
+            align-items: stretch;
+            margin-top: 12px;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            row-gap: 10px;
+            column-gap: 18px;
+            align-items: center;
+        }
+
+        .contact-grid .k {
+            color: #6b6b6b;
+            font-size: 13px;
+        }
+
+        .contact-grid .v {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .contact .foot {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #6b6b6b;
+        }
+
+        .contact-head .rule {
+            display: none;
+        }
+
+        .contact .qr {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contact .qr-box {
+            width: 120px;
+            height: 120px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+
+        .contact .qr-box img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .contact .qr-caption {
+            font-size: 12px;
+            color: #9a9a9a;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .unit {
+            text-align: center;
+            margin: 0 0 22px;
+            font-size: 14px;
+            color: #6b6b6b;
+            letter-spacing: .2px;
+        }
+
+        /* 하단 띠 + QR */
+        .bottom-divider {
+            border-top: 2px solid #111;
+            margin-top: 48px;
+        }
+
+        .bottom-band {
+            padding: 26px var(--pad-x) 36px;
+        }
+
+        .bottom-band .msg {
+            font-size: 16px;
+            line-height: 1.9;
+            color: #1a1a1a;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .bottom-band .thanks {
+            margin-top: 18px;
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        /* 인쇄(A4) */
+        @media print {
+            .paper {
+                width: var(--a4-w);
+            }
+
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+
+        /* 모바일 */
+        @media (max-width: 820px) {
+            .paper {
+                width: 100%;
+            }
+
+            .page {
+                padding: 46px 22px 40px;
+            }
+
+            .bottom-band {
+                padding: 24px 22px 30px;
+            }
+
+            .title {
+                font-size: 34px;
+                letter-spacing: 14px;
+            }
+
+            .period {
+                font-size: 24px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .contact-wrap {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-qr {
+                margin-top: 18px;
+                text-align: left;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="wrap">
-<div class="paper">
-<div class="page">
-<h1 class="title">공 사 안 내</h1>
-<div class="title-line"></div>
-<p class="lead">
-안녕하십니까. 이웃 여러분께 불편을 드리게 되어 먼저 양해의 말씀을 드립니다.
-</p>
-<div class="panel">
-<p>
-<strong>○○동 ○○○호</strong> 세대에서는 주거 환경 개선을 위한 내부 공사를 아파트 관리규약을 준수하여
-조심스럽게 진행할 예정입니다. 공사 기간 중 불가피하게 소음 및 통행 불편이 발생할 수 있는 점,
-깊은 이해와 너그러운 양해를 부탁드립니다.
-</p>
-</div>
-<div class="section">
-<div class="section-head">
-<div class="label">공사 기간</div>
-<div class="rule"></div>
-</div>
-<div class="period">
-2026.<span class="dots">  ○○. ○○ </span>— 2026.<span class="dots">  ○○. ○○</span>
-</div>
-</div>
-<div class="subhead">
-<div class="kicker">소음 발생 가능 공정 안내</div>
-<p class="desc">
-소음 발생 가능 공정은 아래 기간 동안 단계적으로 진행되며,
-가급적 짧은 기간 내 집중하여 시행할 예정입니다.
-</p>
-<div class="grid">
-<div>
-<div class="row">
-<div class="item">철거</div>
-<div class="date">2/3(화) ~ 2/6(금)</div>
-</div>
-<div class="row">
-<div class="item">시스템에어컨</div>
-<div class="date">2/5(목) ~ 2/7(토)</div>
-</div>
-<div class="row">
-<div class="item">타일</div>
-<div class="date">2/8(일) ~ 2/10(화)</div>
-</div>
-</div>
-<div>
-<div class="row">
-<div class="item">창호</div>
-<div class="date">2/11(수) ~ 2/13(금)</div>
-</div>
-<div class="row">
-<div class="item">목공</div>
-<div class="date">2/14(토) ~ 2/18(수)</div>
-</div>
-<div class="row">
-<div class="item">마루</div>
-<div class="date">2/19(목) ~ 2/21(토)</div>
-</div>
-</div>
-</div>
-<div class="note">
-※ 상기 일정은 현장 진행 상황에 따라 변동될 수 있습니다.
-</div>
-</div>
-<div class="contact">
-<div class="section-head contact-head">
-<div class="label">문의 및 연락처</div>
-<div class="rule"></div>
-</div>
-<div class="contact-wrap">
-<!-- 왼쪽: 문의 정보 -->
-<div>
-<div class="contact-grid">
-<div class="k">시공 담당자</div>
-<div class="v">디자인지그</div>
-<div class="k">연락처</div>
-<div class="v">010-4650-7013</div>
-</div>
-<div class="foot">
-작은 불편 사항이라도 언제든지 연락 주시면 신속히 조치하도록 하겠습니다.
-</div>
-</div>
-<!-- 오른쪽: QR -->
-<div class="qr contact-qr">
-<div class="qr-box">
-<img src="https://res.cloudinary.com/designjig/image/upload/v1767486662/qet8givqvcxwezcjovau.png"
-alt="디자인지그 QR코드">
-</div>
-<div class="qr-caption">디자인지그</div>
-</div>
-</div>
-</div>
-</div>
-<div class="bottom-divider"></div>
-<div class="bottom-band">
-<p class="msg">
-이웃 여러분의 일상에 불편을 드리게 되어 죄송한 마음을 전하며,
-안전하고 배려하는 현장 운영으로 보답드리겠습니다.
-</p>
-<div class="thanks">감사합니다.</div>
-</div>
-</div>
-</div>
+    <div class="wrap">
+        <div class="paper">
+            <div class="page">
+                <h1 class="title">공 사 안 내</h1>
+                <div class="title-line"></div>
+                <p class="lead">
+                    안녕하십니까. 이웃 여러분께 불편을 드리게 되어 먼저 양해의 말씀을 드립니다.
+                </p>
+                <div class="panel">
+                    <p>
+                        <strong>○○동 ○○○호</strong> 세대에서는 주거 환경 개선을 위한 내부 공사를 아파트 관리규약을 준수하여
+                        조심스럽게 진행할 예정입니다. 공사 기간 중 불가피하게 소음 및 통행 불편이 발생할 수 있는 점,
+                        깊은 이해와 너그러운 양해를 부탁드립니다.
+                    </p>
+                </div>
+                <div class="section">
+                    <div class="section-head">
+                        <div class="label">공사 기간</div>
+                        <div class="rule"></div>
+                    </div>
+                    <div class="period">
+                        2026.<span class="dots"> ○○. ○○ </span>— 2026.<span class="dots"> ○○. ○○</span>
+                    </div>
+                </div>
+                <div class="subhead">
+                    <div class="kicker">소음 발생 가능 공정 안내</div>
+                    <p class="desc">
+                        소음 발생 가능 공정은 아래 기간 동안 단계적으로 진행되며,
+                        가급적 짧은 기간 내 집중하여 시행할 예정입니다.
+                    </p>
+                    <div class="grid">
+                        <div>
+                            <div class="row">
+                                <div class="item">철거</div>
+                                <div class="date">2/3(화) ~ 2/6(금)</div>
+                            </div>
+                            <div class="row">
+                                <div class="item">시스템에어컨</div>
+                                <div class="date">2/5(목) ~ 2/7(토)</div>
+                            </div>
+                            <div class="row">
+                                <div class="item">타일</div>
+                                <div class="date">2/8(일) ~ 2/10(화)</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="row">
+                                <div class="item">창호</div>
+                                <div class="date">2/11(수) ~ 2/13(금)</div>
+                            </div>
+                            <div class="row">
+                                <div class="item">목공</div>
+                                <div class="date">2/14(토) ~ 2/18(수)</div>
+                            </div>
+                            <div class="row">
+                                <div class="item">마루</div>
+                                <div class="date">2/19(목) ~ 2/21(토)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="note">
+                        ※ 상기 일정은 현장 진행 상황에 따라 변동될 수 있습니다.
+                    </div>
+                </div>
+                <div class="contact">
+                    <div class="section-head contact-head">
+                        <div class="label">문의 및 연락처</div>
+                        <div class="rule"></div>
+                    </div>
+                    <div class="contact-wrap">
+                        <!-- 왼쪽: 문의 정보 -->
+                        <div>
+                            <div class="contact-grid">
+                                <div class="k">시공 담당자</div>
+                                <div class="v">디자인지그</div>
+                                <div class="k">연락처</div>
+                                <div class="v">010-7653-5386</div>
+                            </div>
+                            <div class="foot">
+                                작은 불편 사항이라도 언제든지 연락 주시면 신속히 조치하도록 하겠습니다.
+                            </div>
+                        </div>
+                        <!-- 오른쪽: QR -->
+                        <div class="qr contact-qr">
+                            <div class="qr-box">
+                                <img src="https://res.cloudinary.com/designjig/image/upload/v1767486662/qet8givqvcxwezcjovau.png"
+                                    alt="디자인지그 QR코드">
+                            </div>
+                            <div class="qr-caption">디자인지그</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-divider"></div>
+            <div class="bottom-band">
+                <p class="msg">
+                    이웃 여러분의 일상에 불편을 드리게 되어 죄송한 마음을 전하며,
+                    안전하고 배려하는 현장 운영으로 보답드리겠습니다.
+                </p>
+                <div class="thanks">감사합니다.</div>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

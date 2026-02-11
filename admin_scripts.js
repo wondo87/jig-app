@@ -2164,7 +2164,7 @@
                 const managerInput = document.getElementById('schManagerInput');
                 if (managerInput) {
                     if (!currentData.manager || currentData.manager.trim() === '') {
-                        currentData.manager = '원프로 소장 (010-4650-7013)';
+                        currentData.manager = '원프로 소장 (010-7653-5386)';
                     }
                     managerInput.value = currentData.manager;
 
@@ -2652,7 +2652,7 @@
                     checkPoint: '',
                     start: '',
                     end: '',
-                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
+                    inCharge: currentData.manager || '원프로 소장 (010-7653-5386)',
                     memo: ''
                 };
             } else {
@@ -2663,7 +2663,7 @@
 
                 if (template) {
                     // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
-                    let inChargeValue = '원프로 소장 (010-4650-7013)';
+                    let inChargeValue = '원프로 소장 (010-7653-5386)';
                     if (template.inCharge && template.inCharge.trim()) {
                         inChargeValue = template.inCharge;
                     } else if (currentData.manager && currentData.manager.trim()) {
@@ -4103,7 +4103,7 @@
                     profitRate: '15%',
                     createdBy: currentAdmin?.id || 'unknown',
                     isLocked: false,
-                    manager: '원프로 소장 (010-4650-7013)'
+                    manager: '원프로 소장 (010-7653-5386)'
                 };
 
                 // 3. Save to Cloud Immediately (Source of Truth)
@@ -4240,7 +4240,7 @@
 
 
             if (!customer.manager || customer.manager.trim() === '') {
-                customer.manager = '원프로 소장 (010-4650-7013)';
+                customer.manager = '원프로 소장 (010-7653-5386)';
             }
 
 
@@ -9094,7 +9094,7 @@
                 checkPoint: step.checkPoint || '',
                 start: '', // Date is usually empty in template
                 end: '',
-                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
+                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-7653-5386)',
                 memo: step.memo || ''
             }));
 
@@ -11737,7 +11737,7 @@
 
             // 현장 담당자 정보
             const managerInput = document.querySelector('input[data-field="manager"]');
-            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-4650-7013)');
+            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-7653-5386)');
 
             // 메시지 생성
             let message = `안녕하세요. 디자인지그입니다.\n\n`;
@@ -11897,7 +11897,7 @@
             const doorPw = doorPwInput ? doorPwInput.value : (currentData.doorPw || '');
 
             const managerInput = document.querySelector('input[data-field="manager"]');
-            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-4650-7013)');
+            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-7653-5386)');
 
             Object.keys(grouped).forEach(manager => {
                 const data = grouped[manager];

@@ -9,11 +9,20 @@
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png?v=final_orig_file">
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png?v=final_orig_file">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=final_orig_file">
-    <link rel="manifest" href="manifest.json?v=final_orig_file">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1d1d1f">
-    <!-- Cache Version: dz-admin-v16 (2026-01-30) -->
+    <!-- Cache Version: dz-admin-v1.2.0 (2026-02-10) -->
+    <script>
+        console.log('🚀 [System] Version: v1.2.0 (2026-02-10)');
+        // CORS mitigation for file:// protocol
+        if (window.location.protocol === 'file:') {
+            console.warn('⚠️ [System] Local file protocol detected. Some features (Manifest, SW) are disabled to prevent CORS errors.');
+        } else {
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = 'manifest.json?v=final_orig_file';
+            document.head.appendChild(link);
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"
         onerror="console.warn('Cloudinary widget failed to load')"></script>
@@ -5122,7 +5131,7 @@
                                     <div class="info-item">
                                         <label>공사 담당자</label>
                                         <input type="text" class="customer-field" data-field="manager"
-                                            placeholder="원프로 소장 (010-4650-7013)" value="원프로 소장 (010-4650-7013)"
+                                            placeholder="원프로 소장 (010-7653-5386)" value="원프로 소장 (010-7653-5386)"
                                             oninput="updateCustomerField(this)">
                                     </div>
                                     <div class="info-item">
@@ -5662,6 +5671,12 @@
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
                                 </button>
+                                <!-- [New] 일정표 연동 버튼 -->
+                                <button class="sync-sch-btn no-print" onclick="syncChecklistFromSchedule()"
+                                    style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="일정표에 있는 공정을 체크리스트에 자동 추가합니다">
+                                    <span>📅 일정표 연동</span>
+                                </button>
                                 <button type="button" class="notion-export-btn"
                                     onclick="exportToNotion('checklist', event)"
                                     style="background: #000; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
@@ -5840,7 +5855,7 @@
                                             <input type="text" class="sch-input" id="schManagerInput"
                                                 data-field="manager"
                                                 style="width:100%; border:none; outline:none; text-align:center; background:transparent;"
-                                                value="원프로 소장 (010-4650-7013)">
+                                                value="원프로 소장 (010-7653-5386)">
                                         </td>
                                         <th style="border:1px solid #d2d2d7; padding:2px 4px; height:24px;">공사기간(시작~종료)
                                         </th>
@@ -5928,7 +5943,10 @@
                                 style="background:#f0f7ff; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; color:#004182; border:1px solid #c2e0ff;">
                                 <div
                                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                    <strong>💡 공사 진행 안내 및 유의사항</strong>
+                                    <strong id="scheduleGuidelinesTitle" class="text-formattable"
+                                        contenteditable="false" ondblclick="this.contentEditable=true;this.focus();"
+                                        onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
+                                        onblur="this.contentEditable=false;">💡 공사 진행 안내 및 유의사항</strong>
                                     <button class="btn btn-sm no-print" onclick="loadScheduleGuidelines()"
                                         style="background:#0071e3; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer;">
                                         📥 유의사항 불러오기
@@ -6076,7 +6094,7 @@
                                     style="margin: 5px 0 0 20px; padding: 0; list-style-type: disc; line-height: 1.6;">
                                     <li>기본 A/S 기간은 공사 완료일로부터 12개월입니다.</li>
                                     <li>자재 A/S는 자재 입고일 기준 1년이며, 제조사 기준이 우선 적용됩니다.</li>
-                                    <li>화장실 누수 A/S는 공사 완료일로부터 최대 30개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
+                                    <li>화장실 누수 A/S는 잔금일로부터 24개월이며, 별도 지침에 해당하는 경우에만 적용됩니다.</li>
                                     <li>사용 부주의, 자연 노후, 고객 직접 발주 자재로 인한 하자는 A/S 대상에서 제외됩니다.</li>
                                     <li>A/S 접수는 관련 이미지 및 동영상을 반드시 첨부해 주셔야 원활하게 진행됩니다.</li>
                                     <li>A/S 기간 만료 후에는 사전에 안내드린 고객센터를 통해 접수해 주셔야 합니다.</li>
@@ -8730,12 +8748,12 @@
                     bathroomWarranty = `~ ${bathroomItem.asEndDate}`;
                 }
             }
-            // 기본값: 잔금일 + 5년 (화장실 누수 보증 일반적으로 5년)
+            // 기본값: 잔금일 + 2년 (화장실 누수 보증 24개월)
             if (bathroomWarranty === '-' && finalDateStr) {
                 const finalDate = new Date(finalDateStr);
                 const warrantyEnd = new Date(finalDate);
-                warrantyEnd.setFullYear(finalDate.getFullYear() + 5);
-                bathroomWarranty = `~ ${warrantyEnd.toISOString().split('T')[0]} (5년)`;
+                warrantyEnd.setFullYear(finalDate.getFullYear() + 2);
+                bathroomWarranty = `~ ${warrantyEnd.toISOString().split('T')[0]} (2년)`;
             }
             document.getElementById('dashBathroomWarranty').innerText = bathroomWarranty;
 
@@ -8924,7 +8942,7 @@
                 const managerInput = document.getElementById('schManagerInput');
                 if (managerInput) {
                     if (!currentData.manager || currentData.manager.trim() === '') {
-                        currentData.manager = '원프로 소장 (010-4650-7013)';
+                        currentData.manager = '원프로 소장 (010-7653-5386)';
                     }
                     managerInput.value = currentData.manager;
 
@@ -9134,6 +9152,7 @@
                         <div class="editable-cell-wrapper">
                             <div contenteditable="false" class="text-formattable editable-content" 
                                  style="text-align:center;"
+                                 onmousedown="event.stopPropagation();"
                                  ondblclick="this.contentEditable=true;this.focus();"
                                  onkeydown="if(event.key==='Escape'){
                                      this.contentEditable=false;
@@ -9156,6 +9175,7 @@
                     return `
                         <div contenteditable="false" class="text-formattable editable-content"
                              style="text-align:${textAlign};"
+                             onmousedown="event.stopPropagation();"
                              ondblclick="this.contentEditable=true;this.focus();"
                              onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
                              oninput="updateScheduleRowContent(this, ${index}, '${fieldName}')"
@@ -9518,7 +9538,7 @@
                     checkPoint: '',
                     start: '',
                     end: '',
-                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
+                    inCharge: currentData.manager || '원프로 소장 (010-7653-5386)',
                     memo: ''
                 };
             } else {
@@ -9529,7 +9549,7 @@
 
                 if (template) {
                     // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
-                    let inChargeValue = '원프로 소장 (010-4650-7013)';
+                    let inChargeValue = '원프로 소장 (010-7653-5386)';
                     if (template.inCharge && template.inCharge.trim()) {
                         inChargeValue = template.inCharge;
                     } else if (currentData.manager && currentData.manager.trim()) {
@@ -10969,7 +10989,7 @@
                     profitRate: '15%',
                     createdBy: currentAdmin?.id || 'unknown',
                     isLocked: false,
-                    manager: '원프로 소장 (010-4650-7013)'
+                    manager: '원프로 소장 (010-7653-5386)'
                 };
 
                 // 3. Save to Cloud Immediately (Source of Truth)
@@ -11106,7 +11126,7 @@
 
 
             if (!customer.manager || customer.manager.trim() === '') {
-                customer.manager = '원프로 소장 (010-4650-7013)';
+                customer.manager = '원프로 소장 (010-7653-5386)';
             }
 
 
@@ -16188,7 +16208,7 @@
                 checkPoint: step.checkPoint || '',
                 start: '', // Date is usually empty in template
                 end: '',
-                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
+                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-7653-5386)',
                 memo: step.memo || ''
             }));
 
@@ -16631,6 +16651,104 @@
         }
 
         // 체크리스트 아이템 렌더링
+
+        // [New] 일정표 기반 체크리스트 연동
+        function syncChecklistFromSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
+
+            // checklistMasterData 확인
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                showToast('체크리스트 데이터가 없어서 연동할 수 없습니다. 먼저 불러오기를 해주세요.', 'error');
+                return;
+            }
+
+            // 일정표 데이터 확인
+            if (!scheduleRows || scheduleRows.length === 0) {
+                if (!confirm('일정표 데이터가 비어있습니다. 체크리스트를 초기화하시겠습니까?')) return;
+            } else {
+                if (!confirm('체크리스트를 일정표 기준으로 재설정합니다. 일정표에 없는 항목은 삭제됩니다. 계속하시겠습니까?')) return;
+            }
+
+            // 현재 고객 데이터 확보
+            const currentChecklistData = currentData.checklistData || {};
+            const newChecklistData = {};
+
+            // 1. 일정표에서 유효한 공정/카테고리 키워드 추출
+            const activeKeywords = new Set();
+            scheduleRows.forEach(row => {
+                if (row.name && row.name.trim()) activeKeywords.add(row.name.trim());
+                if (row.category && row.category.trim()) activeKeywords.add(row.category.trim());
+            });
+
+            console.log('📅 [Sync] Schedule Keywords:', [...activeKeywords]);
+
+            let keptCount = 0;
+            let addedCount = 0;
+            let removedCount = 0;
+
+            // 2. 체크리스트 아이템 매칭 (Strict Mode)
+            checklistMasterData.forEach(item => {
+                const itemNo = String(item.번호);
+                const category = (item.category || '').trim();
+                const itemName = (item.항목명 || '').trim();
+
+                // 매칭 로직: 키워드 포함 여부 확인
+                let isMatch = false;
+
+                // 일정표 데이터가 없으면 매칭 실패 (초기화)
+                if (activeKeywords.size > 0) {
+                    for (const keyword of activeKeywords) {
+                        // 키워드가 카테고리나 항목명에 포함되는지 확인
+                        if (category && category.includes(keyword)) { isMatch = true; break; }
+                        if (itemName && itemName.includes(keyword)) { isMatch = true; break; }
+
+                        // 반대로 카테고리가 키워드에 포함되는지 확인 (e.g. 일정 "목공 공사" -> 카테고리 "목공")
+                        // 너무 짧은 키워드는 오탐지 방지 (2글자 이상)
+                        if (category && keyword.includes(category) && category.length > 1) { isMatch = true; break; }
+                    }
+                }
+
+                if (isMatch) {
+                    // 기존 데이터가 있으면 상태 유지, 없으면 false(미완료)로 초기화
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        newChecklistData[itemNo] = currentChecklistData[itemNo];
+                        keptCount++;
+                    } else {
+                        newChecklistData[itemNo] = false;
+                        addedCount++;
+                    }
+                } else {
+                    // 매칭되지 않는 항목은 제거 (newChecklistData에 추가 안 함)
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        removedCount++;
+                    }
+                }
+            });
+
+            // 3. 데이터 업데이트
+            currentData.checklistData = newChecklistData;
+
+            // Customers 배열에도 동기화
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex !== -1) {
+                // Deep copy to prevent reference issues
+                customers[customerIndex].checklistData = JSON.parse(JSON.stringify(newChecklistData));
+            }
+
+            saveCustomers(); // 저장 (LocalStorage & Cloud if enabled)
+            renderChecklistItems();
+
+            // 결과 알림
+            if (addedCount > 0 || removedCount > 0) {
+                showToast(`연동 완료! (추가: ${addedCount}, 삭제: ${removedCount}, 유지: ${keptCount})`, 'success');
+            } else {
+                showToast(`변경 사항이 없습니다. (유지: ${keptCount})`, 'info');
+            }
+        }
+
         function renderChecklistItems() {
             if (!checklistMasterData || checklistMasterData.length === 0) {
                 document.getElementById('checklistTableBody').innerHTML = `
@@ -18827,6 +18945,7 @@
     </script>
     <script>
         // PWA Service Worker 등록
+        // PWA Service Worker 등록
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
@@ -18932,7 +19051,7 @@
 
             // 현장 담당자 정보
             const managerInput = document.querySelector('input[data-field="manager"]');
-            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-4650-7013)');
+            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-7653-5386)');
 
             // 메시지 생성
             let message = `안녕하세요. 디자인지그입니다.\n\n`;
@@ -19092,7 +19211,7 @@
             const doorPw = doorPwInput ? doorPwInput.value : (currentData.doorPw || '');
 
             const managerInput = document.querySelector('input[data-field="manager"]');
-            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-4650-7013)');
+            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-7653-5386)');
 
             Object.keys(grouped).forEach(manager => {
                 const data = grouped[manager];

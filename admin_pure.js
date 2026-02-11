@@ -1,1289 +1,1289 @@
-        (function () {
-            // 페이지는 열람 모드로 볼 수 있음
-            // 관리자 로그인은 헤더의 로그인 버튼 통해 진행
-            sessionStorage.setItem('DJ_admin_page_auth', 'true');
-        })();
-        console.log('Main admin script loading...');
+(function () {
+    // 페이지는 열람 모드로 볼 수 있음
+    // 관리자 로그인은 헤더의 로그인 버튼 통해 진행
+    sessionStorage.setItem('DJ_admin_page_auth', 'true');
+})();
+console.log('Main admin script loading...');
 
-        // [Phase 2] Cleanup Function - 클라우드 동기화 성공 후 실행
-        function runPhase2Cleanup() {
-            const keysToRemove = [
-                'dz_customers', 'dz_regular_admins', 'dz_checklist_master',
-                'dz_global_cost', 'dz_admin_page_auth', 'dz_device_trust',
-                'designzig_expenses', 'designzig_fixed_expenses', 'designzig_fontsize',
-                'designzig_estimate_data', 'dz_estimate_data',
-                'DJ_migrated_v1',
-                'DJ_customers', 'DJ_global_cost', 'DJ_checklist_master', 'DJ_expenses', 'DJ_fixed_expenses',
-                'DJ_regular_admins', 'DJ_editHistory'
-            ];
+// [Phase 2] Cleanup Function - 클라우드 동기화 성공 후 실행
+function runPhase2Cleanup() {
+    const keysToRemove = [
+        'dz_customers', 'dz_regular_admins', 'dz_checklist_master',
+        'dz_global_cost', 'dz_admin_page_auth', 'dz_device_trust',
+        'designzig_expenses', 'designzig_fixed_expenses', 'designzig_fontsize',
+        'designzig_estimate_data', 'dz_estimate_data',
+        'DJ_migrated_v1',
+        'DJ_customers', 'DJ_global_cost', 'DJ_checklist_master', 'DJ_expenses', 'DJ_fixed_expenses',
+        'DJ_regular_admins', 'DJ_editHistory'
+    ];
 
-            let removedCount = 0;
-            keysToRemove.forEach(key => {
-                if (localStorage.getItem(key)) {
-                    localStorage.removeItem(key);
-                    removedCount++;
-                }
-            });
-            if (removedCount > 0) {
-                console.log(`[Phase 2 Cleanup] ${removedCount}개의 업무 데이터 로컬 캐시를 성공적으로 제거했습니다.`);
-            }
+    let removedCount = 0;
+    keysToRemove.forEach(key => {
+        if (localStorage.getItem(key)) {
+            localStorage.removeItem(key);
+            removedCount++;
         }
+    });
+    if (removedCount > 0) {
+        console.log(`[Phase 2 Cleanup] ${removedCount}개의 업무 데이터 로컬 캐시를 성공적으로 제거했습니다.`);
+    }
+}
 
-        // ==========================================
-        // 기기 신뢰 & PIN 로그인 시스템
-        // ==========================================
-        const DEVICE_TRUST_KEY = 'DJ_device_trust';
-        const DEVICE_TRUST_DAYS = 30;
+// ==========================================
+// 기기 신뢰 & PIN 로그인 시스템
+// ==========================================
+const DEVICE_TRUST_KEY = 'DJ_device_trust';
+const DEVICE_TRUST_DAYS = 30;
 
-        // 기기 신뢰 정보 확인
-        function checkDeviceTrust() {
-            try {
-                const trustData = localStorage.getItem(DEVICE_TRUST_KEY);
-                if (!trustData) return null;
+// 기기 신뢰 정보 확인
+function checkDeviceTrust() {
+    try {
+        const trustData = localStorage.getItem(DEVICE_TRUST_KEY);
+        if (!trustData) return null;
 
-                const trust = JSON.parse(trustData);
-                const now = Date.now();
-                const expiry = trust.expiry || 0;
+        const trust = JSON.parse(trustData);
+        const now = Date.now();
+        const expiry = trust.expiry || 0;
 
-                // 30일 경과 시 만료
-                if (now > expiry) {
-                    localStorage.removeItem(DEVICE_TRUST_KEY);
-                    return null;
-                }
-
-                // 환경 변경 감지 (간단한 fingerprint 비교)
-                if (trust.fingerprint !== getDeviceFingerprint()) {
-                    localStorage.removeItem(DEVICE_TRUST_KEY);
-                    return null;
-                }
-
-                return trust;
-            } catch (e) {
-                localStorage.removeItem(DEVICE_TRUST_KEY);
-                return null;
-            }
-        }
-
-        // 간단한 기기 핑거프린트 생성
-        function getDeviceFingerprint() {
-            const ua = navigator.userAgent;
-            const lang = navigator.language;
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const screen = `${window.screen.width}x${window.screen.height}`;
-            return btoa(ua + lang + tz + screen).slice(0, 32);
-        }
-
-        // 로그인 화면 전환
-        function showLoginView(view) {
-            document.getElementById('loginCardIdPw').style.display = 'none';
-            document.getElementById('loginCardPin').style.display = 'none';
-            document.getElementById('loginCardPinSetup').style.display = 'none';
-
-            if (view === 'idpw') {
-                document.getElementById('loginCardIdPw').style.display = 'block';
-                document.getElementById('loginId').focus();
-            } else if (view === 'pin') {
-                document.getElementById('loginCardPin').style.display = 'block';
-                document.getElementById('loginPin').value = '';
-                document.getElementById('loginPin').focus();
-            } else if (view === 'setup') {
-                document.getElementById('loginCardPinSetup').style.display = 'block';
-                document.getElementById('newPin').value = '';
-                document.getElementById('confirmPin').value = '';
-                document.getElementById('newPin').focus();
-            }
-        }
-
-        // PIN 로그인 처리
-        async function performPinLogin() {
-            const pin = document.getElementById('loginPin').value;
-            if (pin.length !== 4) {
-                showToast('PIN 4자리를 입력하세요', 'warning');
-                return;
-            }
-
-            const trust = checkDeviceTrust();
-            if (!trust) {
-                showToast('기기 신뢰가 만료되었습니다', 'error');
-                showLoginView('idpw');
-                return;
-            }
-
-            const pinHash = await hashPassword(pin);
-            if (pinHash !== trust.pinHash) {
-                showToast('PIN이 일치하지 않습니다', 'error');
-                document.getElementById('loginPin').value = '';
-                document.getElementById('loginPin').focus();
-                return;
-            }
-
-            // PIN 일치 - 저장된 관리자 정보로 로그인
-            currentAdmin = {
-                id: trust.adminId,
-                role: trust.adminRole,
-                name: trust.adminName
-            };
-
-            document.getElementById('loginOverlay').style.display = 'none';
-            activateAdminMode();
-            showToast(`${trust.adminName || trust.adminId}님 환영합니다`, 'success');
-        }
-
-        // PIN 설정 (기기 신뢰 생성)
-        async function setupDevicePin() {
-            const newPin = document.getElementById('newPin').value;
-            const confirmPin = document.getElementById('confirmPin').value;
-
-            if (newPin.length !== 4) {
-                showToast('PIN은 4자리 숫자로 입력하세요', 'warning');
-                return;
-            }
-
-            if (newPin !== confirmPin) {
-                showToast('PIN이 일치하지 않습니다', 'error');
-                document.getElementById('confirmPin').value = '';
-                document.getElementById('confirmPin').focus();
-                return;
-            }
-
-            const pinHash = await hashPassword(newPin);
-            const expiry = Date.now() + (DEVICE_TRUST_DAYS * 24 * 60 * 60 * 1000);
-
-            const trustData = {
-                adminId: currentAdmin.id,
-                adminRole: currentAdmin.role,
-                adminName: currentAdmin.name || currentAdmin.id,
-                pinHash: pinHash,
-                fingerprint: getDeviceFingerprint(),
-                expiry: expiry,
-                createdAt: Date.now()
-            };
-
-            localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trustData));
-
-            document.getElementById('loginOverlay').style.display = 'none';
-            activateAdminMode();
-            showToast('PIN이 설정되었습니다. 다음부터 빠르게 로그인하세요!', 'success');
-        }
-
-        // PIN 설정 건너뛰기
-        function skipPinSetup() {
-            document.getElementById('loginOverlay').style.display = 'none';
-            activateAdminMode();
-            showToast(`${currentAdmin.name || currentAdmin.id}로 로그인되었습니다`, 'success');
-        }
-
-        // 기기 신뢰 해제 (다른 계정 로그인)
-        function clearDeviceTrust() {
+        // 30일 경과 시 만료
+        if (now > expiry) {
             localStorage.removeItem(DEVICE_TRUST_KEY);
-            showLoginView('idpw');
-            showToast('기기 신뢰가 해제되었습니다', 'info');
+            return null;
         }
 
-        // 페이지 로드 시 기기 신뢰 확인
-        function initLoginScreen() {
-            const trust = checkDeviceTrust();
-            if (trust) {
-                // 기기 신뢰 있음 → PIN 로그인 화면
-                document.getElementById('trustedUserName').textContent = trust.adminName || trust.adminId;
-                showLoginView('pin');
-            } else {
-                // 기기 신뢰 없음 → ID/PW 로그인 화면
-                showLoginView('idpw');
-            }
+        // 환경 변경 감지 (간단한 fingerprint 비교)
+        if (trust.fingerprint !== getDeviceFingerprint()) {
+            localStorage.removeItem(DEVICE_TRUST_KEY);
+            return null;
         }
 
-        // (performLogin function has been moved to script top)
-        // 오버레이 로그인 처리 (스크립트 최상단 이동)
-        async function performLogin() {
-            console.log('performLogin function executed');
-            const inputId = document.getElementById('loginId').value.trim();
-            const inputPw = document.getElementById('loginPw').value;
+        return trust;
+    } catch (e) {
+        localStorage.removeItem(DEVICE_TRUST_KEY);
+        return null;
+    }
+}
 
-            if (!inputId || !inputPw) {
-                showToast('아이디와 비밀번호를 입력해주세요', 'warning');
-                return;
-            }
+// 간단한 기기 핑거프린트 생성
+function getDeviceFingerprint() {
+    const ua = navigator.userAgent;
+    const lang = navigator.language;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const screen = `${window.screen.width}x${window.screen.height}`;
+    return btoa(ua + lang + tz + screen).slice(0, 32);
+}
 
-            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
-            const inputHash = await hashPassword(inputPw);
-            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
-            if (mainAdmin) {
-                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
-                // PIN 설정 화면으로 전환
-                showLoginView('setup');
-                return;
-            }
+// 로그인 화면 전환
+function showLoginView(view) {
+    document.getElementById('loginCardIdPw').style.display = 'none';
+    document.getElementById('loginCardPin').style.display = 'none';
+    document.getElementById('loginCardPinSetup').style.display = 'none';
 
-            // 일반관리자 확인 (1차: 로컬 데이터)
-            let admins = getRegularAdmins();
-            let found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+    if (view === 'idpw') {
+        document.getElementById('loginCardIdPw').style.display = 'block';
+        document.getElementById('loginId').focus();
+    } else if (view === 'pin') {
+        document.getElementById('loginCardPin').style.display = 'block';
+        document.getElementById('loginPin').value = '';
+        document.getElementById('loginPin').focus();
+    } else if (view === 'setup') {
+        document.getElementById('loginCardPinSetup').style.display = 'block';
+        document.getElementById('newPin').value = '';
+        document.getElementById('confirmPin').value = '';
+        document.getElementById('newPin').focus();
+    }
+}
 
-            // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
-            if (!found) {
-                await syncAdminsFromCloud();
-                admins = getRegularAdmins();
-                found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
-            }
+// PIN 로그인 처리
+async function performPinLogin() {
+    const pin = document.getElementById('loginPin').value;
+    if (pin.length !== 4) {
+        showToast('PIN 4자리를 입력하세요', 'warning');
+        return;
+    }
 
-            if (found) {
-                currentAdmin = { id: found.id, role: 'regular', name: found.name || found.id };
-                // PIN 설정 화면으로 전환
-                showLoginView('setup');
-            } else {
-                showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
-            }
-        }
+    const trust = checkDeviceTrust();
+    if (!trust) {
+        showToast('기기 신뢰가 만료되었습니다', 'error');
+        showLoginView('idpw');
+        return;
+    }
 
-        let asListItems = []; // A/S 관리 리스트 데이터
+    const pinHash = await hashPassword(pin);
+    if (pinHash !== trust.pinHash) {
+        showToast('PIN이 일치하지 않습니다', 'error');
+        document.getElementById('loginPin').value = '';
+        document.getElementById('loginPin').focus();
+        return;
+    }
 
-        const categories = [
-            { no: '01', name: '가설공사' }, { no: '00', name: '설계 및 관리비' }, { no: '02', name: '철거공사' },
-            { no: '03', name: '설비/방수공사' }, { no: '04', name: '확장/단열공사' }, { no: '05', name: '창호공사' },
-            { no: '06', name: '전기/조명공사' }, { no: '07', name: '에어컨공사' }, { no: '08', name: '목공/도어공사' },
-            { no: '09', name: '필름공사' }, { no: '10', name: '타일공사' }, { no: '11', name: '욕실공사' },
-            { no: '12', name: '도장공사' }, { no: '13', name: '도배공사' }, { no: '14', name: '바닥재공사' },
-            { no: '15', name: '가구공사' }, { no: '16', name: '마감공사' }, { no: '17', name: '기타공사' }
-        ];
+    // PIN 일치 - 저장된 관리자 정보로 로그인
+    currentAdmin = {
+        id: trust.adminId,
+        role: trust.adminRole,
+        name: trust.adminName
+    };
+
+    document.getElementById('loginOverlay').style.display = 'none';
+    activateAdminMode();
+    showToast(`${trust.adminName || trust.adminId}님 환영합니다`, 'success');
+}
+
+// PIN 설정 (기기 신뢰 생성)
+async function setupDevicePin() {
+    const newPin = document.getElementById('newPin').value;
+    const confirmPin = document.getElementById('confirmPin').value;
+
+    if (newPin.length !== 4) {
+        showToast('PIN은 4자리 숫자로 입력하세요', 'warning');
+        return;
+    }
+
+    if (newPin !== confirmPin) {
+        showToast('PIN이 일치하지 않습니다', 'error');
+        document.getElementById('confirmPin').value = '';
+        document.getElementById('confirmPin').focus();
+        return;
+    }
+
+    const pinHash = await hashPassword(newPin);
+    const expiry = Date.now() + (DEVICE_TRUST_DAYS * 24 * 60 * 60 * 1000);
+
+    const trustData = {
+        adminId: currentAdmin.id,
+        adminRole: currentAdmin.role,
+        adminName: currentAdmin.name || currentAdmin.id,
+        pinHash: pinHash,
+        fingerprint: getDeviceFingerprint(),
+        expiry: expiry,
+        createdAt: Date.now()
+    };
+
+    localStorage.setItem(DEVICE_TRUST_KEY, JSON.stringify(trustData));
+
+    document.getElementById('loginOverlay').style.display = 'none';
+    activateAdminMode();
+    showToast('PIN이 설정되었습니다. 다음부터 빠르게 로그인하세요!', 'success');
+}
+
+// PIN 설정 건너뛰기
+function skipPinSetup() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    activateAdminMode();
+    showToast(`${currentAdmin.name || currentAdmin.id}로 로그인되었습니다`, 'success');
+}
+
+// 기기 신뢰 해제 (다른 계정 로그인)
+function clearDeviceTrust() {
+    localStorage.removeItem(DEVICE_TRUST_KEY);
+    showLoginView('idpw');
+    showToast('기기 신뢰가 해제되었습니다', 'info');
+}
+
+// 페이지 로드 시 기기 신뢰 확인
+function initLoginScreen() {
+    const trust = checkDeviceTrust();
+    if (trust) {
+        // 기기 신뢰 있음 → PIN 로그인 화면
+        document.getElementById('trustedUserName').textContent = trust.adminName || trust.adminId;
+        showLoginView('pin');
+    } else {
+        // 기기 신뢰 없음 → ID/PW 로그인 화면
+        showLoginView('idpw');
+    }
+}
+
+// (performLogin function has been moved to script top)
+// 오버레이 로그인 처리 (스크립트 최상단 이동)
+async function performLogin() {
+    console.log('performLogin function executed');
+    const inputId = document.getElementById('loginId').value.trim();
+    const inputPw = document.getElementById('loginPw').value;
+
+    if (!inputId || !inputPw) {
+        showToast('아이디와 비밀번호를 입력해주세요', 'warning');
+        return;
+    }
+
+    // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+    const inputHash = await hashPassword(inputPw);
+    const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+    if (mainAdmin) {
+        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+        // PIN 설정 화면으로 전환
+        showLoginView('setup');
+        return;
+    }
+
+    // 일반관리자 확인 (1차: 로컬 데이터)
+    let admins = getRegularAdmins();
+    let found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+
+    // 로컬에 없거나 실패하면 클라우드 동기화 후 재시도 (2차: 클라우드 데이터)
+    if (!found) {
+        await syncAdminsFromCloud();
+        admins = getRegularAdmins();
+        found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+    }
+
+    if (found) {
+        currentAdmin = { id: found.id, role: 'regular', name: found.name || found.id };
+        // PIN 설정 화면으로 전환
+        showLoginView('setup');
+    } else {
+        showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
+    }
+}
+
+let asListItems = []; // A/S 관리 리스트 데이터
+
+const categories = [
+    { no: '01', name: '가설공사' }, { no: '00', name: '설계 및 관리비' }, { no: '02', name: '철거공사' },
+    { no: '03', name: '설비/방수공사' }, { no: '04', name: '확장/단열공사' }, { no: '05', name: '창호공사' },
+    { no: '06', name: '전기/조명공사' }, { no: '07', name: '에어컨공사' }, { no: '08', name: '목공/도어공사' },
+    { no: '09', name: '필름공사' }, { no: '10', name: '타일공사' }, { no: '11', name: '욕실공사' },
+    { no: '12', name: '도장공사' }, { no: '13', name: '도배공사' }, { no: '14', name: '바닥재공사' },
+    { no: '15', name: '가구공사' }, { no: '16', name: '마감공사' }, { no: '17', name: '기타공사' }
+];
 
 
 
-        // 단위 옵션
-        const unitOptions = ['식', 'py', 'm²', 'm', 'ea', 'set', 'unit', '면', '자', '롤'];
+// 단위 옵션
+const unitOptions = ['식', 'py', 'm²', 'm', 'ea', 'set', 'unit', '면', '자', '롤'];
 
-        function getUnitSelectHTML(selectedValue = '') {
-            const isCustom = selectedValue && !unitOptions.includes(selectedValue);
-            if (isCustom) {
-                // 직접입력된 값이면 input으로 표시
-                return `<div class= "unit-wrapper" >
+function getUnitSelectHTML(selectedValue = '') {
+    const isCustom = selectedValue && !unitOptions.includes(selectedValue);
+    if (isCustom) {
+        // 직접입력된 값이면 input으로 표시
+        return `<div class= "unit-wrapper" >
                 <input type="text" class="unit-input" value="${selectedValue}" placeholder="단위" onblur="onUnitInputBlur(this)">
                     <button class="unit-toggle-btn" onclick="toggleUnitToSelect(this)" title="목록에서 선택">▼</button>
                 </div>`;
-            }
-            return `<select class= "unit-select" onchange = "onUnitChange(this)" > ${unitOptions.map(u =>
-                `<option value="${u}" ${u === selectedValue ? 'selected' : ''}>${u}</option>`
-            ).join('')
-                } <option value = "__custom__" >✏️ 직접입력</option></select> `;
-        }
+    }
+    return `<select class= "unit-select" onchange = "onUnitChange(this)" > ${unitOptions.map(u =>
+        `<option value="${u}" ${u === selectedValue ? 'selected' : ''}>${u}</option>`
+    ).join('')
+        } <option value = "__custom__" >✏️ 직접입력</option></select> `;
+}
 
-        // 단위 드롭다운 변경 시
-        function onUnitChange(select) {
-            if (select.value === '__custom__') {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'unit-wrapper';
-                wrapper.innerHTML = `
+// 단위 드롭다운 변경 시
+function onUnitChange(select) {
+    if (select.value === '__custom__') {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'unit-wrapper';
+        wrapper.innerHTML = `
                 <input type = "text" class= "unit-input" placeholder = "단위 입력" autofocus onblur = "onUnitInputBlur(this)" >
                 <button class="unit-toggle-btn" onclick="toggleUnitToSelect(this)" title="목록에서 선택">▼</button>
     `;
-                select.parentNode.replaceChild(wrapper, select);
-                wrapper.querySelector('input').focus();
-            }
+        select.parentNode.replaceChild(wrapper, select);
+        wrapper.querySelector('input').focus();
+    }
+}
+
+// 직접입력 -> 드롭다운으로 전환
+function toggleUnitToSelect(btn) {
+    const wrapper = btn.closest('.unit-wrapper');
+    const currentValue = wrapper.querySelector('.unit-input').value || '식';
+    const select = document.createElement('select');
+    select.className = 'unit-select';
+    select.setAttribute('onchange', 'onUnitChange(this)');
+    select.innerHTML = unitOptions.map(u =>
+        `<option value = "${u}" ${u === currentValue ? 'selected' : ''}> ${u}</option> `
+    ).join('') + '<option value="__custom__">✏️ 직접입력</option>';
+    wrapper.parentNode.replaceChild(select, wrapper);
+}
+
+// 단위 입력 블러 시 빈값이면 기본값
+function onUnitInputBlur(input) {
+    if (!input.value.trim()) {
+        input.value = '식';
+    }
+}
+
+// 기본 원가 데이터 (가설공사)
+const defaultCostData = {
+    '01': [
+        { div: '보양', name: '승강기 하프보양', spec: '승강기 하프보양', unit: '식', qty: '1', price: '90000' },
+        { div: '보양', name: '승강기 준보양', spec: '승강기 준보양', unit: '식', qty: '1', price: '120000' },
+        { div: '보양', name: '승강기 올보양', spec: '승강기 올보양', unit: '식', qty: '1', price: '160000' },
+        { div: '보양', name: '복도보양', spec: '플라베니아 (기본 12장)', unit: '식', qty: '1', price: '120000' },
+        { div: '보양', name: '동선보양', spec: '추가항목', unit: '식', qty: '1', price: '6000' },
+        { div: '보양', name: '현관문 보양', spec: '현관문 보양', unit: '식', qty: '1', price: '50000' },
+        { div: '보양', name: '창호 보양', spec: '집 전체 창호', unit: '식', qty: '1', price: '300000' },
+        { div: '보양', name: '실내 바닥 보양', spec: 'Floor Veneer 기본 12장', unit: '식', qty: '1', price: '120000' },
+        { div: '보양', name: '실내 바닥 보양 (추가)', spec: 'Floor Veneer', unit: '식', qty: '1', price: '6000' },
+        { div: '보양', name: '실내 바닥 보양', spec: '롤 골판지', unit: '롤', qty: '1', price: '90000' },
+        { div: '보양', name: '비닐 보양', spec: '커버링 2.4', unit: '식', qty: '1', price: '50000' },
+        { div: '동의서', name: '입주민 동의서', spec: '1~80 세대 (50%기준)', unit: '식', qty: '1', price: '160000' },
+        { div: '동의서', name: '입주민 동의서', spec: '81~100 세대 (50%기준)', unit: '식', qty: '1', price: '190000' },
+        { div: '동의서', name: '입주민 동의서', spec: '101~120 세대 (50%기준)', unit: '식', qty: '1', price: '210000' },
+        { div: '동의서', name: '입주민 동의서', spec: '121~140 세대 (50%기준)', unit: '식', qty: '1', price: '230000' },
+        { div: '동의서', name: '입주민 동의서', spec: '추가 20세대', unit: '식', qty: '1', price: '20000' },
+        { div: '허가', name: '공동주택 행위허가', spec: '주택과', unit: '식', qty: '1', price: '440000' },
+        { div: '허가', name: '공동주택 행위허가', spec: '건축과', unit: '식', qty: '1', price: '880000' },
+        { div: '필증', name: '방화판', spec: '자재+시공 (1200*550)', unit: 'ea', qty: '1', price: '50000' },
+        { div: '필증', name: '방화유리 (직선)', spec: '자재+시공', unit: 'm', qty: '1', price: '180000' },
+        { div: '필증', name: '방화유리 (곡선)', spec: '자재+시공', unit: 'm', qty: '1', price: '200000' },
+        { div: '필증', name: '갑종 방화문', spec: '자재+시공+시험성적서 (900*2000)', unit: 'ea', qty: '1', price: '1300000' },
+        { div: '필증', name: '소방 감지기', spec: '건전지 방식', unit: 'ea', qty: '1', price: '20000' },
+        { div: '용도변경', name: '상업공간 용도변경', spec: '구조·설비·위생·안전 기준 충족 여부에 따른 신고/허가', unit: '식', qty: '1', price: '0' }
+    ],
+    '02': [
+        { div: '주방', name: '주방 철거 (소형)', spec: 'ㅡ자, ㄱ자 (3.5M 미만)', unit: 'set', qty: '1', price: '70000' },
+        { div: '주방', name: '주방 철거 (중형)', spec: 'ㅡ자, ㄱ자 (5M 미만)', unit: 'set', qty: '1', price: '90000' },
+        { div: '주방', name: '주방 철거 (대형)', spec: 'ㅡ자, ㄱ자 (5M 이상)', unit: 'set', qty: '1', price: '100000' },
+        { div: '주방', name: '주방 철거 (특대)', spec: '12M 미만 ㄷ자, ㅁ자, 병렬형', unit: 'set', qty: '1', price: '130000' },
+        { div: '주방', name: '주방 철거 (초특대)', spec: '12M 이상 ㄷ자, ㅁ자, 병렬형', unit: 'set', qty: '1', price: '160000' },
+        { div: '주방', name: '싱크대 추가 (M당)', spec: '기본 세트 초과 물량', unit: 'M', qty: '1', price: '10000' },
+        { div: '주방', name: '아일랜드 식탁', spec: '독립형 (카운터 타입 제외)', unit: 'set', qty: '1', price: '35000' },
+        { div: '주방', name: '보조주방', spec: '발코니 보조주방', unit: 'set', qty: '1', price: '40000' },
+        { div: '주방', name: '냉장고장/키큰장', spec: '자(30cm)당 단가', unit: '자', qty: '1', price: '10000' },
+        { div: '주방', name: '키큰장 (유리장식)', spec: '대형평수 유리 장식장', unit: '자', qty: '1', price: '15000' },
+        { div: '주방', name: '냉장고장 (신축 EP)', spec: '바닥/천장 재사용 시 (좌우 EP)', unit: '판', qty: '1', price: '50000' },
+        { div: '주방', name: '빌트인 기기', spec: '식기세척기, 오븐, 세탁기 등', unit: 'ea', qty: '1', price: '20000' },
+        { div: '주방', name: '수전(냉/온)', spec: '1m 미만 / 내림설비', unit: 'ea', qty: '1', price: '75000' },
+        { div: '주방', name: '주방 타일 철거', spec: '1M 기준 (H1200 이하)', unit: 'M', qty: '1', price: '18000' },
+        { div: '주방', name: '주방 타일+세라픽스', spec: '샌딩 작업 포함 (최고가 적용)', unit: 'py', qty: '1', price: '100000' },
+        { div: '가구(수납)', name: '붙박이장/장롱', spec: '도어 1개 기준 (슬라이딩 x2)', unit: 'EA', qty: '1', price: '13000' },
+        { div: '가구(수납)', name: '붙박이장 (자 단위)', spec: '자(30cm)당 계산 시', unit: '자', qty: '1', price: '10000' },
+        { div: '가구(수납)', name: '현관장 (신발장)', spec: '도어 1개 기준', unit: 'ea', qty: '1', price: '11000' },
+        { div: '가구(수납)', name: '벽박이장/창고장', spec: '문틀/문선/문짝 포함 (미장별도)', unit: 'ea', qty: '1', price: '16000' },
+        { div: '가구(수납)', name: '벽박이장 (세트)', spec: '문4개+내부장 (대형)', unit: 'set', qty: '1', price: '120000' },
+        { div: '가구(수납)', name: '거실장 (세트)', spec: '소2+중1 기준', unit: 'set', qty: '1', price: '30000' },
+        { div: '가구(수납)', name: '빌트인 화장대', spec: '1.5M 이하', unit: 'ea', qty: '1', price: '35000' },
+        { div: '가구(수납)', name: '베란다장 (창고)', spec: '내부 선반 포함', unit: 'ea', qty: '1', price: '30000' },
+        { div: '가구(수납)', name: '침대+매트리스', spec: '폐기물 스티커 부착 권장', unit: 'ea', qty: '1', price: '60000' },
+        { div: '바닥', name: '마루 철거 (본드식)', spec: '강마루, 합판, 원목 (기본샌딩)', unit: 'py', qty: '1', price: '25000' },
+        { div: '바닥', name: '강화마루', spec: '조립식 (기본샌딩)', unit: 'py', qty: '1', price: '17000' },
+        { div: '바닥', name: '데코타일', spec: '(기본샌딩)', unit: 'py', qty: '1', price: '20000' },
+        { div: '바닥', name: '폴리싱 타일', spec: '타일+본드+샌딩', unit: 'py', qty: '1', price: '90000' },
+        { div: '바닥', name: '대리석', spec: '대리석+사모래+몰탈미장(난방배관미포함)', unit: 'py', qty: '1', price: '250000' },
+        { div: '바닥', name: '대리석', spec: '대리석+사모래+몰탈미장(난방배관재시공)', unit: 'py', qty: '1', price: '330000' },
+        { div: '바닥', name: '장판 철거', spec: '방 1개 기준', unit: 'ea', qty: '1', price: '12000' },
+        { div: '바닥', name: '한지 장판', spec: '샌딩', unit: 'py', qty: '1', price: '12000' },
+        { div: '바닥', name: '바닥 샌딩', spec: '단차/평활도 불량시(문턱)', unit: 'ea', qty: '1', price: '60000' },
+        { div: '창호', name: '거실 분합창', spec: '확장시 선철거', unit: 'set', qty: '1', price: '150000' },
+        { div: '창호', name: '작은방 분합창', spec: '확장시 선철거', unit: 'set', qty: '1', price: '90000' },
+        { div: '창호', name: '대형 샷시/폴딩', spec: '특대형 구분', unit: 'set', qty: '1', price: '250000' },
+        { div: '도어', name: '도어 세트 철거', spec: '문틀+문짝+문선+인방', unit: 'set', qty: '1', price: '32000' },
+        { div: '도어', name: '특수 문틀 (돌/ABS)', spec: '폐기물 포함시 (최고가)', unit: 'set', qty: '1', price: '50000' },
+        { div: '도어', name: '문짝만 철거', spec: '', unit: 'ea', qty: '1', price: '30000' },
+        { div: '도어', name: '문턱 제거', spec: '미장 포함', unit: 'ea', qty: '1', price: '50000' },
+        { div: '도어', name: '중문 철거', spec: '3연동, ㄱ자등 종류 무관', unit: 'set', qty: '1', price: '100000' },
+        { div: '도어', name: '방화문 철거', spec: '', unit: 'ea', qty: '1', price: '80000' },
+        { div: '벽면', name: '벽면 철거', spec: '석고 (h:2400)', unit: 'm', qty: '1', price: '40000' },
+        { div: '벽면', name: '단열벽 철거', spec: '목재+단열(스티로폴)+석고 (h:2400)', unit: 'm', qty: '1', price: '70000' },
+        { div: '벽면', name: '단열벽 철거', spec: '목재+단열(유리섬유)+석고 (h:2400)', unit: 'm', qty: '1', price: '90000' },
+        { div: '벽면', name: '가벽철거', spec: '목공+석고 (h:2400)', unit: 'm', qty: '1', price: '50000' },
+        { div: '벽체', name: '가벽 철거', spec: '목공/석고/단열재 (H2400)', unit: 'M', qty: '1', price: '55000' },
+        { div: '벽체', name: 'ALC 블럭 가벽', spec: '브라더 상세 항목', unit: 'M', qty: '1', price: '120000' },
+        { div: '벽체', name: '조적벽 (부분/날개)', spec: '비내력 조적 1M', unit: 'M', qty: '1', price: '100000' },
+        { div: '벽체', name: '조적벽 (두겹)', spec: '브라더 상세 항목', unit: 'M', qty: '1', price: '250000' },
+        { div: '벽체', name: '아트월 (목공)', spec: 'H2400 이하', unit: 'M', qty: '1', price: '33000' },
+        { div: '벽체', name: '아트월 (타일/석재)', spec: 'H2400 이하 (최고가 적용)', unit: 'M', qty: '1', price: '60000' },
+        { div: '벽체', name: '옹벽 컷팅', spec: '장비(벽체15, 샤시하단부45, 하루65)', unit: '식', qty: '1', price: '650000' },
+        { div: '천장', name: '우물천장 기본 철거', spec: '주변 몰딩만', unit: 'set', qty: '1', price: '30000' },
+        { div: '천장', name: '등박스 철거 (대형)', spec: '철제/대형 등박스', unit: 'set', qty: '1', price: '200000' },
+        { div: '천장', name: '등박스 철거 (일반)', spec: '일반 목공 등박스', unit: 'set', qty: '1', price: '50000' },
+        { div: '천장', name: '천장 전체 철거', spec: '석고만(댄조 유지)', unit: 'py', qty: '1', price: '20000' },
+        { div: '천장', name: '천장 전체 철거', spec: '우물천장 댄조포함 평당', unit: 'py', qty: '1', price: '40000' },
+        { div: '천장', name: '몰딩/걸레받이', spec: '평당 기준', unit: 'py', qty: '1', price: '4000' },
+        { div: '욕실', name: '욕실 기본 철거', spec: '도기/욕조/천장/액세서리', unit: 'set', qty: '1', price: '150000' },
+        { div: '욕실', name: '욕실 기본 철거', spec: '도기/frp욕조/천장/액세서리', unit: 'set', qty: '1', price: '200000' },
+        { div: '욕실', name: '욕실 전체 철거', spec: '타일+방수층 전체 (대형) - 난방배관 별도(10)', unit: 'set', qty: '1', price: '900000' },
+        { div: '욕실', name: '욕실 전체 철거', spec: '타일+방수층 전체 (중형) - 난방배관 별도(7)', unit: 'set', qty: '1', price: '750000' },
+        { div: '욕실', name: '욕실 전체 철거', spec: '타일+방수층 전체 (소형) - 난방배관 별도(5)', unit: 'set', qty: '1', price: '600000' },
+        { div: '욕실', name: '욕실 바닥 철거', spec: '바닥 타일+액체방수 1차', unit: 'set', qty: '1', price: '400000' },
+        { div: '욕실', name: 'UBR 욕실 철거', spec: '전체철거+설비+방수 1차 (조적벽 별도)', unit: 'set', qty: '1', price: '1200000' },
+        { div: '욕실', name: 'UBR 욕실 조적', spec: '입구 벽면 (h:1500)', unit: '면', qty: '1', price: '200000' },
+        { div: '욕실', name: '욕조 철거', spec: '아크릴 욕조 (개별 철거시)', unit: 'ea', qty: '1', price: '35000' },
+        { div: '욕실', name: '욕조 철거', spec: '월풀 욕조 (개별 철거시)', unit: 'ea', qty: '1', price: '200000' },
+        { div: '욕실', name: '욕조 철거 (조적)', spec: '조적/매립 형태', unit: 'ea', qty: '1', price: '100000' },
+        { div: '욕실', name: '욕실 벽타일(1면)', spec: '덧방 불가시', unit: 'ea', qty: '1', price: '100000' },
+        { div: '욕실', name: '라디에이터 철거', spec: '메꾸라/미장 포함', unit: 'EA', qty: '1', price: '100000' },
+        { div: '타일', name: '현관 디딤석', spec: '한면', unit: '식', qty: '1', price: '50000' },
+        { div: '타일', name: '현관 바닥', spec: '타일만', unit: 'py', qty: '1', price: '50000' },
+        { div: '타일', name: '현관 바닥', spec: '원바닥(타일 시공시 쭈꾸미비용 평당 5만원 별도)', unit: 'py', qty: '1', price: '100000' },
+        { div: '타일', name: '발코니 바닥타일 철거', spec: '타일만 0.5평(1.3M×1.3M)', unit: '식', qty: '1', price: '50000' },
+        { div: '타일', name: '발코니 바닥타일 철거', spec: '타일+압착본드 0.5평(1.3M×1.3M)', unit: '식', qty: '1', price: '70000' },
+        { div: '타일', name: '발코니 바닥타일 철거', spec: '원 바닥까지(방수별도) 0.5평(1.3M×1.3M)', unit: '식', qty: '1', price: '150000' },
+        { div: '조명', name: '방등', spec: '', unit: 'ea', qty: '1', price: '5000' },
+        { div: '조명', name: '거실등', spec: '', unit: 'ea', qty: '1', price: '15000' },
+        { div: '조명', name: '매입등', spec: '', unit: 'ea', qty: '1', price: '2000' },
+        { div: '조명', name: '스위치/콘센트', spec: '', unit: '평', qty: '1', price: '4000' },
+        { div: '화단', name: '화단', spec: '흙 (쓰레기 별도)', unit: '식', qty: '1', price: '100000' },
+        { div: '화단', name: '화단', spec: '조적 (h:600 기준)', unit: 'm', qty: '1', price: '100000' },
+        { div: '화단', name: '화단', spec: '옹벽 (h:600 기준)', unit: 'm', qty: '1', price: '150000' },
+        { div: '화단', name: '화단', spec: '옹벽 (h:600 기준-크라샤 작업)', unit: 'm', qty: '1', price: '250000' },
+        { div: '가스', name: '가스배관 부분철거', spec: '가스배관 내부 (계량기 유지)', unit: '식', qty: '1', price: '100000' },
+        { div: '가스', name: '가스배관 전체철거', spec: '가스배관 전체 철거 (외부에서 마감 - 계량기 현장에 보관)', unit: '식', qty: '1', price: '200000' },
+        { div: '폐기물', name: '1톤 트럭 (만차)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '550000' },
+        { div: '폐기물', name: '1톤 트럭 (3/4)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '520000' },
+        { div: '폐기물', name: '1톤 트럭 (1/2)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '320000' },
+        { div: '폐기물', name: '1톤 트럭 (1/4)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '250000' },
+        { div: '폐기물', name: '1톤 트럭 (적재함반차)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '150000' },
+        { div: '폐기물', name: '소량 폐기물', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '식', qty: '1', price: '100000' }
+    ],
+    '03': [
+        { div: '방수', name: '2차 액체 방수', spec: '전체 바닥/벽(h:1000이상) 방수몰탈', unit: '칸', qty: '1', price: '120000' },
+        { div: '방수', name: '욕조 방수', spec: '욕조부만 방수', unit: 'ea', qty: '1', price: '60000' },
+        { div: '방수', name: '3차 도막 방수 코너만 (2회)', spec: '마페이/아덱스(프라이머+방수제)-취약부위', unit: '칸', qty: '1', price: '200000' },
+        { div: '방수', name: '3차 도막 방수 전체 (2회)', spec: '마페이/아덱스(프라이머+방수제)-(h:1000이상)', unit: '칸', qty: '1', price: '400000' },
+        { div: '난방배관', name: '라지에이터', spec: '철거 후 엑셀 마감+미장 포함', unit: 'ea', qty: '1', price: '100000' },
+        { div: '난방배관', name: '화장실 난방배관 연장', spec: '화장실 바닥 난방배관 연장 - 기본', unit: 'ea', qty: '1', price: '100000' },
+        { div: '난방배관', name: '화장실 난방배관 연장', spec: '화장실 바닥 난방배관 연장 - 특대', unit: 'ea', qty: '1', price: '150000' },
+        { div: '수도', name: '급수관 신설 (노출-1면)', spec: '냉/온수 1조 신설 (1면 꺾음 기준) - 노출', unit: 'ea', qty: '1', price: '150000' },
+        { div: '수도', name: '급수관 신설 (노출-2면)', spec: '냉/온수 1조 신설 (2면 꺾음 기준) - 노출', unit: 'ea', qty: '1', price: '200000' },
+        { div: '수도', name: '급수관 신설 (매립)', spec: '냉/온수 1조 신설 (옹벽의 경우) - 매립', unit: 'ea', qty: '1', price: '350000' },
+        { div: '수도', name: '급수관 이동', spec: '기존면 이동 (세면부 모음, 샤워부 높이 조절 등)', unit: 'ea', qty: '1', price: '100000' },
+        { div: '하수', name: 'P트랩 전환', spec: '바닥 배수 → 벽 배수 전환 (철거, 매립 포함)', unit: 'ea', qty: '1', price: '100000' },
+        { div: '하수', name: '하수관 이동', spec: '바닥 배수 이동', unit: 'ea', qty: '1', price: '150000' },
+        { div: '오수', name: '오수 배관', spec: '200~250mm 이동', unit: 'ea', qty: '1', price: '200000' },
+        { div: '수도', name: '수도 막음', spec: '기존 수도 냉/온수 1조', unit: 'ea', qty: '1', price: '100000' },
+        { div: '수도', name: '매립수전', spec: '샤워/세면대 (젠다이 필수-포함)', unit: 'ea', qty: '1', price: '600000' },
+        { div: '조적', name: '조적 젠다이 (숏)', spec: '세면대부 조적 젠다이 시공 (h:1100)', unit: '식', qty: '1', price: '200000' },
+        { div: '조적', name: '조적 젠다이 (롱)', spec: '세면대+샤워 전체 조적 젠다이 시공 (h:1100)', unit: '식', qty: '1', price: '250000' },
+        {
+            div: '분배기', name: '분배기 교체 - 기본', spec: '기존 분배기 교체 - 일반 (이동 없음, 시스템 구동기 별도)', unit: '식', qty: '1', price: '1300000'
+        },
+        {
+            div: '분배기', name: '분배기 교체 - 매립형', spec: '기존 분배기 교체 -매립형 (이동 없음, 시스템 구동기 별도)', unit: '식', qty: '1', price:
+                '1500000'
+        },
+        { div: '분배기', name: '분배기 이동', spec: '기존 분배기 위치에서 2m 이내 이동 (기존 분배기 재사용)', unit: '식', qty: '1', price: '1600000' },
+        { div: '가스배관 철거', name: '가스배관 철거', spec: '기본 철거 (부분 철거, 계량기 유지상태)', unit: '식', qty: '1', price: '200000' },
+        { div: '가스배관 철거', name: '가스배관 철거', spec: '전체 철거 (외부에서 마감, 계량기 세대보관)', unit: '식', qty: '1', price: '250000' },
+        { div: '가스배관 연장', name: '가스배관 연장 (기존유지)', spec: '가스배관 이동 기존 유지하는 상태에서', unit: '식', qty: '1', price: '300000' },
+        { div: '가스배관 연장', name: '가스배관 연장 (부분철거)', spec: '가스배관 이동 부분 철거', unit: '식', qty: '1', price: '350000' },
+        { div: '가스배관 신설', name: '가스배관 신설 (상가)-기본', spec: '기존 건물에서 배관 연장+안전검사+승인', unit: '식', qty: '1', price: '2000000' },
+        {
+            div: '가스배관 신설', name: '가스배관 신설 (상가)-중상', spec: '기존 건물에서 배관 연장+복잡한구조+안전검사+승인', unit: '식', qty: '1', price:
+                '3500000'
+        },
+        {
+            div: '가스배관 신설', name: '가스배관 신설 (상가)-최상', spec: '기존 건물에서 배관 연장+복잡한구조+안전검사+승인(매립-장비)', unit: '식', qty: '1', price:
+                '5000000'
+        },
+        { div: '누수탐지', name: '누수탐지 수도 배관', spec: '집 내부 수도배관(냉/온)', unit: '식', qty: '1', price: '300000' },
+        { div: '누수탐지', name: '누수탐지 난방 배관', spec: '집 내부 난방배관 점검', unit: '식', qty: '1', price: '300000' },
+        { div: '누수탐지', name: '누수탐지 수도/난방 배관', spec: '집 내부 수도배관(냉/온) 및 난방배관 점검', unit: '식', qty: '1', price: '500000' }
+    ],
+    '04': [
+        { div: '확장', name: '거실 확장', spec: '철거+단열(아이소핑크)+엑샐 (특대-통바닥)', unit: '식', qty: '1', price: '1100000' },
+        { div: '확장', name: '거실 확장', spec: '철거+단열(아이소핑크)+엑샐 (대형)', unit: '식', qty: '1', price: '900000' },
+        { div: '확장', name: '거실 확장', spec: '철거+단열(아이소핑크)+엑샐 (기본)', unit: '식', qty: '1', price: '800000' },
+        { div: '확장', name: '방/주방 확장', spec: '철거+단열(아이소핑크)+엑샐 (통바닥)', unit: '식', qty: '1', price: '800000' },
+        { div: '확장', name: '방/주방 확장', spec: '철거+단열(아이소핑크)+엑샐 (기본)', unit: '식', qty: '1', price: '700000' },
+        { div: '확장단열', name: '거실 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-기본', unit: '식', qty: '1', price: '1100000' },
+        { div: '확장단열', name: '방/주방 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-기본', unit: '식', qty: '1', price: '900000' },
+        { div: '확장단열', name: '거실 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-대형(단열기준)', unit: '식', qty: '1', price: '1500000' },
+        { div: '확장단열', name: '방/주방 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-대형(단열기준)', unit: '식', qty: '1', price: '1200000' },
+        { div: '단열', name: '안방 외벽 단열', spec: '아이소핑크(50t+50t)+석고1p-기본', unit: '면', qty: '1', price: '800000' },
+        { div: '단열', name: '안방 외벽 단열', spec: '아이소핑크(50t+50t)+다루끼+기밀(듀폰투습)_석고2p-고급', unit: '면', qty: '1', price: '1100000' },
+        { div: '단열', name: '방 외벽 단열', spec: '아이소핑크(50t+50t)+석고1p-기본', unit: '면', qty: '1', price: '500000' },
+        { div: '단열', name: '방 외벽 단열', spec: '아이소핑크(50t+50t)+다루끼+기밀(듀폰투습)_석고2p-고급', unit: '면', qty: '1', price: '800000' },
+        { div: '단열', name: '화장실 벽면 단열', spec: '아이소핑크(30t)+석고1p', unit: '면', qty: '1', price: '300000' }
+    ],
+    '05': [
+        { div: '창호', name: 'kcc 창호', spec: '20평 이하 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '6000000' },
+        { div: '창호', name: 'kcc 창호', spec: '21~25평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '8000000' },
+        { div: '창호', name: 'kcc 창호', spec: '26~30평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '9000000' },
+        { div: '창호', name: 'kcc 창호', spec: '31~35평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '10000000' },
+        { div: '창호', name: 'kcc 창호', spec: '36~40평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '13000000' },
+        { div: '창호', name: 'kcc 창호', spec: '41~45평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '16000000' },
+        { div: '창호', name: 'kcc 창호', spec: '46~50평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '19000000' },
+        { div: '창호', name: 'kcc 창호', spec: '51평 이상 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '22000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '20평 이하 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '7000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '21~25평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '8000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '26~30평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '11000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '31~35평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '13000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '36~40평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '16000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '41~45평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '19000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '46~50평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '22000000' },
+        { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '51평 이상 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '25000000' },
+        { div: '방충망', name: '미세 방충망', spec: '큰 창', unit: 'ea', qty: '1', price: '70000' },
+        { div: '방충망', name: '미세 방충망', spec: '작은 창', unit: 'ea', qty: '1', price: '50000' },
+        { div: '크리센트', name: '크리센트 교체', spec: '', unit: 'ea', qty: '1', price: '10000' },
+        { div: '폴딩도어', name: '폴딩도어(짝)', spec: '', unit: 'ea', qty: '1', price: '470000' }
+    ],
+    '06': [
+        { div: '배선', name: '전기 배선 (기본)', spec: '전기 배선 비용(2.5SQ-HIV)', unit: 'py', qty: '1', price: '60000' },
+        { div: '배선', name: '단독배선(차단기포함)', spec: '인덕션 (4SQ-HIV)', unit: 'ea', qty: '1', price: '300000' },
+        { div: '배선', name: '단독배선(차단기포함)', spec: '주방(보조주방, 정수기 등)-차단기 가구로 숨김', unit: 'ea', qty: '1', price: '250000' },
+        { div: '배선', name: '일괄소등', spec: '일괄 소등 포함 기계식(전자식 별도)', unit: 'ea', qty: '1', price: '300000' },
+        { div: '배선', name: '스위치 증설/이설', spec: '신설 위치가 가벽의 경우', unit: 'ea', qty: '1', price: '100000' },
+        { div: '배선', name: '3로 스위치 증설/이설', spec: '신설 위치가 가벽의 경우', unit: 'ea', qty: '1', price: '120000' },
+        { div: '배선', name: '스위치 증설/이설', spec: '신설 위치가 옹벽의 경우', unit: 'ea', qty: '1', price: '170000' },
+        { div: '배선', name: '3로 스위치 증설/이설', spec: '신설 위치가 옹벽의 경우', unit: 'ea', qty: '1', price: '190000' },
+        { div: '배선', name: '콘센트 증설/이설', spec: '신설 위치가 가벽의 경우', unit: 'ea', qty: '1', price: '30000' },
+        { div: '배선', name: '콘센트 증설/이설', spec: '신설 위치가 옹벽의 경우', unit: 'ea', qty: '1', price: '70000' },
+        { div: '배선', name: '콘센트 및 스위치 증설/이설', spec: '침대 헤더 좌/우 신설 (일괄소등 안됨)', unit: 'ea', qty: '1', price: '100000' },
+        { div: '비디오폰', name: '비디오선 배선 연장', spec: '1m 이내', unit: '식', qty: '1', price: '100000' },
+        { div: '비디오폰', name: '비디오폰 배선 연장', spec: '1m 이상', unit: '식', qty: '1', price: '200000' },
+        { div: '온도조절기', name: '온도조절기 배선 추가', spec: '각방 온도 조절기 배선 각실 기준 (폭스타공 별도)', unit: 'ea', qty: '1', price: '50000' },
+        { div: '차단기', name: '차단기 교체', spec: '기본 6회로 차단기만 교체', unit: '식', qty: '1', price: '300000' },
+        { div: '차단기', name: '차단기 교체', spec: '차단기 추가 (벽면 철거+차단기 추가)', unit: '식', qty: '1', price: '500000' },
+        { div: '현관', name: '현관 조명', spec: '현관 3인치 or 2인치 (히든센서+띄움 신발장 간접 T5)', unit: '식', qty: '1', price: '250000' },
+        { div: '조명', name: '조명-방등', spec: 'led 엣지등 (640*640) - 시공비 별도', unit: 'ea', qty: '1', price: '70000' },
+        { div: '조명', name: '조명-방등', spec: 'led 스마트 엣지등 (640*640) - 시공비 별도', unit: 'ea', qty: '1', price: '150000' },
+        { div: '조명', name: '조명-주방등', spec: 'led 엣지등 (640*220) - 시공비 별도', unit: 'ea', qty: '1', price: '50000' },
+        { div: '조명', name: '조명-주방등', spec: 'led 스마트 엣지 (635*320) - 시공비 별도', unit: 'ea', qty: '1', price: '120000' },
+        { div: '조명', name: '조명-주방등', spec: 'led 엣지등 (1280*320) - 시공비 별도', unit: 'ea', qty: '1', price: '110000' },
+        { div: '조명', name: '조명-주방등', spec: 'led 스마트 엣지 (1280*320) - 시공비 별도', unit: 'ea', qty: '1', price: '130000' },
+        { div: '조명', name: '조명-매입등', spec: '호른 2인치 led 확산 COB(5w) - 시공비 별도', unit: 'ea', qty: '1', price: '17000' },
+        { div: '조명', name: '조명-매입등', spec: '호른 3인치 led 확산 COB(8w) - 시공비 별도', unit: 'ea', qty: '1', price: '17000' },
+        { div: '조명', name: '조명-매입등', spec: '움푹 2인치 led (5w) - 시공비 별도', unit: 'ea', qty: '1', price: '5000' },
+        { div: '조명', name: '조명-매입등', spec: '움푹 3인치 led (5w) - 시공비 별도', unit: 'ea', qty: '1', price: '6000' },
+        { div: '조명', name: '조명-트림리스', spec: '레일 4m 이내 205길이 6개(목공별도)', unit: 'ea', qty: '1', price: '600000' },
+        { div: '조명', name: '조명-간접등', spec: 't3 led (27mm)', unit: 'm', qty: '1', price: '7000' },
+        { div: '조명', name: '조명-간접등', spec: 't5 led (35mm)', unit: 'm', qty: '1', price: '7500' },
+        { div: '조명', name: '조명-간접등', spec: 'led 바 - 주문제작', unit: '식', qty: '1', price: '0' },
+        { div: '조명', name: '조명-직부등', spec: '8인치 led (원형/사각)', unit: 'ea', qty: '1', price: '12000' },
+        { div: '조명', name: '조명-센서등', spec: '8인치 led (원형/사각)', unit: 'ea', qty: '1', price: '12000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 기본형', spec: '제일 디아트 20평대', unit: '식', qty: '1', price: '400000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 기본형', spec: '제일 디아트 30평대', unit: '식', qty: '1', price: '550000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 기본형', spec: '제일 디아트 40평대', unit: '식', qty: '1', price: '700000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 르그랑', spec: '아테오 20평대', unit: '식', qty: '1', price: '650000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 르그랑', spec: '아테오 30평대', unit: '식', qty: '1', price: '850000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 르그랑', spec: '아테오 40평대', unit: '식', qty: '1', price: '1000000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 유럽형융', spec: '20평대', unit: '식', qty: '1', price: '800000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 유럽형융', spec: '30평대', unit: '식', qty: '1', price: '1100000' },
+        { div: '스위치콘센트', name: '스위치콘센트 - 유럽형융', spec: '40평대', unit: '식', qty: '1', price: '1600000' },
+        { div: '감지기', name: '감지기', spec: '차동식/정온식', unit: 'ea', qty: '1', price: '5000' },
+        { div: '인건비', name: '전기 기술자 1품', spec: '경비/식대/장비 포함.', unit: 'ea', qty: '1', price: '400000' },
+        { div: '실링팬', name: '실링팬', spec: '보강및 시공비 포함(자재 별도)', unit: '식', qty: '1', price: '150000' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '1구 스위치 (기본)', unit: 'ea', qty: '1', price: '1880' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '2구 스위치 (기본)', unit: 'ea', qty: '1', price: '2640' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '3구 스위치 (기본)', unit: 'ea', qty: '1', price: '3450' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '4구 스위치 (기본)', unit: 'ea', qty: '1', price: '4240' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '방불/방등 스위치', unit: 'ea', qty: '1', price: '5350' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '1구 스위치', unit: 'ea', qty: '1', price: '3100' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '2구 스위치', unit: 'ea', qty: '1', price: '3740' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '3구 스위치', unit: 'ea', qty: '1', price: '4200' },
+        { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '방불/방등 스위치', unit: 'ea', qty: '1', price: '4950' },
+        { div: '개별스위치콘센트', name: '융 LS990 / LS 시리즈', spec: '1구 스위치 (1모듈, 화이트/아이보리)', unit: 'ea', qty: '1', price: '10000' },
+        { div: '개별스위치콘센트', name: '융 LS990 / LS 시리즈', spec: '2구 스위치 (2모듈, 화이트/아이보리)', unit: 'ea', qty: '1', price: '18000' },
+        { div: '개별스위치콘센트', name: '융 LS990 / LS 시리즈', spec: '3구 스위치 (3모듈, 화이트/아이보리)', unit: 'ea', qty: '1', price: '43000' },
+        { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '1구 콘센트 (기본)', unit: 'ea', qty: '1', price: '5300' },
+        { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '2구 콘센트 (기본)', unit: 'ea', qty: '1', price: '11000' },
+        { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '3구 콘센트 (기본)', unit: 'ea', qty: '1', price: '16500' },
+        { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '4구 콘센트 (기본)', unit: 'ea', qty: '1', price: '27000' },
+        { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '5구 콘센트 (기본)', unit: 'ea', qty: '1', price: '39000' },
+        { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '1구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '5200' },
+        { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '2구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '11000' },
+        { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '3구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '16000' },
+        { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '4구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '27000' },
+        { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '5구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '39000' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '1구 스위치', unit: 'ea', qty: '1', price: '3100' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '2구 스위치', unit: 'ea', qty: '1', price: '4400' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '3구 스위치', unit: 'ea', qty: '1', price: '5400' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '4구 스위치', unit: 'ea', qty: '1', price: '6800' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '5구 스위치', unit: 'ea', qty: '1', price: '8200' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '4650' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '7450' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '3구 콘센트', unit: 'ea', qty: '1', price: '10000' },
+        { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: 'TV/통합', unit: 'ea', qty: '1', price: '8600' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '1구 스위치', unit: 'ea', qty: '1', price: '3100' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '2구 스위치', unit: 'ea', qty: '1', price: '4200' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '3구 스위치', unit: 'ea', qty: '1', price: '5000' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '4000' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '5500' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '1구 스위치', unit: 'ea', qty: '1', price: '4300' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '2구 스위치', unit: 'ea', qty: '1', price: '5300' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '3구 스위치', unit: 'ea', qty: '1', price: '6300' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '4200' },
+        { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '5300' },
+        { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '1구 스위치', unit: 'ea', qty: '1', price: '2000' },
+        { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '2구 스위치', unit: 'ea', qty: '1', price: '3100' },
+        { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '3구 스위치', unit: 'ea', qty: '1', price: '4000' },
+        { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '4구 스위치', unit: 'ea', qty: '1', price: '5000' },
+        { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: 'TV/전화/통합', unit: 'ea', qty: '1', price: '8000' },
+        { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '1구 스위치', unit: 'ea', qty: '1', price: '2300' },
+        { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '2구 스위치', unit: 'ea', qty: '1', price: '3500' },
+        { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '3구 스위치', unit: 'ea', qty: '1', price: '4700' },
+        { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '3600' },
+        { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '4900' },
+        { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '3구 콘센트', unit: 'ea', qty: '1', price: '6200' },
+        { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '1구 (2,000 ~ 4,000원대 평균)', unit: 'ea', qty: '1', price: '3000' },
+        { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '2구 (3,000 ~ 5,000원대 평균)', unit: 'ea', qty: '1', price: '4000' },
+        { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '3구 (4,000 ~ 7,000원대 평균)', unit: 'ea', qty: '1', price: '5500' },
+        { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '4구 (6,000 ~ 9,000원대 평균)', unit: 'ea', qty: '1', price: '7500' },
+        { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '5구 (7,000 ~ 12,000원대 평균)', unit: 'ea', qty: '1', price: '9500' },
+        { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '6구 (8,000 ~ 14,000원대 평균)', unit: 'ea', qty: '1', price: '11000' },
+        {
+            div: '개별스위치콘센트(평균)', name: '르그랑/융 프리미엄군', spec: '1구 기준 (8,000 ~ 12,000원부터 시작)', unit: 'ea', qty: '1', price:
+                '10000'
         }
-
-        // 직접입력 -> 드롭다운으로 전환
-        function toggleUnitToSelect(btn) {
-            const wrapper = btn.closest('.unit-wrapper');
-            const currentValue = wrapper.querySelector('.unit-input').value || '식';
-            const select = document.createElement('select');
-            select.className = 'unit-select';
-            select.setAttribute('onchange', 'onUnitChange(this)');
-            select.innerHTML = unitOptions.map(u =>
-                `<option value = "${u}" ${u === currentValue ? 'selected' : ''}> ${u}</option> `
-            ).join('') + '<option value="__custom__">✏️ 직접입력</option>';
-            wrapper.parentNode.replaceChild(select, wrapper);
+    ],
+    '07': [
+        {
+            div: '엘지 에어컨', name: 'LG 시스템 에어컨 2대', spec: '프리미엄 일반형(단배관: 18/6) - 실외비 3마력/냉방', unit: '식', qty: '1', price:
+                '3900000'
+        },
+        {
+            div: '엘지 에어컨', name: 'LG 시스템 에어컨 3대', spec: '프리미엄 일반형(단배관: 18/6/5) - 실외비 4마력/냉방', unit: '식', qty: '1', price:
+                '5200000'
+        },
+        {
+            div: '엘지 에어컨', name: 'LG 시스템 에어컨 4대', spec: '프리미엄 일반형(단배관: 18/6/5/5) - 실외비 4마력/냉방', unit: '식', qty: '1', price:
+                '6200000'
+        },
+        {
+            div: '엘지 에어컨', name: 'LG 시스템 에어컨 5대', spec: '프리미엄 일반형(단배관: 18/6/5/5) - 실외비 4마력/냉방', unit: '식', qty: '1', price:
+                '7800000'
+        },
+        {
+            div: '엘지 에어컨', name: 'LG 시스템 에어컨 6대', spec: '프리미엄 일반형(단배관: 18/6/5/5/5) - 실외비 5마력/냉방', unit: '식', qty: '1', price:
+                '8900000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 2대', spec: '무풍 와이파이 내장형(단배관: 18/6) - 실외기 3마력/냉방', unit: '식', qty: '1', price:
+                '3400000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 3대', spec: '무풍 와이파이 내장형(단배관: 18/6/5) - 실외기 4마력/냉방', unit: '식', qty: '1', price:
+                '4500000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 4대', spec: '무풍 와이파이 내장형(단배관: 18/6/5/5) - 실외기 4마력/냉방', unit: '식', qty: '1',
+            price: '5300000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 5대', spec: '무풍 와이파이 내장형(단배관: 18/6/5/5) - 실외기 5마력/냉방', unit: '식', qty: '1',
+            price: '6700000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 6대', spec: '무풍 와이파이 내장형(단배관: 18/8/6/5/5/5) - 실외기 5마력/냉방', unit: '식', qty: '1',
+            price: '7800000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 7대', spec: '무풍 와이파이 내장형(단배관: 10/10/8/6/6/6/6) - 실외기 6마력/냉방', unit: '식', qty:
+                '1', price: '8200000'
+        },
+        {
+            div: '삼성 에어컨', name: 'SAMSUNG 에어컨 7대', spec: '무풍 와이파이 내장형(단배관: 18/8/8/6/6/6/6) - 실외기 6마력/냉방', unit: '식', qty: '1',
+            price: '8500000'
+        },
+        { div: '기타 추가 항목', name: '실외기 앵글 (1단)', spec: '알루미늄 바닥용 1단', unit: '식', qty: '1', price: '70000' },
+        { div: '기타 추가 항목', name: '실외기 앵글 (행어용)', spec: '알루미늄 1050~1150', unit: '식', qty: '1', price: '150000' },
+        { div: '기타 추가 항목', name: '실외기 받침대', spec: '발통 (주거용)', unit: '식', qty: '1', price: '30000' },
+        { div: '기타 추가 항목', name: '실외기 에어가드', spec: '바람막이 (알루미늄)', unit: '식', qty: '1', price: '50000' },
+        { div: '기타 추가 항목', name: '단상 차단기', spec: '누전 220V', unit: '식', qty: '1', price: '50000' }
+    ],
+    '08': [
+        { div: '벽체', name: '벽면 석고 시공', spec: '벽면 석고 면맞춤 떠붙임 1p (h:2400)', unit: 'm', qty: '1', price: '70000' },
+        { div: '가벽', name: '주방 가벽 신설', spec: '다루끼 가벽 (냉장고) - 1m이내 두께60mm', unit: 'ea', qty: '1', price: '150000' },
+        { div: '가벽', name: '중문 가벽 신설', spec: '투바이 가벽 (중문) - 1m이내 두께90mm - 공틀', unit: 'ea', qty: '1', price: '350000' },
+        { div: '가벽', name: '직각 게이트 공틀 MD', spec: '측면 MD 마감', unit: '틀', qty: '1', price: '100000' },
+        { div: '가벽', name: '아치 게이트 공틀 MD', spec: '측면 MD 마감', unit: '틀', qty: '1', price: '150000' },
+        { div: '가벽', name: '가벽 신설', spec: '공간 분리를 위한 투바이 가벽 신설', unit: '식', qty: '1', price: '350000' },
+        { div: '몰딩', name: '천장 몰딩', spec: '계단 몰딩 (25*15)', unit: 'py', qty: '1', price: '22000' },
+        { div: '몰딩', name: '걸레 받이', spec: '직각 평 몰딩 (30mm or 40mm)', unit: 'py', qty: '1', price: '20000' },
+        { div: '천장', name: '가구자리 수평 맞춤', spec: '가구자리 수평 맞춤 (부분 철거 후 맞춤)', unit: '식', qty: '1', price: '300000' },
+        { div: '천장', name: '우물 천장 평시공', spec: '전실/현관 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '150000' },
+        { div: '천장', name: '우물 천장 평시공', spec: '주방 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '250000' },
+        { div: '천장', name: '우물 천장 평시공', spec: '거실 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '350000' },
+        { div: '천장', name: '우물 천장 몰딩', spec: '9mm 몰딩 시공', unit: '식', qty: '1', price: '150000' },
+        { div: '천장', name: '우물 천장 신설', spec: '정사각, 직사각 형태 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '700000' },
+        { div: '천장', name: '우물 천장 신설', spec: '라운드 형태 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '800000' },
+        { div: '천장', name: '매립 등박스 신설 (라인조명)', spec: '철거+재시공 (라인 일자 조명) - 조명별도', unit: 'm', qty: '1', price: '70000' },
+        { div: '천장', name: '매립 등박스 신설 (라인조명)', spec: '철거+재시공 (라인 사각 조명) - 조명별도', unit: '식', qty: '1', price: '500000' },
+        { div: '천장', name: '복도 측면 상부 간접등 박스', spec: '철거+간접등박스 - 조명별도', unit: 'm', qty: '1', price: '100000' },
+        {
+            div: '벽체', name: '복도 끝벽 벽 간접등', spec: '철거+간접등박스 (w:1200,h:2400 기준) - 조명별도', unit: '식', qty: '1', price: '200000'
+        },
+        { div: '벽체', name: '알판 - 템바보드', spec: '포인트 벽면 템바보드', unit: '식', qty: '1', price: '450000' },
+        { div: '벽체', name: '코너 라운드 벽체', spec: '날개벽 또는 코너 벽면 라운드 시공', unit: '식', qty: '1', price: '400000' },
+        { div: '벽체', name: '거실 TV 매립형 가벽', spec: 'TV 고정 벽면 합판 보강', unit: '식', qty: '1', price: '600000' },
+        { div: '벽체', name: '히든도어 벽면 마감', spec: '히든도어 양쪽 벽면 알판 (석고+MD)', unit: '식', qty: '1', price: '200000' },
+        { div: '벽체', name: '벽체 막음 (기존 도어자리)', spec: '기존 도어 자리 벽체 마감 (내부 단열재-방음)', unit: '식', qty: '1', price: '250000' },
+        { div: '벽체', name: '주방 타일 철거자리 마감', spec: '기존 주방자리 타일 철거 후 석고 마감', unit: '식', qty: '1', price: '250000' },
+        { div: '알판', name: '알판 - 벽면 MD', spec: '벽면 알판 (석고+MD) (1000*2400)', unit: 'm', qty: '1', price: '90000' },
+        { div: '알판', name: '알판 - 벽면 MD', spec: '천장 알판 (석고+MD) (1000*2400)', unit: 'm', qty: '1', price: '120000' },
+        { div: '천장', name: '철거 후 댄조 마감 평 - 현관', spec: '전체 철거 후 천장 마감 (다루끼+석고) 평마감', unit: '식', qty: '1', price: '600000' },
+        {
+            div: '천장', name: '철거 후 댄조 마감 우물 - 현관', spec: '전체 철거 후 천장 마감 (다루끼+석고) 우물 마감 (간접시-조명별도)', unit: '식', qty: '1',
+            price: '700000'
+        },
+        { div: '천장', name: '철거 후 댄조 마감 평 - 거실', spec: '전체 철거 후 천장 마감 (다루끼+석고) 평마감', unit: '식', qty: '1', price: '800000' },
+        {
+            div: '천장', name: '철거 후 댄조 마감 우물 - 거실', spec: '전체 철거 후 천장 마감 (다루끼+석고) 우물 마감 (간접시-조명별도)', unit: '식', qty: '1',
+            price: '900000'
+        },
+        {
+            div: '천장', name: '철거 후 댄조 마감 평 - 방or주방', spec: '전체 철거 후 천장 마감 (다루끼+석고) 평마감', unit: '식', qty: '1', price: '700000'
+        },
+        {
+            div: '천장', name: '철거 후 댄조 마감 우물 - 거실or주방', spec: '전체 철거 후 천장 마감 (다루끼+석고) 우물 마감 (간접시-조명별도)', unit: '식', qty: '1',
+            price: '800000'
+        },
+        {
+            div: '에어컨', name: '시스템 에어컨 천장 단내림', spec: '시스템 에어컨 설비층 확보를 위한 천장 단내림 (h:190)', unit: '식', qty: '1', price:
+                '300000'
+        },
+        {
+            div: '에어컨', name: '시스템 에어컨 천장 마감', spec: '시스템 에어컨 선배관 후 기계자리 보강 및 배관 자리 타공부분 막음', unit: '식', qty: '1', price:
+                '400000'
+        },
+        { div: '보강', name: '합판 보강 벽면 - 거울', spec: '거울/액자 등 벽면 보강 (1000*600 기준)', unit: 'm', qty: '1', price: '70000' },
+        {
+            div: '보강', name: '합판 보강 천정 - 가구', spec: '옷봉 or 상부장 or 띄움 장 합판 보강 (1000*600 기준)', unit: 'm', qty: '1', price:
+                '90000'
+        },
+        { div: '도어', name: '도어 재사용 - 필름', spec: '도어 재사용+필름 시공을 위한 도어 대패 작업.', unit: 'set', qty: '1', price: '20000' },
+        {
+            div: '도어', name: '도어 하드웨어만 교체시 (문재사용)', spec: '철거+경첩/댐퍼형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '70000'
+        },
+        {
+            div: '도어', name: '도어 하드웨어만 교체시 (문재사용)', spec: '철거+경첩/자석형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '80000'
+        },
+        { div: '도어', name: '도어 하드웨어 (신설)', spec: '경첩/댐퍼형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '60000' },
+        { div: '도어', name: '도어 하드웨어 (신설)', spec: '경첩/자석형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '70000' },
+        { div: '도어', name: '여닫이 도어', spec: '영림 ABS 여닫이 도어 (문짝만) - 손잡이별도', unit: 'ea', qty: '1', price: '220000' },
+        { div: '도어', name: '여닫이 도어', spec: '영림 ABS 여닫이 도어 (틀/문짝/가스켓) - 손잡이별도', unit: 'set', qty: '1', price: '400000' },
+        { div: '도어', name: '포켓 도어', spec: '목공+슬라이드형 도어 (양뎀퍼) - 손잡이별도', unit: 'set', qty: '1', price: '500000' },
+        { div: '도어', name: '스텝 도어', spec: '목공+ABS 여닫이 도어(어깨가공) - 인방철거/손잡이별도', unit: 'set', qty: '1', price: '500000' },
+        {
+            div: '도어', name: '슬림 와이드 여닫이 도어', spec: '12mm 문선 슬림형 여닫이 도어 (벽면 석고/도어다리 필름 별도)', unit: 'ea', qty: '1', price:
+                '420000'
+        },
+        { div: '도어', name: '히든도어', spec: '알루미늄문틀/ABS히든도어/손잡이 (벽면 마감 석고+MD 별도)', unit: 'ea', qty: '1', price: '950000' },
+        { div: '도어', name: '피봇도어 45T', spec: '180도 여닫이 (부속포함)', unit: 'ea', qty: '1', price: '1200000' },
+        { div: '터닝도어', name: '터닝도어', spec: 'LX 터닝도어 (세탁실or거실발코니)', unit: 'ea', qty: '1', price: '800000' },
+        { div: '침대헤드', name: '침대헤드(알판)', spec: '침대 헤드 알판 (석고+MD)', unit: '식', qty: '1', price: '300000' },
+        { div: '침대헤드', name: '침대헤드(알판)+젠다이(알판)', spec: '침대헤드 상부 알판(포인트)+하부젠다이 알판', unit: '식', qty: '1', price: '500000' },
+        {
+            div: '침대헤드', name: '침대헤드(알판)+젠다이(알판)+조명', spec: '침대헤드 상부 알판(포인트)+하부젠다이 알판 -조명 별도', unit: '식', qty: '1', price:
+                '700000'
+        },
+        {
+            div: '침대헤드', name: '침대헤드(루버)+젠다이(알판)+조명', spec: '침대헤드 상부 루버(포인트)+하부젠다이 알판 -조명 별도', unit: '식', qty: '1', price:
+                '900000'
+        },
+        {
+            div: '현관문', name: '현관문 여닫이 모던전창', spec: '여딛이 180도 편개 도어 (모던) - 문틀 없음. (1000*2400)', unit: '식', qty: '1', price:
+                '1500000'
+        },
+        {
+            div: '현관문', name: '현관문 여닫이 간살 - 비대칭', spec: '여딛이 180도 편개 도어 (전체간살) - 문틀 없음. (1100*2400)', unit: '식', qty: '1',
+            price: '1900000'
+        },
+        {
+            div: '현관문', name: '현관문 여닫이 양개 비대칭-모던', spec: '여닫이 비대칭 양개 180도 (모던) - 문틀 없음. (1200*2400)', unit: '식', qty: '1',
+            price: '1400000'
+        },
+        {
+            div: '현관문', name: '현관문 여닫이 양개 비대칭-백유리', spec: '여닫이 비대칭 양개 180도(전창백유리)-문틀 없음.(1300*2400)', unit: '식', qty: '1',
+            price: '1500000'
+        },
+        {
+            div: '현관문', name: '현관문 슬라이드(1도어)-브론즈샤틴', spec: '슬라이도 1도어 (모던) - 상부/하부 매립형 레일 (900*2400)', unit: '식', qty: '1',
+            price: '800000'
+        },
+        {
+            div: '현관문', name: '현관문 슬라이드 (1도어)', spec: '슬라이도 1도어 (간살6개) - 상부/하부 매립형 레일 (1200*2400)', unit: '식', qty: '1',
+            price: '1600000'
+        },
+        {
+            div: '현관문', name: '현관문 슬라이딩 (2도어)', spec: '슬라이도 2도어 (모던) - 상부/하부 매립형 레일 (1800*2400)', unit: '식', qty: '1', price:
+                '1400000'
+        },
+        {
+            div: '현관문', name: '현관문 슬라이드 (개별 4도어)', spec: '슬라이드 4도어 (간살) - 상부/하부 매립형 레일 (3000*2200)', unit: '식', qty: '1',
+            price: '5500000'
+        },
+        {
+            div: '현관문', name: '현관문 3연동 슬림형 (4도어)', spec: '알루미늄 3연동 4도어 슬라이드 도어 (모던) (2000*2300)', unit: '식', qty: '1', price:
+                '1600000'
+        },
+        {
+            div: '현관문', name: '현관문 3연동 슬림형 (3도어)', spec: '알루미늄 3연동 4도어 슬라이드 도어 (모던) (2000*2300)', unit: '식', qty: '1', price:
+                '1100000'
+        },
+        {
+            div: '현관문', name: '현관문 신설 (방화도어) 양개도어', spec: '현관문 방화문 신설 양개 도어 (철거 및 도어락 별도)', unit: '식', qty: '1', price:
+                '1500000'
+        },
+        {
+            div: '현관문', name: '현관문 신설 (방화도어) 편개도어', spec: '현관문 방화문 신설 양개 도어 (철거 및 도어락 별도)', unit: '식', qty: '1', price:
+                '1200000'
+        },
+        { div: '선반', name: '무지주 선반 시공', spec: 'D:200 이내 선반 시공', unit: '식', qty: '1', price: '150000' },
+        { div: '화장실', name: '화장실 측면 간접', spec: '세면대 자리 측면 간접을 위한 목공 (하부 조적)', unit: '식', qty: '1', price: '300000' },
+        { div: '화장실', name: '화장실 벽면 공간박스', spec: '측면 공간 박스 및 간접', unit: '식', qty: '1', price: '350000' },
+        { div: '액자레일', name: '액자레일 - 매립', spec: '철거 후 액자레일 매립 한면', unit: '식', qty: '1', price: '200000' }
+    ],
+    '09': [
+        { div: '기본 (단품)', name: '기본 시공비 (현관문/공틀)', spec: '현관문 틀/문짝(내부만), 공틀1', unit: '식', qty: '1', price: '500000' },
+        {
+            div: '기본 (단품)', name: '기본 시공비 (부분시공)', spec: '부분 시공일 때 1품(35) - 자재 1m(추가:2만원)', unit: '식', qty: '1', price:
+                '350000'
+        },
+        { div: '창호 단품', name: '창호 (거실) - 단품', spec: '30평대 기준 거실 창호', unit: '식', qty: '1', price: '1200000' },
+        { div: '창호 단품', name: '창호 (거실) - 단품', spec: '40평대 기준 거실 창호', unit: '식', qty: '1', price: '1500000' },
+        { div: '창호 단품', name: '창호 (대) - 단품', spec: '이중창 기준. 단창의 경우 (90)', unit: 'ea', qty: '1', price: '1000000' },
+        { div: '창호 단품', name: '창호 (중) - 단품', spec: '이중창 기준. 단창의 경우 (80)', unit: 'ea', qty: '1', price: '800000' },
+        { div: '창호 단품', name: '창호 (소) - 단품', spec: '이중창 기준. 단창의 경우 (50)', unit: 'ea', qty: '1', price: '600000' },
+        { div: '가구/수납장', name: '붙박이장/신발장', spec: '외측(눈이 보이는 곳) 틀/문짝', unit: '자', qty: '1', price: '100000' },
+        { div: '가구/수납장', name: '하프장', spec: 'h: 1200 이내', unit: '자', qty: '1', price: '70000' },
+        { div: '창고장', name: '창고장', spec: 'w: 1200 이내', unit: '식', qty: '1', price: '200000' },
+        { div: '도어', name: '현관문 or 방화문 or 터닝도어', spec: '내측 기준', unit: 'ea', qty: '1', price: '200000' },
+        { div: '도어', name: '방화문 or 터닝도어 앞뒤 전체', spec: '앞뒤 전체 필름.', unit: 'ea', qty: '1', price: '250000' },
+        { div: '도어(set)', name: '문틀/문짝 (기본)', spec: '민자 도어/틀의 경우', unit: 'set', qty: '1', price: '280000' },
+        {
+            div: '도어(set)', name: '문틀/문짝 (골/페인트/무늬목)', spec: '문짝에 무늬 또는 골, 샌딩 및 핸디(페인트/무늬목) 필요한 경우', unit: 'set', qty: '1',
+            price: '310000'
+        },
+        { div: '도어(단품)', name: '문틀/도어다리/문선', spec: '문틀 전체 해당부분', unit: 'ea', qty: '1', price: '120000' },
+        { div: '도어(단품)', name: '문짝 (민자도어)', spec: '문짝 기본 (민자도어)', unit: 'ea', qty: '1', price: '170000' },
+        { div: '도어(단품)', name: '문짝 (문양도어)', spec: '문짝 핸디작업 2회', unit: 'ea', qty: '1', price: '200000' },
+        { div: '공틀', name: '공틀 사각 게이트', spec: '9mm or 12mm 공틀 MD', unit: 'ea', qty: '1', price: '120000' },
+        { div: '공틀', name: '공틀 아치 게이트', spec: '공틀 아치 게이트 (핸디 작업 2회)', unit: 'ea', qty: '1', price: '150000' },
+        {
+            div: '등박스 몰딩', name: '등박스 몰딩', spec: '사각형 구조 라운드 형태 (끊김없이 1회시 시공시 자재비 추가 1m 2만원)', unit: 'ea', qty: '1', price:
+                '200000'
+        },
+        { div: '알판', name: '현관 or 전실 알판', spec: '34평 기준 현관문 포함, 신발장 및 중문 별', unit: 'ea', qty: '1', price: '500000' },
+        { div: '알판', name: '침대 헤드 (디자인)', spec: '침대 헤드 목공 작업 이후 필름시공', unit: '식', qty: '1', price: '400000' },
+        { div: '알판', name: '거실/주방 알판', spec: '민자 형태 알판 MD', unit: 'm', qty: '1', price: '80000' },
+        { div: '전체필름(창호/도어)', name: '전체 필름', spec: '방화문/문틀짝/중문/공틀/창호', unit: 'py', qty: '1', price: '120000' },
+        { div: '전체 창호 필름', name: '전체 창호 필름', spec: '전체 창호만 시공', unit: 'py', qty: '1', price: '80000' },
+        { div: '전체 문틀짝 필름', name: '전체 문틀짝 필름', spec: '전체 문틀짝 시공 (30평기준)', unit: 'py', qty: '1', price: '40000' }
+    ],
+    '10': [
+        { div: '현관', name: '현관 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 이내', unit: '식', qty: '1', price: '350000' },
+        {
+            div: '현관', name: '현관 바닥 철거 후 타일', spec: '타일 600*600 (쭈꾸미+타일) : 34평 이내 (철거 별도)', unit: '식', qty: '1', price:
+                '400000'
+        },
+        { div: '현관/전실', name: '현관/전실 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 기준', unit: '식', qty: '1', price: '550000' },
+        {
+            div: '현관/전실', name: '현관/전실 철거 후 타일', spec: '타일 600*600 (쭈꾸미+타일) : 34평 기준 (철거/방수 별도)', unit: '식', qty: '1', price:
+                '650000'
+        },
+        { div: '세탁실', name: '세탁실 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 기준', unit: '식', qty: '1', price: '300000' },
+        {
+            div: '세탁실', name: '세탁실 바닥 철거 후 시공', spec: '타일 600*600 (쭈꾸미+타일) : 34평 기준 (철거/방수 별도)', unit: '식', qty: '1', price:
+                '400000'
+        },
+        { div: '발코니', name: '발코니 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 기준', unit: '식', qty: '1', price: '700000' },
+        {
+            div: '발코니', name: '발코니 바닥 철거 후 시공', spec: '타일 600*600 (쭈꾸미+타일) : 34평 기준 (철거/방수 별도)', unit: '식', qty: '1', price:
+                '850000'
+        },
+        {
+            div: '거실/주방/방', name: '포세린 타일 600*600', spec: '기본 바닥 수평+자재비+시공비 - 600*600 (줄눈 별도)', unit: 'py', qty: '1', price:
+                '270000'
+        },
+        {
+            div: '거실/주방/방', name: '포세린 타일 800*800', spec: '기본 바닥 수평+자재비+시공비 - 800*800 (줄눈 별도)', unit: 'py', qty: '1', price:
+                '310000'
+        },
+        {
+            div: '거실/주방/방', name: '폴리싱 타일 600*600', spec: '기본 바닥 수평+자재비+시공비 - 600*600 (줄눈 별도)', unit: 'py', qty: '1', price:
+                '265000'
+        },
+        {
+            div: '거실/주방/방', name: '폴리싱 타일 800*800', spec: '기본 바닥 수평+자재비+시공비 - 800*800 (줄눈 별도)', unit: 'py', qty: '1', price:
+                '300000'
         }
-
-        // 단위 입력 블러 시 빈값이면 기본값
-        function onUnitInputBlur(input) {
-            if (!input.value.trim()) {
-                input.value = '식';
-            }
+    ],
+    '11': [],
+    '12': [
+        {
+            div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (삼화 - 아이생각 4L 당 30헤베 2.9) - 국산', unit: 'm2', qty: '1',
+            price: '50000'
+        },
+        {
+            div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (KCC - 숲으로 4L 당 30헤베 4.9) - 국산', unit: 'm2', qty: '1',
+            price: '55000'
+        },
+        {
+            div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (노루 - 친환경 프리미엄 팬톤 5.1) - 국산', unit: 'm2', qty: '1', price:
+                '55000'
+        },
+        {
+            div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (벤자민무어 4L 당 30헤베 12) - 수입', unit: 'm2', qty: '1', price:
+                '80000'
+        },
+        {
+            div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (던에드워드 4L 당 30헤베 12) - 수입', unit: 'm2', qty: '1', price:
+                '80000'
+        },
+        { div: '탄성', name: '세라믹코트', spec: '기능성 마감 도장 (전실 또는 현관 적합) 칸 추가 12만원', unit: '칸', qty: '1', price: '300000' },
+        { div: '탄성', name: '월드클래스', spec: '결로에 취약한 부분 (발코니에 적합) 칸 추가 17만원', unit: '칸', qty: '1', price: '350000' },
+        {
+            div: '탄성', name: '제로스탑', spec: '습도 조절 및 유지 냄새 공기정화 기능 (세탁샐에 적합) 칸 추가 22만원', unit: '칸', qty: '1', price: '470000'
+        },
+        { div: '참고', name: '도장 참고사항', spec: '도장 기본 평당 15만원(수입산페인트 별도)', unit: 'py', qty: '1', price: '150000' }
+    ],
+    '13': [
+        {
+            div: '합지도배', name: '합지도배', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1', price:
+                '100000'
+        },
+        {
+            div: '실크도배 (기본)', name: '실크도배', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1', price:
+                '120000'
+        },
+        {
+            div: '실크프리미엄 (고급)', name: '실크프리미엄', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
+            price: '140000'
+        },
+        { div: '무몰딩', name: '무몰딩 밑작업', spec: '무몰딩 밑작업', unit: '식', qty: '1', price: '400000' },
+        { div: '무걸레받이', name: '무걸레받이 밑작업', spec: '무걸레받이 밑작업', unit: '식', qty: '1', price: '400000' },
+        {
+            div: '합지(일반) - 참고', name: '개나리벽지 (합지)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
+            price: '100000'
+        },
+        {
+            div: '합지(일반) - 참고', name: '신화벽지 (합지 / 아이리스 / 파인하임)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit:
+                'py', qty: '1', price: '100000'
+        },
+        {
+            div: '합지(일반) - 참고', name: '제일벽지 (해피데이 / 센스)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py',
+            qty: '1', price: '100000'
+        },
+        {
+            div: '합지(일반) - 참고', name: 'LX Z:IN (휘앙세)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
+                '1', price: '100000'
+        },
+        {
+            div: '실크 (기본) - 참고', name: '개나리 로하스+', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
+            price: '120000'
+        },
+        {
+            div: '실크 (기본) - 참고', name: '제일 베이직플러스', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
+            price: '120000'
+        },
+        {
+            div: '실크 (기본) - 참고', name: 'LX Z:IN 베스띠', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
+                '1', price: '120000'
+        },
+        {
+            div: '실크 (고급) - 참고', name: '개나리 프리미엄 / 아트북 / 에비뉴', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit:
+                'py', qty: '1', price: '140000'
+        },
+        {
+            div: '실크 (고급) - 참고', name: '신화 에상스 / 파사드', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
+                '1', price: '140000'
+        },
+        {
+            div: '실크 (고급) - 참고', name: '제일 나무플러스 / 제이플래티넘', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py',
+            qty: '1', price: '140000'
+        },
+        {
+            div: '실크 (고급) - 참고', name: 'LX Z:IN 디아망', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
+                '1', price: '140000'
         }
+    ],
+    '14': [
+        { div: '원목마루', name: '원목마루', spec: '', unit: 'py', qty: '1', price: '280000' },
+        { div: '강마루', name: '동화 합판마루', spec: '10T 600*600', unit: 'py', qty: '1', price: '150000' },
+        { div: '동화', name: '나투스진 그란데 / 이모션블랑(JG2012)', spec: '7T*325*810', unit: 'py', qty: '1', price: '110000' },
+        { div: '강마루', name: '노바 플로', spec: '', unit: 'py', qty: '1', price: '140000' },
+        { div: '노배', name: '노배 블랙라벨', spec: '7.5T*165*1200', unit: 'py', qty: '1', price: '120000' },
+        { div: '동화', name: '비움190', spec: '', unit: 'py', qty: '1', price: '260000' },
+        { div: 'LX 지인 에디톤', name: 'lx 에디톤 스톤', spec: '5t*450*900 - 솔티크림(EDT7725)', unit: 'py', qty: '1', price: '99000' },
+        { div: '데코타일', name: 'LX 지인 데코타일', spec: 'LX 지인 보타닉 사각 600각 (3T*600*600)', unit: 'py', qty: '1', price: '45000' },
+        { div: '장판', name: '장판', spec: '2.2T', unit: 'py', qty: '1', price: '60000' },
+        { div: '장판', name: '장판', spec: '2.2T', unit: 'py', qty: '1', price: '70000' },
+        { div: '장판', name: 'lx 컴포트', spec: '', unit: 'py', qty: '1', price: '150000' }
+    ],
+    '15': [],
+    '16': [
+        { div: '실리콘', name: '실리콘 마감', spec: '아덱스 실리콘 - 색맞춤 시공', unit: 'py', qty: '1', price: '13000' },
+        { div: '빨래건조대', name: '빨래건조대 - 수동', spec: '스테인레스 봉 - 수동', unit: 'ea', qty: '1', price: '110000' },
+        { div: '빨래건조대', name: '빨래건조대 - 전동', spec: '스테인레스 봉 - 수동', unit: 'ea', qty: '1', price: '300000' },
+        { div: '준공청소', name: '준공청소', spec: '', unit: 'py', qty: '1', price: '20000' }
+    ],
+    '17': []
+};
 
-        // 기본 원가 데이터 (가설공사)
-        const defaultCostData = {
-            '01': [
-                { div: '보양', name: '승강기 하프보양', spec: '승강기 하프보양', unit: '식', qty: '1', price: '90000' },
-                { div: '보양', name: '승강기 준보양', spec: '승강기 준보양', unit: '식', qty: '1', price: '120000' },
-                { div: '보양', name: '승강기 올보양', spec: '승강기 올보양', unit: '식', qty: '1', price: '160000' },
-                { div: '보양', name: '복도보양', spec: '플라베니아 (기본 12장)', unit: '식', qty: '1', price: '120000' },
-                { div: '보양', name: '동선보양', spec: '추가항목', unit: '식', qty: '1', price: '6000' },
-                { div: '보양', name: '현관문 보양', spec: '현관문 보양', unit: '식', qty: '1', price: '50000' },
-                { div: '보양', name: '창호 보양', spec: '집 전체 창호', unit: '식', qty: '1', price: '300000' },
-                { div: '보양', name: '실내 바닥 보양', spec: 'Floor Veneer 기본 12장', unit: '식', qty: '1', price: '120000' },
-                { div: '보양', name: '실내 바닥 보양 (추가)', spec: 'Floor Veneer', unit: '식', qty: '1', price: '6000' },
-                { div: '보양', name: '실내 바닥 보양', spec: '롤 골판지', unit: '롤', qty: '1', price: '90000' },
-                { div: '보양', name: '비닐 보양', spec: '커버링 2.4', unit: '식', qty: '1', price: '50000' },
-                { div: '동의서', name: '입주민 동의서', spec: '1~80 세대 (50%기준)', unit: '식', qty: '1', price: '160000' },
-                { div: '동의서', name: '입주민 동의서', spec: '81~100 세대 (50%기준)', unit: '식', qty: '1', price: '190000' },
-                { div: '동의서', name: '입주민 동의서', spec: '101~120 세대 (50%기준)', unit: '식', qty: '1', price: '210000' },
-                { div: '동의서', name: '입주민 동의서', spec: '121~140 세대 (50%기준)', unit: '식', qty: '1', price: '230000' },
-                { div: '동의서', name: '입주민 동의서', spec: '추가 20세대', unit: '식', qty: '1', price: '20000' },
-                { div: '허가', name: '공동주택 행위허가', spec: '주택과', unit: '식', qty: '1', price: '440000' },
-                { div: '허가', name: '공동주택 행위허가', spec: '건축과', unit: '식', qty: '1', price: '880000' },
-                { div: '필증', name: '방화판', spec: '자재+시공 (1200*550)', unit: 'ea', qty: '1', price: '50000' },
-                { div: '필증', name: '방화유리 (직선)', spec: '자재+시공', unit: 'm', qty: '1', price: '180000' },
-                { div: '필증', name: '방화유리 (곡선)', spec: '자재+시공', unit: 'm', qty: '1', price: '200000' },
-                { div: '필증', name: '갑종 방화문', spec: '자재+시공+시험성적서 (900*2000)', unit: 'ea', qty: '1', price: '1300000' },
-                { div: '필증', name: '소방 감지기', spec: '건전지 방식', unit: 'ea', qty: '1', price: '20000' },
-                { div: '용도변경', name: '상업공간 용도변경', spec: '구조·설비·위생·안전 기준 충족 여부에 따른 신고/허가', unit: '식', qty: '1', price: '0' }
-            ],
-            '02': [
-                { div: '주방', name: '주방 철거 (소형)', spec: 'ㅡ자, ㄱ자 (3.5M 미만)', unit: 'set', qty: '1', price: '70000' },
-                { div: '주방', name: '주방 철거 (중형)', spec: 'ㅡ자, ㄱ자 (5M 미만)', unit: 'set', qty: '1', price: '90000' },
-                { div: '주방', name: '주방 철거 (대형)', spec: 'ㅡ자, ㄱ자 (5M 이상)', unit: 'set', qty: '1', price: '100000' },
-                { div: '주방', name: '주방 철거 (특대)', spec: '12M 미만 ㄷ자, ㅁ자, 병렬형', unit: 'set', qty: '1', price: '130000' },
-                { div: '주방', name: '주방 철거 (초특대)', spec: '12M 이상 ㄷ자, ㅁ자, 병렬형', unit: 'set', qty: '1', price: '160000' },
-                { div: '주방', name: '싱크대 추가 (M당)', spec: '기본 세트 초과 물량', unit: 'M', qty: '1', price: '10000' },
-                { div: '주방', name: '아일랜드 식탁', spec: '독립형 (카운터 타입 제외)', unit: 'set', qty: '1', price: '35000' },
-                { div: '주방', name: '보조주방', spec: '발코니 보조주방', unit: 'set', qty: '1', price: '40000' },
-                { div: '주방', name: '냉장고장/키큰장', spec: '자(30cm)당 단가', unit: '자', qty: '1', price: '10000' },
-                { div: '주방', name: '키큰장 (유리장식)', spec: '대형평수 유리 장식장', unit: '자', qty: '1', price: '15000' },
-                { div: '주방', name: '냉장고장 (신축 EP)', spec: '바닥/천장 재사용 시 (좌우 EP)', unit: '판', qty: '1', price: '50000' },
-                { div: '주방', name: '빌트인 기기', spec: '식기세척기, 오븐, 세탁기 등', unit: 'ea', qty: '1', price: '20000' },
-                { div: '주방', name: '수전(냉/온)', spec: '1m 미만 / 내림설비', unit: 'ea', qty: '1', price: '75000' },
-                { div: '주방', name: '주방 타일 철거', spec: '1M 기준 (H1200 이하)', unit: 'M', qty: '1', price: '18000' },
-                { div: '주방', name: '주방 타일+세라픽스', spec: '샌딩 작업 포함 (최고가 적용)', unit: 'py', qty: '1', price: '100000' },
-                { div: '가구(수납)', name: '붙박이장/장롱', spec: '도어 1개 기준 (슬라이딩 x2)', unit: 'EA', qty: '1', price: '13000' },
-                { div: '가구(수납)', name: '붙박이장 (자 단위)', spec: '자(30cm)당 계산 시', unit: '자', qty: '1', price: '10000' },
-                { div: '가구(수납)', name: '현관장 (신발장)', spec: '도어 1개 기준', unit: 'ea', qty: '1', price: '11000' },
-                { div: '가구(수납)', name: '벽박이장/창고장', spec: '문틀/문선/문짝 포함 (미장별도)', unit: 'ea', qty: '1', price: '16000' },
-                { div: '가구(수납)', name: '벽박이장 (세트)', spec: '문4개+내부장 (대형)', unit: 'set', qty: '1', price: '120000' },
-                { div: '가구(수납)', name: '거실장 (세트)', spec: '소2+중1 기준', unit: 'set', qty: '1', price: '30000' },
-                { div: '가구(수납)', name: '빌트인 화장대', spec: '1.5M 이하', unit: 'ea', qty: '1', price: '35000' },
-                { div: '가구(수납)', name: '베란다장 (창고)', spec: '내부 선반 포함', unit: 'ea', qty: '1', price: '30000' },
-                { div: '가구(수납)', name: '침대+매트리스', spec: '폐기물 스티커 부착 권장', unit: 'ea', qty: '1', price: '60000' },
-                { div: '바닥', name: '마루 철거 (본드식)', spec: '강마루, 합판, 원목 (기본샌딩)', unit: 'py', qty: '1', price: '25000' },
-                { div: '바닥', name: '강화마루', spec: '조립식 (기본샌딩)', unit: 'py', qty: '1', price: '17000' },
-                { div: '바닥', name: '데코타일', spec: '(기본샌딩)', unit: 'py', qty: '1', price: '20000' },
-                { div: '바닥', name: '폴리싱 타일', spec: '타일+본드+샌딩', unit: 'py', qty: '1', price: '90000' },
-                { div: '바닥', name: '대리석', spec: '대리석+사모래+몰탈미장(난방배관미포함)', unit: 'py', qty: '1', price: '250000' },
-                { div: '바닥', name: '대리석', spec: '대리석+사모래+몰탈미장(난방배관재시공)', unit: 'py', qty: '1', price: '330000' },
-                { div: '바닥', name: '장판 철거', spec: '방 1개 기준', unit: 'ea', qty: '1', price: '12000' },
-                { div: '바닥', name: '한지 장판', spec: '샌딩', unit: 'py', qty: '1', price: '12000' },
-                { div: '바닥', name: '바닥 샌딩', spec: '단차/평활도 불량시(문턱)', unit: 'ea', qty: '1', price: '60000' },
-                { div: '창호', name: '거실 분합창', spec: '확장시 선철거', unit: 'set', qty: '1', price: '150000' },
-                { div: '창호', name: '작은방 분합창', spec: '확장시 선철거', unit: 'set', qty: '1', price: '90000' },
-                { div: '창호', name: '대형 샷시/폴딩', spec: '특대형 구분', unit: 'set', qty: '1', price: '250000' },
-                { div: '도어', name: '도어 세트 철거', spec: '문틀+문짝+문선+인방', unit: 'set', qty: '1', price: '32000' },
-                { div: '도어', name: '특수 문틀 (돌/ABS)', spec: '폐기물 포함시 (최고가)', unit: 'set', qty: '1', price: '50000' },
-                { div: '도어', name: '문짝만 철거', spec: '', unit: 'ea', qty: '1', price: '30000' },
-                { div: '도어', name: '문턱 제거', spec: '미장 포함', unit: 'ea', qty: '1', price: '50000' },
-                { div: '도어', name: '중문 철거', spec: '3연동, ㄱ자등 종류 무관', unit: 'set', qty: '1', price: '100000' },
-                { div: '도어', name: '방화문 철거', spec: '', unit: 'ea', qty: '1', price: '80000' },
-                { div: '벽면', name: '벽면 철거', spec: '석고 (h:2400)', unit: 'm', qty: '1', price: '40000' },
-                { div: '벽면', name: '단열벽 철거', spec: '목재+단열(스티로폴)+석고 (h:2400)', unit: 'm', qty: '1', price: '70000' },
-                { div: '벽면', name: '단열벽 철거', spec: '목재+단열(유리섬유)+석고 (h:2400)', unit: 'm', qty: '1', price: '90000' },
-                { div: '벽면', name: '가벽철거', spec: '목공+석고 (h:2400)', unit: 'm', qty: '1', price: '50000' },
-                { div: '벽체', name: '가벽 철거', spec: '목공/석고/단열재 (H2400)', unit: 'M', qty: '1', price: '55000' },
-                { div: '벽체', name: 'ALC 블럭 가벽', spec: '브라더 상세 항목', unit: 'M', qty: '1', price: '120000' },
-                { div: '벽체', name: '조적벽 (부분/날개)', spec: '비내력 조적 1M', unit: 'M', qty: '1', price: '100000' },
-                { div: '벽체', name: '조적벽 (두겹)', spec: '브라더 상세 항목', unit: 'M', qty: '1', price: '250000' },
-                { div: '벽체', name: '아트월 (목공)', spec: 'H2400 이하', unit: 'M', qty: '1', price: '33000' },
-                { div: '벽체', name: '아트월 (타일/석재)', spec: 'H2400 이하 (최고가 적용)', unit: 'M', qty: '1', price: '60000' },
-                { div: '벽체', name: '옹벽 컷팅', spec: '장비(벽체15, 샤시하단부45, 하루65)', unit: '식', qty: '1', price: '650000' },
-                { div: '천장', name: '우물천장 기본 철거', spec: '주변 몰딩만', unit: 'set', qty: '1', price: '30000' },
-                { div: '천장', name: '등박스 철거 (대형)', spec: '철제/대형 등박스', unit: 'set', qty: '1', price: '200000' },
-                { div: '천장', name: '등박스 철거 (일반)', spec: '일반 목공 등박스', unit: 'set', qty: '1', price: '50000' },
-                { div: '천장', name: '천장 전체 철거', spec: '석고만(댄조 유지)', unit: 'py', qty: '1', price: '20000' },
-                { div: '천장', name: '천장 전체 철거', spec: '우물천장 댄조포함 평당', unit: 'py', qty: '1', price: '40000' },
-                { div: '천장', name: '몰딩/걸레받이', spec: '평당 기준', unit: 'py', qty: '1', price: '4000' },
-                { div: '욕실', name: '욕실 기본 철거', spec: '도기/욕조/천장/액세서리', unit: 'set', qty: '1', price: '150000' },
-                { div: '욕실', name: '욕실 기본 철거', spec: '도기/frp욕조/천장/액세서리', unit: 'set', qty: '1', price: '200000' },
-                { div: '욕실', name: '욕실 전체 철거', spec: '타일+방수층 전체 (대형) - 난방배관 별도(10)', unit: 'set', qty: '1', price: '900000' },
-                { div: '욕실', name: '욕실 전체 철거', spec: '타일+방수층 전체 (중형) - 난방배관 별도(7)', unit: 'set', qty: '1', price: '750000' },
-                { div: '욕실', name: '욕실 전체 철거', spec: '타일+방수층 전체 (소형) - 난방배관 별도(5)', unit: 'set', qty: '1', price: '600000' },
-                { div: '욕실', name: '욕실 바닥 철거', spec: '바닥 타일+액체방수 1차', unit: 'set', qty: '1', price: '400000' },
-                { div: '욕실', name: 'UBR 욕실 철거', spec: '전체철거+설비+방수 1차 (조적벽 별도)', unit: 'set', qty: '1', price: '1200000' },
-                { div: '욕실', name: 'UBR 욕실 조적', spec: '입구 벽면 (h:1500)', unit: '면', qty: '1', price: '200000' },
-                { div: '욕실', name: '욕조 철거', spec: '아크릴 욕조 (개별 철거시)', unit: 'ea', qty: '1', price: '35000' },
-                { div: '욕실', name: '욕조 철거', spec: '월풀 욕조 (개별 철거시)', unit: 'ea', qty: '1', price: '200000' },
-                { div: '욕실', name: '욕조 철거 (조적)', spec: '조적/매립 형태', unit: 'ea', qty: '1', price: '100000' },
-                { div: '욕실', name: '욕실 벽타일(1면)', spec: '덧방 불가시', unit: 'ea', qty: '1', price: '100000' },
-                { div: '욕실', name: '라디에이터 철거', spec: '메꾸라/미장 포함', unit: 'EA', qty: '1', price: '100000' },
-                { div: '타일', name: '현관 디딤석', spec: '한면', unit: '식', qty: '1', price: '50000' },
-                { div: '타일', name: '현관 바닥', spec: '타일만', unit: 'py', qty: '1', price: '50000' },
-                { div: '타일', name: '현관 바닥', spec: '원바닥(타일 시공시 쭈꾸미비용 평당 5만원 별도)', unit: 'py', qty: '1', price: '100000' },
-                { div: '타일', name: '발코니 바닥타일 철거', spec: '타일만 0.5평(1.3M×1.3M)', unit: '식', qty: '1', price: '50000' },
-                { div: '타일', name: '발코니 바닥타일 철거', spec: '타일+압착본드 0.5평(1.3M×1.3M)', unit: '식', qty: '1', price: '70000' },
-                { div: '타일', name: '발코니 바닥타일 철거', spec: '원 바닥까지(방수별도) 0.5평(1.3M×1.3M)', unit: '식', qty: '1', price: '150000' },
-                { div: '조명', name: '방등', spec: '', unit: 'ea', qty: '1', price: '5000' },
-                { div: '조명', name: '거실등', spec: '', unit: 'ea', qty: '1', price: '15000' },
-                { div: '조명', name: '매입등', spec: '', unit: 'ea', qty: '1', price: '2000' },
-                { div: '조명', name: '스위치/콘센트', spec: '', unit: '평', qty: '1', price: '4000' },
-                { div: '화단', name: '화단', spec: '흙 (쓰레기 별도)', unit: '식', qty: '1', price: '100000' },
-                { div: '화단', name: '화단', spec: '조적 (h:600 기준)', unit: 'm', qty: '1', price: '100000' },
-                { div: '화단', name: '화단', spec: '옹벽 (h:600 기준)', unit: 'm', qty: '1', price: '150000' },
-                { div: '화단', name: '화단', spec: '옹벽 (h:600 기준-크라샤 작업)', unit: 'm', qty: '1', price: '250000' },
-                { div: '가스', name: '가스배관 부분철거', spec: '가스배관 내부 (계량기 유지)', unit: '식', qty: '1', price: '100000' },
-                { div: '가스', name: '가스배관 전체철거', spec: '가스배관 전체 철거 (외부에서 마감 - 계량기 현장에 보관)', unit: '식', qty: '1', price: '200000' },
-                { div: '폐기물', name: '1톤 트럭 (만차)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '550000' },
-                { div: '폐기물', name: '1톤 트럭 (3/4)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '520000' },
-                { div: '폐기물', name: '1톤 트럭 (1/2)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '320000' },
-                { div: '폐기물', name: '1톤 트럭 (1/4)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '250000' },
-                { div: '폐기물', name: '1톤 트럭 (적재함반차)', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '대', qty: '1', price: '150000' },
-                { div: '폐기물', name: '소량 폐기물', spec: '혼합폐기물 (정리및 이동비 포함)', unit: '식', qty: '1', price: '100000' }
-            ],
-            '03': [
-                { div: '방수', name: '2차 액체 방수', spec: '전체 바닥/벽(h:1000이상) 방수몰탈', unit: '칸', qty: '1', price: '120000' },
-                { div: '방수', name: '욕조 방수', spec: '욕조부만 방수', unit: 'ea', qty: '1', price: '60000' },
-                { div: '방수', name: '3차 도막 방수 코너만 (2회)', spec: '마페이/아덱스(프라이머+방수제)-취약부위', unit: '칸', qty: '1', price: '200000' },
-                { div: '방수', name: '3차 도막 방수 전체 (2회)', spec: '마페이/아덱스(프라이머+방수제)-(h:1000이상)', unit: '칸', qty: '1', price: '400000' },
-                { div: '난방배관', name: '라지에이터', spec: '철거 후 엑셀 마감+미장 포함', unit: 'ea', qty: '1', price: '100000' },
-                { div: '난방배관', name: '화장실 난방배관 연장', spec: '화장실 바닥 난방배관 연장 - 기본', unit: 'ea', qty: '1', price: '100000' },
-                { div: '난방배관', name: '화장실 난방배관 연장', spec: '화장실 바닥 난방배관 연장 - 특대', unit: 'ea', qty: '1', price: '150000' },
-                { div: '수도', name: '급수관 신설 (노출-1면)', spec: '냉/온수 1조 신설 (1면 꺾음 기준) - 노출', unit: 'ea', qty: '1', price: '150000' },
-                { div: '수도', name: '급수관 신설 (노출-2면)', spec: '냉/온수 1조 신설 (2면 꺾음 기준) - 노출', unit: 'ea', qty: '1', price: '200000' },
-                { div: '수도', name: '급수관 신설 (매립)', spec: '냉/온수 1조 신설 (옹벽의 경우) - 매립', unit: 'ea', qty: '1', price: '350000' },
-                { div: '수도', name: '급수관 이동', spec: '기존면 이동 (세면부 모음, 샤워부 높이 조절 등)', unit: 'ea', qty: '1', price: '100000' },
-                { div: '하수', name: 'P트랩 전환', spec: '바닥 배수 → 벽 배수 전환 (철거, 매립 포함)', unit: 'ea', qty: '1', price: '100000' },
-                { div: '하수', name: '하수관 이동', spec: '바닥 배수 이동', unit: 'ea', qty: '1', price: '150000' },
-                { div: '오수', name: '오수 배관', spec: '200~250mm 이동', unit: 'ea', qty: '1', price: '200000' },
-                { div: '수도', name: '수도 막음', spec: '기존 수도 냉/온수 1조', unit: 'ea', qty: '1', price: '100000' },
-                { div: '수도', name: '매립수전', spec: '샤워/세면대 (젠다이 필수-포함)', unit: 'ea', qty: '1', price: '600000' },
-                { div: '조적', name: '조적 젠다이 (숏)', spec: '세면대부 조적 젠다이 시공 (h:1100)', unit: '식', qty: '1', price: '200000' },
-                { div: '조적', name: '조적 젠다이 (롱)', spec: '세면대+샤워 전체 조적 젠다이 시공 (h:1100)', unit: '식', qty: '1', price: '250000' },
-                {
-                    div: '분배기', name: '분배기 교체 - 기본', spec: '기존 분배기 교체 - 일반 (이동 없음, 시스템 구동기 별도)', unit: '식', qty: '1', price: '1300000'
-                },
-                {
-                    div: '분배기', name: '분배기 교체 - 매립형', spec: '기존 분배기 교체 -매립형 (이동 없음, 시스템 구동기 별도)', unit: '식', qty: '1', price:
-                        '1500000'
-                },
-                { div: '분배기', name: '분배기 이동', spec: '기존 분배기 위치에서 2m 이내 이동 (기존 분배기 재사용)', unit: '식', qty: '1', price: '1600000' },
-                { div: '가스배관 철거', name: '가스배관 철거', spec: '기본 철거 (부분 철거, 계량기 유지상태)', unit: '식', qty: '1', price: '200000' },
-                { div: '가스배관 철거', name: '가스배관 철거', spec: '전체 철거 (외부에서 마감, 계량기 세대보관)', unit: '식', qty: '1', price: '250000' },
-                { div: '가스배관 연장', name: '가스배관 연장 (기존유지)', spec: '가스배관 이동 기존 유지하는 상태에서', unit: '식', qty: '1', price: '300000' },
-                { div: '가스배관 연장', name: '가스배관 연장 (부분철거)', spec: '가스배관 이동 부분 철거', unit: '식', qty: '1', price: '350000' },
-                { div: '가스배관 신설', name: '가스배관 신설 (상가)-기본', spec: '기존 건물에서 배관 연장+안전검사+승인', unit: '식', qty: '1', price: '2000000' },
-                {
-                    div: '가스배관 신설', name: '가스배관 신설 (상가)-중상', spec: '기존 건물에서 배관 연장+복잡한구조+안전검사+승인', unit: '식', qty: '1', price:
-                        '3500000'
-                },
-                {
-                    div: '가스배관 신설', name: '가스배관 신설 (상가)-최상', spec: '기존 건물에서 배관 연장+복잡한구조+안전검사+승인(매립-장비)', unit: '식', qty: '1', price:
-                        '5000000'
-                },
-                { div: '누수탐지', name: '누수탐지 수도 배관', spec: '집 내부 수도배관(냉/온)', unit: '식', qty: '1', price: '300000' },
-                { div: '누수탐지', name: '누수탐지 난방 배관', spec: '집 내부 난방배관 점검', unit: '식', qty: '1', price: '300000' },
-                { div: '누수탐지', name: '누수탐지 수도/난방 배관', spec: '집 내부 수도배관(냉/온) 및 난방배관 점검', unit: '식', qty: '1', price: '500000' }
-            ],
-            '04': [
-                { div: '확장', name: '거실 확장', spec: '철거+단열(아이소핑크)+엑샐 (특대-통바닥)', unit: '식', qty: '1', price: '1100000' },
-                { div: '확장', name: '거실 확장', spec: '철거+단열(아이소핑크)+엑샐 (대형)', unit: '식', qty: '1', price: '900000' },
-                { div: '확장', name: '거실 확장', spec: '철거+단열(아이소핑크)+엑샐 (기본)', unit: '식', qty: '1', price: '800000' },
-                { div: '확장', name: '방/주방 확장', spec: '철거+단열(아이소핑크)+엑샐 (통바닥)', unit: '식', qty: '1', price: '800000' },
-                { div: '확장', name: '방/주방 확장', spec: '철거+단열(아이소핑크)+엑샐 (기본)', unit: '식', qty: '1', price: '700000' },
-                { div: '확장단열', name: '거실 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-기본', unit: '식', qty: '1', price: '1100000' },
-                { div: '확장단열', name: '방/주방 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-기본', unit: '식', qty: '1', price: '900000' },
-                { div: '확장단열', name: '거실 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-대형(단열기준)', unit: '식', qty: '1', price: '1500000' },
-                { div: '확장단열', name: '방/주방 확장부 단열', spec: '벽단열(아이소핑크)+천장단열(온도리)-대형(단열기준)', unit: '식', qty: '1', price: '1200000' },
-                { div: '단열', name: '안방 외벽 단열', spec: '아이소핑크(50t+50t)+석고1p-기본', unit: '면', qty: '1', price: '800000' },
-                { div: '단열', name: '안방 외벽 단열', spec: '아이소핑크(50t+50t)+다루끼+기밀(듀폰투습)_석고2p-고급', unit: '면', qty: '1', price: '1100000' },
-                { div: '단열', name: '방 외벽 단열', spec: '아이소핑크(50t+50t)+석고1p-기본', unit: '면', qty: '1', price: '500000' },
-                { div: '단열', name: '방 외벽 단열', spec: '아이소핑크(50t+50t)+다루끼+기밀(듀폰투습)_석고2p-고급', unit: '면', qty: '1', price: '800000' },
-                { div: '단열', name: '화장실 벽면 단열', spec: '아이소핑크(30t)+석고1p', unit: '면', qty: '1', price: '300000' }
-            ],
-            '05': [
-                { div: '창호', name: 'kcc 창호', spec: '20평 이하 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '6000000' },
-                { div: '창호', name: 'kcc 창호', spec: '21~25평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '8000000' },
-                { div: '창호', name: 'kcc 창호', spec: '26~30평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '9000000' },
-                { div: '창호', name: 'kcc 창호', spec: '31~35평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '10000000' },
-                { div: '창호', name: 'kcc 창호', spec: '36~40평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '13000000' },
-                { div: '창호', name: 'kcc 창호', spec: '41~45평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '16000000' },
-                { div: '창호', name: 'kcc 창호', spec: '46~50평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '19000000' },
-                { div: '창호', name: 'kcc 창호', spec: '51평 이상 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '22000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '20평 이하 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '7000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '21~25평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '8000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '26~30평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '11000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '31~35평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '13000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '36~40평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '16000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '41~45평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '19000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '46~50평 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '22000000' },
-                { div: '창호', name: 'LX 지인 창호 뷰프레임', spec: '51평 이상 예상견적가 - 실측 완료 후 재안내.', unit: '식', qty: '1', price: '25000000' },
-                { div: '방충망', name: '미세 방충망', spec: '큰 창', unit: 'ea', qty: '1', price: '70000' },
-                { div: '방충망', name: '미세 방충망', spec: '작은 창', unit: 'ea', qty: '1', price: '50000' },
-                { div: '크리센트', name: '크리센트 교체', spec: '', unit: 'ea', qty: '1', price: '10000' },
-                { div: '폴딩도어', name: '폴딩도어(짝)', spec: '', unit: 'ea', qty: '1', price: '470000' }
-            ],
-            '06': [
-                { div: '배선', name: '전기 배선 (기본)', spec: '전기 배선 비용(2.5SQ-HIV)', unit: 'py', qty: '1', price: '60000' },
-                { div: '배선', name: '단독배선(차단기포함)', spec: '인덕션 (4SQ-HIV)', unit: 'ea', qty: '1', price: '300000' },
-                { div: '배선', name: '단독배선(차단기포함)', spec: '주방(보조주방, 정수기 등)-차단기 가구로 숨김', unit: 'ea', qty: '1', price: '250000' },
-                { div: '배선', name: '일괄소등', spec: '일괄 소등 포함 기계식(전자식 별도)', unit: 'ea', qty: '1', price: '300000' },
-                { div: '배선', name: '스위치 증설/이설', spec: '신설 위치가 가벽의 경우', unit: 'ea', qty: '1', price: '100000' },
-                { div: '배선', name: '3로 스위치 증설/이설', spec: '신설 위치가 가벽의 경우', unit: 'ea', qty: '1', price: '120000' },
-                { div: '배선', name: '스위치 증설/이설', spec: '신설 위치가 옹벽의 경우', unit: 'ea', qty: '1', price: '170000' },
-                { div: '배선', name: '3로 스위치 증설/이설', spec: '신설 위치가 옹벽의 경우', unit: 'ea', qty: '1', price: '190000' },
-                { div: '배선', name: '콘센트 증설/이설', spec: '신설 위치가 가벽의 경우', unit: 'ea', qty: '1', price: '30000' },
-                { div: '배선', name: '콘센트 증설/이설', spec: '신설 위치가 옹벽의 경우', unit: 'ea', qty: '1', price: '70000' },
-                { div: '배선', name: '콘센트 및 스위치 증설/이설', spec: '침대 헤더 좌/우 신설 (일괄소등 안됨)', unit: 'ea', qty: '1', price: '100000' },
-                { div: '비디오폰', name: '비디오선 배선 연장', spec: '1m 이내', unit: '식', qty: '1', price: '100000' },
-                { div: '비디오폰', name: '비디오폰 배선 연장', spec: '1m 이상', unit: '식', qty: '1', price: '200000' },
-                { div: '온도조절기', name: '온도조절기 배선 추가', spec: '각방 온도 조절기 배선 각실 기준 (폭스타공 별도)', unit: 'ea', qty: '1', price: '50000' },
-                { div: '차단기', name: '차단기 교체', spec: '기본 6회로 차단기만 교체', unit: '식', qty: '1', price: '300000' },
-                { div: '차단기', name: '차단기 교체', spec: '차단기 추가 (벽면 철거+차단기 추가)', unit: '식', qty: '1', price: '500000' },
-                { div: '현관', name: '현관 조명', spec: '현관 3인치 or 2인치 (히든센서+띄움 신발장 간접 T5)', unit: '식', qty: '1', price: '250000' },
-                { div: '조명', name: '조명-방등', spec: 'led 엣지등 (640*640) - 시공비 별도', unit: 'ea', qty: '1', price: '70000' },
-                { div: '조명', name: '조명-방등', spec: 'led 스마트 엣지등 (640*640) - 시공비 별도', unit: 'ea', qty: '1', price: '150000' },
-                { div: '조명', name: '조명-주방등', spec: 'led 엣지등 (640*220) - 시공비 별도', unit: 'ea', qty: '1', price: '50000' },
-                { div: '조명', name: '조명-주방등', spec: 'led 스마트 엣지 (635*320) - 시공비 별도', unit: 'ea', qty: '1', price: '120000' },
-                { div: '조명', name: '조명-주방등', spec: 'led 엣지등 (1280*320) - 시공비 별도', unit: 'ea', qty: '1', price: '110000' },
-                { div: '조명', name: '조명-주방등', spec: 'led 스마트 엣지 (1280*320) - 시공비 별도', unit: 'ea', qty: '1', price: '130000' },
-                { div: '조명', name: '조명-매입등', spec: '호른 2인치 led 확산 COB(5w) - 시공비 별도', unit: 'ea', qty: '1', price: '17000' },
-                { div: '조명', name: '조명-매입등', spec: '호른 3인치 led 확산 COB(8w) - 시공비 별도', unit: 'ea', qty: '1', price: '17000' },
-                { div: '조명', name: '조명-매입등', spec: '움푹 2인치 led (5w) - 시공비 별도', unit: 'ea', qty: '1', price: '5000' },
-                { div: '조명', name: '조명-매입등', spec: '움푹 3인치 led (5w) - 시공비 별도', unit: 'ea', qty: '1', price: '6000' },
-                { div: '조명', name: '조명-트림리스', spec: '레일 4m 이내 205길이 6개(목공별도)', unit: 'ea', qty: '1', price: '600000' },
-                { div: '조명', name: '조명-간접등', spec: 't3 led (27mm)', unit: 'm', qty: '1', price: '7000' },
-                { div: '조명', name: '조명-간접등', spec: 't5 led (35mm)', unit: 'm', qty: '1', price: '7500' },
-                { div: '조명', name: '조명-간접등', spec: 'led 바 - 주문제작', unit: '식', qty: '1', price: '0' },
-                { div: '조명', name: '조명-직부등', spec: '8인치 led (원형/사각)', unit: 'ea', qty: '1', price: '12000' },
-                { div: '조명', name: '조명-센서등', spec: '8인치 led (원형/사각)', unit: 'ea', qty: '1', price: '12000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 기본형', spec: '제일 디아트 20평대', unit: '식', qty: '1', price: '400000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 기본형', spec: '제일 디아트 30평대', unit: '식', qty: '1', price: '550000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 기본형', spec: '제일 디아트 40평대', unit: '식', qty: '1', price: '700000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 르그랑', spec: '아테오 20평대', unit: '식', qty: '1', price: '650000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 르그랑', spec: '아테오 30평대', unit: '식', qty: '1', price: '850000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 르그랑', spec: '아테오 40평대', unit: '식', qty: '1', price: '1000000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 유럽형융', spec: '20평대', unit: '식', qty: '1', price: '800000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 유럽형융', spec: '30평대', unit: '식', qty: '1', price: '1100000' },
-                { div: '스위치콘센트', name: '스위치콘센트 - 유럽형융', spec: '40평대', unit: '식', qty: '1', price: '1600000' },
-                { div: '감지기', name: '감지기', spec: '차동식/정온식', unit: 'ea', qty: '1', price: '5000' },
-                { div: '인건비', name: '전기 기술자 1품', spec: '경비/식대/장비 포함.', unit: 'ea', qty: '1', price: '400000' },
-                { div: '실링팬', name: '실링팬', spec: '보강및 시공비 포함(자재 별도)', unit: '식', qty: '1', price: '150000' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '1구 스위치 (기본)', unit: 'ea', qty: '1', price: '1880' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '2구 스위치 (기본)', unit: 'ea', qty: '1', price: '2640' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '3구 스위치 (기본)', unit: 'ea', qty: '1', price: '3450' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '4구 스위치 (기본)', unit: 'ea', qty: '1', price: '4240' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 화이트', spec: '방불/방등 스위치', unit: 'ea', qty: '1', price: '5350' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '1구 스위치', unit: 'ea', qty: '1', price: '3100' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '2구 스위치', unit: 'ea', qty: '1', price: '3740' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '3구 스위치', unit: 'ea', qty: '1', price: '4200' },
-                { div: '개별스위치콘센트', name: '르그랑 아틀라스 마그네틱', spec: '방불/방등 스위치', unit: 'ea', qty: '1', price: '4950' },
-                { div: '개별스위치콘센트', name: '융 LS990 / LS 시리즈', spec: '1구 스위치 (1모듈, 화이트/아이보리)', unit: 'ea', qty: '1', price: '10000' },
-                { div: '개별스위치콘센트', name: '융 LS990 / LS 시리즈', spec: '2구 스위치 (2모듈, 화이트/아이보리)', unit: 'ea', qty: '1', price: '18000' },
-                { div: '개별스위치콘센트', name: '융 LS990 / LS 시리즈', spec: '3구 스위치 (3모듈, 화이트/아이보리)', unit: 'ea', qty: '1', price: '43000' },
-                { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '1구 콘센트 (기본)', unit: 'ea', qty: '1', price: '5300' },
-                { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '2구 콘센트 (기본)', unit: 'ea', qty: '1', price: '11000' },
-                { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '3구 콘센트 (기본)', unit: 'ea', qty: '1', price: '16500' },
-                { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '4구 콘센트 (기본)', unit: 'ea', qty: '1', price: '27000' },
-                { div: '개별스위치콘센트', name: '융 LS990 콘센트류', spec: '5구 콘센트 (기본)', unit: 'ea', qty: '1', price: '39000' },
-                { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '1구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '5200' },
-                { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '2구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '11000' },
-                { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '3구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '16000' },
-                { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '4구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '27000' },
-                { div: '개별스위치콘센트', name: '융 LS990 프레임', spec: '5구 프레임 (WHITE/BLACK 등 구수별)', unit: 'ea', qty: '1', price: '39000' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '1구 스위치', unit: 'ea', qty: '1', price: '3100' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '2구 스위치', unit: 'ea', qty: '1', price: '4400' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '3구 스위치', unit: 'ea', qty: '1', price: '5400' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '4구 스위치', unit: 'ea', qty: '1', price: '6800' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '5구 스위치', unit: 'ea', qty: '1', price: '8200' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '4650' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '7450' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: '3구 콘센트', unit: 'ea', qty: '1', price: '10000' },
-                { div: '개별스위치콘센트', name: 'VEKO 베코노 시리즈', spec: 'TV/통합', unit: 'ea', qty: '1', price: '8600' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '1구 스위치', unit: 'ea', qty: '1', price: '3100' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '2구 스위치', unit: 'ea', qty: '1', price: '4200' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '3구 스위치', unit: 'ea', qty: '1', price: '5000' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '4000' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T1 TRIICO', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '5500' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '1구 스위치', unit: 'ea', qty: '1', price: '4300' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '2구 스위치', unit: 'ea', qty: '1', price: '5300' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '3구 스위치', unit: 'ea', qty: '1', price: '6300' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '4200' },
-                { div: '개별스위치콘센트', name: 'TILINS 티린스 T14 시리즈', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '5300' },
-                { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '1구 스위치', unit: 'ea', qty: '1', price: '2000' },
-                { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '2구 스위치', unit: 'ea', qty: '1', price: '3100' },
-                { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '3구 스위치', unit: 'ea', qty: '1', price: '4000' },
-                { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: '4구 스위치', unit: 'ea', qty: '1', price: '5000' },
-                { div: '개별스위치콘센트', name: '진흥전기 J 시리즈', spec: 'TV/전화/통합', unit: 'ea', qty: '1', price: '8000' },
-                { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '1구 스위치', unit: 'ea', qty: '1', price: '2300' },
-                { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '2구 스위치', unit: 'ea', qty: '1', price: '3500' },
-                { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '3구 스위치', unit: 'ea', qty: '1', price: '4700' },
-                { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '1구 콘센트', unit: 'ea', qty: '1', price: '3600' },
-                { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '2구 콘센트', unit: 'ea', qty: '1', price: '4900' },
-                { div: '개별스위치콘센트', name: 'NANO 나노전기 오뎀세이/아트', spec: '3구 콘센트', unit: 'ea', qty: '1', price: '6200' },
-                { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '1구 (2,000 ~ 4,000원대 평균)', unit: 'ea', qty: '1', price: '3000' },
-                { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '2구 (3,000 ~ 5,000원대 평균)', unit: 'ea', qty: '1', price: '4000' },
-                { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '3구 (4,000 ~ 7,000원대 평균)', unit: 'ea', qty: '1', price: '5500' },
-                { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '4구 (6,000 ~ 9,000원대 평균)', unit: 'ea', qty: '1', price: '7500' },
-                { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '5구 (7,000 ~ 12,000원대 평균)', unit: 'ea', qty: '1', price: '9500' },
-                { div: '개별스위치콘센트(평균)', name: '국내 브랜드 스위치', spec: '6구 (8,000 ~ 14,000원대 평균)', unit: 'ea', qty: '1', price: '11000' },
-                {
-                    div: '개별스위치콘센트(평균)', name: '르그랑/융 프리미엄군', spec: '1구 기준 (8,000 ~ 12,000원부터 시작)', unit: 'ea', qty: '1', price:
-                        '10000'
-                }
-            ],
-            '07': [
-                {
-                    div: '엘지 에어컨', name: 'LG 시스템 에어컨 2대', spec: '프리미엄 일반형(단배관: 18/6) - 실외비 3마력/냉방', unit: '식', qty: '1', price:
-                        '3900000'
-                },
-                {
-                    div: '엘지 에어컨', name: 'LG 시스템 에어컨 3대', spec: '프리미엄 일반형(단배관: 18/6/5) - 실외비 4마력/냉방', unit: '식', qty: '1', price:
-                        '5200000'
-                },
-                {
-                    div: '엘지 에어컨', name: 'LG 시스템 에어컨 4대', spec: '프리미엄 일반형(단배관: 18/6/5/5) - 실외비 4마력/냉방', unit: '식', qty: '1', price:
-                        '6200000'
-                },
-                {
-                    div: '엘지 에어컨', name: 'LG 시스템 에어컨 5대', spec: '프리미엄 일반형(단배관: 18/6/5/5) - 실외비 4마력/냉방', unit: '식', qty: '1', price:
-                        '7800000'
-                },
-                {
-                    div: '엘지 에어컨', name: 'LG 시스템 에어컨 6대', spec: '프리미엄 일반형(단배관: 18/6/5/5/5) - 실외비 5마력/냉방', unit: '식', qty: '1', price:
-                        '8900000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 2대', spec: '무풍 와이파이 내장형(단배관: 18/6) - 실외기 3마력/냉방', unit: '식', qty: '1', price:
-                        '3400000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 3대', spec: '무풍 와이파이 내장형(단배관: 18/6/5) - 실외기 4마력/냉방', unit: '식', qty: '1', price:
-                        '4500000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 4대', spec: '무풍 와이파이 내장형(단배관: 18/6/5/5) - 실외기 4마력/냉방', unit: '식', qty: '1',
-                    price: '5300000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 5대', spec: '무풍 와이파이 내장형(단배관: 18/6/5/5) - 실외기 5마력/냉방', unit: '식', qty: '1',
-                    price: '6700000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 6대', spec: '무풍 와이파이 내장형(단배관: 18/8/6/5/5/5) - 실외기 5마력/냉방', unit: '식', qty: '1',
-                    price: '7800000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 7대', spec: '무풍 와이파이 내장형(단배관: 10/10/8/6/6/6/6) - 실외기 6마력/냉방', unit: '식', qty:
-                        '1', price: '8200000'
-                },
-                {
-                    div: '삼성 에어컨', name: 'SAMSUNG 에어컨 7대', spec: '무풍 와이파이 내장형(단배관: 18/8/8/6/6/6/6) - 실외기 6마력/냉방', unit: '식', qty: '1',
-                    price: '8500000'
-                },
-                { div: '기타 추가 항목', name: '실외기 앵글 (1단)', spec: '알루미늄 바닥용 1단', unit: '식', qty: '1', price: '70000' },
-                { div: '기타 추가 항목', name: '실외기 앵글 (행어용)', spec: '알루미늄 1050~1150', unit: '식', qty: '1', price: '150000' },
-                { div: '기타 추가 항목', name: '실외기 받침대', spec: '발통 (주거용)', unit: '식', qty: '1', price: '30000' },
-                { div: '기타 추가 항목', name: '실외기 에어가드', spec: '바람막이 (알루미늄)', unit: '식', qty: '1', price: '50000' },
-                { div: '기타 추가 항목', name: '단상 차단기', spec: '누전 220V', unit: '식', qty: '1', price: '50000' }
-            ],
-            '08': [
-                { div: '벽체', name: '벽면 석고 시공', spec: '벽면 석고 면맞춤 떠붙임 1p (h:2400)', unit: 'm', qty: '1', price: '70000' },
-                { div: '가벽', name: '주방 가벽 신설', spec: '다루끼 가벽 (냉장고) - 1m이내 두께60mm', unit: 'ea', qty: '1', price: '150000' },
-                { div: '가벽', name: '중문 가벽 신설', spec: '투바이 가벽 (중문) - 1m이내 두께90mm - 공틀', unit: 'ea', qty: '1', price: '350000' },
-                { div: '가벽', name: '직각 게이트 공틀 MD', spec: '측면 MD 마감', unit: '틀', qty: '1', price: '100000' },
-                { div: '가벽', name: '아치 게이트 공틀 MD', spec: '측면 MD 마감', unit: '틀', qty: '1', price: '150000' },
-                { div: '가벽', name: '가벽 신설', spec: '공간 분리를 위한 투바이 가벽 신설', unit: '식', qty: '1', price: '350000' },
-                { div: '몰딩', name: '천장 몰딩', spec: '계단 몰딩 (25*15)', unit: 'py', qty: '1', price: '22000' },
-                { div: '몰딩', name: '걸레 받이', spec: '직각 평 몰딩 (30mm or 40mm)', unit: 'py', qty: '1', price: '20000' },
-                { div: '천장', name: '가구자리 수평 맞춤', spec: '가구자리 수평 맞춤 (부분 철거 후 맞춤)', unit: '식', qty: '1', price: '300000' },
-                { div: '천장', name: '우물 천장 평시공', spec: '전실/현관 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '150000' },
-                { div: '천장', name: '우물 천장 평시공', spec: '주방 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '250000' },
-                { div: '천장', name: '우물 천장 평시공', spec: '거실 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '350000' },
-                { div: '천장', name: '우물 천장 몰딩', spec: '9mm 몰딩 시공', unit: '식', qty: '1', price: '150000' },
-                { div: '천장', name: '우물 천장 신설', spec: '정사각, 직사각 형태 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '700000' },
-                { div: '천장', name: '우물 천장 신설', spec: '라운드 형태 (기본), (대형 추가 10만원)', unit: '식', qty: '1', price: '800000' },
-                { div: '천장', name: '매립 등박스 신설 (라인조명)', spec: '철거+재시공 (라인 일자 조명) - 조명별도', unit: 'm', qty: '1', price: '70000' },
-                { div: '천장', name: '매립 등박스 신설 (라인조명)', spec: '철거+재시공 (라인 사각 조명) - 조명별도', unit: '식', qty: '1', price: '500000' },
-                { div: '천장', name: '복도 측면 상부 간접등 박스', spec: '철거+간접등박스 - 조명별도', unit: 'm', qty: '1', price: '100000' },
-                {
-                    div: '벽체', name: '복도 끝벽 벽 간접등', spec: '철거+간접등박스 (w:1200,h:2400 기준) - 조명별도', unit: '식', qty: '1', price: '200000'
-                },
-                { div: '벽체', name: '알판 - 템바보드', spec: '포인트 벽면 템바보드', unit: '식', qty: '1', price: '450000' },
-                { div: '벽체', name: '코너 라운드 벽체', spec: '날개벽 또는 코너 벽면 라운드 시공', unit: '식', qty: '1', price: '400000' },
-                { div: '벽체', name: '거실 TV 매립형 가벽', spec: 'TV 고정 벽면 합판 보강', unit: '식', qty: '1', price: '600000' },
-                { div: '벽체', name: '히든도어 벽면 마감', spec: '히든도어 양쪽 벽면 알판 (석고+MD)', unit: '식', qty: '1', price: '200000' },
-                { div: '벽체', name: '벽체 막음 (기존 도어자리)', spec: '기존 도어 자리 벽체 마감 (내부 단열재-방음)', unit: '식', qty: '1', price: '250000' },
-                { div: '벽체', name: '주방 타일 철거자리 마감', spec: '기존 주방자리 타일 철거 후 석고 마감', unit: '식', qty: '1', price: '250000' },
-                { div: '알판', name: '알판 - 벽면 MD', spec: '벽면 알판 (석고+MD) (1000*2400)', unit: 'm', qty: '1', price: '90000' },
-                { div: '알판', name: '알판 - 벽면 MD', spec: '천장 알판 (석고+MD) (1000*2400)', unit: 'm', qty: '1', price: '120000' },
-                { div: '천장', name: '철거 후 댄조 마감 평 - 현관', spec: '전체 철거 후 천장 마감 (다루끼+석고) 평마감', unit: '식', qty: '1', price: '600000' },
-                {
-                    div: '천장', name: '철거 후 댄조 마감 우물 - 현관', spec: '전체 철거 후 천장 마감 (다루끼+석고) 우물 마감 (간접시-조명별도)', unit: '식', qty: '1',
-                    price: '700000'
-                },
-                { div: '천장', name: '철거 후 댄조 마감 평 - 거실', spec: '전체 철거 후 천장 마감 (다루끼+석고) 평마감', unit: '식', qty: '1', price: '800000' },
-                {
-                    div: '천장', name: '철거 후 댄조 마감 우물 - 거실', spec: '전체 철거 후 천장 마감 (다루끼+석고) 우물 마감 (간접시-조명별도)', unit: '식', qty: '1',
-                    price: '900000'
-                },
-                {
-                    div: '천장', name: '철거 후 댄조 마감 평 - 방or주방', spec: '전체 철거 후 천장 마감 (다루끼+석고) 평마감', unit: '식', qty: '1', price: '700000'
-                },
-                {
-                    div: '천장', name: '철거 후 댄조 마감 우물 - 거실or주방', spec: '전체 철거 후 천장 마감 (다루끼+석고) 우물 마감 (간접시-조명별도)', unit: '식', qty: '1',
-                    price: '800000'
-                },
-                {
-                    div: '에어컨', name: '시스템 에어컨 천장 단내림', spec: '시스템 에어컨 설비층 확보를 위한 천장 단내림 (h:190)', unit: '식', qty: '1', price:
-                        '300000'
-                },
-                {
-                    div: '에어컨', name: '시스템 에어컨 천장 마감', spec: '시스템 에어컨 선배관 후 기계자리 보강 및 배관 자리 타공부분 막음', unit: '식', qty: '1', price:
-                        '400000'
-                },
-                { div: '보강', name: '합판 보강 벽면 - 거울', spec: '거울/액자 등 벽면 보강 (1000*600 기준)', unit: 'm', qty: '1', price: '70000' },
-                {
-                    div: '보강', name: '합판 보강 천정 - 가구', spec: '옷봉 or 상부장 or 띄움 장 합판 보강 (1000*600 기준)', unit: 'm', qty: '1', price:
-                        '90000'
-                },
-                { div: '도어', name: '도어 재사용 - 필름', spec: '도어 재사용+필름 시공을 위한 도어 대패 작업.', unit: 'set', qty: '1', price: '20000' },
-                {
-                    div: '도어', name: '도어 하드웨어만 교체시 (문재사용)', spec: '철거+경첩/댐퍼형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '70000'
-                },
-                {
-                    div: '도어', name: '도어 하드웨어만 교체시 (문재사용)', spec: '철거+경첩/자석형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '80000'
-                },
-                { div: '도어', name: '도어 하드웨어 (신설)', spec: '경첩/댐퍼형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '60000' },
-                { div: '도어', name: '도어 하드웨어 (신설)', spec: '경첩/자석형 도어스토퍼/손잡이(30,000)', unit: 'set', qty: '1', price: '70000' },
-                { div: '도어', name: '여닫이 도어', spec: '영림 ABS 여닫이 도어 (문짝만) - 손잡이별도', unit: 'ea', qty: '1', price: '220000' },
-                { div: '도어', name: '여닫이 도어', spec: '영림 ABS 여닫이 도어 (틀/문짝/가스켓) - 손잡이별도', unit: 'set', qty: '1', price: '400000' },
-                { div: '도어', name: '포켓 도어', spec: '목공+슬라이드형 도어 (양뎀퍼) - 손잡이별도', unit: 'set', qty: '1', price: '500000' },
-                { div: '도어', name: '스텝 도어', spec: '목공+ABS 여닫이 도어(어깨가공) - 인방철거/손잡이별도', unit: 'set', qty: '1', price: '500000' },
-                {
-                    div: '도어', name: '슬림 와이드 여닫이 도어', spec: '12mm 문선 슬림형 여닫이 도어 (벽면 석고/도어다리 필름 별도)', unit: 'ea', qty: '1', price:
-                        '420000'
-                },
-                { div: '도어', name: '히든도어', spec: '알루미늄문틀/ABS히든도어/손잡이 (벽면 마감 석고+MD 별도)', unit: 'ea', qty: '1', price: '950000' },
-                { div: '도어', name: '피봇도어 45T', spec: '180도 여닫이 (부속포함)', unit: 'ea', qty: '1', price: '1200000' },
-                { div: '터닝도어', name: '터닝도어', spec: 'LX 터닝도어 (세탁실or거실발코니)', unit: 'ea', qty: '1', price: '800000' },
-                { div: '침대헤드', name: '침대헤드(알판)', spec: '침대 헤드 알판 (석고+MD)', unit: '식', qty: '1', price: '300000' },
-                { div: '침대헤드', name: '침대헤드(알판)+젠다이(알판)', spec: '침대헤드 상부 알판(포인트)+하부젠다이 알판', unit: '식', qty: '1', price: '500000' },
-                {
-                    div: '침대헤드', name: '침대헤드(알판)+젠다이(알판)+조명', spec: '침대헤드 상부 알판(포인트)+하부젠다이 알판 -조명 별도', unit: '식', qty: '1', price:
-                        '700000'
-                },
-                {
-                    div: '침대헤드', name: '침대헤드(루버)+젠다이(알판)+조명', spec: '침대헤드 상부 루버(포인트)+하부젠다이 알판 -조명 별도', unit: '식', qty: '1', price:
-                        '900000'
-                },
-                {
-                    div: '현관문', name: '현관문 여닫이 모던전창', spec: '여딛이 180도 편개 도어 (모던) - 문틀 없음. (1000*2400)', unit: '식', qty: '1', price:
-                        '1500000'
-                },
-                {
-                    div: '현관문', name: '현관문 여닫이 간살 - 비대칭', spec: '여딛이 180도 편개 도어 (전체간살) - 문틀 없음. (1100*2400)', unit: '식', qty: '1',
-                    price: '1900000'
-                },
-                {
-                    div: '현관문', name: '현관문 여닫이 양개 비대칭-모던', spec: '여닫이 비대칭 양개 180도 (모던) - 문틀 없음. (1200*2400)', unit: '식', qty: '1',
-                    price: '1400000'
-                },
-                {
-                    div: '현관문', name: '현관문 여닫이 양개 비대칭-백유리', spec: '여닫이 비대칭 양개 180도(전창백유리)-문틀 없음.(1300*2400)', unit: '식', qty: '1',
-                    price: '1500000'
-                },
-                {
-                    div: '현관문', name: '현관문 슬라이드(1도어)-브론즈샤틴', spec: '슬라이도 1도어 (모던) - 상부/하부 매립형 레일 (900*2400)', unit: '식', qty: '1',
-                    price: '800000'
-                },
-                {
-                    div: '현관문', name: '현관문 슬라이드 (1도어)', spec: '슬라이도 1도어 (간살6개) - 상부/하부 매립형 레일 (1200*2400)', unit: '식', qty: '1',
-                    price: '1600000'
-                },
-                {
-                    div: '현관문', name: '현관문 슬라이딩 (2도어)', spec: '슬라이도 2도어 (모던) - 상부/하부 매립형 레일 (1800*2400)', unit: '식', qty: '1', price:
-                        '1400000'
-                },
-                {
-                    div: '현관문', name: '현관문 슬라이드 (개별 4도어)', spec: '슬라이드 4도어 (간살) - 상부/하부 매립형 레일 (3000*2200)', unit: '식', qty: '1',
-                    price: '5500000'
-                },
-                {
-                    div: '현관문', name: '현관문 3연동 슬림형 (4도어)', spec: '알루미늄 3연동 4도어 슬라이드 도어 (모던) (2000*2300)', unit: '식', qty: '1', price:
-                        '1600000'
-                },
-                {
-                    div: '현관문', name: '현관문 3연동 슬림형 (3도어)', spec: '알루미늄 3연동 4도어 슬라이드 도어 (모던) (2000*2300)', unit: '식', qty: '1', price:
-                        '1100000'
-                },
-                {
-                    div: '현관문', name: '현관문 신설 (방화도어) 양개도어', spec: '현관문 방화문 신설 양개 도어 (철거 및 도어락 별도)', unit: '식', qty: '1', price:
-                        '1500000'
-                },
-                {
-                    div: '현관문', name: '현관문 신설 (방화도어) 편개도어', spec: '현관문 방화문 신설 양개 도어 (철거 및 도어락 별도)', unit: '식', qty: '1', price:
-                        '1200000'
-                },
-                { div: '선반', name: '무지주 선반 시공', spec: 'D:200 이내 선반 시공', unit: '식', qty: '1', price: '150000' },
-                { div: '화장실', name: '화장실 측면 간접', spec: '세면대 자리 측면 간접을 위한 목공 (하부 조적)', unit: '식', qty: '1', price: '300000' },
-                { div: '화장실', name: '화장실 벽면 공간박스', spec: '측면 공간 박스 및 간접', unit: '식', qty: '1', price: '350000' },
-                { div: '액자레일', name: '액자레일 - 매립', spec: '철거 후 액자레일 매립 한면', unit: '식', qty: '1', price: '200000' }
-            ],
-            '09': [
-                { div: '기본 (단품)', name: '기본 시공비 (현관문/공틀)', spec: '현관문 틀/문짝(내부만), 공틀1', unit: '식', qty: '1', price: '500000' },
-                {
-                    div: '기본 (단품)', name: '기본 시공비 (부분시공)', spec: '부분 시공일 때 1품(35) - 자재 1m(추가:2만원)', unit: '식', qty: '1', price:
-                        '350000'
-                },
-                { div: '창호 단품', name: '창호 (거실) - 단품', spec: '30평대 기준 거실 창호', unit: '식', qty: '1', price: '1200000' },
-                { div: '창호 단품', name: '창호 (거실) - 단품', spec: '40평대 기준 거실 창호', unit: '식', qty: '1', price: '1500000' },
-                { div: '창호 단품', name: '창호 (대) - 단품', spec: '이중창 기준. 단창의 경우 (90)', unit: 'ea', qty: '1', price: '1000000' },
-                { div: '창호 단품', name: '창호 (중) - 단품', spec: '이중창 기준. 단창의 경우 (80)', unit: 'ea', qty: '1', price: '800000' },
-                { div: '창호 단품', name: '창호 (소) - 단품', spec: '이중창 기준. 단창의 경우 (50)', unit: 'ea', qty: '1', price: '600000' },
-                { div: '가구/수납장', name: '붙박이장/신발장', spec: '외측(눈이 보이는 곳) 틀/문짝', unit: '자', qty: '1', price: '100000' },
-                { div: '가구/수납장', name: '하프장', spec: 'h: 1200 이내', unit: '자', qty: '1', price: '70000' },
-                { div: '창고장', name: '창고장', spec: 'w: 1200 이내', unit: '식', qty: '1', price: '200000' },
-                { div: '도어', name: '현관문 or 방화문 or 터닝도어', spec: '내측 기준', unit: 'ea', qty: '1', price: '200000' },
-                { div: '도어', name: '방화문 or 터닝도어 앞뒤 전체', spec: '앞뒤 전체 필름.', unit: 'ea', qty: '1', price: '250000' },
-                { div: '도어(set)', name: '문틀/문짝 (기본)', spec: '민자 도어/틀의 경우', unit: 'set', qty: '1', price: '280000' },
-                {
-                    div: '도어(set)', name: '문틀/문짝 (골/페인트/무늬목)', spec: '문짝에 무늬 또는 골, 샌딩 및 핸디(페인트/무늬목) 필요한 경우', unit: 'set', qty: '1',
-                    price: '310000'
-                },
-                { div: '도어(단품)', name: '문틀/도어다리/문선', spec: '문틀 전체 해당부분', unit: 'ea', qty: '1', price: '120000' },
-                { div: '도어(단품)', name: '문짝 (민자도어)', spec: '문짝 기본 (민자도어)', unit: 'ea', qty: '1', price: '170000' },
-                { div: '도어(단품)', name: '문짝 (문양도어)', spec: '문짝 핸디작업 2회', unit: 'ea', qty: '1', price: '200000' },
-                { div: '공틀', name: '공틀 사각 게이트', spec: '9mm or 12mm 공틀 MD', unit: 'ea', qty: '1', price: '120000' },
-                { div: '공틀', name: '공틀 아치 게이트', spec: '공틀 아치 게이트 (핸디 작업 2회)', unit: 'ea', qty: '1', price: '150000' },
-                {
-                    div: '등박스 몰딩', name: '등박스 몰딩', spec: '사각형 구조 라운드 형태 (끊김없이 1회시 시공시 자재비 추가 1m 2만원)', unit: 'ea', qty: '1', price:
-                        '200000'
-                },
-                { div: '알판', name: '현관 or 전실 알판', spec: '34평 기준 현관문 포함, 신발장 및 중문 별', unit: 'ea', qty: '1', price: '500000' },
-                { div: '알판', name: '침대 헤드 (디자인)', spec: '침대 헤드 목공 작업 이후 필름시공', unit: '식', qty: '1', price: '400000' },
-                { div: '알판', name: '거실/주방 알판', spec: '민자 형태 알판 MD', unit: 'm', qty: '1', price: '80000' },
-                { div: '전체필름(창호/도어)', name: '전체 필름', spec: '방화문/문틀짝/중문/공틀/창호', unit: 'py', qty: '1', price: '120000' },
-                { div: '전체 창호 필름', name: '전체 창호 필름', spec: '전체 창호만 시공', unit: 'py', qty: '1', price: '80000' },
-                { div: '전체 문틀짝 필름', name: '전체 문틀짝 필름', spec: '전체 문틀짝 시공 (30평기준)', unit: 'py', qty: '1', price: '40000' }
-            ],
-            '10': [
-                { div: '현관', name: '현관 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 이내', unit: '식', qty: '1', price: '350000' },
-                {
-                    div: '현관', name: '현관 바닥 철거 후 타일', spec: '타일 600*600 (쭈꾸미+타일) : 34평 이내 (철거 별도)', unit: '식', qty: '1', price:
-                        '400000'
-                },
-                { div: '현관/전실', name: '현관/전실 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 기준', unit: '식', qty: '1', price: '550000' },
-                {
-                    div: '현관/전실', name: '현관/전실 철거 후 타일', spec: '타일 600*600 (쭈꾸미+타일) : 34평 기준 (철거/방수 별도)', unit: '식', qty: '1', price:
-                        '650000'
-                },
-                { div: '세탁실', name: '세탁실 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 기준', unit: '식', qty: '1', price: '300000' },
-                {
-                    div: '세탁실', name: '세탁실 바닥 철거 후 시공', spec: '타일 600*600 (쭈꾸미+타일) : 34평 기준 (철거/방수 별도)', unit: '식', qty: '1', price:
-                        '400000'
-                },
-                { div: '발코니', name: '발코니 바닥 (덧방)', spec: '타일 600*600 덧방 기준 : 34평 기준', unit: '식', qty: '1', price: '700000' },
-                {
-                    div: '발코니', name: '발코니 바닥 철거 후 시공', spec: '타일 600*600 (쭈꾸미+타일) : 34평 기준 (철거/방수 별도)', unit: '식', qty: '1', price:
-                        '850000'
-                },
-                {
-                    div: '거실/주방/방', name: '포세린 타일 600*600', spec: '기본 바닥 수평+자재비+시공비 - 600*600 (줄눈 별도)', unit: 'py', qty: '1', price:
-                        '270000'
-                },
-                {
-                    div: '거실/주방/방', name: '포세린 타일 800*800', spec: '기본 바닥 수평+자재비+시공비 - 800*800 (줄눈 별도)', unit: 'py', qty: '1', price:
-                        '310000'
-                },
-                {
-                    div: '거실/주방/방', name: '폴리싱 타일 600*600', spec: '기본 바닥 수평+자재비+시공비 - 600*600 (줄눈 별도)', unit: 'py', qty: '1', price:
-                        '265000'
-                },
-                {
-                    div: '거실/주방/방', name: '폴리싱 타일 800*800', spec: '기본 바닥 수평+자재비+시공비 - 800*800 (줄눈 별도)', unit: 'py', qty: '1', price:
-                        '300000'
-                }
-            ],
-            '11': [],
-            '12': [
-                {
-                    div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (삼화 - 아이생각 4L 당 30헤베 2.9) - 국산', unit: 'm2', qty: '1',
-                    price: '50000'
-                },
-                {
-                    div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (KCC - 숲으로 4L 당 30헤베 4.9) - 국산', unit: 'm2', qty: '1',
-                    price: '55000'
-                },
-                {
-                    div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (노루 - 친환경 프리미엄 팬톤 5.1) - 국산', unit: 'm2', qty: '1', price:
-                        '55000'
-                },
-                {
-                    div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (벤자민무어 4L 당 30헤베 12) - 수입', unit: 'm2', qty: '1', price:
-                        '80000'
-                },
-                {
-                    div: '도장', name: '뿜칠 도장 마감 (벽/천정)', spec: '줄퍼티+올퍼티+2회칠 (던에드워드 4L 당 30헤베 12) - 수입', unit: 'm2', qty: '1', price:
-                        '80000'
-                },
-                { div: '탄성', name: '세라믹코트', spec: '기능성 마감 도장 (전실 또는 현관 적합) 칸 추가 12만원', unit: '칸', qty: '1', price: '300000' },
-                { div: '탄성', name: '월드클래스', spec: '결로에 취약한 부분 (발코니에 적합) 칸 추가 17만원', unit: '칸', qty: '1', price: '350000' },
-                {
-                    div: '탄성', name: '제로스탑', spec: '습도 조절 및 유지 냄새 공기정화 기능 (세탁샐에 적합) 칸 추가 22만원', unit: '칸', qty: '1', price: '470000'
-                },
-                { div: '참고', name: '도장 참고사항', spec: '도장 기본 평당 15만원(수입산페인트 별도)', unit: 'py', qty: '1', price: '150000' }
-            ],
-            '13': [
-                {
-                    div: '합지도배', name: '합지도배', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1', price:
-                        '100000'
-                },
-                {
-                    div: '실크도배 (기본)', name: '실크도배', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1', price:
-                        '120000'
-                },
-                {
-                    div: '실크프리미엄 (고급)', name: '실크프리미엄', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
-                    price: '140000'
-                },
-                { div: '무몰딩', name: '무몰딩 밑작업', spec: '무몰딩 밑작업', unit: '식', qty: '1', price: '400000' },
-                { div: '무걸레받이', name: '무걸레받이 밑작업', spec: '무걸레받이 밑작업', unit: '식', qty: '1', price: '400000' },
-                {
-                    div: '합지(일반) - 참고', name: '개나리벽지 (합지)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
-                    price: '100000'
-                },
-                {
-                    div: '합지(일반) - 참고', name: '신화벽지 (합지 / 아이리스 / 파인하임)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit:
-                        'py', qty: '1', price: '100000'
-                },
-                {
-                    div: '합지(일반) - 참고', name: '제일벽지 (해피데이 / 센스)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py',
-                    qty: '1', price: '100000'
-                },
-                {
-                    div: '합지(일반) - 참고', name: 'LX Z:IN (휘앙세)', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
-                        '1', price: '100000'
-                },
-                {
-                    div: '실크 (기본) - 참고', name: '개나리 로하스+', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
-                    price: '120000'
-                },
-                {
-                    div: '실크 (기본) - 참고', name: '제일 베이직플러스', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty: '1',
-                    price: '120000'
-                },
-                {
-                    div: '실크 (기본) - 참고', name: 'LX Z:IN 베스띠', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
-                        '1', price: '120000'
-                },
-                {
-                    div: '실크 (고급) - 참고', name: '개나리 프리미엄 / 아트북 / 에비뉴', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit:
-                        'py', qty: '1', price: '140000'
-                },
-                {
-                    div: '실크 (고급) - 참고', name: '신화 에상스 / 파사드', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
-                        '1', price: '140000'
-                },
-                {
-                    div: '실크 (고급) - 참고', name: '제일 나무플러스 / 제이플래티넘', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py',
-                    qty: '1', price: '140000'
-                },
-                {
-                    div: '실크 (고급) - 참고', name: 'LX Z:IN 디아망', spec: '(LX Z:IN,개나리,신화,제일)택 1. 벽벽지/천장지 통일시 자재비 추가.', unit: 'py', qty:
-                        '1', price: '140000'
-                }
-            ],
-            '14': [
-                { div: '원목마루', name: '원목마루', spec: '', unit: 'py', qty: '1', price: '280000' },
-                { div: '강마루', name: '동화 합판마루', spec: '10T 600*600', unit: 'py', qty: '1', price: '150000' },
-                { div: '동화', name: '나투스진 그란데 / 이모션블랑(JG2012)', spec: '7T*325*810', unit: 'py', qty: '1', price: '110000' },
-                { div: '강마루', name: '노바 플로', spec: '', unit: 'py', qty: '1', price: '140000' },
-                { div: '노배', name: '노배 블랙라벨', spec: '7.5T*165*1200', unit: 'py', qty: '1', price: '120000' },
-                { div: '동화', name: '비움190', spec: '', unit: 'py', qty: '1', price: '260000' },
-                { div: 'LX 지인 에디톤', name: 'lx 에디톤 스톤', spec: '5t*450*900 - 솔티크림(EDT7725)', unit: 'py', qty: '1', price: '99000' },
-                { div: '데코타일', name: 'LX 지인 데코타일', spec: 'LX 지인 보타닉 사각 600각 (3T*600*600)', unit: 'py', qty: '1', price: '45000' },
-                { div: '장판', name: '장판', spec: '2.2T', unit: 'py', qty: '1', price: '60000' },
-                { div: '장판', name: '장판', spec: '2.2T', unit: 'py', qty: '1', price: '70000' },
-                { div: '장판', name: 'lx 컴포트', spec: '', unit: 'py', qty: '1', price: '150000' }
-            ],
-            '15': [],
-            '16': [
-                { div: '실리콘', name: '실리콘 마감', spec: '아덱스 실리콘 - 색맞춤 시공', unit: 'py', qty: '1', price: '13000' },
-                { div: '빨래건조대', name: '빨래건조대 - 수동', spec: '스테인레스 봉 - 수동', unit: 'ea', qty: '1', price: '110000' },
-                { div: '빨래건조대', name: '빨래건조대 - 전동', spec: '스테인레스 봉 - 수동', unit: 'ea', qty: '1', price: '300000' },
-                { div: '준공청소', name: '준공청소', spec: '', unit: 'py', qty: '1', price: '20000' }
-            ],
-            '17': []
-        };
-
-        // 기본 메모 데이터
-        const defaultCostMemos = {
-            '01': `1. 행위허가가 필요한 경우는 구조나 외관, 설비 등에 영향을 주는 공사를 할 때 지자체에 사전 허가를 받아야 합니다.
+// 기본 메모 데이터
+const defaultCostMemos = {
+    '01': `1. 행위허가가 필요한 경우는 구조나 외관, 설비 등에 영향을 주는 공사를 할 때 지자체에 사전 허가를 받아야 합니다.
 2. 행위허가 증명서(필증) 발급시 반드시 승인에 따른 조건(갑종 방화문, 방화판 및 방화유리, 감지기) 을 충족해야 합니다.
 3. 입주민 동의서를 받는 이유는 공사로 인해 발생할 수 있는 소음·진동·먼지·동선 제한 등의 불편을 사전에 알리고, 주변 거주자의 공식적인 '동의'를 받아 분쟁을 예방하기 위해입니다.
 4. 공사를 위해 엘리베이터 이용료(보증금) 및 주차 요금이 부담합니다.
 5. 공사 과정에서 발생하는 전기·수도 등의 공과금은 고객이 부담합니다.
 6. 엘리베이터 이용이 불가 또는 없는 세대는 추가 비용이 발생합니다.
 7. 유지 되는 항목(가구, 바닥재 등)은 보양이 필수이며 비용이 발생합니다.`,
-            '02': `1. 철거 전 재사용 항목에 대하여 사전에 문제(작동안됨, 찍힘, 오염 등) 부분이 필요합니다.
+    '02': `1. 철거 전 재사용 항목에 대하여 사전에 문제(작동안됨, 찍힘, 오염 등) 부분이 필요합니다.
 2. 철거 항목에 없는 부분은 임의로 철거하지 않습니다.철거 추가시 비용이 산출되어 추가금이 발생됩니다.
 3. 구조체(내력벽, 보, 기둥)는 임의 철거가 불가하며, 구조검토 없이 철거 시 안전사고 및 법적 책임이 발생합니다.
 4. 철거 시 발생하는 폐기물은 법적 기준에 따라 분리·처리해야 하며, 폐기물 처리 비용이 별도로 발생합니다.
 5. 층간 소음 및 진동이 심한 작업은 관리사무소 사전에 고지하며 지정 시간 내에 진행합니다.`,
-            '03': `1. 기존 배관 사용을 원칙으로 합니다.
+    '03': `1. 기존 배관 사용을 원칙으로 합니다.
 2. 배관(오수, 하수, 수도) 위치 변경 시 구배가 확보 되지 않으면 신발이 문에 걸릴 수 있습니다.
 3. 기존 배관 상태에 따라 교체가 권장될 수 있으며, 이때 반드시 공정 중간에 누수탐지를 실시합니다.
 4. 방수는 바닥뿐 아니라 벽체 일정 높이(H: 1100이상)까지 시공해야 하며, 3차 방수까지 권장 드립니다.
 5. 방수 후 충분한 양생 기간(최소 24~48시간)을 확보 후 타일 시공을 진행 합니다.
 6. 외벽이 맞닿는 부분에 수도 배관 신설 시 동파 방지 및 단열 처리가 반드시 필요합니다.
 7. 가스 철거 및 신설은 면허 보유자가 진행 해야 합니다.`,
-            '04': `1. 발코니 확장은 행위허가 대상이며, 허가 조건(방화문, 단열 기준 등)을 충족해야 합니다.
+    '04': `1. 발코니 확장은 행위허가 대상이며, 허가 조건(방화문, 단열 기준 등)을 충족해야 합니다.
 2. 확장 시 외부 노출면에 대한 단열 시공이 필수이며, 미흡 시 결로·곰팡이 발생의 원인이 됩니다.
 3. 단열재 종류 및 두께에 따라 시공비가 달라지며, 에너지 효율과 직결됩니다.
 4. 단열은 격자 방식으로 열교현상을 최소화 하며 이음부위는 반드시 테이핑 처리로 마감합니다.`,
-            '05': `1. 창호 교체는 외관 변경에 해당하여 아파트의 경우 관리규약 확인 및 동의 절차가 필요할 수 있습니다.
+    '05': `1. 창호 교체는 외관 변경에 해당하여 아파트의 경우 관리규약 확인 및 동의 절차가 필요할 수 있습니다.
 2. 기존 창호 규격과 신규 창호 규격이 다를 경우 추가 마감 공사가 발생합니다.
 3. 창호 제작 기간(2~3주)을 공정에 반영해야 하며, 현장 실측 후 제작 진행합니다.
 4. 하자 발생 시 각 제조사 A / S 기준이 적용됩니다.
 5. 모든 창호 시공은 시방서에 준하여 시공됩니다.`,
-            '06': `1. 분전반 용량 및 차단기 구성을 확인하고, 필요시 증설 또는 교체를 진행합니다.
+    '06': `1. 분전반 용량 및 차단기 구성을 확인하고, 필요시 증설 또는 교체를 진행합니다.
 2. 전선 규격은 사용 용량에 맞게 선정하며 노후 전선은 화재 위험이 있어 교체를 권장합니다.
 3. 조명 위치 변경 및 추가 시 천장 구조(콘크리트 / 석고보드)에 따라 시공 방법이 달라집니다.
 4. 매립 콘센트 및 스위치 위치는 도면 확정 후 변경이 어려우므로 사전 확정이 중요합니다.
 5. 욕실 등 습기 노출 공간은 방수형 콘센트 및 접지 시공을 필수로 진행합니다.`,
-            '07': `1. 시스템 에어컨 설치 시 천장 내부 공간 확보 여부를 사전에 확인해야 합니다.
+    '07': `1. 시스템 에어컨 설치 시 천장 내부 공간 확보 여부를 사전에 확인해야 합니다.
 2. 배관 경로에 따라 에어컨 단내림 또는 배관 길(천장 박스 및 몰딩)의 시공에 따른 추가 비용이 발생할 수 있습니다.
 3. 배관 시공에 따른 철거 후 마감 및 에어컨 자리 보강에 따른 추가 비용이 발생할 수 있습니다.
 4. 실외기 설치 위치는 아파트 관리규약 및 구조적 제약을 확인 후 시공 여부를 결정합니다.
 5. 실외기실 신설시 별도 비용이 추가 됩니다.(루버창, 칸막이: 단열 - 차음)
             6. 전기 용량 확인 후 전용 회로 배선이 필요할 수 있으며 추가 비용이 발생 됩니다.
 7. 에어컨 시공시 배관은 반드시 정품을 사용합니다.`,
-            '08': `1. 천장 및 벽체 목공 작업은 후속 공정(전기, 단열, 도장)과 연계되므로 정확한 순서 관리가 필요합니다.
+    '08': `1. 천장 및 벽체 목공 작업은 후속 공정(전기, 단열, 도장)과 연계되므로 정확한 순서 관리가 필요합니다.
 2. 도어 종류에 따라 제작 기간과 비용이 달라집니다.
 3. 도어 방향(열림 / 닫힘, 좌 / 우) 및 손잡이 위치는 시공 전 확정하며 도면 기준으로 시공합니다.
 4. 수축, 뒤틀림, 갈라짐을 방지하기 위해 목자재는 함수율 8~12 % 기준의 자재만 사용합니다.
 5. 현장 제작 가구의 경우 합판 및 마감재 종류에 따라 품질 차이가 있습니다.
 6. 목자재는 절대 재사용품을 사용하지 않습니다.`,
-            '09': `1. 기존 가구나 도어에 필름 시공 시 표면 상태(들뜸, 손상)에 따라 결과물 품질이 달라집니다.
+    '09': `1. 기존 가구나 도어에 필름 시공 시 표면 상태(들뜸, 손상)에 따라 결과물 품질이 달라집니다.
 2. 표면 상태가 좋지 않으면 필름 시공이 불가합니다.
 3. 필름 종류(무광, 유광, 우드, 메탈 등)에 따라 내구성 및 단가가 상이합니다.
 4. 모서리, 곡면, 모양 부위는 시간 경과에 따라 들뜸이 발생할 수 있습니다.
 5. 도어의 경우 문양 부분을 없애고 민자모양을 만들기 위해 핸디작업은 필수이며 사용자의 환경에 따라 문제가 발생할 수 있습니다.
 6. 기존 필름 자리가 페인트나 무늬목의 경우 밑작업 비용이 발생합니다.
 7. 상업공간의 경우 반드시 방화필름을 사용해야 합니다.`,
-            '10': `1. 타일 규격 및 패턴에 따라 시공 난이도와 비용이 달라지며, 대형 타일은 할증이 적용됩니다.
+    '10': `1. 타일 규격 및 패턴에 따라 시공 난이도와 비용이 달라지며, 대형 타일은 할증이 적용됩니다.
 2. 바닥 타일 시공 시 구배 방향을 확인하고, 배수구 방향으로 물 흐름이 원활하도록 시공합니다.
 3. 줄눈 색상 타일과 함께 선정하며 시멘트 줄눈을 기본으로 사용하며 백화현상은 자연스러운 현상입니다.
 4. 우레탄 또는 케라폭시 줄눈은 별도 비용이 발생됩니다.
 5. 벽타일과 바닥타일 접합부, 코너 방식(ㄱ자, 몰딩 등) 또는 졸리컷 방식 중 마감을 사전에 결정 후 진행합니다.
 6. 모든 타일은 크기가 균일하지 않고 불균형하며 오차범위에 따른 불량 자재가 아닙니다.`,
-            '11': '',
-            '12': `1. 도장 전 하지 처리(퍼티, 샌딩)가 품질을 좌우하며, 크랙 및 요철 부위는 보수 후 진행합니다.
+    '11': '',
+    '12': `1. 도장 전 하지 처리(퍼티, 샌딩)가 품질을 좌우하며, 크랙 및 요철 부위는 보수 후 진행합니다.
 2. 도장 횟수(초벌, 중벌, 정벌)에 따라 마감 품질이 달라지며, 최소 2회 이상 진행합니다.
 3. 페인트 종류(수성, 유성, 친환경)에 따라 건조 시간, 냄새, 내구성이 상이합니다.
 4. 도장 작업 중에는 환기를 충분히 하고, 타 공정 작업자 및 고객의 출입을 제한합니다.
 5. 천장, 벽체 등 적합한 도료를 선정 하며, 색상은 샘플 확인 후 결정 후 도면에 표기합니다.`,
-            '13': `1. 도배 전 벽면 상태(곰팡이, 크랙, 습기)를 확인하고, 필요시 보수 곰팡이 제거제를 실행하며 상황에 따라 추가비용이 발생할 수 있습니다.
+    '13': `1. 도배 전 벽면 상태(곰팡이, 크랙, 습기)를 확인하고, 필요시 보수 곰팡이 제거제를 실행하며 상황에 따라 추가비용이 발생할 수 있습니다.
 2. 벽지 종류(실크, 합지, 천연)에 따라 시공 방법 및 단가가 달라집니다.
 3. 도배 후 24~48시간 환기를 자제하고 급격한 온도 변화를 피해야 벽지 들뜸을 방지합니다.고객님 현장방문을 자제 바랍니다.
 4. 곰팡이 이력이 있는 벽면은 단순 도배로 해결되지 않으며, 원인(결로, 누수) 해결(단열)이 선행되어야 합니다.
 5. 에어컨, 조명 설치 부위는 도배 전 확정하여 마감 손상을 방지합니다.`,
-            '14': `1. 바닥재 종류(강마루, 강화마루, 온돌마루, 데코타일, 장판 등)에 따라 시공 방법과 하지 조건이 다릅니다.
+    '14': `1. 바닥재 종류(강마루, 강화마루, 온돌마루, 데코타일, 장판 등)에 따라 시공 방법과 하지 조건이 다릅니다.
 2. 기존 바닥재 위 덧방 시공은 하지 않습니다.이는 레벨 상승 및 문턱 간섭 또는 하자를 유발시킵니다.
 3. 바닥재 시공 전 바닥 레벨(평활도)을 확인하고, 불량 시 셀프 레벨링 작업을 진행해야하며 이때 추가 비용이 발생할 수 있습니다.
 4. 공용부 바닥이랑 내부 방 바닥 레벨 높이가 다를 경우 샌딩작업으로 면 맞춤으로 진행하며 이때 추가금 이발생 됩니다.
 5. 데코타일 및 장판 시공의 경우 무거운 물건에 의한 눌림 자국 및 찍힘으로 가구공사 이후에 진행 합니다.`,
-            '15': `1. 제작 가구와 시스템 가구의 특성을 이해하고, 공간 및 예산에 맞게 선택 진행합니다.
+    '15': `1. 제작 가구와 시스템 가구의 특성을 이해하고, 공간 및 예산에 맞게 선택 진행합니다.
 2. 가구 제작 기간은 보통 1~2주 제작 기간이 필요하며, 무늬목 또는 도장의 경우 2~4주 공정에 반영해야 합니다.
 3. 가구도면이 완성되고 실측이후 제작이 실행되면 도면 변경이 불가하면 고객님 요청에 의한 변경은 추가금이 발생될 수 있습니다.
 4. 붙박이장, 신발장 등 설치 시 벽체 보강 여부를 확인하고, 필요시 합판 보강에 따른 비용이 발생할 수 있습니다.
 5. 가구 도어 종류(여닫이, 슬라이딩)에 따라 레일 및 손잡이 등 부자재가 종류 달라지며 부자재 브랜드에 따라 비용이 변경됩니다.
 6. 주방 가구는 가전 규격(냉장고, 빌트인 기기)과 설비 위치를 사전(공사 이전)에 확정해야 공사가 원활하며 문제 발생을 차단됩니다.`,
-            '16': `1. 인터폰, 손잡이, 현관 중문, 발코니 빨래건조대 등 부자재 설치는 최종 마감 단계에서 진행합니다.
+    '16': `1. 인터폰, 손잡이, 현관 중문, 발코니 빨래건조대 등 부자재 설치는 최종 마감 단계에서 진행합니다.
 2. 전체 공간 청소(입주 청소)는 공사 완료 후 진행하며, 별도 비용이 발생합니다.
 3. 실리콘 마감 부위(욕실, 주방, 창호 주변)는 청소 이후 시행되며 완전히 경화가 완료된 이후 사용이 가능합니다.
 4. 하자 점검은 입주 전 시행하며, 발견된 하자는 보수 완료 후 인수인계를 진행합니다.`,
-            '17': `1. 공사 중 예상치 못한 추가 공사(배관 누수 발견, 마감재 손상 등)가 발생할 수 있으며, 별도 협의 후 진행합니다.
+    '17': `1. 공사 중 예상치 못한 추가 공사(배관 누수 발견, 마감재 손상 등)가 발생할 수 있으며, 별도 협의 후 진행합니다.
 2. 고객 요청에 의한 설계 변경은 공정 지연 및 추가 비용의 원인이 됩니다.
 3. 고객님 별도 공사로 인하여 잔재물 처리 및 폐기물 발생시 반출에 따른 비용이 발생합니다.
 4. 공사 완료 후 하자 보수 기간 및 범위는 계약서에 명시된 조건에 따릅니다.
 5. A / S 접수 및 처리 절차는 계약 시 안내드리며, 하자와 사용자 과실을 구분하여 처리합니다.`
-        };
+};
 
-        const statusLabels = {
-            consulting: '상담중',
-            estimate: '견적서',
-            hold: '보류(고민중)',
-            budget_over: '예산초과(미계약)',
-            other_company: '타업체선정(미계약)',
-            contracted: '계약완료',
-            in_progress: '공사중',
-            completed: '공사완료',
-            as_done: 'A/S'
-        };
+const statusLabels = {
+    consulting: '상담중',
+    estimate: '견적서',
+    hold: '보류(고민중)',
+    budget_over: '예산초과(미계약)',
+    other_company: '타업체선정(미계약)',
+    contracted: '계약완료',
+    in_progress: '공사중',
+    completed: '공사완료',
+    as_done: 'A/S'
+};
 
-        let customers = []; // Phase 2: 단일 Source of Truth (Google Sheets) 기준
-        let globalCostData = {}; // Phase 2: 원가관리표 마스터 데이터 (Source of Truth: Google Sheets)
-        let currentCustomerId = null;
-        let currentData = {};
-        let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
-        let currentStatusFilter = 'all';
-        let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
+let customers = []; // Phase 2: 단일 Source of Truth (Google Sheets) 기준
+let globalCostData = {}; // Phase 2: 원가관리표 마스터 데이터 (Source of Truth: Google Sheets)
+let currentCustomerId = null;
+let currentData = {};
+let currentCustomer = null; // 호환성 유지용 (exportToNotion 등)
+let currentStatusFilter = 'all';
+let cachedCloudCount = customers.length; // 클라우드 고객 수 캐시 (동기화 시 업데이트)
 
-        // 페이징 관련 변수
-        const PAGE_THRESHOLD = 500; // 500명 이상이면 페이징 활성화
-        const ITEMS_PER_PAGE = 50; // 페이지당 표시 개수
-        let currentPage = 1;
-        let filteredCustomers = []; // 필터링된 고객 목록 저장
+// 페이징 관련 변수
+const PAGE_THRESHOLD = 500; // 500명 이상이면 페이징 활성화
+const ITEMS_PER_PAGE = 50; // 페이지당 표시 개수
+let currentPage = 1;
+let filteredCustomers = []; // 필터링된 고객 목록 저장
 
-        // ========== 다중 관리자 시스템 ==========
-        // ========== 다중 관리자 시스템 ==========
-        // 설정값은 admin_config.js 에서 로드됨
+// ========== 다중 관리자 시스템 ==========
+// ========== 다중 관리자 시스템 ==========
+// 설정값은 admin_config.js 에서 로드됨
 
-        // ========== 비밀번호 보안 (SHA-256 해싱) ==========
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// ========== 비밀번호 보안 (SHA-256 해싱) ==========
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyPassword(inputPassword, storedHash) {
+    const inputHash = await hashPassword(inputPassword);
+    return inputHash === storedHash;
+}
+
+
+// 일반관리자 목록 (Phase 2: In-memory 전용)
+let regularAdminsRows = [];
+
+function getRegularAdmins() {
+
+    return regularAdminsRows;
+}
+
+function saveRegularAdmins(admins) {
+
+    regularAdminsRows = admins || [];
+}
+
+// 관리자 클라우드 동기화 - 불러오기
+async function syncAdminsFromCloud() {
+    try {
+        const params = new URLSearchParams({ sheet: '관리자' });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+        if (!response.ok) {
+            console.error('관리자 동기화 실패: HTTP', response.status);
+            return false;
         }
-
-        async function verifyPassword(inputPassword, storedHash) {
-            const inputHash = await hashPassword(inputPassword);
-            return inputHash === storedHash;
-        }
-
-
-        // 일반관리자 목록 (Phase 2: In-memory 전용)
-        let regularAdminsRows = [];
-
-        function getRegularAdmins() {
-
-            return regularAdminsRows;
-        }
-
-        function saveRegularAdmins(admins) {
-
-            regularAdminsRows = admins || [];
-        }
-
-        // 관리자 클라우드 동기화 - 불러오기
-        async function syncAdminsFromCloud() {
-            try {
-                const params = new URLSearchParams({ sheet: '관리자' });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                if (!response.ok) {
-                    console.error('관리자 동기화 실패: HTTP', response.status);
-                    return false;
-                }
-                const cloudAdmins = await response.json();
-                if (Array.isArray(cloudAdmins)) {
-                    saveRegularAdmins(cloudAdmins);
-                    if (cloudAdmins.length > 0) {
-                        console.log('✅ [Admin Sync] 관리자 동기화 완료:', cloudAdmins.length + '명');
-                    } else {
-                        console.warn('⚠️ [Admin Sync] 관리자 데이터가 없습니다. (0명)');
-                    }
-                    return true;
-                } else {
-                    console.error('관리자 동기화 실패: 잘못된 응답 형식', cloudAdmins);
-                    return false;
-                }
-            } catch (e) {
-                console.warn('관리자 동기화 실패:', e);
-                return false;
+        const cloudAdmins = await response.json();
+        if (Array.isArray(cloudAdmins)) {
+            saveRegularAdmins(cloudAdmins);
+            if (cloudAdmins.length > 0) {
+                console.log('✅ [Admin Sync] 관리자 동기화 완료:', cloudAdmins.length + '명');
+            } else {
+                console.warn('⚠️ [Admin Sync] 관리자 데이터가 없습니다. (0명)');
             }
-        }
-
-        // 관리자 클라우드 동기화 - 저장
-        async function syncAdminToCloud(adminData) {
-            try {
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // text/plain 사용 (CORS 회피)
-                    body: JSON.stringify({
-                        action: 'admin',
-                        data: adminData
-                    })
-                });
-                const result = await response.json();
-                console.log('✅ [Admin Sync] 관리자 저장 완료:', result);
-                return result;
-            } catch (e) {
-                console.error('관리자 저장 실패:', e);
-                return null;
-            }
-        }
-
-        // 관리자 클라우드 삭제
-        async function deleteAdminFromCloud(adminId) {
-            try {
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: 'deleteAdmin',
-                        adminId: adminId
-                    })
-                });
-                return await response.json();
-            } catch (e) {
-                console.error('관리자 삭제 실패:', e);
-                return null;
-            }
-        }
-
-        // 현재 로그인한 관리자
-        let currentAdmin = null; // { id, role: 'main' | 'regular'}
-
-        // 권한 체크 함수
-        function isLoggedIn() {
-            return currentAdmin !== null;
-        }
-
-        function isMainAdmin() {
-            return currentAdmin && currentAdmin.role === 'main';
-        }
-
-        function isCreator(customer) {
-            if (!currentAdmin) return false;
-            // Legacy support: if no createdBy, default to Main Admin
-            if (!customer.createdBy) return isMainAdmin();
-            return String(customer.createdBy).trim().toLowerCase() === String(currentAdmin.id).trim().toLowerCase();
-        }
-
-        function canEdit(customer) {
-            if (!customer) customer = currentData;
-            if (!currentAdmin) return false;
-            if (isMainAdmin()) return true;
-            if (customer.isLocked && !customer.unlockedForSession) return false;
-            return isCreator(customer);
-        }
-
-        function canDelete(customer) {
-            return canEdit(customer);
-        }
-
-        function isCustomerLocked() {
-            if (!currentData || !currentData.isLocked) return false;
-            if (isMainAdmin()) return false;
-            if (currentData.unlockedForSession) return false;
             return true;
+        } else {
+            console.error('관리자 동기화 실패: 잘못된 응답 형식', cloudAdmins);
+            return false;
         }
+    } catch (e) {
+        console.warn('관리자 동기화 실패:', e);
+        return false;
+    }
+}
 
-        async function unlockCustomerAccess() {
-            const pw = document.getElementById('lockedPasswordInput').value;
-            const pwHash = await hashPassword(pw);
-            if (pwHash === DELETE_PASSWORD_HASH) {
-                currentData.unlockedForSession = true;
-                document.getElementById('accessDeniedOverlay').style.display = 'none';
-                showToast('접근이 허용되었습니다', 'success');
-                document.getElementById('lockedPasswordInput').value = '';
-            } else {
-                showToast('비밀번호가 일치하지 않습니다', 'error');
-            }
-        }
+// 관리자 클라우드 동기화 - 저장
+async function syncAdminToCloud(adminData) {
+    try {
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // text/plain 사용 (CORS 회피)
+            body: JSON.stringify({
+                action: 'admin',
+                data: adminData
+            })
+        });
+        const result = await response.json();
+        console.log('✅ [Admin Sync] 관리자 저장 완료:', result);
+        return result;
+    } catch (e) {
+        console.error('관리자 저장 실패:', e);
+        return null;
+    }
+}
 
-        function showTrashModal() {
-            if (!isMainAdmin()) {
-                showToast('메인관리자만 접근 가능합니다', 'error');
-                return;
-            }
-            const trashItems = customers.filter(c => c.status === 'trash');
-            const listEl = document.getElementById('trashList');
-            listEl.innerHTML = '';
-            if (trashItems.length === 0) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#86868b;">휴지통이 비었습니다</div>';
-            } else {
-                trashItems.forEach(c => {
-                    const div = document.createElement('div');
-                    div.className = 'trash-item';
-                    div.innerHTML = `
+// 관리자 클라우드 삭제
+async function deleteAdminFromCloud(adminId) {
+    try {
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'deleteAdmin',
+                adminId: adminId
+            })
+        });
+        return await response.json();
+    } catch (e) {
+        console.error('관리자 삭제 실패:', e);
+        return null;
+    }
+}
+
+// 현재 로그인한 관리자
+let currentAdmin = null; // { id, role: 'main' | 'regular'}
+
+// 권한 체크 함수
+function isLoggedIn() {
+    return currentAdmin !== null;
+}
+
+function isMainAdmin() {
+    return currentAdmin && currentAdmin.role === 'main';
+}
+
+function isCreator(customer) {
+    if (!currentAdmin) return false;
+    // Legacy support: if no createdBy, default to Main Admin
+    if (!customer.createdBy) return isMainAdmin();
+    return String(customer.createdBy).trim().toLowerCase() === String(currentAdmin.id).trim().toLowerCase();
+}
+
+function canEdit(customer) {
+    if (!customer) customer = currentData;
+    if (!currentAdmin) return false;
+    if (isMainAdmin()) return true;
+    if (customer.isLocked && !customer.unlockedForSession) return false;
+    return isCreator(customer);
+}
+
+function canDelete(customer) {
+    return canEdit(customer);
+}
+
+function isCustomerLocked() {
+    if (!currentData || !currentData.isLocked) return false;
+    if (isMainAdmin()) return false;
+    if (currentData.unlockedForSession) return false;
+    return true;
+}
+
+async function unlockCustomerAccess() {
+    const pw = document.getElementById('lockedPasswordInput').value;
+    const pwHash = await hashPassword(pw);
+    if (pwHash === DELETE_PASSWORD_HASH) {
+        currentData.unlockedForSession = true;
+        document.getElementById('accessDeniedOverlay').style.display = 'none';
+        showToast('접근이 허용되었습니다', 'success');
+        document.getElementById('lockedPasswordInput').value = '';
+    } else {
+        showToast('비밀번호가 일치하지 않습니다', 'error');
+    }
+}
+
+function showTrashModal() {
+    if (!isMainAdmin()) {
+        showToast('메인관리자만 접근 가능합니다', 'error');
+        return;
+    }
+    const trashItems = customers.filter(c => c.status === 'trash');
+    const listEl = document.getElementById('trashList');
+    listEl.innerHTML = '';
+    if (trashItems.length === 0) {
+        listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#86868b;">휴지통이 비었습니다</div>';
+    } else {
+        trashItems.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'trash-item';
+            div.innerHTML = `
                 <div >
         <div style="font-weight:600;">${c.name || '(이름없음)'}</div>
         <div style="font-size:11px; color:#86868b;">
@@ -1297,479 +1297,479 @@
                         style="padding:4px 8px; border:1px solid #ff3b30; background:#ff3b30; color:#fff; border-radius:4px; font-size:11px; cursor:pointer;">영구삭제</button>
                 </div>
             `;
-                    listEl.appendChild(div);
-                });
-            }
-            document.getElementById('trashModal').classList.add('show');
+            listEl.appendChild(div);
+        });
+    }
+    document.getElementById('trashModal').classList.add('show');
+}
+
+function closeTrashModal() {
+    document.getElementById('trashModal').classList.remove('show');
+}
+
+function restoreCustomer(id) {
+    const index = customers.findIndex(c => c.customerId === id);
+    if (index !== -1) {
+        customers[index].status = 'consulting';
+        delete customers[index].deletedAt;
+        delete customers[index].deletedBy;
+        saveCustomers();
+        showToast('고객이 복원되었습니다', 'success');
+        showTrashModal();
+        updateCustomerList();
+    }
+}
+
+function permanentDeleteCustomer(id) {
+    if (!confirm('정말로 영구 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+    const index = customers.findIndex(c => c.customerId === id);
+    if (index !== -1) {
+        customers.splice(index, 1);
+        saveCustomers();
+        showToast('영구 삭제되었습니다', 'success');
+        showTrashModal();
+    }
+}
+
+function canWrite() {
+    return currentAdmin !== null;
+}
+
+function canManageAdmins() {
+    return currentAdmin?.role === 'main';
+}
+
+// Google Sheets GAS URL
+
+
+// 관리자 모달 표시
+function showAdminModal() {
+    document.getElementById('adminModal').classList.add('show');
+    document.getElementById('adminId').value = '';
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminId').focus();
+}
+
+function closeAdminModal() {
+    document.getElementById('adminModal').classList.remove('show');
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').classList.remove('show');
+}
+
+// 삭제 비밀번호 모달 표시
+function showDeletePasswordModal(callback) {
+    window.pendingDeleteCallback = callback;
+    document.getElementById('deletePasswordModal').classList.add('show');
+    document.getElementById('deletePassword').value = '';
+    document.getElementById('deletePassword').focus();
+}
+
+function closeDeletePasswordModal() {
+    document.getElementById('deletePasswordModal').classList.remove('show');
+    window.pendingDeleteCallback = null;
+}
+
+async function confirmDeletePassword() {
+    const inputPw = document.getElementById('deletePassword').value;
+    const pwHash = await hashPassword(inputPw);
+    if (pwHash === DELETE_PASSWORD_HASH) {
+        closeDeletePasswordModal();
+        if (window.pendingDeleteCallback) {
+            window.pendingDeleteCallback();
         }
+    } else {
+        showToast('삭제 비밀번호가 틀렸습니다', 'error');
+        document.getElementById('deletePassword').value = '';
+        document.getElementById('deletePassword').focus();
+    }
+}
 
-        function closeTrashModal() {
-            document.getElementById('trashModal').classList.remove('show');
-        }
+// 관리자 관리 모달
+function showAdminManagerModal() {
+    if (!isMainAdmin()) {
+        showToast('메인관리자만 접근 가능합니다', 'error');
+        return;
+    }
+    document.getElementById('adminManagerModal').classList.add('show');
+    renderRegularAdminList();
+}
 
-        function restoreCustomer(id) {
-            const index = customers.findIndex(c => c.customerId === id);
-            if (index !== -1) {
-                customers[index].status = 'consulting';
-                delete customers[index].deletedAt;
-                delete customers[index].deletedBy;
-                saveCustomers();
-                showToast('고객이 복원되었습니다', 'success');
-                showTrashModal();
-                updateCustomerList();
-            }
-        }
+function closeAdminManagerModal() {
+    document.getElementById('adminManagerModal').classList.remove('show');
+}
 
-        function permanentDeleteCustomer(id) {
-            if (!confirm('정말로 영구 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
-            const index = customers.findIndex(c => c.customerId === id);
-            if (index !== -1) {
-                customers.splice(index, 1);
-                saveCustomers();
-                showToast('영구 삭제되었습니다', 'success');
-                showTrashModal();
-            }
-        }
-
-        function canWrite() {
-            return currentAdmin !== null;
-        }
-
-        function canManageAdmins() {
-            return currentAdmin?.role === 'main';
-        }
-
-        // Google Sheets GAS URL
-
-
-        // 관리자 모달 표시
-        function showAdminModal() {
-            document.getElementById('adminModal').classList.add('show');
-            document.getElementById('adminId').value = '';
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('adminId').focus();
-        }
-
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.remove('show');
-        }
-
-        function closePasswordModal() {
-            document.getElementById('passwordModal').classList.remove('show');
-        }
-
-        // 삭제 비밀번호 모달 표시
-        function showDeletePasswordModal(callback) {
-            window.pendingDeleteCallback = callback;
-            document.getElementById('deletePasswordModal').classList.add('show');
-            document.getElementById('deletePassword').value = '';
-            document.getElementById('deletePassword').focus();
-        }
-
-        function closeDeletePasswordModal() {
-            document.getElementById('deletePasswordModal').classList.remove('show');
-            window.pendingDeleteCallback = null;
-        }
-
-        async function confirmDeletePassword() {
-            const inputPw = document.getElementById('deletePassword').value;
-            const pwHash = await hashPassword(inputPw);
-            if (pwHash === DELETE_PASSWORD_HASH) {
-                closeDeletePasswordModal();
-                if (window.pendingDeleteCallback) {
-                    window.pendingDeleteCallback();
-                }
-            } else {
-                showToast('삭제 비밀번호가 틀렸습니다', 'error');
-                document.getElementById('deletePassword').value = '';
-                document.getElementById('deletePassword').focus();
-            }
-        }
-
-        // 관리자 관리 모달
-        function showAdminManagerModal() {
-            if (!isMainAdmin()) {
-                showToast('메인관리자만 접근 가능합니다', 'error');
-                return;
-            }
-            document.getElementById('adminManagerModal').classList.add('show');
-            renderRegularAdminList();
-        }
-
-        function closeAdminManagerModal() {
-            document.getElementById('adminManagerModal').classList.remove('show');
-        }
-
-        function renderRegularAdminList() {
-            const admins = getRegularAdmins();
-            const container = document.getElementById('regularAdminList');
-            if (admins.length === 0) {
-                container.innerHTML = '<div style="color:#86868b;text-align:center;padding:20px;">등록된 일반관리자가 없습니다</div>';
-            } else {
-                container.innerHTML = admins.map((admin, i) => `
+function renderRegularAdminList() {
+    const admins = getRegularAdmins();
+    const container = document.getElementById('regularAdminList');
+    if (admins.length === 0) {
+        container.innerHTML = '<div style="color:#86868b;text-align:center;padding:20px;">등록된 일반관리자가 없습니다</div>';
+    } else {
+        container.innerHTML = admins.map((admin, i) => `
                 <div
             style = "display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e8e8ed;" >
         <span>👤 ${admin.id}</span>
         <button class="btn btn-secondary btn-sm" onclick="removeRegularAdmin(${i})" style="color:#ff3b30;">삭제</button>
     </div>
                 `).join('');
-            }
-        }
+    }
+}
 
-        async function addRegularAdmin() {
-            const id = document.getElementById('newAdminId').value.trim();
-            const pw = document.getElementById('newAdminPw').value;
+async function addRegularAdmin() {
+    const id = document.getElementById('newAdminId').value.trim();
+    const pw = document.getElementById('newAdminPw').value;
 
-            if (!id || !pw) {
-                showToast('아이디와 비밀번호를 입력하세요', 'error');
-                return;
-            }
+    if (!id || !pw) {
+        showToast('아이디와 비밀번호를 입력하세요', 'error');
+        return;
+    }
 
-            // 메인관리자 ID 중복 체크 (복수 관리자 지원)
-            if (MAIN_ADMINS.some(admin => admin.id === id)) {
-                showToast('메인관리자 ID는 사용할 수 없습니다', 'error');
-                return;
-            }
+    // 메인관리자 ID 중복 체크 (복수 관리자 지원)
+    if (MAIN_ADMINS.some(admin => admin.id === id)) {
+        showToast('메인관리자 ID는 사용할 수 없습니다', 'error');
+        return;
+    }
 
-            const admins = getRegularAdmins();
-            if (admins.some(a => a.id === id)) {
-                showToast('이미 존재하는 아이디입니다', 'error');
-                return;
-            }
+    const admins = getRegularAdmins();
+    if (admins.some(a => a.id === id)) {
+        showToast('이미 존재하는 아이디입니다', 'error');
+        return;
+    }
 
-            // 비밀번호를 해시로 변환하여 저장
-            const pwHash = await hashPassword(pw);
-            const newAdmin = {
-                id,
-                passwordHash: pwHash,  // 해시값 저장 (원본 비밀번호 저장 안 함)
-                name: id,
-                createdAt: new Date().toISOString()
-            };
+    // 비밀번호를 해시로 변환하여 저장
+    const pwHash = await hashPassword(pw);
+    const newAdmin = {
+        id,
+        passwordHash: pwHash,  // 해시값 저장 (원본 비밀번호 저장 안 함)
+        name: id,
+        createdAt: new Date().toISOString()
+    };
 
-            admins.push(newAdmin);
-            saveRegularAdmins(admins);
+    admins.push(newAdmin);
+    saveRegularAdmins(admins);
 
-            // 클라우드 동기화
-            syncAdminToCloud(newAdmin);
+    // 클라우드 동기화
+    syncAdminToCloud(newAdmin);
 
-            document.getElementById('newAdminId').value = '';
-            document.getElementById('newAdminPw').value = '';
-            renderRegularAdminList();
-            showToast(`일반관리자 '${id}' 추가됨(클라우드 동기화)`, 'success');
-        }
+    document.getElementById('newAdminId').value = '';
+    document.getElementById('newAdminPw').value = '';
+    renderRegularAdminList();
+    showToast(`일반관리자 '${id}' 추가됨(클라우드 동기화)`, 'success');
+}
 
-        async function removeRegularAdmin(index) {
-            if (!confirm('이 관리자를 삭제하시겠습니까?')) return;
-            const admins = getRegularAdmins();
-            const removed = admins.splice(index, 1)[0];
-            saveRegularAdmins(admins);
+async function removeRegularAdmin(index) {
+    if (!confirm('이 관리자를 삭제하시겠습니까?')) return;
+    const admins = getRegularAdmins();
+    const removed = admins.splice(index, 1)[0];
+    saveRegularAdmins(admins);
 
-            // 클라우드에서도 삭제
-            deleteAdminFromCloud(removed.id);
+    // 클라우드에서도 삭제
+    deleteAdminFromCloud(removed.id);
 
-            renderRegularAdminList();
-            showToast(`관리자 '${removed.id}' 삭제됨(클라우드 동기화)`, 'success');
-        }
+    renderRegularAdminList();
+    showToast(`관리자 '${removed.id}' 삭제됨(클라우드 동기화)`, 'success');
+}
 
 
-        // 관리자 로그인
-        async function loginAdmin() {
-            const inputId = document.getElementById('adminId').value.trim();
-            const inputPw = document.getElementById('adminPassword').value;
-            const inputHash = await hashPassword(inputPw);
+// 관리자 로그인
+async function loginAdmin() {
+    const inputId = document.getElementById('adminId').value.trim();
+    const inputPw = document.getElementById('adminPassword').value;
+    const inputHash = await hashPassword(inputPw);
 
-            // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
-            const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
-            if (mainAdmin) {
-                currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
-                closeAdminModal();
-                activateAdminMode();
-                showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
-                return;
-            }
+    // 메인관리자 확인 (해시 비교) - 복수 관리자 지원
+    const mainAdmin = MAIN_ADMINS.find(admin => admin.id === inputId && admin.passwordHash === inputHash);
+    if (mainAdmin) {
+        currentAdmin = { id: mainAdmin.id, role: 'main', name: mainAdmin.name };
+        closeAdminModal();
+        activateAdminMode();
+        showToast(`${mainAdmin.name}로 로그인되었습니다`, 'success');
+        return;
+    }
 
-            // 일반관리자 확인 (해시 비교)
-            const admins = getRegularAdmins();
-            const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
-            if (found) {
-                currentAdmin = { id: found.id, role: 'regular' };
-                closeAdminModal();
-                activateAdminMode();
-                showToast('관리자로 로그인되었습니다', 'success');
-                return;
-            }
+    // 일반관리자 확인 (해시 비교)
+    const admins = getRegularAdmins();
+    const found = admins.find(a => a.id === inputId && a.passwordHash === inputHash);
+    if (found) {
+        currentAdmin = { id: found.id, role: 'regular' };
+        closeAdminModal();
+        activateAdminMode();
+        showToast('관리자로 로그인되었습니다', 'success');
+        return;
+    }
 
-            showToast('아이디 또는 비밀번호가 틀렸습니다', 'error');
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('adminPassword').focus();
-        }
+    showToast('아이디 또는 비밀번호가 틀렸습니다', 'error');
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminPassword').focus();
+}
 
-        // 관리자 모드 활성화
-        function activateAdminMode() {
-            const roleLabel = isMainAdmin() ? '🔑 메인관리자' : '👤 관리자';
-            const adminId = currentAdmin?.id || '';
+// 관리자 모드 활성화
+function activateAdminMode() {
+    const roleLabel = isMainAdmin() ? '🔑 메인관리자' : '👤 관리자';
+    const adminId = currentAdmin?.id || '';
 
-            // UI 업데이트
-            document.getElementById('adminBadge').className = 'admin-badge admin';
-            document.getElementById('adminBadge').innerHTML = `${roleLabel}: ${adminId} `;
+    // UI 업데이트
+    document.getElementById('adminBadge').className = 'admin-badge admin';
+    document.getElementById('adminBadge').innerHTML = `${roleLabel}: ${adminId} `;
 
-            let statusHTML = `
+    let statusHTML = `
                 <span class="admin-badge admin" id = "adminBadge" > ${roleLabel}: ${adminId}</span>
                     <button class="admin-login-btn" onclick="logoutAdmin()">로그아웃</button>
             `;
 
-            // 메인관리자만 관리자 관리 버튼 표시
-            if (isMainAdmin()) {
-                statusHTML += `<button class="admin-login-btn" onclick = "showAdminManagerModal()" style = "margin-left:5px;" >👥 관리자
+    // 메인관리자만 관리자 관리 버튼 표시
+    if (isMainAdmin()) {
+        statusHTML += `<button class="admin-login-btn" onclick = "showAdminManagerModal()" style = "margin-left:5px;" >👥 관리자
         관리</button> `;
-            }
+    }
 
-            document.getElementById('adminStatus').innerHTML = statusHTML;
+    document.getElementById('adminStatus').innerHTML = statusHTML;
 
-            // 휴지통 버튼 (메인관리자 전용)
-            const trashBtn = document.getElementById('trashBtn');
-            if (trashBtn) {
-                trashBtn.style.display = isMainAdmin() ? 'flex' : 'none';
-            }
+    // 휴지통 버튼 (메인관리자 전용)
+    const trashBtn = document.getElementById('trashBtn');
+    if (trashBtn) {
+        trashBtn.style.display = isMainAdmin() ? 'flex' : 'none';
+    }
 
-            // 원가관리표 잠금 해제
-            document.getElementById('costLockOverlay').style.display = 'none';
-            document.getElementById('costCategoriesWrapper').classList.remove('cost-locked');
-            document.getElementById('adminSettings').style.display = 'block';
+    // 원가관리표 잠금 해제
+    document.getElementById('costLockOverlay').style.display = 'none';
+    document.getElementById('costCategoriesWrapper').classList.remove('cost-locked');
+    document.getElementById('adminSettings').style.display = 'block';
 
-            // 역할에 따른 탭 가시성 업데이트
-            updateTabVisibility();
+    // 역할에 따른 탭 가시성 업데이트
+    updateTabVisibility();
+}
+
+// 역할에 따른 탭 가시성 업데이트
+function updateTabVisibility() {
+    const mainOnly = isMainAdmin();
+
+    // 메인관리자만 볼 수 있는 탭 처리 (원가관리표, 통계)
+    document.querySelectorAll('.customer-tab[data-main-only="true"]').forEach(tab => {
+        tab.style.display = mainOnly ? '' : 'none';
+    });
+
+    // 통계 패널도 숨기기
+    const statsPanel = document.getElementById('panel-stats');
+    if (statsPanel) {
+        statsPanel.style.display = mainOnly ? '' : 'none';
+    }
+
+    // 원가관리표 패널도 숨기기
+    const costPanel = document.getElementById('panel-cost');
+    if (costPanel) {
+        costPanel.style.display = mainOnly ? '' : 'none';
+    }
+
+    // 일반관리자가 숨겨진 탭을 보고 있다면 고객정보 탭으로 이동
+    if (!mainOnly) {
+        const activeTab = document.querySelector('.customer-tab.active');
+        if (activeTab && activeTab.dataset.mainOnly === 'true') {
+            showCustomerTab('info');
         }
+    }
+}
 
-        // 역할에 따른 탭 가시성 업데이트
-        function updateTabVisibility() {
-            const mainOnly = isMainAdmin();
+// 관리자 로그아웃
+function logoutAdmin() {
+    currentAdmin = null;
 
-            // 메인관리자만 볼 수 있는 탭 처리 (원가관리표, 통계)
-            document.querySelectorAll('.customer-tab[data-main-only="true"]').forEach(tab => {
-                tab.style.display = mainOnly ? '' : 'none';
+    // 기기 신뢰 해제 (정책: 로그아웃 시 기기 신뢰 해제)
+    localStorage.removeItem(DEVICE_TRUST_KEY);
+
+    // 로그인 오버레이 표시 (ID/PW 로그인 화면)
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        showLoginView('idpw');
+    }
+
+    // UI 초기화 (필요시)
+    document.getElementById('adminStatus').innerHTML = '';
+
+    // 원가관리표 잠금
+    document.getElementById('costLockOverlay').style.display = 'flex';
+    document.getElementById('costCategoriesWrapper').classList.add('cost-locked');
+    document.getElementById('adminSettings').style.display = 'none';
+
+    // 탭 가시성 업데이트
+    updateTabVisibility();
+
+    showToast('로그아웃되었습니다. 기기 신뢰가 해제됩니다.', 'success');
+}
+
+// 비밀번호 변경 (기능 비활성화)
+function changeAdminPassword() {
+    showToast('비밀번호 변경은 관리자 관리 메뉴에서 가능합니다.', 'error');
+}
+
+// 관리자 모드 체크 (저장 시)
+function checkAdminForSave() {
+    if (!isLoggedIn()) {
+        // 원가관리표는 저장하지 않음 (전역 데이터이므로)
+        return false;
+    }
+    return true;
+}
+
+// 잠금 상태 체크
+// 잠금 UI 업데이트
+function updateLockUI() {
+    const lockBtn = document.getElementById('lockToggleBtn');
+    const createdBySpan = document.getElementById('headerCreatedBy');
+
+    if (lockBtn) {
+        const isLocked = currentData && currentData.isLocked;
+        lockBtn.className = 'lock-toggle-btn ' + (isLocked ? 'locked' : 'unlocked');
+        lockBtn.innerHTML = isLocked ? '🔒 잠금' : '🔓 열림';
+        lockBtn.title = isLocked ? '잠금 해제' : '잠금 설정';
+    }
+
+    if (createdBySpan) {
+        createdBySpan.textContent = `📝 ${currentData?.createdBy || '-'} `;
+    }
+}
+
+// 잠금 토글
+function toggleCustomerLock() {
+    if (!currentCustomerId) return;
+
+    // Only Main Admin can toggle
+    if (!isMainAdmin()) {
+        showToast('메인관리자만 잠금 상태를 변경할 수 있습니다', 'error');
+        return;
+    }
+
+    currentData.isLocked = !currentData.isLocked;
+    // Clear session unlock if re-locking
+    if (currentData.isLocked) {
+        delete currentData.unlockedForSession;
+    }
+
+    // Sync back to customers array
+    const idx = customers.findIndex(c => c.customerId === currentCustomerId);
+    if (idx !== -1) {
+        customers[idx].isLocked = currentData.isLocked;
+    }
+
+    saveCustomers();
+    updateLockUI();
+    showToast(currentData.isLocked ? '고객 정보가 잠금 처리되었습니다' : '잠금이 해제되었습니다', 'success');
+}
+
+
+// 글씨 크기 조절
+function changeFontSize(size) {
+    document.documentElement.style.setProperty('--font-size-base', size + 'px');
+    document.getElementById('fontSizeValue').textContent = size + 'px';
+    localStorage.setItem('DJ_fontsize', size);
+    document.body.style.fontSize = size + 'px';
+}
+
+function loadFontSize() {
+    const savedSize = localStorage.getItem('DJ_fontsize') || '12';
+    document.getElementById('fontSizeSlider').value = savedSize;
+    document.getElementById('fontSizeValue').textContent = savedSize + 'px';
+    document.documentElement.style.setProperty('--font-size-base', savedSize + 'px');
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
+    // UI 초기화
+    initLoginScreen();
+    loadFontSize();
+    createCostCategories();
+    createEstimateCategories();
+    createCoverTable();
+    initYearFilter();
+    updateCustomerList();
+
+    const statusEl = document.getElementById('initialSyncStatus');
+    const overlay = document.getElementById('initialSyncOverlay');
+
+    try {
+        statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
+
+        // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
+        const results = await Promise.allSettled([
+            syncFromCloud(true),      // 고객
+            syncCostFromCloud(),      // 원가
+            syncChecklistFromCloud(), // 체크리스트
+            syncExpensesFromCloud(),  // 운영비
+            syncAdminsFromCloud()     // 관리자
+        ]);
+
+        // 필수 데이터 성공 여부 확인
+        // 필수 데이터 성공 여부 확인 (고객, 관리자만 필수로 변경 - 체크리스트 공백 허용)
+        const criticalSuccess = (results[0].status === 'fulfilled' && results[0].value === true) &&
+            (results[4].status === 'fulfilled' && results[4].value === true);
+
+        if (criticalSuccess) {
+            // 비필수 데이터 실패 로깅
+            const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
+            results.forEach((r, i) => {
+                if (r.status !== 'fulfilled' || r.value !== true) {
+                    console.warn(`⚠️ [Non-Critical Sync Warning] ${labels[i]} 데이터 동기화 실패 (앱 실행 계속)`);
+                }
             });
 
-            // 통계 패널도 숨기기
-            const statsPanel = document.getElementById('panel-stats');
-            if (statsPanel) {
-                statsPanel.style.display = mainOnly ? '' : 'none';
-            }
+            // 동기화 성공 시 클린업 실행
+            runPhase2Cleanup();
 
-            // 원가관리표 패널도 숨기기
-            const costPanel = document.getElementById('panel-cost');
-            if (costPanel) {
-                costPanel.style.display = mainOnly ? '' : 'none';
-            }
-
-            // 일반관리자가 숨겨진 탭을 보고 있다면 고객정보 탭으로 이동
-            if (!mainOnly) {
-                const activeTab = document.querySelector('.customer-tab.active');
-                if (activeTab && activeTab.dataset.mainOnly === 'true') {
-                    showCustomerTab('info');
-                }
-            }
+            // 오버레이 제거
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 500);
+            console.log('✅ 전역 데이터 동기화 및 클린업 완료');
+        } else {
+            // 필수 데이터 실패 시 에러 처리
+            const failedLabels = [];
+            if (results[0].status !== 'fulfilled' || results[0].value !== true) failedLabels.push('고객');
+            if (results[4].status !== 'fulfilled' || results[4].value !== true) failedLabels.push('관리자');
+            throw new Error(`${failedLabels.join(', ')} 필수 데이터 동기화에 실패했습니다.`);
         }
 
-        // 관리자 로그아웃
-        function logoutAdmin() {
-            currentAdmin = null;
+        // 부가 로직
+        fetchScheduleTemplate();
+        fetchSettlementMaster();
 
-            // 기기 신뢰 해제 (정책: 로그아웃 시 기기 신뢰 해제)
-            localStorage.removeItem(DEVICE_TRUST_KEY);
-
-            // 로그인 오버레이 표시 (ID/PW 로그인 화면)
-            const overlay = document.getElementById('loginOverlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-                showLoginView('idpw');
-            }
-
-            // UI 초기화 (필요시)
-            document.getElementById('adminStatus').innerHTML = '';
-
-            // 원가관리표 잠금
-            document.getElementById('costLockOverlay').style.display = 'flex';
-            document.getElementById('costCategoriesWrapper').classList.add('cost-locked');
-            document.getElementById('adminSettings').style.display = 'none';
-
-            // 탭 가시성 업데이트
-            updateTabVisibility();
-
-            showToast('로그아웃되었습니다. 기기 신뢰가 해제됩니다.', 'success');
+        if (typeof renderChecklistItems === 'function') {
+            renderChecklistItems();
+            if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
         }
 
-        // 비밀번호 변경 (기능 비활성화)
-        function changeAdminPassword() {
-            showToast('비밀번호 변경은 관리자 관리 메뉴에서 가능합니다.', 'error');
-        }
+    } catch (err) {
+        console.error('❌ 초기 동기화 실패:', err);
+        // 에러 화면 표시
+        document.querySelector('.sync-loader').style.display = 'none';
+        document.getElementById('syncErrorContent').style.display = 'block';
+        document.getElementById('syncErrorMessage').textContent = err.message + ' 네트워크 연결 확인 후 다시 시도해 주세요.';
+    }
+});
 
-        // 관리자 모드 체크 (저장 시)
-        function checkAdminForSave() {
-            if (!isLoggedIn()) {
-                // 원가관리표는 저장하지 않음 (전역 데이터이므로)
-                return false;
-            }
-            return true;
-        }
+// 토스트 알림
+let toastTimer = null;
+function showToast(message, type = 'success', duration = 2000) {
+    const toast = document.getElementById('toast');
+    const icon = document.getElementById('toastIcon');
+    const msg = document.getElementById('toastMessage');
 
-        // 잠금 상태 체크
-        // 잠금 UI 업데이트
-        function updateLockUI() {
-            const lockBtn = document.getElementById('lockToggleBtn');
-            const createdBySpan = document.getElementById('headerCreatedBy');
+    if (toastTimer) clearTimeout(toastTimer);
 
-            if (lockBtn) {
-                const isLocked = currentData && currentData.isLocked;
-                lockBtn.className = 'lock-toggle-btn ' + (isLocked ? 'locked' : 'unlocked');
-                lockBtn.innerHTML = isLocked ? '🔒 잠금' : '🔓 열림';
-                lockBtn.title = isLocked ? '잠금 해제' : '잠금 설정';
-            }
+    toast.className = 'toast show ' + type;
+    icon.textContent = type === 'success' ? '✓' : (type === 'info' ? 'ℹ️' : '✕');
+    msg.innerHTML = message; // [변경] 줄바꿈 지원을 위해 innerHTML 사용
 
-            if (createdBySpan) {
-                createdBySpan.textContent = `📝 ${currentData?.createdBy || '-'} `;
-            }
-        }
+    toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
+}
 
-        // 잠금 토글
-        function toggleCustomerLock() {
-            if (!currentCustomerId) return;
-
-            // Only Main Admin can toggle
-            if (!isMainAdmin()) {
-                showToast('메인관리자만 잠금 상태를 변경할 수 있습니다', 'error');
-                return;
-            }
-
-            currentData.isLocked = !currentData.isLocked;
-            // Clear session unlock if re-locking
-            if (currentData.isLocked) {
-                delete currentData.unlockedForSession;
-            }
-
-            // Sync back to customers array
-            const idx = customers.findIndex(c => c.customerId === currentCustomerId);
-            if (idx !== -1) {
-                customers[idx].isLocked = currentData.isLocked;
-            }
-
-            saveCustomers();
-            updateLockUI();
-            showToast(currentData.isLocked ? '고객 정보가 잠금 처리되었습니다' : '잠금이 해제되었습니다', 'success');
-        }
-
-
-        // 글씨 크기 조절
-        function changeFontSize(size) {
-            document.documentElement.style.setProperty('--font-size-base', size + 'px');
-            document.getElementById('fontSizeValue').textContent = size + 'px';
-            localStorage.setItem('DJ_fontsize', size);
-            document.body.style.fontSize = size + 'px';
-        }
-
-        function loadFontSize() {
-            const savedSize = localStorage.getItem('DJ_fontsize') || '12';
-            document.getElementById('fontSizeSlider').value = savedSize;
-            document.getElementById('fontSizeValue').textContent = savedSize + 'px';
-            document.documentElement.style.setProperty('--font-size-base', savedSize + 'px');
-        }
-
-        document.addEventListener('DOMContentLoaded', async function () {
-            // UI 초기화
-            initLoginScreen();
-            loadFontSize();
-            createCostCategories();
-            createEstimateCategories();
-            createCoverTable();
-            initYearFilter();
-            updateCustomerList();
-
-            const statusEl = document.getElementById('initialSyncStatus');
-            const overlay = document.getElementById('initialSyncOverlay');
-
-            try {
-                statusEl.textContent = '고객 및 기초 데이터를 동기화 중...';
-
-                // [Phase 2 Sync Gate] 모든 필수 데이터 동기화 대기
-                const results = await Promise.allSettled([
-                    syncFromCloud(true),      // 고객
-                    syncCostFromCloud(),      // 원가
-                    syncChecklistFromCloud(), // 체크리스트
-                    syncExpensesFromCloud(),  // 운영비
-                    syncAdminsFromCloud()     // 관리자
-                ]);
-
-                // 필수 데이터 성공 여부 확인
-                // 필수 데이터 성공 여부 확인 (고객, 관리자만 필수로 변경 - 체크리스트 공백 허용)
-                const criticalSuccess = (results[0].status === 'fulfilled' && results[0].value === true) &&
-                    (results[4].status === 'fulfilled' && results[4].value === true);
-
-                if (criticalSuccess) {
-                    // 비필수 데이터 실패 로깅
-                    const labels = ['고객', '원가', '체크리스트', '운영비', '관리자'];
-                    results.forEach((r, i) => {
-                        if (r.status !== 'fulfilled' || r.value !== true) {
-                            console.warn(`⚠️ [Non-Critical Sync Warning] ${labels[i]} 데이터 동기화 실패 (앱 실행 계속)`);
-                        }
-                    });
-
-                    // 동기화 성공 시 클린업 실행
-                    runPhase2Cleanup();
-
-                    // 오버레이 제거
-                    overlay.style.opacity = '0';
-                    setTimeout(() => overlay.style.display = 'none', 500);
-                    console.log('✅ 전역 데이터 동기화 및 클린업 완료');
-                } else {
-                    // 필수 데이터 실패 시 에러 처리
-                    const failedLabels = [];
-                    if (results[0].status !== 'fulfilled' || results[0].value !== true) failedLabels.push('고객');
-                    if (results[4].status !== 'fulfilled' || results[4].value !== true) failedLabels.push('관리자');
-                    throw new Error(`${failedLabels.join(', ')} 필수 데이터 동기화에 실패했습니다.`);
-                }
-
-                // 부가 로직
-                fetchScheduleTemplate();
-                fetchSettlementMaster();
-
-                if (typeof renderChecklistItems === 'function') {
-                    renderChecklistItems();
-                    if (typeof updateChecklistFilters === 'function') updateChecklistFilters();
-                }
-
-            } catch (err) {
-                console.error('❌ 초기 동기화 실패:', err);
-                // 에러 화면 표시
-                document.querySelector('.sync-loader').style.display = 'none';
-                document.getElementById('syncErrorContent').style.display = 'block';
-                document.getElementById('syncErrorMessage').textContent = err.message + ' 네트워크 연결 확인 후 다시 시도해 주세요.';
-            }
-        });
-
-        // 토스트 알림
-        let toastTimer = null;
-        function showToast(message, type = 'success', duration = 2000) {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const msg = document.getElementById('toastMessage');
-
-            if (toastTimer) clearTimeout(toastTimer);
-
-            toast.className = 'toast show ' + type;
-            icon.textContent = type === 'success' ? '✓' : (type === 'info' ? 'ℹ️' : '✕');
-            msg.innerHTML = message; // [변경] 줄바꿈 지원을 위해 innerHTML 사용
-
-            toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
-        }
-
-        // 저장 확인 토스트 (우측상단, 짧은 표시)
-        let saveToastTimer = null;
-        function showSaveConfirmToast(message) {
-            let saveToast = document.getElementById('saveConfirmToast');
-            if (!saveToast) {
-                saveToast = document.createElement('div');
-                saveToast.id = 'saveConfirmToast';
-                saveToast.style.cssText = `
+// 저장 확인 토스트 (우측상단, 짧은 표시)
+let saveToastTimer = null;
+function showSaveConfirmToast(message) {
+    let saveToast = document.getElementById('saveConfirmToast');
+    if (!saveToast) {
+        saveToast = document.createElement('div');
+        saveToast.id = 'saveConfirmToast';
+        saveToast.style.cssText = `
                     position: fixed; top: 20px; right: 20px;
                     background: linear-gradient(135deg, #34c759, #28a745);
                     color: #fff; padding: 12px 24px; border-radius: 12px;
@@ -1779,509 +1779,509 @@
                     animation: slideInSaveToast 0.3s ease;
                     transition: opacity 0.3s ease;
                 `;
-                document.body.appendChild(saveToast);
+        document.body.appendChild(saveToast);
 
-                // 애니메이션 키프레임 추가
-                if (!document.getElementById('saveToastKeyframes')) {
-                    const style = document.createElement('style');
-                    style.id = 'saveToastKeyframes';
-                    style.textContent = `
+        // 애니메이션 키프레임 추가
+        if (!document.getElementById('saveToastKeyframes')) {
+            const style = document.createElement('style');
+            style.id = 'saveToastKeyframes';
+            style.textContent = `
                         @keyframes slideInSaveToast {
                             from { transform: translateX(100px); opacity: 0; }
                             to { transform: translateX(0); opacity: 1; }
                         }
                     `;
-                    document.head.appendChild(style);
-                }
-            }
-            if (saveToastTimer) clearTimeout(saveToastTimer);
-            saveToast.innerHTML = message;
-            saveToast.style.display = 'flex';
-            saveToast.style.opacity = '1';
-            saveToastTimer = setTimeout(() => {
-                saveToast.style.opacity = '0';
-                setTimeout(() => { saveToast.style.display = 'none'; }, 300);
-            }, 1500);
+            document.head.appendChild(style);
         }
+    }
+    if (saveToastTimer) clearTimeout(saveToastTimer);
+    saveToast.innerHTML = message;
+    saveToast.style.display = 'flex';
+    saveToast.style.opacity = '1';
+    saveToastTimer = setTimeout(() => {
+        saveToast.style.opacity = '0';
+        setTimeout(() => { saveToast.style.display = 'none'; }, 300);
+    }, 1500);
+}
 
-        // 상태 필터
-        function setStatusFilter(status) {
-            currentStatusFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.status === status);
-            });
-            updateCustomerList();
+// 상태 필터
+function setStatusFilter(status) {
+    currentStatusFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+    });
+    updateCustomerList();
+}
+
+// Cost Tab Security
+const COST_ACCESS_PIN = '6454';
+let isCostUnlocked = false;
+
+function showCustomerTab(tabId) {
+    // [SECURITY CHECK] Cost Management Tab
+    // 메인관리자(isMainAdmin)는 패스; 일반관리자만 비밀번호 체크
+    if (tabId === 'cost' && !isMainAdmin() && !isCostUnlocked) {
+        // If not unlocked, show password modal and STOP.
+        document.getElementById('costPasswordModal').classList.add('show');
+        document.getElementById('costAccessPin').value = '';
+        document.getElementById('costAccessPin').focus();
+        return;
+    }
+
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.customer-tab').forEach(t => t.classList.remove('active'));
+
+    const panel = document.getElementById('panel-' + tabId);
+    if (panel) panel.classList.add('active');
+
+    // Find the button and add active class
+    const buttons = document.querySelectorAll('.customer-tab');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(`'${tabId}'`)) {
+            btn.classList.add('active');
         }
+    });
 
-        // Cost Tab Security
-        const COST_ACCESS_PIN = '6454';
-        let isCostUnlocked = false;
+    syncAllFields();
+    if (tabId === 'estimate') updateEstimateFromCost();
+    if (tabId === 'schedule') loadScheduleForCustomer();
+    if (tabId === 'as_list') loadASList();
+    if (tabId === 'settlement') {
+        if (typeof renderSettlementTable === 'function') renderSettlementTable();
+    }
+    if (tabId === 'expenses') {
+        if (typeof renderExpensesTable === 'function') renderExpensesTable();
+    }
+    if (tabId === 'stats') {
+        if (typeof renderAuditLog === 'function') renderAuditLog(currentCustomerId ? currentCustomerId : null);
+    }
+    if (tabId === 'dashboard') {
+        if (typeof renderDashboard === 'function') renderDashboard();
+    }
+}
 
-        function showCustomerTab(tabId) {
-            // [SECURITY CHECK] Cost Management Tab
-            // 메인관리자(isMainAdmin)는 패스; 일반관리자만 비밀번호 체크
-            if (tabId === 'cost' && !isMainAdmin() && !isCostUnlocked) {
-                // If not unlocked, show password modal and STOP.
-                document.getElementById('costPasswordModal').classList.add('show');
-                document.getElementById('costAccessPin').value = '';
-                document.getElementById('costAccessPin').focus();
-                return;
-            }
+function renderDashboard() {
+    // 1. Profile - 현장명
+    document.getElementById('dashName').innerText = document.getElementById('headerCustomerName').innerText;
+    const name = document.getElementById('headerCustomerName').innerText;
+    document.getElementById('dashAvatar').innerText = name ? name.charAt(0) : '?';
 
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.customer-tab').forEach(t => t.classList.remove('active'));
+    // 고객 연락처 표시: 성명(연락처) | 배우자 성명(배우자 연락처)
+    const customerName = currentData.name || currentData.clientName || '';
+    const customerPhone = currentData.phone || currentData.clientPhone || '';
+    const spouseName = currentData.spouseName || '';
+    const spousePhone = currentData.spousePhone || '';
 
-            const panel = document.getElementById('panel-' + tabId);
-            if (panel) panel.classList.add('active');
+    let contactDisplay = '';
+    if (customerName) {
+        contactDisplay = customerName;
+        if (customerPhone) contactDisplay += `(${customerPhone})`;
+    }
+    if (spouseName) {
+        if (contactDisplay) contactDisplay += ' | ';
+        contactDisplay += spouseName;
+        if (spousePhone) contactDisplay += `(${spousePhone})`;
+    }
+    document.getElementById('dashPhone').innerText = contactDisplay || '-';
 
-            // Find the button and add active class
-            const buttons = document.querySelectorAll('.customer-tab');
-            buttons.forEach(btn => {
-                if (btn.getAttribute('onclick').includes(`'${tabId}'`)) {
-                    btn.classList.add('active');
-                }
-            });
+    const fieldAddress = document.querySelector('.customer-field[data-field="siteAddress"]');
+    if (fieldAddress) document.getElementById('dashAddress').innerText = fieldAddress.value || '-';
 
-            syncAllFields();
-            if (tabId === 'estimate') updateEstimateFromCost();
-            if (tabId === 'schedule') loadScheduleForCustomer();
-            if (tabId === 'as_list') loadASList();
-            if (tabId === 'settlement') {
-                if (typeof renderSettlementTable === 'function') renderSettlementTable();
-            }
-            if (tabId === 'expenses') {
-                if (typeof renderExpensesTable === 'function') renderExpensesTable();
-            }
-            if (tabId === 'stats') {
-                if (typeof renderAuditLog === 'function') renderAuditLog(currentCustomerId ? currentCustomerId : null);
-            }
-            if (tabId === 'dashboard') {
-                if (typeof renderDashboard === 'function') renderDashboard();
-            }
-        }
+    const fieldArea = document.querySelector('.customer-field[data-field="area"]');
+    const fieldType = document.querySelector('.customer-field[data-field="buildingType"]');
+    let areaType = [];
+    if (fieldArea && fieldArea.value) areaType.push(fieldArea.value);
+    if (fieldType && fieldType.value) areaType.push(fieldType.value);
+    document.getElementById('dashAreaType').innerText = areaType.length > 0 ? areaType.join(' / ') : '-';
 
-        function renderDashboard() {
-            // 1. Profile - 현장명
-            document.getElementById('dashName').innerText = document.getElementById('headerCustomerName').innerText;
-            const name = document.getElementById('headerCustomerName').innerText;
-            document.getElementById('dashAvatar').innerText = name ? name.charAt(0) : '?';
+    // 계약일
+    const contractDate = currentData.contractDate || '';
+    document.getElementById('dashContractDate').innerText = contractDate || '-';
 
-            // 고객 연락처 표시: 성명(연락처) | 배우자 성명(배우자 연락처)
-            const customerName = currentData.name || currentData.clientName || '';
-            const customerPhone = currentData.phone || currentData.clientPhone || '';
-            const spouseName = currentData.spouseName || '';
-            const spousePhone = currentData.spousePhone || '';
+    // 총 계약금액 (VAT 포함)
+    const totalAmountField = document.querySelector('.customer-field[data-field="totalAmount"]');
+    const totalAmount = totalAmountField ? totalAmountField.value : (currentData.totalAmount || '');
+    if (totalAmount) {
+        const amountNum = parseInt(String(totalAmount).replace(/[^0-9]/g, '')) || 0;
+        document.getElementById('dashContractAmount').innerText = amountNum.toLocaleString() + '원';
+    } else {
+        document.getElementById('dashContractAmount').innerText = '-';
+    }
 
-            let contactDisplay = '';
-            if (customerName) {
-                contactDisplay = customerName;
-                if (customerPhone) contactDisplay += `(${customerPhone})`;
-            }
-            if (spouseName) {
-                if (contactDisplay) contactDisplay += ' | ';
-                contactDisplay += spouseName;
-                if (spousePhone) contactDisplay += `(${spousePhone})`;
-            }
-            document.getElementById('dashPhone').innerText = contactDisplay || '-';
+    // 2. Status & Timeline
+    const statusSelect = document.getElementById('customerStatus');
+    const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+    const statusVal = statusSelect.value;
+    // Remove emoji for badge
+    let statusLabel = statusText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[\u{2600}-\u{26FF}]/gu, '').trim();
 
-            const fieldAddress = document.querySelector('.customer-field[data-field="siteAddress"]');
-            if (fieldAddress) document.getElementById('dashAddress').innerText = fieldAddress.value || '-';
-
-            const fieldArea = document.querySelector('.customer-field[data-field="area"]');
-            const fieldType = document.querySelector('.customer-field[data-field="buildingType"]');
-            let areaType = [];
-            if (fieldArea && fieldArea.value) areaType.push(fieldArea.value);
-            if (fieldType && fieldType.value) areaType.push(fieldType.value);
-            document.getElementById('dashAreaType').innerText = areaType.length > 0 ? areaType.join(' / ') : '-';
-
-            // 계약일
-            const contractDate = currentData.contractDate || '';
-            document.getElementById('dashContractDate').innerText = contractDate || '-';
-
-            // 총 계약금액 (VAT 포함)
-            const totalAmountField = document.querySelector('.customer-field[data-field="totalAmount"]');
-            const totalAmount = totalAmountField ? totalAmountField.value : (currentData.totalAmount || '');
-            if (totalAmount) {
-                const amountNum = parseInt(String(totalAmount).replace(/[^0-9]/g, '')) || 0;
-                document.getElementById('dashContractAmount').innerText = amountNum.toLocaleString() + '원';
-            } else {
-                document.getElementById('dashContractAmount').innerText = '-';
-            }
-
-            // 2. Status & Timeline
-            const statusSelect = document.getElementById('customerStatus');
-            const statusText = statusSelect.options[statusSelect.selectedIndex].text;
-            const statusVal = statusSelect.value;
-            // Remove emoji for badge
-            let statusLabel = statusText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[\u{2600}-\u{26FF}]/gu, '').trim();
-
-            // [New] A/S Period Check (진행상황에 A/S 기간 표시)
-            if (statusVal === 'completed' || statusVal === 'as_done' || statusVal === 'contracted' || statusVal === 'in_progress') {
-                const finalDateStr = currentData.finalPaymentDate || '';
-                if (finalDateStr) {
-                    const finalDate = new Date(finalDateStr);
-                    const asEndDate = new Date(finalDate);
-                    asEndDate.setFullYear(finalDate.getFullYear() + 1);
-                    const today = new Date();
-                    if (today >= finalDate && today <= asEndDate) {
-                        statusLabel = "A/S 기간 중";
-                    }
-                }
-            }
-
-            document.getElementById('dashStatusBadge').innerText = statusLabel;
-
-            // 공사 기간
-            const start = document.getElementById('constructionStartInput').value;
-            const end = document.getElementById('constructionEndInput').value;
-            document.getElementById('dashPeriod').innerText = (start || '-') + ' ~ ' + (end || '-');
-
-            // 이사예정일
-            const movingDate = currentData.movingDate || '';
-            document.getElementById('dashMovingDate').innerText = movingDate || '-';
-
-            // A/S 기간 (잔금일 + 12개월)
-            const finalDateStr = currentData.finalPaymentDate || '';
-            if (finalDateStr) {
-                const finalDate = new Date(finalDateStr);
-                const asEndDate = new Date(finalDate);
-                asEndDate.setFullYear(finalDate.getFullYear() + 1);
-                const formattedStart = finalDate.toISOString().split('T')[0];
-                const formattedEnd = asEndDate.toISOString().split('T')[0];
-                document.getElementById('dashASPeriod').innerText = `${formattedStart} ~ ${formattedEnd}`;
-            } else {
-                document.getElementById('dashASPeriod').innerText = '-';
-            }
-
-            // 화장실 누수 보증 기간 (A/S 관리 리스트에서 연동)
-            let bathroomWarranty = '-';
-            if (typeof asListDB !== 'undefined' && asListDB.length > 0) {
-                // A/S 리스트에서 '화장실' 또는 '누수' 관련 항목 찾기
-                const bathroomItem = asListDB.find(item =>
-                    (item.category && (item.category.includes('화장실') || item.category.includes('누수'))) ||
-                    (item.name && (item.name.includes('화장실') || item.name.includes('누수')))
-                );
-                if (bathroomItem && bathroomItem.warrantyPeriod) {
-                    bathroomWarranty = bathroomItem.warrantyPeriod;
-                } else if (bathroomItem && bathroomItem.asEndDate) {
-                    bathroomWarranty = `~ ${bathroomItem.asEndDate}`;
-                }
-            }
-            // 기본값: 잔금일 + 5년 (화장실 누수 보증 일반적으로 5년)
-            if (bathroomWarranty === '-' && finalDateStr) {
-                const finalDate = new Date(finalDateStr);
-                const warrantyEnd = new Date(finalDate);
-                warrantyEnd.setFullYear(finalDate.getFullYear() + 5);
-                bathroomWarranty = `~ ${warrantyEnd.toISOString().split('T')[0]} (5년)`;
-            }
-            document.getElementById('dashBathroomWarranty').innerText = bathroomWarranty;
-
-            // Update Timeline
-            let progress = 0;
-            document.querySelectorAll('.timeline-step').forEach(s => s.classList.remove('active'));
-            let activeStepId = '';
-
-            if (statusVal === 'consulting') { progress = 10; activeStepId = 'step-consulting'; }
-            else if (statusVal === 'estimate') { progress = 25; activeStepId = 'step-consulting'; }
-            else if (statusVal === 'contracted') { progress = 40; activeStepId = 'step-contract'; }
-            else if (statusVal === 'in_progress') { progress = 70; activeStepId = 'step-construction'; }
-            else if (statusVal === 'completed' || statusVal === 'as_done' || statusVal.includes('as_')) { progress = 100; activeStepId = 'step-completed'; }
-
-            if (activeStepId) document.getElementById(activeStepId).classList.add('active');
-            document.getElementById('dashProgressWidth').style.width = progress + '%';
-
-            // 3. Cost Summary (수정: 정산 관리 대장 기준)
-            // Get Total Amount
-            const totalAmtInput = document.querySelector('.customer-field[data-field="totalAmount"]');
-            const totalAmtStr = totalAmtInput ? totalAmtInput.value.replace(/[^0-9]/g, '') : '0';
-            const totalAmt = parseInt(totalAmtStr) || 0;
-            document.getElementById('dashTotalAmount').innerText = totalAmt.toLocaleString() + '원';
-
-            // Get Total Expenditure (Cost) from Settlement Ledger (정산 관리 대장)
-            // [변경] 원가관리표가 아닌 정산 관리 대장의 '지출' 합계를 사용
-            let totalCost = 0;
-            if (currentData.settlementRows && currentData.settlementRows.length > 0) {
-                currentData.settlementRows.forEach(row => {
-                    // expense 필드가 '지출' 금액임
-                    const expense = parseInt((row.expense || '0').replace(/[^0-9]/g, '')) || 0;
-                    totalCost += expense;
-                });
-            }
-
-            document.getElementById('dashTotalCost').innerText = totalCost.toLocaleString() + '원';
-
-            // Net Profit
-            const netProfit = totalAmt - totalCost;
-            document.getElementById('dashNetProfit').innerText = netProfit.toLocaleString() + '원';
-            if (netProfit < 0) document.getElementById('dashNetProfit').style.color = '#ff3b30';
-            else document.getElementById('dashNetProfit').style.color = '#34c759';
-
-            // Profit Rate
-            let rate = 0;
-            if (totalAmt > 0) rate = (netProfit / totalAmt) * 100;
-            document.getElementById('dashProfitRate').innerText = rate.toFixed(1) + '%';
-        }
-
-        // Helper to calc total cost from global data
-        function calculateTotalConstructionCost() {
-            let total = 0;
-            if (typeof categories !== 'undefined' && typeof globalCostData !== 'undefined') {
-                categories.forEach(cat => {
-                    const items = globalCostData['cost_' + cat.no] || [];
-                    items.forEach(item => {
-                        const qty = parseNumber(item.qty) || 0;
-                        // Price logic matches loadCostData
-                        let price = 0;
-                        if (item.price) {
-                            price = parseNumber(item.price);
-                        } else {
-                            price = (parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) + (parseNumber(item.expense) || 0);
-                        }
-                        total += (qty * price);
-                    });
-                });
-            }
-            return total;
-        }
-
-        function closeCostPasswordModal() {
-            document.getElementById('costPasswordModal').classList.remove('show');
-        }
-
-        function checkCostPassword() {
-            const input = document.getElementById('costAccessPin').value;
-            if (input === COST_ACCESS_PIN) {
-                isCostUnlocked = true;
-                closeCostPasswordModal();
-
-                // 잠금 해제 시 패널 강제 표시 (초기화 시 숨겨진 상태 해제)
-                const costPanel = document.getElementById('panel-cost');
-                if (costPanel) costPanel.style.display = '';
-
-                showCustomerTab('cost'); // Retry opening the tab
-                showToast('원가관리표 접근이 허용되었습니다.', 'success');
-            } else {
-                showToast('비밀번호가 올바르지 않습니다.', 'error');
-                document.getElementById('costAccessPin').value = '';
-                document.getElementById('costAccessPin').focus();
+    // [New] A/S Period Check (진행상황에 A/S 기간 표시)
+    if (statusVal === 'completed' || statusVal === 'as_done' || statusVal === 'contracted' || statusVal === 'in_progress') {
+        const finalDateStr = currentData.finalPaymentDate || '';
+        if (finalDateStr) {
+            const finalDate = new Date(finalDateStr);
+            const asEndDate = new Date(finalDate);
+            asEndDate.setFullYear(finalDate.getFullYear() + 1);
+            const today = new Date();
+            if (today >= finalDate && today <= asEndDate) {
+                statusLabel = "A/S 기간 중";
             }
         }
+    }
 
-        let scheduleRows = [];
-        let defaultScheduleSteps = [];
+    document.getElementById('dashStatusBadge').innerText = statusLabel;
 
-        async function fetchScheduleTemplate() {
-            try {
-                // 스케줄 템플릿 가져오기 (Google Sheet: '공사 스케줄 관리')
-                const params = new URLSearchParams({ sheet: 'schedule_template' });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                const data = await response.json();
+    // 공사 기간
+    const start = document.getElementById('constructionStartInput').value;
+    const end = document.getElementById('constructionEndInput').value;
+    document.getElementById('dashPeriod').innerText = (start || '-') + ' ~ ' + (end || '-');
 
-                let steps = [];
-                if (Array.isArray(data)) {
-                    steps = data;
-                } else if (data && data.steps && Array.isArray(data.steps)) {
-                    steps = data.steps;
-                }
+    // 이사예정일
+    const movingDate = currentData.movingDate || '';
+    document.getElementById('dashMovingDate').innerText = movingDate || '-';
 
-                // [Fix] Merged cells handling: Fill down empty categories
-                let lastCategory = '';
-                steps.forEach(step => {
-                    if (step.category && String(step.category).trim() !== '') {
-                        lastCategory = step.category;
-                    } else if (lastCategory) {
-                        step.category = lastCategory;
-                    }
-                });
+    // A/S 기간 (잔금일 + 12개월)
+    const finalDateStr = currentData.finalPaymentDate || '';
+    if (finalDateStr) {
+        const finalDate = new Date(finalDateStr);
+        const asEndDate = new Date(finalDate);
+        asEndDate.setFullYear(finalDate.getFullYear() + 1);
+        const formattedStart = finalDate.toISOString().split('T')[0];
+        const formattedEnd = asEndDate.toISOString().split('T')[0];
+        document.getElementById('dashASPeriod').innerText = `${formattedStart} ~ ${formattedEnd}`;
+    } else {
+        document.getElementById('dashASPeriod').innerText = '-';
+    }
 
-                if (steps.length > 0) {
-                    defaultScheduleSteps = steps;
-                    console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
-                    console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
+    // 화장실 누수 보증 기간 (A/S 관리 리스트에서 연동)
+    let bathroomWarranty = '-';
+    if (typeof asListDB !== 'undefined' && asListDB.length > 0) {
+        // A/S 리스트에서 '화장실' 또는 '누수' 관련 항목 찾기
+        const bathroomItem = asListDB.find(item =>
+            (item.category && (item.category.includes('화장실') || item.category.includes('누수'))) ||
+            (item.name && (item.name.includes('화장실') || item.name.includes('누수')))
+        );
+        if (bathroomItem && bathroomItem.warrantyPeriod) {
+            bathroomWarranty = bathroomItem.warrantyPeriod;
+        } else if (bathroomItem && bathroomItem.asEndDate) {
+            bathroomWarranty = `~ ${bathroomItem.asEndDate}`;
+        }
+    }
+    // 기본값: 잔금일 + 5년 (화장실 누수 보증 일반적으로 5년)
+    if (bathroomWarranty === '-' && finalDateStr) {
+        const finalDate = new Date(finalDateStr);
+        const warrantyEnd = new Date(finalDate);
+        warrantyEnd.setFullYear(finalDate.getFullYear() + 5);
+        bathroomWarranty = `~ ${warrantyEnd.toISOString().split('T')[0]} (5년)`;
+    }
+    document.getElementById('dashBathroomWarranty').innerText = bathroomWarranty;
 
-                    // [신규] 정산 관리 대장 옵션 마스터 로드
-                    await fetchSettlementMaster();
+    // Update Timeline
+    let progress = 0;
+    document.querySelectorAll('.timeline-step').forEach(s => s.classList.remove('active'));
+    let activeStepId = '';
 
-                    // 만약 이미 스케줄 탭이나 정산 탭이 열려있고 데이터가 있다면 갱신
-                    if (document.getElementById('panel-schedule').classList.contains('active')) {
-                        renderScheduleTable();
-                    }
-                    if (document.getElementById('panel-settlement').classList.contains('active')) {
-                        renderSettlementTable();
-                    }
+    if (statusVal === 'consulting') { progress = 10; activeStepId = 'step-consulting'; }
+    else if (statusVal === 'estimate') { progress = 25; activeStepId = 'step-consulting'; }
+    else if (statusVal === 'contracted') { progress = 40; activeStepId = 'step-contract'; }
+    else if (statusVal === 'in_progress') { progress = 70; activeStepId = 'step-construction'; }
+    else if (statusVal === 'completed' || statusVal === 'as_done' || statusVal.includes('as_')) { progress = 100; activeStepId = 'step-completed'; }
+
+    if (activeStepId) document.getElementById(activeStepId).classList.add('active');
+    document.getElementById('dashProgressWidth').style.width = progress + '%';
+
+    // 3. Cost Summary (수정: 정산 관리 대장 기준)
+    // Get Total Amount
+    const totalAmtInput = document.querySelector('.customer-field[data-field="totalAmount"]');
+    const totalAmtStr = totalAmtInput ? totalAmtInput.value.replace(/[^0-9]/g, '') : '0';
+    const totalAmt = parseInt(totalAmtStr) || 0;
+    document.getElementById('dashTotalAmount').innerText = totalAmt.toLocaleString() + '원';
+
+    // Get Total Expenditure (Cost) from Settlement Ledger (정산 관리 대장)
+    // [변경] 원가관리표가 아닌 정산 관리 대장의 '지출' 합계를 사용
+    let totalCost = 0;
+    if (currentData.settlementRows && currentData.settlementRows.length > 0) {
+        currentData.settlementRows.forEach(row => {
+            // expense 필드가 '지출' 금액임
+            const expense = parseInt((row.expense || '0').replace(/[^0-9]/g, '')) || 0;
+            totalCost += expense;
+        });
+    }
+
+    document.getElementById('dashTotalCost').innerText = totalCost.toLocaleString() + '원';
+
+    // Net Profit
+    const netProfit = totalAmt - totalCost;
+    document.getElementById('dashNetProfit').innerText = netProfit.toLocaleString() + '원';
+    if (netProfit < 0) document.getElementById('dashNetProfit').style.color = '#ff3b30';
+    else document.getElementById('dashNetProfit').style.color = '#34c759';
+
+    // Profit Rate
+    let rate = 0;
+    if (totalAmt > 0) rate = (netProfit / totalAmt) * 100;
+    document.getElementById('dashProfitRate').innerText = rate.toFixed(1) + '%';
+}
+
+// Helper to calc total cost from global data
+function calculateTotalConstructionCost() {
+    let total = 0;
+    if (typeof categories !== 'undefined' && typeof globalCostData !== 'undefined') {
+        categories.forEach(cat => {
+            const items = globalCostData['cost_' + cat.no] || [];
+            items.forEach(item => {
+                const qty = parseNumber(item.qty) || 0;
+                // Price logic matches loadCostData
+                let price = 0;
+                if (item.price) {
+                    price = parseNumber(item.price);
                 } else {
-                    console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
-                    defaultScheduleSteps = [
-                        { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
-                    ];
+                    price = (parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) + (parseNumber(item.expense) || 0);
                 }
-            } catch (error) {
-                console.error('❌ 스케줄 템플릿 로드 오류:', error);
-                defaultScheduleSteps = [];
+                total += (qty * price);
+            });
+        });
+    }
+    return total;
+}
+
+function closeCostPasswordModal() {
+    document.getElementById('costPasswordModal').classList.remove('show');
+}
+
+function checkCostPassword() {
+    const input = document.getElementById('costAccessPin').value;
+    if (input === COST_ACCESS_PIN) {
+        isCostUnlocked = true;
+        closeCostPasswordModal();
+
+        // 잠금 해제 시 패널 강제 표시 (초기화 시 숨겨진 상태 해제)
+        const costPanel = document.getElementById('panel-cost');
+        if (costPanel) costPanel.style.display = '';
+
+        showCustomerTab('cost'); // Retry opening the tab
+        showToast('원가관리표 접근이 허용되었습니다.', 'success');
+    } else {
+        showToast('비밀번호가 올바르지 않습니다.', 'error');
+        document.getElementById('costAccessPin').value = '';
+        document.getElementById('costAccessPin').focus();
+    }
+}
+
+let scheduleRows = [];
+let defaultScheduleSteps = [];
+
+async function fetchScheduleTemplate() {
+    try {
+        // 스케줄 템플릿 가져오기 (Google Sheet: '공사 스케줄 관리')
+        const params = new URLSearchParams({ sheet: 'schedule_template' });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+        const data = await response.json();
+
+        let steps = [];
+        if (Array.isArray(data)) {
+            steps = data;
+        } else if (data && data.steps && Array.isArray(data.steps)) {
+            steps = data.steps;
+        }
+
+        // [Fix] Merged cells handling: Fill down empty categories
+        let lastCategory = '';
+        steps.forEach(step => {
+            if (step.category && String(step.category).trim() !== '') {
+                lastCategory = step.category;
+            } else if (lastCategory) {
+                step.category = lastCategory;
+            }
+        });
+
+        if (steps.length > 0) {
+            defaultScheduleSteps = steps;
+            console.log('✅ 스케줄 템플릿 로드 완료:', defaultScheduleSteps.length + '개 항목');
+            console.log('📋 첫 번째 항목 샘플:', defaultScheduleSteps[0]);
+
+            // [신규] 정산 관리 대장 옵션 마스터 로드
+            await fetchSettlementMaster();
+
+            // 만약 이미 스케줄 탭이나 정산 탭이 열려있고 데이터가 있다면 갱신
+            if (document.getElementById('panel-schedule').classList.contains('active')) {
+                renderScheduleTable();
+            }
+            if (document.getElementById('panel-settlement').classList.contains('active')) {
+                renderSettlementTable();
+            }
+        } else {
+            console.warn('⚠️ 스케줄 템플릿이 비어있거나 로드 실패. 기본값 사용.');
+            defaultScheduleSteps = [
+                { category: '기획·현장 사전 준비', name: '디자인 상담 및 설계', checkPoint: '설계 도면 확정 여부', inCharge: 'DESIGN JIG' }
+            ];
+        }
+    } catch (error) {
+        console.error('❌ 스케줄 템플릿 로드 오류:', error);
+        defaultScheduleSteps = [];
+    }
+}
+
+function loadScheduleForCustomer(targetId) {
+    // [Guard] Async Race Protection
+    if (targetId && targetId !== currentCustomerId) return;
+
+    // Notion 통합 제거됨
+
+    if (currentData.schedules && currentData.schedules.length > 0) {
+        scheduleRows = [...currentData.schedules];
+    } else {
+        // [수정] 신규 고객은 빈 스케줄로 시작 (템플릿 자동 로드 X)
+        scheduleRows = [];
+    }
+
+    // [추가] 스케줄 상단 정보 자동 채우기
+    if (document.getElementById('schPeriod')) {
+        // 1. Static/Auto Fields
+        document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
+        document.getElementById('schArea').textContent = currentData.area ? currentData.area + ' PY' : '';
+        document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
+
+        // 공사 의뢰인 1: 메인 고객
+        const clientInfo = currentData.clientName ? (currentData.clientName + ' 고객님' + (currentData.clientPhone ? ' (' + currentData.clientPhone + ')' : '')) : '';
+        document.getElementById('schClient1').textContent = clientInfo;
+
+        // 공사 의뢰인 2: 배우자 정보 자동 채우기
+        const client2Input = document.querySelector('.sch-input[data-field="client2"]');
+        if (client2Input && currentData.spouseName) {
+            const spouseInfo = currentData.spouseName + (currentData.spousePhone ? ' (' + currentData.spousePhone + ')' : '');
+            if (!currentData.sch_client2) {
+                client2Input.value = spouseInfo;
+                currentData.sch_client2 = spouseInfo;
             }
         }
 
-        function loadScheduleForCustomer(targetId) {
-            // [Guard] Async Race Protection
-            if (targetId && targetId !== currentCustomerId) return;
+        document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
 
-            // Notion 통합 제거됨
+        // 2. Manager Input (Special handling)
+        const managerInput = document.getElementById('schManagerInput');
+        if (managerInput) {
+            if (!currentData.manager || currentData.manager.trim() === '') {
+                currentData.manager = '원프로 소장 (010-7653-5386)';
+            }
+            managerInput.value = currentData.manager;
 
-            if (currentData.schedules && currentData.schedules.length > 0) {
-                scheduleRows = [...currentData.schedules];
-            } else {
-                // [수정] 신규 고객은 빈 스케줄로 시작 (템플릿 자동 로드 X)
-                scheduleRows = [];
+            managerInput.oninput = function () {
+                updateCustomerField('manager', this.value);
+            };
+            managerInput.onchange = function () {
+                updateCustomerField('manager', this.value);
+                saveCustomers();
+            };
+        }
+
+        // 3. Text Inputs (sch_*)
+        document.querySelectorAll('.sch-input').forEach(input => {
+            const field = input.dataset.field;
+            if (field === 'manager') return; // Skip manager
+
+            const key = 'sch_' + field;
+            input.value = currentData[key] || '';
+
+            if (field === 'client2') {
+                input.addEventListener('input', function () {
+                    this.value = this.value.replace(/(010)(\d{4})(\d{4})(?!\d)/g, '$1-$2-$3');
+                });
             }
 
-            // [추가] 스케줄 상단 정보 자동 채우기
-            if (document.getElementById('schPeriod')) {
-                // 1. Static/Auto Fields
-                document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
-                document.getElementById('schArea').textContent = currentData.area ? currentData.area + ' PY' : '';
-                document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
+            input.onchange = function () {
+                currentData[key] = this.value;
+                saveCustomers();
+            };
+        });
 
-                // 공사 의뢰인 1: 메인 고객
-                const clientInfo = currentData.clientName ? (currentData.clientName + ' 고객님' + (currentData.clientPhone ? ' (' + currentData.clientPhone + ')' : '')) : '';
-                document.getElementById('schClient1').textContent = clientInfo;
+        // 4. Radio Buttons (sch_*)
+        const radioFields = ['permit_status', 'consent_status'];
+        radioFields.forEach(field => {
+            const key = 'sch_' + field;
+            const savedValue = currentData[key];
+            const radios = document.querySelectorAll(`input[name="${field}"]`);
 
-                // 공사 의뢰인 2: 배우자 정보 자동 채우기
-                const client2Input = document.querySelector('.sch-input[data-field="client2"]');
-                if (client2Input && currentData.spouseName) {
-                    const spouseInfo = currentData.spouseName + (currentData.spousePhone ? ' (' + currentData.spousePhone + ')' : '');
-                    if (!currentData.sch_client2) {
-                        client2Input.value = spouseInfo;
-                        currentData.sch_client2 = spouseInfo;
-                    }
-                }
-
-                document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
-
-                // 2. Manager Input (Special handling)
-                const managerInput = document.getElementById('schManagerInput');
-                if (managerInput) {
-                    if (!currentData.manager || currentData.manager.trim() === '') {
-                        currentData.manager = '원프로 소장 (010-4650-7013)';
-                    }
-                    managerInput.value = currentData.manager;
-
-                    managerInput.oninput = function () {
-                        updateCustomerField('manager', this.value);
-                    };
-                    managerInput.onchange = function () {
-                        updateCustomerField('manager', this.value);
-                        saveCustomers();
-                    };
-                }
-
-                // 3. Text Inputs (sch_*)
-                document.querySelectorAll('.sch-input').forEach(input => {
-                    const field = input.dataset.field;
-                    if (field === 'manager') return; // Skip manager
-
-                    const key = 'sch_' + field;
-                    input.value = currentData[key] || '';
-
-                    if (field === 'client2') {
-                        input.addEventListener('input', function () {
-                            this.value = this.value.replace(/(010)(\d{4})(\d{4})(?!\d)/g, '$1-$2-$3');
-                        });
-                    }
-
-                    input.onchange = function () {
+            radios.forEach(radio => {
+                radio.checked = (radio.value === savedValue);
+                radio.onchange = function () {
+                    if (this.checked) {
                         currentData[key] = this.value;
                         saveCustomers();
-                    };
-                });
+                    }
+                };
+            });
+        });
+    }
+    renderScheduleTable();
+    syncAllFields();
+}
 
-                // 4. Radio Buttons (sch_*)
-                const radioFields = ['permit_status', 'consent_status'];
-                radioFields.forEach(field => {
-                    const key = 'sch_' + field;
-                    const savedValue = currentData[key];
-                    const radios = document.querySelectorAll(`input[name="${field}"]`);
+function renderScheduleTable() {
+    const tbody = document.getElementById('scheduleTableBody');
+    const empty = document.getElementById('scheduleEmptyState');
+    if (!tbody) return;
 
-                    radios.forEach(radio => {
-                        radio.checked = (radio.value === savedValue);
-                        radio.onchange = function () {
-                            if (this.checked) {
-                                currentData[key] = this.value;
-                                saveCustomers();
-                            }
-                        };
-                    });
-                });
-            }
-            renderScheduleTable();
-            syncAllFields();
+    if (scheduleRows.length === 0) {
+        tbody.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    // Extract unique values for dropdowns
+    const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+    const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    // [수정] 담당자 목록 추출 (유니크)
+    const managers = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
+
+    // 현재 사용 중인 담당자가 목록에 없으면 추가 (데이터 보존용)
+    scheduleRows.forEach(row => {
+        if (row.inCharge && !managers.includes(row.inCharge)) {
+            managers.push(row.inCharge);
+        }
+    });
+    tbody.innerHTML = scheduleRows.map((row, index) => {
+        // 현재 행의 카테고리로 공정명 필터링
+        const processes = defaultScheduleSteps.filter(s => s.category === row.category);
+
+        // [수정] 공정명 중복 제거 (순수 이름만 표시)
+        const uniqueProcessNames = [...new Set(processes.map(p => p.name))];
+        const processOptions = uniqueProcessNames.map(name =>
+            `<option value="${name}" ${row.name === name ? 'selected' : ''}>${name}</option>`
+        ).join('');
+
+        // [수정] 담당자 목록 동적 필터링 (카테고리+공정명 종속)
+        let availableManagers = [];
+        if (row.category && row.name) {
+            // 카테고리와 공정명이 선택된 경우 -> 해당 조합의 담당자들만 추출
+            availableManagers = defaultScheduleSteps
+                .filter(s => s.category === row.category && s.name === row.name)
+                .map(s => s.inCharge)
+                .filter(Boolean);
         }
 
-        function renderScheduleTable() {
-            const tbody = document.getElementById('scheduleTableBody');
-            const empty = document.getElementById('scheduleEmptyState');
-            if (!tbody) return;
+        // 만약 필터링된 담당자가 없다면(또는 공정명 미선택), 전체 담당자 풀을 보여줄지 결정해야 함
+        // 사용자 요구사항: "3개만 보여야지" -> 공정명이 선택되었다면 좁혀서 보여주는 게 핵심
+        // 공정명이 아직 안 정해졌다면, 전체 목록 노출 (유연성)
+        if (availableManagers.length === 0 && !row.name) {
+            availableManagers = defaultScheduleSteps.map(s => s.inCharge).filter(Boolean);
+        }
 
-            if (scheduleRows.length === 0) {
-                tbody.innerHTML = '';
-                if (empty) empty.style.display = 'block';
-                return;
-            }
+        // 중복 제거
+        availableManagers = [...new Set(availableManagers)];
 
-            if (empty) empty.style.display = 'none';
+        // 현재 입력된 담당자가 목록에 없으면 추가 (기존 데이터 보존)
+        if (row.inCharge && !availableManagers.includes(row.inCharge)) {
+            availableManagers.push(row.inCharge);
+        }
 
-            // Extract unique values for dropdowns
-            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        const currentManagerOptions = availableManagers.map(m =>
+            `<option value="${m}" ${row.inCharge === m ? 'selected' : ''}>${m}</option>`
+        ).join('');
 
-            // [수정] 담당자 목록 추출 (유니크)
-            const managers = [...new Set(defaultScheduleSteps.map(s => s.inCharge).filter(Boolean))];
-
-            // 현재 사용 중인 담당자가 목록에 없으면 추가 (데이터 보존용)
-            scheduleRows.forEach(row => {
-                if (row.inCharge && !managers.includes(row.inCharge)) {
-                    managers.push(row.inCharge);
-                }
-            });
-            tbody.innerHTML = scheduleRows.map((row, index) => {
-                // 현재 행의 카테고리로 공정명 필터링
-                const processes = defaultScheduleSteps.filter(s => s.category === row.category);
-
-                // [수정] 공정명 중복 제거 (순수 이름만 표시)
-                const uniqueProcessNames = [...new Set(processes.map(p => p.name))];
-                const processOptions = uniqueProcessNames.map(name =>
-                    `<option value="${name}" ${row.name === name ? 'selected' : ''}>${name}</option>`
-                ).join('');
-
-                // [수정] 담당자 목록 동적 필터링 (카테고리+공정명 종속)
-                let availableManagers = [];
-                if (row.category && row.name) {
-                    // 카테고리와 공정명이 선택된 경우 -> 해당 조합의 담당자들만 추출
-                    availableManagers = defaultScheduleSteps
-                        .filter(s => s.category === row.category && s.name === row.name)
-                        .map(s => s.inCharge)
-                        .filter(Boolean);
-                }
-
-                // 만약 필터링된 담당자가 없다면(또는 공정명 미선택), 전체 담당자 풀을 보여줄지 결정해야 함
-                // 사용자 요구사항: "3개만 보여야지" -> 공정명이 선택되었다면 좁혀서 보여주는 게 핵심
-                // 공정명이 아직 안 정해졌다면, 전체 목록 노출 (유연성)
-                if (availableManagers.length === 0 && !row.name) {
-                    availableManagers = defaultScheduleSteps.map(s => s.inCharge).filter(Boolean);
-                }
-
-                // 중복 제거
-                availableManagers = [...new Set(availableManagers)];
-
-                // 현재 입력된 담당자가 목록에 없으면 추가 (기존 데이터 보존)
-                if (row.inCharge && !availableManagers.includes(row.inCharge)) {
-                    availableManagers.push(row.inCharge);
-                }
-
-                const currentManagerOptions = availableManagers.map(m =>
-                    `<option value="${m}" ${row.inCharge === m ? 'selected' : ''}>${m}</option>`
-                ).join('');
-
-                return `
+        return `
     <tr draggable="true" ondragstart="handleDragStart(event, ${index})" ondragover="handleDragOver(event)"
         ondrop="handleDrop(event, ${index})" ondragend="handleDragEnd(event)"
         style="cursor:move; transition: background 0.2s;">
@@ -2347,185 +2347,185 @@
         </td>
     </tr>
                 `;
-            }).join('');
+    }).join('');
+}
+
+function addScheduleRow() {
+    // 빈 행 추가 (견적서 방식)
+    scheduleRows.push({
+        id: Date.now() + Math.random(),
+        category: '',
+        name: '',
+        checkPoint: '',
+        start: '',
+        end: '',
+        inCharge: '', // [수정] 기본값 없음
+        memo: ''
+    });
+    renderScheduleTable();
+    saveScheduleToCustomer();
+}
+
+// 카테고리 선택 시 공정명 필터링 (견적서 패턴 참조)
+function onScheduleCategoryChange(rowIndex, category) {
+    if (!scheduleRows[rowIndex]) return;
+
+    // 카테고리 변경 시 공정명, 체크포인트 초기화
+    scheduleRows[rowIndex].category = category;
+    scheduleRows[rowIndex].name = '';
+    scheduleRows[rowIndex].checkPoint = '';
+    // [추가] 담당자도 같이 초기화하는 것이 자연스러움
+    scheduleRows[rowIndex].inCharge = '';
+
+    // 테이블 다시 렌더링 (필터링된 공정명 드롭다운 표시)
+    renderScheduleTable();
+    saveScheduleToCustomer();
+}
+
+// 공정명 선택 시 체크포인트/담당자 연동
+function onScheduleProcessChange(rowIndex, processName) {
+    if (!scheduleRows[rowIndex]) return;
+
+    scheduleRows[rowIndex].name = processName;
+
+    // 공정명을 바꿨으므로 담당자도 초기화 (다시 선택 유도)
+    scheduleRows[rowIndex].inCharge = '';
+
+    if (!processName) {
+        scheduleRows[rowIndex].checkPoint = '';
+        renderScheduleTable();
+        saveScheduleToCustomer();
+        return;
+    }
+
+    // 선택된 공정명에 해당하는 후보군 찾기
+    const candidates = defaultScheduleSteps.filter(s =>
+        s.category === scheduleRows[rowIndex].category && s.name === processName
+    );
+
+    if (candidates.length > 0) {
+        // 체크포인트는 첫 번째 후보의 것을 따름 (보통 동일하므로)
+        scheduleRows[rowIndex].checkPoint = candidates[0].checkPoint || '';
+
+        // [수정] 만약 가능한 담당자가 딱 1명이라면 자동 선택
+        // 2명 이상이면 빈 값으로 두어 사용자가 드롭다운에서 선택하게 함 (B.R, S.T, T.W 중 택1)
+        const distinctManagers = [...new Set(candidates.map(c => c.inCharge).filter(Boolean))];
+        if (distinctManagers.length === 1) {
+            scheduleRows[rowIndex].inCharge = distinctManagers[0];
         }
+    }
 
-        function addScheduleRow() {
-            // 빈 행 추가 (견적서 방식)
-            scheduleRows.push({
-                id: Date.now() + Math.random(),
-                category: '',
-                name: '',
-                checkPoint: '',
-                start: '',
-                end: '',
-                inCharge: '', // [수정] 기본값 없음
-                memo: ''
-            });
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
+    renderScheduleTable();
+    saveScheduleToCustomer();
+}
 
-        // 카테고리 선택 시 공정명 필터링 (견적서 패턴 참조)
-        function onScheduleCategoryChange(rowIndex, category) {
-            if (!scheduleRows[rowIndex]) return;
+// 유의사항 텍스트 추출 함수 (노션 연동용)
+function getScheduleGuidelinesText() {
+    const list = document.getElementById('scheduleGuidelinesList');
+    if (!list) return '';
+    const items = list.querySelectorAll('li');
+    return Array.from(items).map(li => li.textContent.trim()).join('\n');
+}
 
-            // 카테고리 변경 시 공정명, 체크포인트 초기화
-            scheduleRows[rowIndex].category = category;
-            scheduleRows[rowIndex].name = '';
-            scheduleRows[rowIndex].checkPoint = '';
-            // [추가] 담당자도 같이 초기화하는 것이 자연스러움
-            scheduleRows[rowIndex].inCharge = '';
+function getASGuidelinesText() {
+    const list = document.getElementById('asGuidelinesList');
+    if (!list) return '';
+    const items = list.querySelectorAll('li');
+    return Array.from(items).map(li => li.textContent.trim()).join('\n');
+}
 
-            // 테이블 다시 렌더링 (필터링된 공정명 드롭다운 표시)
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
+// [추가] 유의사항을 배열로 반환 (노션 콜아웃용)
+function getScheduleGuidelinesArray() {
+    const list = document.getElementById('scheduleGuidelinesList');
+    if (!list) return [];
+    const items = list.querySelectorAll('li');
+    return Array.from(items).map(li => li.textContent.trim()).filter(t => t);
+}
 
-        // 공정명 선택 시 체크포인트/담당자 연동
-        function onScheduleProcessChange(rowIndex, processName) {
-            if (!scheduleRows[rowIndex]) return;
+function getASGuidelinesArray() {
+    const list = document.getElementById('asGuidelinesList');
+    if (!list) return [];
+    const items = list.querySelectorAll('li');
+    return Array.from(items).map(li => li.textContent.trim()).filter(t => t);
+}
 
-            scheduleRows[rowIndex].name = processName;
+// 스케줄 유의사항 불러오기 (구글 시트에서)
+async function loadScheduleGuidelines() {
+    try {
+        const params = new URLSearchParams({
+            sheet: '공사스케줄관리', // 앱스스크립트에서 띄어쓰기 유연하게 처리함
+            action: 'getGuidelines'
+        });
 
-            // 공정명을 바꿨으므로 담당자도 초기화 (다시 선택 유도)
-            scheduleRows[rowIndex].inCharge = '';
+        // 3초 타임아웃 설정 (로컬 테스트 시 너무 오래 걸리지 않게)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-            if (!processName) {
-                scheduleRows[rowIndex].checkPoint = '';
-                renderScheduleTable();
-                saveScheduleToCustomer();
-                return;
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        const result = await response.json();
+
+        if (result.success && result.guidelines && result.guidelines.length > 0) {
+            const guidelinesList = document.getElementById('scheduleGuidelinesList');
+            if (guidelinesList) {
+                guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                showPersistentAlert('공사 스케줄 유의사항을\n성공적으로 불러왔습니다.', 'success');
             }
+        } else {
+            throw new Error(result.error || 'No guidelines found');
+        }
+    } catch (error) {
+        console.warn('❌ 서버 유의사항 로드 실패, 로컬 백업 데이터 사용:', error);
 
-            // 선택된 공정명에 해당하는 후보군 찾기
-            const candidates = defaultScheduleSteps.filter(s =>
-                s.category === scheduleRows[rowIndex].category && s.name === processName
-            );
+        // [로컬 테스트용 백업 데이터]
+        // 배포 문제로 서버 통신이 안 될 경우 이 데이터를 보여줍니다.
+        const localBackupGuidelines = [
+            "공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.",
+            "공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.",
+            "공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 담당자와 먼저 협의 부탁드립니다.",
+            "공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다."
+        ];
 
-            if (candidates.length > 0) {
-                // 체크포인트는 첫 번째 후보의 것을 따름 (보통 동일하므로)
-                scheduleRows[rowIndex].checkPoint = candidates[0].checkPoint || '';
+        const guidelinesList = document.getElementById('scheduleGuidelinesList');
+        if (guidelinesList) {
+            guidelinesList.innerHTML = localBackupGuidelines.map(item => `<li>${item}</li>`).join('');
+            showPersistentAlert('서버 연결이 원활하지 않아\n기본 유의사항을 표시합니다.\n(로컬 모드)', 'warning');
+        }
+    }
+}
 
-                // [수정] 만약 가능한 담당자가 딱 1명이라면 자동 선택
-                // 2명 이상이면 빈 값으로 두어 사용자가 드롭다운에서 선택하게 함 (B.R, S.T, T.W 중 택1)
-                const distinctManagers = [...new Set(candidates.map(c => c.inCharge).filter(Boolean))];
-                if (distinctManagers.length === 1) {
-                    scheduleRows[rowIndex].inCharge = distinctManagers[0];
-                }
+// A/S 유의사항 불러오기 (구글 시트에서)
+async function loadASGuidelines() {
+    try {
+        const params = new URLSearchParams({
+            sheet: 'AS관리리스트',
+            action: 'getGuidelines'
+        });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+        const result = await response.json();
+
+        if (result.success && result.guidelines && result.guidelines.length > 0) {
+            const guidelinesList = document.getElementById('asGuidelinesList');
+            if (guidelinesList) {
+                guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
+                showPersistentAlert('A/S 관리 유의사항을\n성공적으로 불러왔습니다.', 'success');
             }
-
-            renderScheduleTable();
-            saveScheduleToCustomer();
+        } else if (result.success) {
+            showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
+        } else {
+            showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
         }
+    } catch (error) {
+        console.error('Error loading AS guidelines:', error);
+        showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
+    }
+}
 
-        // 유의사항 텍스트 추출 함수 (노션 연동용)
-        function getScheduleGuidelinesText() {
-            const list = document.getElementById('scheduleGuidelinesList');
-            if (!list) return '';
-            const items = list.querySelectorAll('li');
-            return Array.from(items).map(li => li.textContent.trim()).join('\n');
-        }
-
-        function getASGuidelinesText() {
-            const list = document.getElementById('asGuidelinesList');
-            if (!list) return '';
-            const items = list.querySelectorAll('li');
-            return Array.from(items).map(li => li.textContent.trim()).join('\n');
-        }
-
-        // [추가] 유의사항을 배열로 반환 (노션 콜아웃용)
-        function getScheduleGuidelinesArray() {
-            const list = document.getElementById('scheduleGuidelinesList');
-            if (!list) return [];
-            const items = list.querySelectorAll('li');
-            return Array.from(items).map(li => li.textContent.trim()).filter(t => t);
-        }
-
-        function getASGuidelinesArray() {
-            const list = document.getElementById('asGuidelinesList');
-            if (!list) return [];
-            const items = list.querySelectorAll('li');
-            return Array.from(items).map(li => li.textContent.trim()).filter(t => t);
-        }
-
-        // 스케줄 유의사항 불러오기 (구글 시트에서)
-        async function loadScheduleGuidelines() {
-            try {
-                const params = new URLSearchParams({
-                    sheet: '공사스케줄관리', // 앱스스크립트에서 띄어쓰기 유연하게 처리함
-                    action: 'getGuidelines'
-                });
-
-                // 3초 타임아웃 설정 (로컬 테스트 시 너무 오래 걸리지 않게)
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                const result = await response.json();
-
-                if (result.success && result.guidelines && result.guidelines.length > 0) {
-                    const guidelinesList = document.getElementById('scheduleGuidelinesList');
-                    if (guidelinesList) {
-                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
-                        showPersistentAlert('공사 스케줄 유의사항을\n성공적으로 불러왔습니다.', 'success');
-                    }
-                } else {
-                    throw new Error(result.error || 'No guidelines found');
-                }
-            } catch (error) {
-                console.warn('❌ 서버 유의사항 로드 실패, 로컬 백업 데이터 사용:', error);
-
-                // [로컬 테스트용 백업 데이터]
-                // 배포 문제로 서버 통신이 안 될 경우 이 데이터를 보여줍니다.
-                const localBackupGuidelines = [
-                    "공사 기간 중에는 안전사고 예방을 위해 현장 출입이 제한될 수 있으며, 작업 구간 출입은 삼가 주시기 바랍니다.",
-                    "공정 특성상 소음, 분진, 냄새가 발생할 수 있고, 일정 시간대에는 작업이 집중될 수 있습니다.",
-                    "공사 중 추가 요청이나 변경 사항이 있을 경우, 공정 및 비용에 영향이 있을 수 있으므로 반드시 담당자와 먼저 협의 부탁드립니다.",
-                    "공정 완료 후에는 다음 공정을 위해 현장 정리 및 양생 시간이 필요할 수 있으며, 이 기간 동안 현장 출입이 제한될 수 있습니다."
-                ];
-
-                const guidelinesList = document.getElementById('scheduleGuidelinesList');
-                if (guidelinesList) {
-                    guidelinesList.innerHTML = localBackupGuidelines.map(item => `<li>${item}</li>`).join('');
-                    showPersistentAlert('서버 연결이 원활하지 않아\n기본 유의사항을 표시합니다.\n(로컬 모드)', 'warning');
-                }
-            }
-        }
-
-        // A/S 유의사항 불러오기 (구글 시트에서)
-        async function loadASGuidelines() {
-            try {
-                const params = new URLSearchParams({
-                    sheet: 'AS관리리스트',
-                    action: 'getGuidelines'
-                });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                const result = await response.json();
-
-                if (result.success && result.guidelines && result.guidelines.length > 0) {
-                    const guidelinesList = document.getElementById('asGuidelinesList');
-                    if (guidelinesList) {
-                        guidelinesList.innerHTML = result.guidelines.map(item => `<li>${item}</li>`).join('');
-                        showPersistentAlert('A/S 관리 유의사항을\n성공적으로 불러왔습니다.', 'success');
-                    }
-                } else if (result.success) {
-                    showPersistentAlert('불러올 유의사항이 없습니다.', 'error');
-                } else {
-                    showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + (result.error || ''), 'error');
-                }
-            } catch (error) {
-                console.error('Error loading AS guidelines:', error);
-                showPersistentAlert('유의사항을 불러오는데 실패했습니다.\n\n' + error.message, 'error');
-            }
-        }
-
-        function showScheduleTemplateModal() {
-            const modal = document.createElement('div');
-            modal.id = 'scheduleTemplateModal';
-            modal.style.cssText = `
+function showScheduleTemplateModal() {
+    const modal = document.createElement('div');
+    modal.id = 'scheduleTemplateModal';
+    modal.style.cssText = `
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -2538,8 +2538,8 @@
                 z-index: 10000;
             `;
 
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
                 background: white;
                 border-radius: 12px;
                 padding: 24px;
@@ -2550,11 +2550,11 @@
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             `;
 
-            // 카테고리 목록 추출
-            const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
-            const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    // 카테고리 목록 추출
+    const categories = [...new Set(defaultScheduleSteps.map(s => s.category).filter(Boolean))];
+    const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
-            modalContent.innerHTML = `
+    modalContent.innerHTML = `
                 <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333;">📋 공정 선택</h3>
 
                 <div style="margin-bottom: 16px;">
@@ -2577,308 +2577,308 @@
                 </div>
             `;
 
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
 
-            // 모달 외부 클릭 시 닫기
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeScheduleTemplateModal();
-                }
-            });
+    // 모달 외부 클릭 시 닫기
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeScheduleTemplateModal();
         }
+    });
+}
 
-        function updateProcessOptions() {
-            const categorySelect = document.getElementById('categorySelect');
-            const processSelectContainer = document.getElementById('processSelectContainer');
-            const processSelect = document.getElementById('processSelect');
-            const addBtn = document.getElementById('addScheduleBtn');
-            const selectedCategory = categorySelect.value;
+function updateProcessOptions() {
+    const categorySelect = document.getElementById('categorySelect');
+    const processSelectContainer = document.getElementById('processSelectContainer');
+    const processSelect = document.getElementById('processSelect');
+    const addBtn = document.getElementById('addScheduleBtn');
+    const selectedCategory = categorySelect.value;
 
-            if (selectedCategory === '__CUSTOM__') {
-                // 직접 입력 선택 시
-                processSelectContainer.style.display = 'none';
-                addBtn.disabled = false;
-            } else if (selectedCategory) {
-                // 카테고리 선택 시 해당 카테고리의 공정들 필터링
-                const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
-                const processOptions = processes.map((proc, idx) =>
-                    `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
-                ).join('');
+    if (selectedCategory === '__CUSTOM__') {
+        // 직접 입력 선택 시
+        processSelectContainer.style.display = 'none';
+        addBtn.disabled = false;
+    } else if (selectedCategory) {
+        // 카테고리 선택 시 해당 카테고리의 공정들 필터링
+        const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
+        const processOptions = processes.map((proc, idx) =>
+            `<option value="${idx}" data-category="${selectedCategory}">${proc.name}</option>`
+        ).join('');
 
-                processSelect.innerHTML = processOptions;
+        processSelect.innerHTML = processOptions;
 
-                // size 속성 동적 조정 (최소 3, 최대 10)
-                const optionCount = processes.length;
-                processSelect.setAttribute('size', Math.min(Math.max(optionCount, 3), 10));
+        // size 속성 동적 조정 (최소 3, 최대 10)
+        const optionCount = processes.length;
+        processSelect.setAttribute('size', Math.min(Math.max(optionCount, 3), 10));
 
-                processSelectContainer.style.display = 'block';
-                addBtn.disabled = true;
+        processSelectContainer.style.display = 'block';
+        addBtn.disabled = true;
 
-                // 공정 선택 시 추가 버튼 활성화
-                processSelect.onchange = function () {
-                    addBtn.disabled = !this.value;
-                };
-            } else {
-                // 선택 안함
-                processSelectContainer.style.display = 'none';
-                addBtn.disabled = true;
+        // 공정 선택 시 추가 버튼 활성화
+        processSelect.onchange = function () {
+            addBtn.disabled = !this.value;
+        };
+    } else {
+        // 선택 안함
+        processSelectContainer.style.display = 'none';
+        addBtn.disabled = true;
+    }
+}
+
+function closeScheduleTemplateModal() {
+    const modal = document.getElementById('scheduleTemplateModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function addScheduleFromTemplate() {
+    const categorySelect = document.getElementById('categorySelect');
+    const processSelect = document.getElementById('processSelect');
+    const selectedCategory = categorySelect.value;
+
+    let newRow;
+
+    if (selectedCategory === '__CUSTOM__') {
+        // 빈 행 추가
+        newRow = {
+            id: Date.now() + Math.random(),
+            category: '',
+            name: '',
+            checkPoint: '',
+            start: '',
+            end: '',
+            inCharge: currentData.manager || '원프로 소장 (010-7653-5386)',
+            memo: ''
+        };
+    } else {
+        // 선택한 카테고리의 공정 찾기
+        const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
+        const selectedIndex = parseInt(processSelect.value);
+        const template = processes[selectedIndex];
+
+        if (template) {
+            // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
+            let inChargeValue = '원프로 소장 (010-7653-5386)';
+            if (template.inCharge && template.inCharge.trim()) {
+                inChargeValue = template.inCharge;
+            } else if (currentData.manager && currentData.manager.trim()) {
+                inChargeValue = currentData.manager;
+            }
+
+            newRow = {
+                id: Date.now() + Math.random(),
+                category: template.category || '',
+                name: template.name || '',
+                checkPoint: template.checkPoint || '',
+                start: '',
+                end: '',
+                inCharge: inChargeValue,
+                memo: ''
+            };
+
+            console.log('📌 공정 추가:', newRow);
+        }
+    }
+
+    if (newRow) {
+        scheduleRows.push(newRow);
+        renderScheduleTable();
+        saveScheduleToCustomer();
+        closeScheduleTemplateModal();
+    }
+}
+
+function removeScheduleRow(index) {
+    scheduleRows.splice(index, 1);
+    renderScheduleTable();
+    saveScheduleToCustomer();
+}
+
+function updateScheduleRow(index, field, value) {
+    scheduleRows[index][field] = value;
+    saveScheduleToCustomer();
+}
+
+// 시작일 변경 시 종료일 자동 채우기
+function handleStartDateChange(index, value) {
+    scheduleRows[index]['start'] = value;
+
+    // 종료일이 비어있으면 시작일과 동일하게 설정
+    if (!scheduleRows[index]['end'] && value) {
+        scheduleRows[index]['end'] = value;
+        renderScheduleTable(); // 테이블 다시 렌더링하여 종료일 표시
+    }
+
+    saveScheduleToCustomer();
+}
+
+function moveScheduleRow(index, delta) {
+    const newIndex = index + delta;
+    if (newIndex < 0 || newIndex >= scheduleRows.length) return;
+    const item = scheduleRows.splice(index, 1)[0];
+    scheduleRows.splice(newIndex, 0, item);
+    renderScheduleTable();
+    saveScheduleToCustomer();
+}
+
+function saveScheduleToCustomer() {
+    currentData.schedules = [...scheduleRows];
+    syncAllFields();
+}
+
+// [New] A/S List Logic
+let asListRows = [];
+
+function loadASList(targetId) {
+    // [Guard] Async Race Protection
+    if (targetId && targetId !== currentCustomerId) return;
+
+    if (currentData && currentData.as_list) {
+        asListRows = currentData.as_list;
+    } else {
+        asListRows = []; // Start empty for new selection
+    }
+    renderASListTable();
+    updateASInfoHeaders();
+}
+
+function updateASInfoHeaders() {
+    // Manually sync fields in A/S header (since syncAllFields might not target these specific IDs if they are refreshed or not caught)
+    // But they use 'data-sync' class, so syncAllFields() handles them IF called.
+    // Let's call syncAllFields() just in case OR just handle the specific ID for bathroom leak.
+    // We'll rely on syncAllFields() for the standard ones, but calculate bathroom leak.
+
+    // Calculate Bathroom Leak A/S (General A/S + 18 months)
+    const leakEl = document.getElementById('bathroomLeakWarranty');
+    if (leakEl) {
+        let endDate = currentData.asEndDate || '';
+        // If no asEndDate, try to parse from warrantyPeriod string if it ends with date
+        if (!endDate && currentData.warrantyPeriod) {
+            // Try to match date pattern like "~YY.MM.DD" or "~YYYY.MM.DD" or "YYYY.MM.DD"
+            const matches = currentData.warrantyPeriod.match(/(\d{2,4})[-\.](\d{2})[-\.](\d{2})$/);
+            if (matches) {
+                // Reconstruct full date
+                let year = parseInt(matches[1]);
+                if (year < 100) year += 2000;
+                const month = matches[2];
+                const day = matches[3];
+                endDate = `${year}-${month}-${day}`;
             }
         }
 
-        function closeScheduleTemplateModal() {
-            const modal = document.getElementById('scheduleTemplateModal');
-            if (modal) {
-                modal.remove();
-            }
-        }
+        if (endDate) {
+            try {
+                const date = new Date(endDate);
+                if (!isNaN(date.getTime())) {
+                    // Add 18 months
+                    date.setMonth(date.getMonth() + 18);
 
-        function addScheduleFromTemplate() {
-            const categorySelect = document.getElementById('categorySelect');
-            const processSelect = document.getElementById('processSelect');
-            const selectedCategory = categorySelect.value;
-
-            let newRow;
-
-            if (selectedCategory === '__CUSTOM__') {
-                // 빈 행 추가
-                newRow = {
-                    id: Date.now() + Math.random(),
-                    category: '',
-                    name: '',
-                    checkPoint: '',
-                    start: '',
-                    end: '',
-                    inCharge: currentData.manager || '원프로 소장 (010-4650-7013)',
-                    memo: ''
-                };
-            } else {
-                // 선택한 카테고리의 공정 찾기
-                const processes = defaultScheduleSteps.filter(s => s.category === selectedCategory);
-                const selectedIndex = parseInt(processSelect.value);
-                const template = processes[selectedIndex];
-
-                if (template) {
-                    // 담당자 우선순위: 1. 템플릿 담당자, 2. 현재 고객 담당자, 3. 기본값 "원프로 소장"
-                    let inChargeValue = '원프로 소장 (010-4650-7013)';
-                    if (template.inCharge && template.inCharge.trim()) {
-                        inChargeValue = template.inCharge;
-                    } else if (currentData.manager && currentData.manager.trim()) {
-                        inChargeValue = currentData.manager;
-                    }
-
-                    newRow = {
-                        id: Date.now() + Math.random(),
-                        category: template.category || '',
-                        name: template.name || '',
-                        checkPoint: template.checkPoint || '',
-                        start: '',
-                        end: '',
-                        inCharge: inChargeValue,
-                        memo: ''
-                    };
-
-                    console.log('📌 공정 추가:', newRow);
-                }
-            }
-
-            if (newRow) {
-                scheduleRows.push(newRow);
-                renderScheduleTable();
-                saveScheduleToCustomer();
-                closeScheduleTemplateModal();
-            }
-        }
-
-        function removeScheduleRow(index) {
-            scheduleRows.splice(index, 1);
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
-
-        function updateScheduleRow(index, field, value) {
-            scheduleRows[index][field] = value;
-            saveScheduleToCustomer();
-        }
-
-        // 시작일 변경 시 종료일 자동 채우기
-        function handleStartDateChange(index, value) {
-            scheduleRows[index]['start'] = value;
-
-            // 종료일이 비어있으면 시작일과 동일하게 설정
-            if (!scheduleRows[index]['end'] && value) {
-                scheduleRows[index]['end'] = value;
-                renderScheduleTable(); // 테이블 다시 렌더링하여 종료일 표시
-            }
-
-            saveScheduleToCustomer();
-        }
-
-        function moveScheduleRow(index, delta) {
-            const newIndex = index + delta;
-            if (newIndex < 0 || newIndex >= scheduleRows.length) return;
-            const item = scheduleRows.splice(index, 1)[0];
-            scheduleRows.splice(newIndex, 0, item);
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
-
-        function saveScheduleToCustomer() {
-            currentData.schedules = [...scheduleRows];
-            syncAllFields();
-        }
-
-        // [New] A/S List Logic
-        let asListRows = [];
-
-        function loadASList(targetId) {
-            // [Guard] Async Race Protection
-            if (targetId && targetId !== currentCustomerId) return;
-
-            if (currentData && currentData.as_list) {
-                asListRows = currentData.as_list;
-            } else {
-                asListRows = []; // Start empty for new selection
-            }
-            renderASListTable();
-            updateASInfoHeaders();
-        }
-
-        function updateASInfoHeaders() {
-            // Manually sync fields in A/S header (since syncAllFields might not target these specific IDs if they are refreshed or not caught)
-            // But they use 'data-sync' class, so syncAllFields() handles them IF called.
-            // Let's call syncAllFields() just in case OR just handle the specific ID for bathroom leak.
-            // We'll rely on syncAllFields() for the standard ones, but calculate bathroom leak.
-
-            // Calculate Bathroom Leak A/S (General A/S + 18 months)
-            const leakEl = document.getElementById('bathroomLeakWarranty');
-            if (leakEl) {
-                let endDate = currentData.asEndDate || '';
-                // If no asEndDate, try to parse from warrantyPeriod string if it ends with date
-                if (!endDate && currentData.warrantyPeriod) {
-                    // Try to match date pattern like "~YY.MM.DD" or "~YYYY.MM.DD" or "YYYY.MM.DD"
-                    const matches = currentData.warrantyPeriod.match(/(\d{2,4})[-\.](\d{2})[-\.](\d{2})$/);
-                    if (matches) {
-                        // Reconstruct full date
-                        let year = parseInt(matches[1]);
-                        if (year < 100) year += 2000;
-                        const month = matches[2];
-                        const day = matches[3];
-                        endDate = `${year}-${month}-${day}`;
-                    }
-                }
-
-                if (endDate) {
-                    try {
-                        const date = new Date(endDate);
-                        if (!isNaN(date.getTime())) {
-                            // Add 18 months
-                            date.setMonth(date.getMonth() + 18);
-
-                            // Format
-                            const yy = String(date.getFullYear()).slice(-2);
-                            const mm = String(date.getMonth() + 1).padStart(2, '0');
-                            const dd = String(date.getDate()).padStart(2, '0');
-                            leakEl.textContent = `~${yy}.${mm}.${dd}`;
-                        } else {
-                            leakEl.textContent = '-';
-                        }
-                    } catch (e) {
-                        leakEl.textContent = '-';
-                    }
+                    // Format
+                    const yy = String(date.getFullYear()).slice(-2);
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    leakEl.textContent = `~${yy}.${mm}.${dd}`;
                 } else {
                     leakEl.textContent = '-';
                 }
+            } catch (e) {
+                leakEl.textContent = '-';
             }
+        } else {
+            leakEl.textContent = '-';
+        }
+    }
+}
+
+function addASListItem() {
+    asListRows.push({
+        category: '',
+        brand: '',
+        item: '',
+        modelNum: '',
+        size: '',
+        price: '',
+        service: '',
+        warranty: '',
+        note: ''
+    });
+    renderASListTable();
+    saveASList();
+}
+
+// [New] A/S DB Mock Data (Initialize global)
+// Global A/S DB
+let AS_DB = [];
+
+function fetchASListDB() {
+    if (AS_DB && AS_DB.length > 0) return; // Already loaded
+
+    fetch(CUSTOMER_SYNC_URL + '?sheet=as_list')
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === 'success' && Array.isArray(data.items)) {
+                AS_DB = data.items;
+                console.log('✅ A/S DB Loaded:', AS_DB.length + ' items');
+                renderASListTable(); // Re-render if table is open
+            } else {
+                console.error('❌ Failed to load A/S DB or invalid format:', data);
+                AS_DB = []; // Ensure it remains an array
+            }
+        })
+        .catch(err => {
+            console.error('❌ Error fetching A/S DB:', err);
+            AS_DB = []; // Ensure it remains an array on error
+        });
+}
+
+function renderASListTable() {
+    const tbody = document.getElementById('asListTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // Extract unique categories from AS_DB
+    const categories = [...new Set(AS_DB.map(item => item.category).filter(Boolean))];
+
+    asListRows.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('draggable', 'true');
+        tr.ondragstart = (e) => handleASDragStart(e, index);
+        tr.ondragover = (e) => handleASDragOver(e);
+        tr.ondrop = (e) => handleASDrop(e, index);
+        tr.ondragend = (e) => handleASDragEnd(e);
+        tr.style.cursor = 'move';
+        tr.style.transition = 'background 0.2s';
+
+        // Category Options
+        const categoryOptions = categories.map(c =>
+            `<option value="${c}" ${row.category === c ? 'selected' : ''}>${c}</option>`
+        ).join('');
+
+        // Brand Options (Filtered by Category)
+        let brandOptions = '<option value="">선택</option>';
+        if (row.category) {
+            const brands = [...new Set(AS_DB.filter(d => d.category === row.category).map(d => d.brand).filter(Boolean))];
+            brandOptions += brands.map(b =>
+                `<option value="${b}" ${row.brand === b ? 'selected' : ''}>${b}</option>`
+            ).join('');
+        } else {
+            brandOptions = '<option value="">카테고리 먼저 선택</option>';
         }
 
-        function addASListItem() {
-            asListRows.push({
-                category: '',
-                brand: '',
-                item: '',
-                modelNum: '',
-                size: '',
-                price: '',
-                service: '',
-                warranty: '',
-                note: ''
-            });
-            renderASListTable();
-            saveASList();
+        // Item Options (Filtered by Category AND Brand)
+        let itemOptions = '<option value="">선택</option>';
+        if (row.category && row.brand) {
+            const items = [...new Set(AS_DB.filter(d => d.category === row.category && d.brand === row.brand).map(d => d.item).filter(Boolean))];
+            itemOptions += items.map(i =>
+                `<option value="${i}" ${row.item === i ? 'selected' : ''}>${i}</option>`
+            ).join('');
+        } else {
+            itemOptions = '<option value="">브랜드 먼저 선택</option>';
         }
 
-        // [New] A/S DB Mock Data (Initialize global)
-        // Global A/S DB
-        let AS_DB = [];
-
-        function fetchASListDB() {
-            if (AS_DB && AS_DB.length > 0) return; // Already loaded
-
-            fetch(CUSTOMER_SYNC_URL + '?sheet=as_list')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.result === 'success' && Array.isArray(data.items)) {
-                        AS_DB = data.items;
-                        console.log('✅ A/S DB Loaded:', AS_DB.length + ' items');
-                        renderASListTable(); // Re-render if table is open
-                    } else {
-                        console.error('❌ Failed to load A/S DB or invalid format:', data);
-                        AS_DB = []; // Ensure it remains an array
-                    }
-                })
-                .catch(err => {
-                    console.error('❌ Error fetching A/S DB:', err);
-                    AS_DB = []; // Ensure it remains an array on error
-                });
-        }
-
-        function renderASListTable() {
-            const tbody = document.getElementById('asListTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            // Extract unique categories from AS_DB
-            const categories = [...new Set(AS_DB.map(item => item.category).filter(Boolean))];
-
-            asListRows.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('draggable', 'true');
-                tr.ondragstart = (e) => handleASDragStart(e, index);
-                tr.ondragover = (e) => handleASDragOver(e);
-                tr.ondrop = (e) => handleASDrop(e, index);
-                tr.ondragend = (e) => handleASDragEnd(e);
-                tr.style.cursor = 'move';
-                tr.style.transition = 'background 0.2s';
-
-                // Category Options
-                const categoryOptions = categories.map(c =>
-                    `<option value="${c}" ${row.category === c ? 'selected' : ''}>${c}</option>`
-                ).join('');
-
-                // Brand Options (Filtered by Category)
-                let brandOptions = '<option value="">선택</option>';
-                if (row.category) {
-                    const brands = [...new Set(AS_DB.filter(d => d.category === row.category).map(d => d.brand).filter(Boolean))];
-                    brandOptions += brands.map(b =>
-                        `<option value="${b}" ${row.brand === b ? 'selected' : ''}>${b}</option>`
-                    ).join('');
-                } else {
-                    brandOptions = '<option value="">카테고리 먼저 선택</option>';
-                }
-
-                // Item Options (Filtered by Category AND Brand)
-                let itemOptions = '<option value="">선택</option>';
-                if (row.category && row.brand) {
-                    const items = [...new Set(AS_DB.filter(d => d.category === row.category && d.brand === row.brand).map(d => d.item).filter(Boolean))];
-                    itemOptions += items.map(i =>
-                        `<option value="${i}" ${row.item === i ? 'selected' : ''}>${i}</option>`
-                    ).join('');
-                } else {
-                    itemOptions = '<option value="">브랜드 먼저 선택</option>';
-                }
-
-                tr.innerHTML = `
+        tr.innerHTML = `
                     <td class="no-print" style="text-align:center; padding:5px; border:1px solid #d2d2d7;">
                         <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
                             <button onclick="removeASListRow(${index})" class="no-print" 
@@ -2954,461 +2954,461 @@
                              style="width:100%; border:none; outline:none;">
                     </td>
                  `;
-                tbody.appendChild(tr);
-            });
+        tbody.appendChild(tr);
+    });
+}
+
+let draggedASIndex = null;
+function handleASDragStart(e, index) {
+    draggedASIndex = index;
+    e.target.style.opacity = '0.4';
+}
+function handleASDragEnd(e) {
+    e.target.style.opacity = '1';
+    draggedASIndex = null;
+}
+function handleASDragOver(e) {
+    e.preventDefault();
+}
+function handleASDrop(e, index) {
+    e.preventDefault();
+    if (draggedASIndex === null || draggedASIndex === index) return;
+    // Move item in array
+    const item = asListRows.splice(draggedASIndex, 1)[0];
+    asListRows.splice(index, 0, item);
+    renderASListTable();
+    saveASList();
+}
+
+function updateASCategory(index, category) {
+    asListRows[index].category = category;
+    asListRows[index].brand = ''; // Reset brand
+    asListRows[index].item = ''; // Reset item
+    asListRows[index].modelNum = '';
+    asListRows[index].size = '';
+    asListRows[index].price = '';
+    asListRows[index].service = '';
+    asListRows[index].warranty = '';
+    // Note: Don't clear note if user typed one? Or reset? Usually reset if everything changes.
+    asListRows[index].note = '';
+
+    saveASList();
+    renderASListTable();
+}
+
+function updateASBrand(index, brand) {
+    asListRows[index].brand = brand;
+    asListRows[index].item = ''; // Reset item
+    asListRows[index].modelNum = '';
+    asListRows[index].size = '';
+    asListRows[index].price = '';
+    asListRows[index].service = '';
+    asListRows[index].warranty = '';
+    asListRows[index].note = '';
+
+    saveASList();
+    renderASListTable();
+}
+
+function updateASItem(index, itemName) {
+    if (!itemName) {
+        asListRows[index].item = '';
+        // Don't reset Brand/Category
+        asListRows[index].modelNum = '';
+        asListRows[index].size = '';
+        asListRows[index].price = '';
+        asListRows[index].service = '';
+        asListRows[index].warranty = '';
+        asListRows[index].note = '';
+        saveASList();
+        renderASListTable();
+        return;
+    }
+
+    // Find selected item in DB (matching category and brand)
+    const selectedData = AS_DB.find(d =>
+        d.category === asListRows[index].category &&
+        d.brand === asListRows[index].brand &&
+        d.item === itemName
+    );
+
+    if (selectedData) {
+        asListRows[index].item = selectedData.item;
+        asListRows[index].modelNum = selectedData.modelNum;
+        asListRows[index].size = selectedData.size;
+        asListRows[index].price = selectedData.price;
+        asListRows[index].service = selectedData.service;
+        asListRows[index].warranty = selectedData.warranty;
+        asListRows[index].note = selectedData.note;
+    }
+    saveASList();
+    renderASListTable();
+}
+
+function getScheduleOptions() {
+    // Use currentData.schedules if scheduleRows is empty
+    const schedules = (scheduleRows && scheduleRows.length > 0) ? scheduleRows : (currentData.schedules || []);
+
+    let options = '';
+    // [추가] 잔금일 옵션
+    if (currentData.finalPaymentDate) {
+        options += `<option value="balanceDate" style="color:#0071e3; font-weight:bold;">잔금일 (${currentData.finalPaymentDate})</option>`;
+    }
+
+    options += schedules.map((sch, idx) => {
+        const name = sch.name || '이름 없음';
+        const end = sch.end || '';
+        if (!end) return '';
+        return `<option value="${end}">${name}</option>`;
+    }).join('');
+
+    return options;
+}
+
+function applyScheduleToWarranty(index, endDate) {
+    if (!endDate) return;
+
+    // [추가] 잔금일 선택 시 (속성명 수정: balanceDate -> finalPaymentDate)
+    if (endDate === 'balanceDate') {
+        endDate = currentData.finalPaymentDate;
+    }
+
+    // 1. Find the original warranty duration from AS_DB
+    const row = asListRows[index];
+    const dbItem = AS_DB.find(d =>
+        d.category === row.category &&
+        d.brand === row.brand &&
+        d.item === row.item
+    );
+
+    // Default to '1년' if not found or empty
+    const durationStr = (dbItem && dbItem.warranty) ? dbItem.warranty : '1년';
+
+    try {
+        // endDate format: YYYY-MM-DD
+        const date = new Date(endDate);
+
+        // 2. Parse duration string (e.g., "1년", "2년", "6개월")
+        let addYears = 0;
+        let addMonths = 0;
+
+        const yearMatch = durationStr.match(/(\d+)\s*년/);
+        const monthMatch = durationStr.match(/(\d+)\s*개월/);
+
+        addYears = yearMatch ? parseInt(yearMatch[1]) : 0;
+        addMonths = monthMatch ? parseInt(monthMatch[1]) : 0;
+
+        // Fallback: If no recognized format, default to 1 year
+        if (addYears === 0 && addMonths === 0) {
+            addYears = 1;
         }
 
-        let draggedASIndex = null;
-        function handleASDragStart(e, index) {
-            draggedASIndex = index;
-            e.target.style.opacity = '0.4';
-        }
-        function handleASDragEnd(e) {
-            e.target.style.opacity = '1';
-            draggedASIndex = null;
-        }
-        function handleASDragOver(e) {
-            e.preventDefault();
-        }
-        function handleASDrop(e, index) {
-            e.preventDefault();
-            if (draggedASIndex === null || draggedASIndex === index) return;
-            // Move item in array
-            const item = asListRows.splice(draggedASIndex, 1)[0];
-            asListRows.splice(index, 0, item);
+        // 3. Calculate new date
+        date.setFullYear(date.getFullYear() + addYears);
+        date.setMonth(date.getMonth() + addMonths);
+
+        // 4. Format: ~YY.MM.DD
+        const yy = String(date.getFullYear()).slice(-2);
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const warrantyText = `~${yy}.${mm}.${dd}`;
+
+        // 5. Update state and UI
+        asListRows[index].warranty = warrantyText;
+        const inputEl = document.getElementById(`warrantyInput_${index}`);
+        if (inputEl) inputEl.value = warrantyText;
+
+        saveASList();
+        showToast(`보증기간(${durationStr})이 적용되었습니다.`, 'success');
+
+    } catch (e) {
+        console.error("Invalid Date Calculation", e);
+        showToast('날짜 계산 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+function updateASListRow(index, field, value) {
+    asListRows[index][field] = value;
+    saveASList();
+}
+
+function removeASListRow(index) {
+
+    asListRows.splice(index, 1);
+    renderASListTable();
+    saveASList();
+}
+
+function saveASList() {
+    if (!currentData) return;
+    currentData.as_list = asListRows;
+    saveCustomers();
+}
+
+async function syncASListFromCloud() {
+    if (!confirm('경고: 현재 목록이 초기화되고 Google Sheet의 전체 A/S 리스트로 교체됩니다.\n계속하시겠습니까?')) return;
+
+    const btn = document.querySelector('button[onclick="syncASListFromCloud()"]');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '⏳ 불러오는 중...';
+        btn.disabled = true;
+    }
+
+    try {
+        // Use 'as_list' to hit handleASListGet
+        const params = new URLSearchParams({ sheet: 'as_list' });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+        const result = await response.json();
+
+        if (result.result === 'success' && result.items) {
+            // Populate asListRows with ALL items from the DB
+            asListRows = result.items.map(item => ({
+                category: item.category || '',
+                brand: item.brand || '',
+                item: item.item || '',
+                modelNum: item.modelNum || '',
+                size: item.size || '',
+                price: item.price || '',
+                service: item.service || '',
+                warranty: item.warranty || '',
+                note: item.note || ''
+            }));
+
+            // Also update the global AS_DB for dropdowns
+            AS_DB = result.items;
+
             renderASListTable();
             saveASList();
+            showToast(`전체 ${asListRows.length}개의 항목을 불러왔습니다.`, 'success');
+        } else {
+            throw new Error(result.message || '데이터 구조가 올바르지 않습니다.');
         }
 
-        function updateASCategory(index, category) {
-            asListRows[index].category = category;
-            asListRows[index].brand = ''; // Reset brand
-            asListRows[index].item = ''; // Reset item
-            asListRows[index].modelNum = '';
-            asListRows[index].size = '';
-            asListRows[index].price = '';
-            asListRows[index].service = '';
-            asListRows[index].warranty = '';
-            // Note: Don't clear note if user typed one? Or reset? Usually reset if everything changes.
-            asListRows[index].note = '';
-
-            saveASList();
-            renderASListTable();
+    } catch (error) {
+        console.error('Error syncing AS list:', error);
+        showToast('불러오기 실패: ' + error.message, 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
+    }
+}
 
-        function updateASBrand(index, brand) {
-            asListRows[index].brand = brand;
-            asListRows[index].item = ''; // Reset item
-            asListRows[index].modelNum = '';
-            asListRows[index].size = '';
-            asListRows[index].price = '';
-            asListRows[index].service = '';
-            asListRows[index].warranty = '';
-            asListRows[index].note = '';
+// ============================
+// [신규] 정산 관리 대장 (Settlement Management)
+// ============================
+let settlementRows = [];
+let settlementDirty = false; // UX: Track unsaved changes
+let settlementOptionsData = []; // [신규] 정산 관리 대장 옵션 마스터 데이터
 
-            saveASList();
-            renderASListTable();
-        }
+// [신규] 정산 관리 대장 옵션 마스터 데이터 가져오기
+async function fetchSettlementMaster() {
+    try {
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=settlement&action=getSettlementOptions`);
+        const result = await response.json();
+        if (result.result === 'success' && result.options) {
+            settlementOptionsData = result.options;
+            console.log('✅ 정산 옵션 마스터 로드 완료:', settlementOptionsData.length + '개');
 
-        function updateASItem(index, itemName) {
-            if (!itemName) {
-                asListRows[index].item = '';
-                // Don't reset Brand/Category
-                asListRows[index].modelNum = '';
-                asListRows[index].size = '';
-                asListRows[index].price = '';
-                asListRows[index].service = '';
-                asListRows[index].warranty = '';
-                asListRows[index].note = '';
-                saveASList();
-                renderASListTable();
-                return;
+            // 정산 탭이 열려있다면 갱신
+            if (document.getElementById('panel-settlement').classList.contains('active')) {
+                renderSettlementTable();
             }
-
-            // Find selected item in DB (matching category and brand)
-            const selectedData = AS_DB.find(d =>
-                d.category === asListRows[index].category &&
-                d.brand === asListRows[index].brand &&
-                d.item === itemName
-            );
-
-            if (selectedData) {
-                asListRows[index].item = selectedData.item;
-                asListRows[index].modelNum = selectedData.modelNum;
-                asListRows[index].size = selectedData.size;
-                asListRows[index].price = selectedData.price;
-                asListRows[index].service = selectedData.service;
-                asListRows[index].warranty = selectedData.warranty;
-                asListRows[index].note = selectedData.note;
-            }
-            saveASList();
-            renderASListTable();
+        } else {
+            console.warn('⚠️ 정산 옵션 마스터 로드 실패 또는 비어있음.');
         }
+    } catch (error) {
+        console.error('정산 옵션 마스터 로드 중 오류:', error);
+    }
+}
 
-        function getScheduleOptions() {
-            // Use currentData.schedules if scheduleRows is empty
-            const schedules = (scheduleRows && scheduleRows.length > 0) ? scheduleRows : (currentData.schedules || []);
+function formatNumberInput(input) {
+    let value = input.value.replace(/,/g, '');
+    if (!isNaN(value) && value !== '') {
+        input.value = Number(value).toLocaleString();
+    }
+}
 
-            let options = '';
-            // [추가] 잔금일 옵션
-            if (currentData.finalPaymentDate) {
-                options += `<option value="balanceDate" style="color:#0071e3; font-weight:bold;">잔금일 (${currentData.finalPaymentDate})</option>`;
-            }
+// 카테고리 목록
+const SETTLEMENT_CATEGORIES = [
+    '가설공사', '철거공사', '설비/방수공사', '전기/조명공사', '에어컨공사',
+    '창호공사', '목공/도어공사', '타일공사', '욕실공사', '필름공사',
+    '도장공사', '바닥재공사', '도배공사', '가구공사', '중문공사',
+    '마감공사', '기타공사'
+];
 
-            options += schedules.map((sch, idx) => {
-                const name = sch.name || '이름 없음';
-                const end = sch.end || '';
-                if (!end) return '';
-                return `<option value="${end}">${name}</option>`;
-            }).join('');
+// 거래처 정보 자동 완성을 위한 도우미 함수
+function autoFillPartnerInfo(index, clientName) {
+    if (!clientName) return;
+    // 현재 활성화된 정산 행들이나 과거 기록에서 해당 거래처의 정보가 있는지 찾음
+    const match = settlementRows.find((r, idx) => idx !== index && r.client === clientName && (r.bizId || r.bankInfo));
+    if (match) {
+        if (!settlementRows[index].bizId) settlementRows[index].bizId = match.bizId;
+        if (!settlementRows[index].bankInfo) settlementRows[index].bankInfo = match.bankInfo;
+        if (!settlementRows[index].payType) settlementRows[index].payType = match.payType;
+        if (!settlementRows[index].costType) settlementRows[index].costType = match.costType;
+    }
+}
 
-            return options;
-        }
-
-        function applyScheduleToWarranty(index, endDate) {
-            if (!endDate) return;
-
-            // [추가] 잔금일 선택 시 (속성명 수정: balanceDate -> finalPaymentDate)
-            if (endDate === 'balanceDate') {
-                endDate = currentData.finalPaymentDate;
-            }
-
-            // 1. Find the original warranty duration from AS_DB
-            const row = asListRows[index];
-            const dbItem = AS_DB.find(d =>
-                d.category === row.category &&
-                d.brand === row.brand &&
-                d.item === row.item
-            );
-
-            // Default to '1년' if not found or empty
-            const durationStr = (dbItem && dbItem.warranty) ? dbItem.warranty : '1년';
-
-            try {
-                // endDate format: YYYY-MM-DD
-                const date = new Date(endDate);
-
-                // 2. Parse duration string (e.g., "1년", "2년", "6개월")
-                let addYears = 0;
-                let addMonths = 0;
-
-                const yearMatch = durationStr.match(/(\d+)\s*년/);
-                const monthMatch = durationStr.match(/(\d+)\s*개월/);
-
-                addYears = yearMatch ? parseInt(yearMatch[1]) : 0;
-                addMonths = monthMatch ? parseInt(monthMatch[1]) : 0;
-
-                // Fallback: If no recognized format, default to 1 year
-                if (addYears === 0 && addMonths === 0) {
-                    addYears = 1;
-                }
-
-                // 3. Calculate new date
-                date.setFullYear(date.getFullYear() + addYears);
-                date.setMonth(date.getMonth() + addMonths);
-
-                // 4. Format: ~YY.MM.DD
-                const yy = String(date.getFullYear()).slice(-2);
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                const warrantyText = `~${yy}.${mm}.${dd}`;
-
-                // 5. Update state and UI
-                asListRows[index].warranty = warrantyText;
-                const inputEl = document.getElementById(`warrantyInput_${index}`);
-                if (inputEl) inputEl.value = warrantyText;
-
-                saveASList();
-                showToast(`보증기간(${durationStr})이 적용되었습니다.`, 'success');
-
-            } catch (e) {
-                console.error("Invalid Date Calculation", e);
-                showToast('날짜 계산 중 오류가 발생했습니다.', 'error');
-            }
-        }
-
-        function updateASListRow(index, field, value) {
-            asListRows[index][field] = value;
-            saveASList();
-        }
-
-        function removeASListRow(index) {
-
-            asListRows.splice(index, 1);
-            renderASListTable();
-            saveASList();
-        }
-
-        function saveASList() {
-            if (!currentData) return;
-            currentData.as_list = asListRows;
-            saveCustomers();
-        }
-
-        async function syncASListFromCloud() {
-            if (!confirm('경고: 현재 목록이 초기화되고 Google Sheet의 전체 A/S 리스트로 교체됩니다.\n계속하시겠습니까?')) return;
-
-            const btn = document.querySelector('button[onclick="syncASListFromCloud()"]');
-            const originalText = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.innerHTML = '⏳ 불러오는 중...';
-                btn.disabled = true;
-            }
-
-            try {
-                // Use 'as_list' to hit handleASListGet
-                const params = new URLSearchParams({ sheet: 'as_list' });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                const result = await response.json();
-
-                if (result.result === 'success' && result.items) {
-                    // Populate asListRows with ALL items from the DB
-                    asListRows = result.items.map(item => ({
-                        category: item.category || '',
-                        brand: item.brand || '',
-                        item: item.item || '',
-                        modelNum: item.modelNum || '',
-                        size: item.size || '',
-                        price: item.price || '',
-                        service: item.service || '',
-                        warranty: item.warranty || '',
-                        note: item.note || ''
-                    }));
-
-                    // Also update the global AS_DB for dropdowns
-                    AS_DB = result.items;
-
-                    renderASListTable();
-                    saveASList();
-                    showToast(`전체 ${asListRows.length}개의 항목을 불러왔습니다.`, 'success');
-                } else {
-                    throw new Error(result.message || '데이터 구조가 올바르지 않습니다.');
-                }
-
-            } catch (error) {
-                console.error('Error syncing AS list:', error);
-                showToast('불러오기 실패: ' + error.message, 'error');
-            } finally {
-                if (btn) {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            }
-        }
-
-        // ============================
-        // [신규] 정산 관리 대장 (Settlement Management)
-        // ============================
-        let settlementRows = [];
-        let settlementDirty = false; // UX: Track unsaved changes
-        let settlementOptionsData = []; // [신규] 정산 관리 대장 옵션 마스터 데이터
-
-        // [신규] 정산 관리 대장 옵션 마스터 데이터 가져오기
-        async function fetchSettlementMaster() {
-            try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=settlement&action=getSettlementOptions`);
-                const result = await response.json();
-                if (result.result === 'success' && result.options) {
-                    settlementOptionsData = result.options;
-                    console.log('✅ 정산 옵션 마스터 로드 완료:', settlementOptionsData.length + '개');
-
-                    // 정산 탭이 열려있다면 갱신
-                    if (document.getElementById('panel-settlement').classList.contains('active')) {
-                        renderSettlementTable();
-                    }
-                } else {
-                    console.warn('⚠️ 정산 옵션 마스터 로드 실패 또는 비어있음.');
-                }
-            } catch (error) {
-                console.error('정산 옵션 마스터 로드 중 오류:', error);
-            }
-        }
-
-        function formatNumberInput(input) {
-            let value = input.value.replace(/,/g, '');
-            if (!isNaN(value) && value !== '') {
-                input.value = Number(value).toLocaleString();
-            }
-        }
-
-        // 카테고리 목록
-        const SETTLEMENT_CATEGORIES = [
-            '가설공사', '철거공사', '설비/방수공사', '전기/조명공사', '에어컨공사',
-            '창호공사', '목공/도어공사', '타일공사', '욕실공사', '필름공사',
-            '도장공사', '바닥재공사', '도배공사', '가구공사', '중문공사',
-            '마감공사', '기타공사'
-        ];
-
-        // 거래처 정보 자동 완성을 위한 도우미 함수
-        function autoFillPartnerInfo(index, clientName) {
-            if (!clientName) return;
-            // 현재 활성화된 정산 행들이나 과거 기록에서 해당 거래처의 정보가 있는지 찾음
-            const match = settlementRows.find((r, idx) => idx !== index && r.client === clientName && (r.bizId || r.bankInfo));
-            if (match) {
-                if (!settlementRows[index].bizId) settlementRows[index].bizId = match.bizId;
-                if (!settlementRows[index].bankInfo) settlementRows[index].bankInfo = match.bankInfo;
-                if (!settlementRows[index].payType) settlementRows[index].payType = match.payType;
-                if (!settlementRows[index].costType) settlementRows[index].costType = match.costType;
-            }
-        }
-
-        function onSettlementCategoryChange(index, value) {
-            if (value === '__DIRECT_INPUT__') {
-                const custom = prompt('카테고리를 직접 입력하세요:');
-                if (custom) {
-                    settlementRows[index].category = custom;
-                    settlementRows[index].process = '';
-                    settlementRows[index].client = '';
-                } else {
-                    renderSettlementTable();
-                    return;
-                }
-            } else {
-                settlementRows[index].category = value;
-                settlementRows[index].process = '';
-                settlementRows[index].client = '';
-            }
+function onSettlementCategoryChange(index, value) {
+    if (value === '__DIRECT_INPUT__') {
+        const custom = prompt('카테고리를 직접 입력하세요:');
+        if (custom) {
+            settlementRows[index].category = custom;
+            settlementRows[index].process = '';
+            settlementRows[index].client = '';
+        } else {
             renderSettlementTable();
-            saveSettlementToLocal();
+            return;
         }
+    } else {
+        settlementRows[index].category = value;
+        settlementRows[index].process = '';
+        settlementRows[index].client = '';
+    }
+    renderSettlementTable();
+    saveSettlementToLocal();
+}
 
-        function onSettlementProcessChange(index, value) {
-            if (value === '__DIRECT_INPUT__') {
-                const custom = prompt('공정명을 직접 입력하세요:');
-                if (custom) {
-                    settlementRows[index].process = custom;
-                } else {
-                    renderSettlementTable();
-                    return;
-                }
-            } else {
-                settlementRows[index].process = value;
-            }
-
-            // 공정 선택 시 기본 담당자 자동 세팅
-            const row = settlementRows[index];
-            if (row.process) {
-                // 1. 매칭 소스 결정 (정산 DB 우선, 없으면 스케줄 DB)
-                // 만약 정산 옵션 데이터가 있으면 사용, 없으면 스케줄 템플릿 사용 (Fallback)
-                const sourceData = (settlementOptionsData && settlementOptionsData.length > 0) ? settlementOptionsData : defaultScheduleSteps;
-                const isSettlementMaster = (sourceData === settlementOptionsData);
-
-                // 2. DB에서 매칭 확인
-                const matches = sourceData.filter(s => {
-                    const cat1 = (row.category || '').replace(/\s/g, '').replace('공사', '');
-                    const cat2 = (s.category || '').replace(/\s/g, '').replace('공사', '');
-                    return (cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1)) &&
-                        (isSettlementMaster ? s.process : s.name) === row.process;
-                });
-
-                if (matches.length > 0 && !row.client) {
-                    const matchedItem = matches[0];
-                    const clientName = isSettlementMaster ? matchedItem.client : matchedItem.inCharge;
-
-                    if (clientName) {
-                        settlementRows[index].client = clientName;
-
-                        // 추가 정보 자동 기입 (정산 DB인 경우만 가능)
-                        if (isSettlementMaster) {
-                            if (matchedItem.costType) settlementRows[index].costType = matchedItem.costType;
-                            if (matchedItem.payType) settlementRows[index].payType = matchedItem.payType;
-                            if (matchedItem.bizId) settlementRows[index].bizId = matchedItem.bizId;
-                            if (matchedItem.bankInfo) settlementRows[index].bankInfo = matchedItem.bankInfo;
-                        }
-
-                        // 과거 기록 참조 (Fallback)
-                        autoFillPartnerInfo(index, clientName);
-                    }
-                }
-            }
+function onSettlementProcessChange(index, value) {
+    if (value === '__DIRECT_INPUT__') {
+        const custom = prompt('공정명을 직접 입력하세요:');
+        if (custom) {
+            settlementRows[index].process = custom;
+        } else {
             renderSettlementTable();
-            saveSettlementToLocal();
+            return;
+        }
+    } else {
+        settlementRows[index].process = value;
+    }
+
+    // 공정 선택 시 기본 담당자 자동 세팅
+    const row = settlementRows[index];
+    if (row.process) {
+        // 1. 매칭 소스 결정 (정산 DB 우선, 없으면 스케줄 DB)
+        // 만약 정산 옵션 데이터가 있으면 사용, 없으면 스케줄 템플릿 사용 (Fallback)
+        const sourceData = (settlementOptionsData && settlementOptionsData.length > 0) ? settlementOptionsData : defaultScheduleSteps;
+        const isSettlementMaster = (sourceData === settlementOptionsData);
+
+        // 2. DB에서 매칭 확인
+        const matches = sourceData.filter(s => {
+            const cat1 = (row.category || '').replace(/\s/g, '').replace('공사', '');
+            const cat2 = (s.category || '').replace(/\s/g, '').replace('공사', '');
+            return (cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1)) &&
+                (isSettlementMaster ? s.process : s.name) === row.process;
+        });
+
+        if (matches.length > 0 && !row.client) {
+            const matchedItem = matches[0];
+            const clientName = isSettlementMaster ? matchedItem.client : matchedItem.inCharge;
+
+            if (clientName) {
+                settlementRows[index].client = clientName;
+
+                // 추가 정보 자동 기입 (정산 DB인 경우만 가능)
+                if (isSettlementMaster) {
+                    if (matchedItem.costType) settlementRows[index].costType = matchedItem.costType;
+                    if (matchedItem.payType) settlementRows[index].payType = matchedItem.payType;
+                    if (matchedItem.bizId) settlementRows[index].bizId = matchedItem.bizId;
+                    if (matchedItem.bankInfo) settlementRows[index].bankInfo = matchedItem.bankInfo;
+                }
+
+                // 과거 기록 참조 (Fallback)
+                autoFillPartnerInfo(index, clientName);
+            }
+        }
+    }
+    renderSettlementTable();
+    saveSettlementToLocal();
+}
+
+function renderSettlementTable() {
+    const tbody = document.getElementById('settlementTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    let totalPayAmount = 0; // 총 결제금액
+
+    settlementRows.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        const payAmount = parseInt(String(row.payAmount || '0').replace(/,/g, ''), 10) || 0;
+        totalPayAmount += payAmount;
+
+        // 1. 카테고리 옵션 생성 (마스터 데이터 DB 기준)
+        // 만약 정산 옵션 데이터가 있으면 사용, 없으면 스케줄 템플릿 사용 (Fallback)
+        const sourceData = (settlementOptionsData && settlementOptionsData.length > 0) ? settlementOptionsData : defaultScheduleSteps;
+        const isSettlementMaster = (sourceData === settlementOptionsData);
+
+        const combinedCategories = [...new Set([
+            ...SETTLEMENT_CATEGORIES,
+            ...(sourceData.map(s => s.category).filter(Boolean))
+        ])];
+
+        let categoryOptions = '<option value="">선택</option>';
+        categoryOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
+        combinedCategories.forEach(cat => {
+            categoryOptions += `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`;
+        });
+        if (row.category && !combinedCategories.includes(row.category)) {
+            categoryOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.category}" selected>${row.category}</option>` +
+                combinedCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
         }
 
-        function renderSettlementTable() {
-            const tbody = document.getElementById('settlementTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+        // 2. 공정분류 옵션 생성 (DB 데이터 사용)
+        // [수정] 정산 관리 대장 DB(또는 스케줄)를 기준으로 매칭
+        const filteredSteps = sourceData.filter(s => {
+            if (!row.category) return true;
+            // Comparison relaxed: 1. Remove "공사", 2. Remove spaces, 3. Remove leading numbers (e.g., "01.")
+            const normalize = (str) => (str || '').replace(/^\d+\.?\s*/, '').replace(/\s/g, '').replace('공사', '');
+            const cat1 = normalize(row.category);
+            const cat2 = normalize(s.category);
 
-            let totalPayAmount = 0; // 총 결제금액
+            return cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1);
+        });
 
-            settlementRows.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                const payAmount = parseInt(String(row.payAmount || '0').replace(/,/g, ''), 10) || 0;
-                totalPayAmount += payAmount;
+        // 데이터 소스에 따라 키가 다름 (settlementOptionsData: process, defaultScheduleSteps: name)
+        const uniqueProcesses = [...new Set(filteredSteps.map(s => isSettlementMaster ? s.process : s.name).filter(Boolean))];
+        let processOptions = '<option value="">선택</option>';
+        processOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
+        uniqueProcesses.forEach(p => {
+            processOptions += `<option value="${p}" ${row.process === p ? 'selected' : ''}>${p}</option>`;
+        });
+        if (row.process && !uniqueProcesses.includes(row.process)) {
+            processOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.process}" selected>${row.process}</option>` +
+                uniqueProcesses.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
 
-                // 1. 카테고리 옵션 생성 (마스터 데이터 DB 기준)
-                // 만약 정산 옵션 데이터가 있으면 사용, 없으면 스케줄 템플릿 사용 (Fallback)
-                const sourceData = (settlementOptionsData && settlementOptionsData.length > 0) ? settlementOptionsData : defaultScheduleSteps;
-                const isSettlementMaster = (sourceData === settlementOptionsData);
+        // 3. 거래처/작업자 옵션 생성 (공정명 기반 필터링 + 과거 기록)
+        let availableClients = [];
+        if (row.process) {
+            availableClients = sourceData
+                .filter(s => (isSettlementMaster ? s.process : s.name) === row.process)
+                .map(s => isSettlementMaster ? s.client : s.inCharge)
+                .filter(Boolean);
+        }
+        const pastClients = settlementRows.map(r => r.client).filter(Boolean);
+        const combinedClients = [...new Set([...availableClients, ...pastClients])];
+        let clientOptions = '<option value="">선택</option>';
+        clientOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
+        combinedClients.forEach(c => {
+            clientOptions += `<option value="${c}" ${row.client === c ? 'selected' : ''}>${c}</option>`;
+        });
+        if (row.client && !combinedClients.includes(row.client)) {
+            clientOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.client}" selected>${row.client}</option>` +
+                combinedClients.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
 
-                const combinedCategories = [...new Set([
-                    ...SETTLEMENT_CATEGORIES,
-                    ...(sourceData.map(s => s.category).filter(Boolean))
-                ])];
+        tr.setAttribute('draggable', 'true');
+        tr.ondragstart = (e) => handleSettlementDragStart(e, index);
+        tr.ondragover = handleSettlementDragOver;
+        tr.ondrop = (e) => handleSettlementDrop(e, index);
+        tr.ondragend = handleSettlementDragEnd;
+        tr.style.cursor = 'move';
 
-                let categoryOptions = '<option value="">선택</option>';
-                categoryOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
-                combinedCategories.forEach(cat => {
-                    categoryOptions += `<option value="${cat}" ${row.category === cat ? 'selected' : ''}>${cat}</option>`;
-                });
-                if (row.category && !combinedCategories.includes(row.category)) {
-                    categoryOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.category}" selected>${row.category}</option>` +
-                        combinedCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-                }
-
-                // 2. 공정분류 옵션 생성 (DB 데이터 사용)
-                // [수정] 정산 관리 대장 DB(또는 스케줄)를 기준으로 매칭
-                const filteredSteps = sourceData.filter(s => {
-                    if (!row.category) return true;
-                    // Comparison relaxed: 1. Remove "공사", 2. Remove spaces, 3. Remove leading numbers (e.g., "01.")
-                    const normalize = (str) => (str || '').replace(/^\d+\.?\s*/, '').replace(/\s/g, '').replace('공사', '');
-                    const cat1 = normalize(row.category);
-                    const cat2 = normalize(s.category);
-
-                    return cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1);
-                });
-
-                // 데이터 소스에 따라 키가 다름 (settlementOptionsData: process, defaultScheduleSteps: name)
-                const uniqueProcesses = [...new Set(filteredSteps.map(s => isSettlementMaster ? s.process : s.name).filter(Boolean))];
-                let processOptions = '<option value="">선택</option>';
-                processOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
-                uniqueProcesses.forEach(p => {
-                    processOptions += `<option value="${p}" ${row.process === p ? 'selected' : ''}>${p}</option>`;
-                });
-                if (row.process && !uniqueProcesses.includes(row.process)) {
-                    processOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.process}" selected>${row.process}</option>` +
-                        uniqueProcesses.map(p => `<option value="${p}">${p}</option>`).join('');
-                }
-
-                // 3. 거래처/작업자 옵션 생성 (공정명 기반 필터링 + 과거 기록)
-                let availableClients = [];
-                if (row.process) {
-                    availableClients = sourceData
-                        .filter(s => (isSettlementMaster ? s.process : s.name) === row.process)
-                        .map(s => isSettlementMaster ? s.client : s.inCharge)
-                        .filter(Boolean);
-                }
-                const pastClients = settlementRows.map(r => r.client).filter(Boolean);
-                const combinedClients = [...new Set([...availableClients, ...pastClients])];
-                let clientOptions = '<option value="">선택</option>';
-                clientOptions += '<option value="__DIRECT_INPUT__">🖊️ 직접 입력</option>';
-                combinedClients.forEach(c => {
-                    clientOptions += `<option value="${c}" ${row.client === c ? 'selected' : ''}>${c}</option>`;
-                });
-                if (row.client && !combinedClients.includes(row.client)) {
-                    clientOptions = `<option value="">선택</option><option value="__DIRECT_INPUT__">🖊️ 직접 입력</option><option value="${row.client}" selected>${row.client}</option>` +
-                        combinedClients.map(c => `<option value="${c}">${c}</option>`).join('');
-                }
-
-                tr.setAttribute('draggable', 'true');
-                tr.ondragstart = (e) => handleSettlementDragStart(e, index);
-                tr.ondragover = handleSettlementDragOver;
-                tr.ondrop = (e) => handleSettlementDrop(e, index);
-                tr.ondragend = handleSettlementDragEnd;
-                tr.style.cursor = 'move';
-
-                tr.innerHTML = `
+        tr.innerHTML = `
                     <td style="padding:5px; text-align:center; border:1px solid #d2d2d7; white-space:nowrap;">
                         <span style="cursor:grab; margin-right:4px; color:#999;">☰</span>
                         <button onclick="removeSettlementRow(${index})" style="background:none; border:none; color:#ff3b30; cursor:pointer; font-size:14px; margin-right:4px;" title="삭제">🗑️</button>
@@ -3459,258 +3459,258 @@
                         <input type="text" value="${row.note || ''}" onchange="updateSettlementRow(${index}, 'note', this.value)" style="width:100%; border:none; background:transparent; font-size:11px;" placeholder="비고">
                     </td>
                 `;
-                tbody.appendChild(tr);
-            });
+        tbody.appendChild(tr);
+    });
 
-            // 합계 표시 업데이트
-            // 합계 계산
-            const totalIncome = currentData && currentData.totalAmount ? parseInt(String(currentData.totalAmount).replace(/,/g, '')) || 0 : 0;
-            const totalExpense = totalPayAmount;
-            const profit = totalIncome - totalExpense;
-            const profitRate = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : 0;
+    // 합계 표시 업데이트
+    // 합계 계산
+    const totalIncome = currentData && currentData.totalAmount ? parseInt(String(currentData.totalAmount).replace(/,/g, '')) || 0 : 0;
+    const totalExpense = totalPayAmount;
+    const profit = totalIncome - totalExpense;
+    const profitRate = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : 0;
 
-            // 합계 표시 업데이트
-            document.getElementById('settlementTotalIncome').innerText = totalIncome.toLocaleString();
-            document.getElementById('settlementTotalExpense').innerText = totalExpense.toLocaleString();
-            document.getElementById('settlementProfit').innerText = profit.toLocaleString();
-            document.getElementById('settlementProfitRate').innerText = profitRate + '%';
+    // 합계 표시 업데이트
+    document.getElementById('settlementTotalIncome').innerText = totalIncome.toLocaleString();
+    document.getElementById('settlementTotalExpense').innerText = totalExpense.toLocaleString();
+    document.getElementById('settlementProfit').innerText = profit.toLocaleString();
+    document.getElementById('settlementProfitRate').innerText = profitRate + '%';
 
-            // 색상 처리
-            document.getElementById('settlementProfit').style.color = profit >= 0 ? '#34c759' : '#ff3b30';
-            document.getElementById('settlementProfitRate').style.color = profit >= 0 ? '#333' : '#ff3b30';
-        }
+    // 색상 처리
+    document.getElementById('settlementProfit').style.color = profit >= 0 ? '#34c759' : '#ff3b30';
+    document.getElementById('settlementProfitRate').style.color = profit >= 0 ? '#333' : '#ff3b30';
+}
 
-        function addSettlementRow() {
-            settlementRows.push({
-                category: '',
-                process: '',
-                client: '',
-                costType: '',
-                payType: '',
-                bizId: '',
-                bankInfo: '',
-                payAmount: 0,
-                payDate: '',
-                payStatus: '미지급',
-                note: ''
-            });
+function addSettlementRow() {
+    settlementRows.push({
+        category: '',
+        process: '',
+        client: '',
+        costType: '',
+        payType: '',
+        bizId: '',
+        bankInfo: '',
+        payAmount: 0,
+        payDate: '',
+        payStatus: '미지급',
+        note: ''
+    });
+    renderSettlementTable();
+    saveSettlementToLocal();
+    setSettlementDirty(true);
+}
+
+function removeSettlementRow(index) {
+    settlementRows.splice(index, 1);
+    renderSettlementTable();
+    saveSettlementToLocal();
+    setSettlementDirty(true);
+}
+
+function updateSettlementRow(index, field, value) {
+    if (field === 'client' && value === '__DIRECT_INPUT__') {
+        const custom = prompt('거래처명을 직접 입력하세요:');
+        if (custom) {
+            settlementRows[index].client = custom;
+            autoFillPartnerInfo(index, custom);
+        } else {
             renderSettlementTable();
-            saveSettlementToLocal();
-            setSettlementDirty(true);
+            return;
         }
-
-        function removeSettlementRow(index) {
-            settlementRows.splice(index, 1);
-            renderSettlementTable();
-            saveSettlementToLocal();
-            setSettlementDirty(true);
+    } else {
+        settlementRows[index][field] = value;
+        if (field === 'client') {
+            autoFillPartnerInfo(index, value);
         }
+    }
+    renderSettlementTable();
+    saveSettlementToLocal();
+    setSettlementDirty(true);
+}
 
-        function updateSettlementRow(index, field, value) {
-            if (field === 'client' && value === '__DIRECT_INPUT__') {
-                const custom = prompt('거래처명을 직접 입력하세요:');
-                if (custom) {
-                    settlementRows[index].client = custom;
-                    autoFillPartnerInfo(index, custom);
-                } else {
-                    renderSettlementTable();
-                    return;
-                }
+function saveSettlementToLocal() {
+    if (currentData) {
+        currentData.settlementRows = settlementRows;
+        saveCustomers(); // 로컬 스토리지 저장
+    }
+}
+
+// UX: Set dirty state and update indicator
+function setSettlementDirty(dirty) {
+    settlementDirty = dirty;
+    const indicator = document.getElementById('settlementDirtyIndicator');
+    const saveBtn = document.getElementById('btnSaveSettlement');
+
+    if (indicator) {
+        if (dirty) {
+            indicator.textContent = '⚠️ 저장되지 않은 변경사항';
+            indicator.style.color = '#ff9500';
+            indicator.style.display = 'inline-block';
+        } else {
+            indicator.textContent = '✅ 저장됨';
+            indicator.style.color = '#34c759';
+            indicator.style.display = 'inline-block';
+            setTimeout(() => { if (!settlementDirty) indicator.style.display = 'none'; }, 3000);
+        }
+    }
+
+    if (saveBtn) {
+        if (dirty) {
+            saveBtn.style.background = '#ff9500';
+            saveBtn.style.animation = 'pulse 1.5s infinite';
+            saveBtn.innerHTML = '💾 저장하기 <span style="background:#fff;color:#ff9500;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px;">!</span>';
+        } else {
+            saveBtn.style.background = '#0071e3';
+            saveBtn.style.animation = 'none';
+            saveBtn.innerHTML = '💾 저장하기';
+        }
+    }
+}
+
+// [추가] 정산 데이터 초기화 (기본 카테고리로)
+function initializeSettlementRows() {
+    if (typeof SETTLEMENT_CATEGORIES === 'undefined') return;
+    settlementRows = SETTLEMENT_CATEGORIES.map(cat => ({
+        category: cat,
+        process: '',
+        client: '',
+        costType: '',
+        payType: '', // [수정] payMethod -> payType
+        bizId: '',
+        bankInfo: '',
+        payAmount: 0, // [수정] amount -> payAmount
+        payDate: '', // [수정] date -> payDate
+        payStatus: '미지급', // [수정] status -> payStatus
+        note: '' // [수정] memo -> note
+    }));
+    renderSettlementTable();
+    saveSettlementToLocal();
+}
+
+// 구글 시트에서 불러오기
+async function syncSettlementFromCloud() {
+    // [수정] ID 체크 강화 (id 또는 customerId)
+    const custId = currentData ? (currentData.id || currentData.customerId) : null;
+    if (!custId) {
+        showToast('고객을 먼저 선택해주세요', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnLoadSettlement');
+    const originalText = btn ? btn.innerText : '';
+    if (btn) {
+        btn.innerText = '⏳ 연동중...';
+        btn.disabled = true;
+    }
+
+    try {
+        // 옵션 마스터 데이터 먼저 동기화
+        await fetchSettlementMaster();
+
+        const params = new URLSearchParams({
+            sheet: 'settlement',
+            customerId: custId
+        });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+        const result = await response.json();
+
+        if (result.result === 'success') {
+            if (result.rows && result.rows.length > 0) {
+                settlementRows = result.rows;
+                showToast('정산 내역 및 옵션을 동기화했습니다.', 'success');
+                logUserAction('불러오기', (currentData.clientName || '') + ' 정산 내역 불러오기');
             } else {
-                settlementRows[index][field] = value;
-                if (field === 'client') {
-                    autoFillPartnerInfo(index, value);
-                }
+                // [변경] 데이터가 없으면 기본 템플릿 생성
+                initializeSettlementRows();
+                showToast('저장된 내역이 없어 기본 항목을 생성했습니다.', 'info');
             }
             renderSettlementTable();
             saveSettlementToLocal();
-            setSettlementDirty(true);
+        } else {
+            throw new Error(result.error || '불러오기 실패');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('연동 실패: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+// 구글 시트로 저장하기
+async function syncSettlementToCloud() {
+    // [수정] ID 체크 강화
+    const custId = currentData ? (currentData.id || currentData.customerId) : null;
+    if (!custId) {
+        showToast('고객을 먼저 선택해주세요', 'error');
+        return;
+    }
+
+    if (!confirm('현재 정산 내역을 구글 시트에 저장(덮어쓰기)하시겠습니까?')) return;
+
+    const btn = document.getElementById('btnSaveSettlement');
+    if (btn) {
+        btn.innerHTML = '⏳ 저장중...';
+        btn.disabled = true;
+        btn.style.animation = 'none';
+    }
+
+    try {
+        // 저장 데이터 구성
+        const payload = {
+            action: 'updateSettlement',
+            customerId: custId,
+            customerName: currentData.clientName,
+            rows: settlementRows
+        };
+
+        // sendDataToAppsScript 함수 재사용 (또는 직접 fetch)
+        // 여기서는 직접 fetch 구현 (post)
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload) // sendBeacon 대신 일반 fetch 사용 (결과 확인 필요)
+        });
+        const result = await response.json();
+
+        if (result.result === 'success') {
+            showToast('정산 내역이 구글 시트에 저장되었습니다.', 'success');
+            setSettlementDirty(false); // UX: Clear dirty state on success
+            logUserAction('저장', (currentData.clientName || '') + ' 정산 내역 저장');
+        } else {
+            throw new Error(result.error || '저장 실패');
         }
 
-        function saveSettlementToLocal() {
-            if (currentData) {
-                currentData.settlementRows = settlementRows;
-                saveCustomers(); // 로컬 스토리지 저장
+    } catch (err) {
+        console.error(err);
+        showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            // Button text/style will be set by setSettlementDirty if success
+            if (settlementDirty) {
+                btn.innerHTML = '💾 저장하기 <span style="background:#fff;color:#ff9500;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px;">!</span>';
+                btn.style.background = '#ff9500';
+                btn.style.animation = 'pulse 1.5s infinite';
             }
         }
+    }
+}
 
-        // UX: Set dirty state and update indicator
-        function setSettlementDirty(dirty) {
-            settlementDirty = dirty;
-            const indicator = document.getElementById('settlementDirtyIndicator');
-            const saveBtn = document.getElementById('btnSaveSettlement');
+// 정산 관리 대장 인쇄
+function printSettlement() {
+    const panel = document.getElementById('panel-settlement');
+    if (!panel) {
+        showToast('인쇄할 내용이 없습니다.', 'error');
+        return;
+    }
 
-            if (indicator) {
-                if (dirty) {
-                    indicator.textContent = '⚠️ 저장되지 않은 변경사항';
-                    indicator.style.color = '#ff9500';
-                    indicator.style.display = 'inline-block';
-                } else {
-                    indicator.textContent = '✅ 저장됨';
-                    indicator.style.color = '#34c759';
-                    indicator.style.display = 'inline-block';
-                    setTimeout(() => { if (!settlementDirty) indicator.style.display = 'none'; }, 3000);
-                }
-            }
+    const customerName = currentData?.clientName || currentData?.projectName || '고객명없음';
+    const printContent = panel.innerHTML;
 
-            if (saveBtn) {
-                if (dirty) {
-                    saveBtn.style.background = '#ff9500';
-                    saveBtn.style.animation = 'pulse 1.5s infinite';
-                    saveBtn.innerHTML = '💾 저장하기 <span style="background:#fff;color:#ff9500;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px;">!</span>';
-                } else {
-                    saveBtn.style.background = '#0071e3';
-                    saveBtn.style.animation = 'none';
-                    saveBtn.innerHTML = '💾 저장하기';
-                }
-            }
-        }
-
-        // [추가] 정산 데이터 초기화 (기본 카테고리로)
-        function initializeSettlementRows() {
-            if (typeof SETTLEMENT_CATEGORIES === 'undefined') return;
-            settlementRows = SETTLEMENT_CATEGORIES.map(cat => ({
-                category: cat,
-                process: '',
-                client: '',
-                costType: '',
-                payType: '', // [수정] payMethod -> payType
-                bizId: '',
-                bankInfo: '',
-                payAmount: 0, // [수정] amount -> payAmount
-                payDate: '', // [수정] date -> payDate
-                payStatus: '미지급', // [수정] status -> payStatus
-                note: '' // [수정] memo -> note
-            }));
-            renderSettlementTable();
-            saveSettlementToLocal();
-        }
-
-        // 구글 시트에서 불러오기
-        async function syncSettlementFromCloud() {
-            // [수정] ID 체크 강화 (id 또는 customerId)
-            const custId = currentData ? (currentData.id || currentData.customerId) : null;
-            if (!custId) {
-                showToast('고객을 먼저 선택해주세요', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('btnLoadSettlement');
-            const originalText = btn ? btn.innerText : '';
-            if (btn) {
-                btn.innerText = '⏳ 연동중...';
-                btn.disabled = true;
-            }
-
-            try {
-                // 옵션 마스터 데이터 먼저 동기화
-                await fetchSettlementMaster();
-
-                const params = new URLSearchParams({
-                    sheet: 'settlement',
-                    customerId: custId
-                });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                const result = await response.json();
-
-                if (result.result === 'success') {
-                    if (result.rows && result.rows.length > 0) {
-                        settlementRows = result.rows;
-                        showToast('정산 내역 및 옵션을 동기화했습니다.', 'success');
-                        logUserAction('불러오기', (currentData.clientName || '') + ' 정산 내역 불러오기');
-                    } else {
-                        // [변경] 데이터가 없으면 기본 템플릿 생성
-                        initializeSettlementRows();
-                        showToast('저장된 내역이 없어 기본 항목을 생성했습니다.', 'info');
-                    }
-                    renderSettlementTable();
-                    saveSettlementToLocal();
-                } else {
-                    throw new Error(result.error || '불러오기 실패');
-                }
-            } catch (err) {
-                console.error(err);
-                showToast('연동 실패: ' + err.message, 'error');
-            } finally {
-                if (btn) {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }
-            }
-        }
-
-        // 구글 시트로 저장하기
-        async function syncSettlementToCloud() {
-            // [수정] ID 체크 강화
-            const custId = currentData ? (currentData.id || currentData.customerId) : null;
-            if (!custId) {
-                showToast('고객을 먼저 선택해주세요', 'error');
-                return;
-            }
-
-            if (!confirm('현재 정산 내역을 구글 시트에 저장(덮어쓰기)하시겠습니까?')) return;
-
-            const btn = document.getElementById('btnSaveSettlement');
-            if (btn) {
-                btn.innerHTML = '⏳ 저장중...';
-                btn.disabled = true;
-                btn.style.animation = 'none';
-            }
-
-            try {
-                // 저장 데이터 구성
-                const payload = {
-                    action: 'updateSettlement',
-                    customerId: custId,
-                    customerName: currentData.clientName,
-                    rows: settlementRows
-                };
-
-                // sendDataToAppsScript 함수 재사용 (또는 직접 fetch)
-                // 여기서는 직접 fetch 구현 (post)
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload) // sendBeacon 대신 일반 fetch 사용 (결과 확인 필요)
-                });
-                const result = await response.json();
-
-                if (result.result === 'success') {
-                    showToast('정산 내역이 구글 시트에 저장되었습니다.', 'success');
-                    setSettlementDirty(false); // UX: Clear dirty state on success
-                    logUserAction('저장', (currentData.clientName || '') + ' 정산 내역 저장');
-                } else {
-                    throw new Error(result.error || '저장 실패');
-                }
-
-            } catch (err) {
-                console.error(err);
-                showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    // Button text/style will be set by setSettlementDirty if success
-                    if (settlementDirty) {
-                        btn.innerHTML = '💾 저장하기 <span style="background:#fff;color:#ff9500;padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px;">!</span>';
-                        btn.style.background = '#ff9500';
-                        btn.style.animation = 'pulse 1.5s infinite';
-                    }
-                }
-            }
-        }
-
-        // 정산 관리 대장 인쇄
-        function printSettlement() {
-            const panel = document.getElementById('panel-settlement');
-            if (!panel) {
-                showToast('인쇄할 내용이 없습니다.', 'error');
-                return;
-            }
-
-            const customerName = currentData?.clientName || currentData?.projectName || '고객명없음';
-            const printContent = panel.innerHTML;
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -3742,859 +3742,859 @@
                 </body>
                 </html>
             `);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 500);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
 
-            // 로그 기록
-            logUserAction('인쇄', (currentData?.clientName || customerName) + ' 정산 관리 대장 인쇄');
+    // 로그 기록
+    logUserAction('인쇄', (currentData?.clientName || customerName) + ' 정산 관리 대장 인쇄');
+}
+
+// Settlement Drag & Drop Handlers
+let draggedSettlementIndex = null;
+
+function handleSettlementDragStart(e, index) {
+    draggedSettlementIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+    setTimeout(() => e.target.style.opacity = '0.5', 0);
+}
+
+function handleSettlementDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleSettlementDrop(e, index) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (draggedSettlementIndex !== null && draggedSettlementIndex !== index) {
+        // 배열 순서 변경
+        const item = settlementRows.splice(draggedSettlementIndex, 1)[0];
+        settlementRows.splice(index, 0, item);
+
+        renderSettlementTable();
+        saveSettlementToLocal();
+    }
+    return false;
+}
+
+function handleSettlementDragEnd(e) {
+    e.target.style.opacity = '1';
+    draggedSettlementIndex = null;
+}
+
+// Existing Schedule Drag & Drop (Reference)
+let draggedIndex = null;
+function handleDragStart(e, index) {
+    draggedIndex = index;
+    e.target.style.opacity = '0.4';
+}
+function handleDragEnd(e) {
+    e.target.style.opacity = '1';
+    draggedIndex = null;
+}
+function handleDragOver(e) {
+    e.preventDefault();
+}
+function handleDrop(e, index) {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    const item = scheduleRows.splice(draggedIndex, 1)[0];
+    scheduleRows.splice(index, 0, item);
+    renderScheduleTable();
+    saveScheduleToCustomer();
+}
+
+
+function syncAllFields() {
+    // [Auth Check]
+    if (!currentData) return;
+
+    // [Auto-Calc] 잔금일 기반 A/S 종료일 자동 계산 및 저장 (데이터가 없을 때만)
+    if (currentData.finalPaymentDate && !currentData.asEndDate) {
+        const fDate = new Date(currentData.finalPaymentDate);
+        if (!isNaN(fDate.getTime())) {
+            fDate.setMonth(fDate.getMonth() + 12);
+            currentData.asEndDate = fDate.toISOString().split('T')[0];
         }
+    }
 
-        // Settlement Drag & Drop Handlers
-        let draggedSettlementIndex = null;
+    // 1. Input Fields
+    document.querySelectorAll('.synced-input').forEach(field => {
+        field.value = currentData[field.dataset.sync] || '';
+    });
 
-        function handleSettlementDragStart(e, index) {
-            draggedSettlementIndex = index;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', index);
-            setTimeout(() => e.target.style.opacity = '0.5', 0);
-        }
+    // 2. Display Fields (.synced-display)
+    document.querySelectorAll('.synced-display').forEach(field => {
+        let value = currentData[field.dataset.sync] || '-';
 
-        function handleSettlementDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleSettlementDrop(e, index) {
-            e.stopPropagation();
-            e.preventDefault();
-
-            if (draggedSettlementIndex !== null && draggedSettlementIndex !== index) {
-                // 배열 순서 변경
-                const item = settlementRows.splice(draggedSettlementIndex, 1)[0];
-                settlementRows.splice(index, 0, item);
-
-                renderSettlementTable();
-                saveSettlementToLocal();
-            }
-            return false;
-        }
-
-        function handleSettlementDragEnd(e) {
-            e.target.style.opacity = '1';
-            draggedSettlementIndex = null;
-        }
-
-        // Existing Schedule Drag & Drop (Reference)
-        let draggedIndex = null;
-        function handleDragStart(e, index) {
-            draggedIndex = index;
-            e.target.style.opacity = '0.4';
-        }
-        function handleDragEnd(e) {
-            e.target.style.opacity = '1';
-            draggedIndex = null;
-        }
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
-        function handleDrop(e, index) {
-            e.preventDefault();
-            if (draggedIndex === null || draggedIndex === index) return;
-            const item = scheduleRows.splice(draggedIndex, 1)[0];
-            scheduleRows.splice(index, 0, item);
-            renderScheduleTable();
-            saveScheduleToCustomer();
-        }
-
-
-        function syncAllFields() {
-            // [Auth Check]
-            if (!currentData) return;
-
-            // [Auto-Calc] 잔금일 기반 A/S 종료일 자동 계산 및 저장 (데이터가 없을 때만)
-            if (currentData.finalPaymentDate && !currentData.asEndDate) {
-                const fDate = new Date(currentData.finalPaymentDate);
-                if (!isNaN(fDate.getTime())) {
-                    fDate.setMonth(fDate.getMonth() + 12);
-                    currentData.asEndDate = fDate.toISOString().split('T')[0];
-                }
-            }
-
-            // 1. Input Fields
-            document.querySelectorAll('.synced-input').forEach(field => {
-                field.value = currentData[field.dataset.sync] || '';
-            });
-
-            // 2. Display Fields (.synced-display)
-            document.querySelectorAll('.synced-display').forEach(field => {
-                let value = currentData[field.dataset.sync] || '-';
-
-                // 1) A/S 기간 (warrantyPeriod) 계산 로직
-                if (field.dataset.sync === 'warrantyPeriod') {
-                    if (currentData.asEndDate) {
-                        // 잔금일이 있으면 "잔금일 ~ 종료일" 표시
-                        value = currentData.finalPaymentDate ? `${currentData.finalPaymentDate} ~ ${currentData.asEndDate}` : `~ ${currentData.asEndDate}`;
-                    } else if (currentData.asWarrantyEnd) {
-                        value = `~ ${currentData.asWarrantyEnd}`;
-                    }
-                }
-                field.textContent = value;
-            });
-
-            // 3. A/S List Special Fields
-            const asInfo1 = document.getElementById('asClientInfo1');
-            const asInfo2 = document.getElementById('asClientInfo2');
-            if (asInfo1 && asInfo2) {
-                // 라인 1: 본인 성명 (연락처)
-                let name1 = currentData.clientName || '';
-                const phone1 = currentData.clientPhone || '';
-                if (name1 && phone1) name1 += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(phone1) : phone1})`;
-                asInfo1.textContent = name1;
-
-                // 라인 2: 배우자 성명 (연락처)
-                let name2 = currentData.spouseName || '';
-                const phone2 = currentData.spousePhone || '';
-                if (name2) {
-                    if (phone2) name2 += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(phone2) : phone2})`;
-                    asInfo2.textContent = name2;
-                } else {
-                    asInfo2.textContent = '';
-                }
-            }
-
-            const leakEl = document.getElementById('bathroomLeakWarranty');
-            if (leakEl) {
-                leakEl.textContent = currentData.leakWarrantyEnd ? `~ ${currentData.leakWarrantyEnd}` : '-';
-            }
-
-            // 4. [FIX] Schedule Tab Fields Force Sync
-            // 공사 스케줄 탭의 ID 요소들이 synced-display 클래스가 없어 업데이트되지 않는 문제 해결
-            if (document.getElementById('schPeriod')) {
-                document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
-
-                let areaText = (currentData.area || '').toString().replace(' PY', '');
-                if (areaText) areaText += ' PY';
-                document.getElementById('schArea').textContent = areaText;
-
-                document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
-
-                // 공사 의뢰인 (본인) - 성명 (연락처)
-                let clientInfo = '';
-                if (currentData.clientName) {
-                    clientInfo = currentData.clientName + ' 고객님';
-                    if (currentData.clientPhone) clientInfo += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(currentData.clientPhone) : currentData.clientPhone})`;
-                }
-                document.getElementById('schClient1').textContent = clientInfo;
-
-                // 공사 의뢰인 (배우자) - 성명 (연락처) -> Schedule 탭의 input 필드에 할당
-                const client2Input = document.querySelector('.sch-input[data-field="client2"]');
-                if (client2Input) {
-                    let spouseInfo = currentData.spouseName || '';
-                    if (spouseInfo && currentData.spousePhone) {
-                        spouseInfo += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(currentData.spousePhone) : currentData.spousePhone})`;
-                    }
-                    client2Input.value = spouseInfo;
-                }
-
-                document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
-            }
-
-            const rep = document.getElementById('companyRep');
-            if (rep) {
-                document.querySelectorAll('.company-sync').forEach(f => f.value = rep.value);
+        // 1) A/S 기간 (warrantyPeriod) 계산 로직
+        if (field.dataset.sync === 'warrantyPeriod') {
+            if (currentData.asEndDate) {
+                // 잔금일이 있으면 "잔금일 ~ 종료일" 표시
+                value = currentData.finalPaymentDate ? `${currentData.finalPaymentDate} ~ ${currentData.asEndDate}` : `~ ${currentData.asEndDate}`;
+            } else if (currentData.asWarrantyEnd) {
+                value = `~ ${currentData.asWarrantyEnd}`;
             }
         }
+        field.textContent = value;
+    });
 
-        async function exportASListToNotion() {
-            if (!currentData.clientName) {
-                showToast('고객을 먼저 선택해주세요', 'error');
-                return;
+    // 3. A/S List Special Fields
+    const asInfo1 = document.getElementById('asClientInfo1');
+    const asInfo2 = document.getElementById('asClientInfo2');
+    if (asInfo1 && asInfo2) {
+        // 라인 1: 본인 성명 (연락처)
+        let name1 = currentData.clientName || '';
+        const phone1 = currentData.clientPhone || '';
+        if (name1 && phone1) name1 += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(phone1) : phone1})`;
+        asInfo1.textContent = name1;
+
+        // 라인 2: 배우자 성명 (연락처)
+        let name2 = currentData.spouseName || '';
+        const phone2 = currentData.spousePhone || '';
+        if (name2) {
+            if (phone2) name2 += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(phone2) : phone2})`;
+            asInfo2.textContent = name2;
+        } else {
+            asInfo2.textContent = '';
+        }
+    }
+
+    const leakEl = document.getElementById('bathroomLeakWarranty');
+    if (leakEl) {
+        leakEl.textContent = currentData.leakWarrantyEnd ? `~ ${currentData.leakWarrantyEnd}` : '-';
+    }
+
+    // 4. [FIX] Schedule Tab Fields Force Sync
+    // 공사 스케줄 탭의 ID 요소들이 synced-display 클래스가 없어 업데이트되지 않는 문제 해결
+    if (document.getElementById('schPeriod')) {
+        document.getElementById('schPeriod').textContent = currentData.constructionPeriod || '';
+
+        let areaText = (currentData.area || '').toString().replace(' PY', '');
+        if (areaText) areaText += ' PY';
+        document.getElementById('schArea').textContent = areaText;
+
+        document.getElementById('schMoveDate').textContent = currentData.movingDate || '';
+
+        // 공사 의뢰인 (본인) - 성명 (연락처)
+        let clientInfo = '';
+        if (currentData.clientName) {
+            clientInfo = currentData.clientName + ' 고객님';
+            if (currentData.clientPhone) clientInfo += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(currentData.clientPhone) : currentData.clientPhone})`;
+        }
+        document.getElementById('schClient1').textContent = clientInfo;
+
+        // 공사 의뢰인 (배우자) - 성명 (연락처) -> Schedule 탭의 input 필드에 할당
+        const client2Input = document.querySelector('.sch-input[data-field="client2"]');
+        if (client2Input) {
+            let spouseInfo = currentData.spouseName || '';
+            if (spouseInfo && currentData.spousePhone) {
+                spouseInfo += ` (${typeof formatPhoneNumber === 'function' ? formatPhoneNumber(currentData.spousePhone) : currentData.spousePhone})`;
             }
-
-            // [UI 통일] confirm 창 제거하고 토스트 메시지로 대체
-            showToast('노션 내보내기를 시작합니다...', 'info');
-
-            const btn = document.querySelector('button[title="노션으로 A/S 리스트 내보내기"]');
-
-            if (btn) {
-                btn.innerHTML = '⏳ 내보내는 중...';
-                btn.disabled = true;
-            }
-
-            try {
-                const exportData = {
-                    manager: currentData.manager || '',
-                    period: currentData.warrantyPeriod || '',
-                    balanceDate: currentData.balanceDate || '',
-                    clientName: currentData.clientName || '',
-                    clientPhone: currentData.clientPhone || '',
-                    spouseName: currentData.spouseName || '',
-                    spousePhone: currentData.spousePhone || '',
-                    siteAddress: currentData.siteAddress || '',
-                    leakWarranty: currentData.leakWarrantyEnd || '',
-                    guidelines: getASGuidelinesArray(), // [추가] A/S 유의사항 배열
-                    items: typeof asListRows !== 'undefined' ? asListRows : []
-                };
-
-                const payload = {
-                    action: 'exportToNotion',
-                    type: 'asList',
-                    customerId: currentData.customerId,
-                    data: JSON.stringify(exportData)
-                };
-
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast('✅ 노션으로 내보내기 완료!', 'success');
-                } else {
-                    throw new Error(result.message || '동기화 실패');
-                }
-            } catch (error) {
-                console.error('Notion Sync Error:', error);
-                showToast('노션 내보내기 실패: ' + error.message, 'error');
-            } finally {
-                if (btn) {
-                    btn.innerHTML = '📤 노션 내보내기';
-                    btn.disabled = false;
-                }
-            }
+            client2Input.value = spouseInfo;
         }
 
-        async function saveCustomers() {
-            // Phase 2: 클라우드로 저장 (Source of Truth: Google Sheets)
-            if (!currentData || !currentData.customerId) {
-                console.log('❌ [Web Save] No customer selected, skipping save');
-                return;
+        document.getElementById('schSiteAddr').textContent = currentData.siteAddress || '';
+    }
+
+    const rep = document.getElementById('companyRep');
+    if (rep) {
+        document.querySelectorAll('.company-sync').forEach(f => f.value = rep.value);
+    }
+}
+
+async function exportASListToNotion() {
+    if (!currentData.clientName) {
+        showToast('고객을 먼저 선택해주세요', 'error');
+        return;
+    }
+
+    // [UI 통일] confirm 창 제거하고 토스트 메시지로 대체
+    showToast('노션 내보내기를 시작합니다...', 'info');
+
+    const btn = document.querySelector('button[title="노션으로 A/S 리스트 내보내기"]');
+
+    if (btn) {
+        btn.innerHTML = '⏳ 내보내는 중...';
+        btn.disabled = true;
+    }
+
+    try {
+        const exportData = {
+            manager: currentData.manager || '',
+            period: currentData.warrantyPeriod || '',
+            balanceDate: currentData.balanceDate || '',
+            clientName: currentData.clientName || '',
+            clientPhone: currentData.clientPhone || '',
+            spouseName: currentData.spouseName || '',
+            spousePhone: currentData.spousePhone || '',
+            siteAddress: currentData.siteAddress || '',
+            leakWarranty: currentData.leakWarrantyEnd || '',
+            guidelines: getASGuidelinesArray(), // [추가] A/S 유의사항 배열
+            items: typeof asListRows !== 'undefined' ? asListRows : []
+        };
+
+        const payload = {
+            action: 'exportToNotion',
+            type: 'asList',
+            customerId: currentData.customerId,
+            data: JSON.stringify(exportData)
+        };
+
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('✅ 노션으로 내보내기 완료!', 'success');
+        } else {
+            throw new Error(result.message || '동기화 실패');
+        }
+    } catch (error) {
+        console.error('Notion Sync Error:', error);
+        showToast('노션 내보내기 실패: ' + error.message, 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = '📤 노션 내보내기';
+            btn.disabled = false;
+        }
+    }
+}
+
+async function saveCustomers() {
+    // Phase 2: 클라우드로 저장 (Source of Truth: Google Sheets)
+    if (!currentData || !currentData.customerId) {
+        console.log('❌ [Web Save] No customer selected, skipping save');
+        return;
+    }
+
+    console.log('📤 [Web Save] ========== SAVE START ==========');
+    console.log('📋 [Web Save] Customer ID:', currentData.customerId);
+    console.log('📋 [Web Save] Checklist Items Count:', Object.keys(currentData.checklistData || {}).length);
+
+    try {
+        const payload = {
+            sheetName: '고객관리_견적서',
+            data: {
+                customerId: currentData.customerId || '',
+                clientName: currentData.clientName || '',
+                clientPhone: currentData.clientPhone || '',
+                clientEmail: currentData.clientEmail || '',
+                status: currentData.status || '',
+                createdAt: currentData.createdAt || new Date().toISOString(),
+                clientAddress: currentData.clientAddress || '',
+                projectName: currentData.projectName || '',
+                siteAddress: currentData.siteAddress || '',
+                constructionPeriod: currentData.constructionPeriod || '',
+                movingDate: currentData.movingDate || '',
+                finalPaymentDate: currentData.finalPaymentDate || '',
+                contractDate: currentData.contractDate || '',
+                warrantyPeriod: currentData.asEndDate || '',
+                asEndDate: currentData.asEndDate || '',
+                pyeong: currentData.area || '',
+                inflowPath: currentData.clientSource || '',
+                buildingType: currentData.buildingType || '',
+                totalAmount: currentData.totalAmount || '',
+                estimateProfitRate: currentData.profitRate || '15%',
+                manager: currentData.manager || '',
+                updatedAt: new Date().toISOString().split('T')[0],
+                jsonData: JSON.stringify(currentData)
             }
+        };
 
-            console.log('📤 [Web Save] ========== SAVE START ==========');
-            console.log('📋 [Web Save] Customer ID:', currentData.customerId);
-            console.log('📋 [Web Save] Checklist Items Count:', Object.keys(currentData.checklistData || {}).length);
+        console.log('📦 [Web Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
 
-            try {
-                const payload = {
-                    sheetName: '고객관리_견적서',
-                    data: {
-                        customerId: currentData.customerId || '',
-                        clientName: currentData.clientName || '',
-                        clientPhone: currentData.clientPhone || '',
-                        clientEmail: currentData.clientEmail || '',
-                        status: currentData.status || '',
-                        createdAt: currentData.createdAt || new Date().toISOString(),
-                        clientAddress: currentData.clientAddress || '',
-                        projectName: currentData.projectName || '',
-                        siteAddress: currentData.siteAddress || '',
-                        constructionPeriod: currentData.constructionPeriod || '',
-                        movingDate: currentData.movingDate || '',
-                        finalPaymentDate: currentData.finalPaymentDate || '',
-                        contractDate: currentData.contractDate || '',
-                        warrantyPeriod: currentData.asEndDate || '',
-                        asEndDate: currentData.asEndDate || '',
-                        pyeong: currentData.area || '',
-                        inflowPath: currentData.clientSource || '',
-                        buildingType: currentData.buildingType || '',
-                        totalAmount: currentData.totalAmount || '',
-                        estimateProfitRate: currentData.profitRate || '15%',
-                        manager: currentData.manager || '',
-                        updatedAt: new Date().toISOString().split('T')[0],
-                        jsonData: JSON.stringify(currentData)
-                    }
-                };
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
 
-                console.log('📦 [Web Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
+        console.log('📡 [Web Save] Response status:', response.status);
 
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload)
-                });
-
-                console.log('📡 [Web Save] Response status:', response.status);
-
-                const responseText = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                    console.log('✅ [Web Save] Save successful:', result);
-                } catch (e) {
-                    console.warn('⚠️ [Web Save] Response is not JSON:', responseText);
-                    result = { success: true, message: responseText };
-                }
-
-                // Google Apps Script returns {result: 'success'} or {success: true}
-                if (result.success || result.result === 'success') {
-                    console.log('✅ [Web Save] ========== SAVE COMPLETE ==========');
-                } else {
-                    console.error('❌ [Web Save] Save failed:', result.message || 'Unknown error');
-                    showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
-                }
-
-                return result;
-
-            } catch (error) {
-                console.error('❌ [Web Save] Error:', error);
-                showToast('저장 중 오류가 발생했습니다', 'error');
-                throw error;
-            }
+        const responseText = await response.text();
+        let result;
+        try {
+            result = JSON.parse(responseText);
+            console.log('✅ [Web Save] Save successful:', result);
+        } catch (e) {
+            console.warn('⚠️ [Web Save] Response is not JSON:', responseText);
+            result = { success: true, message: responseText };
         }
 
-        async function newCustomer() {
-            if (!isLoggedIn()) {
-                showToast('관리자 로그인이 필요합니다', 'error');
-                showAdminModal();
-                return;
-            }
-            if (isAppBusy) return;
-
-            const name = prompt('고객명을 입력하세요:');
-            if (!name) {
-                showToast('고객명을 입력해주세요', 'error');
-                return;
-            }
-
-            setAppBusy(true, '최신 정보 확인 중...');
-            // [Task 3] Stabilization: Ensure fresh state before creation
-            try {
-                // 1. Sync to get latest ID/Count
-                const syncSuccess = await syncFromCloud(true);
-                if (!syncSuccess) {
-                    setAppBusy(false);
-                    if (!confirm('데이터 동기화에 실패했습니다. 그래도 진행하시겠습니까? (ID 중복 위험)')) return;
-                    setAppBusy(true, '신규 고객 생성 중...');
-                } else {
-                    setAppBusy(true, '신규 고객 생성 중...');
-                }
-
-                // 2. Generate ID using fresh count
-                const cloudCount = cachedCloudCount;
-                const now = new Date();
-                const yy = now.getFullYear().toString().slice(-2);
-                const mm = String(now.getMonth() + 1).padStart(2, '0');
-                const dd = String(now.getDate()).padStart(2, '0');
-                const seq = String(cloudCount + 1).padStart(3, '0');
-                currentCustomerId = `${yy}${mm}${dd} -${seq} `;
-
-                // Double check collision locally
-                if (customers.some(c => c.customerId === currentCustomerId)) {
-                    const seq2 = String(cloudCount + 2).padStart(3, '0');
-                    currentCustomerId = `${yy}${mm}${dd} -${seq2} `;
-                }
-
-                currentData = {
-                    customerId: currentCustomerId,
-                    clientName: name,
-                    projectName: '',
-                    status: 'consulting',
-                    createdAt: new Date().toISOString().split('T')[0],
-                    profitRate: '15%',
-                    createdBy: currentAdmin?.id || 'unknown',
-                    isLocked: false,
-                    manager: '원프로 소장 (010-4650-7013)'
-                };
-
-                // 3. Save to Cloud Immediately (Source of Truth)
-                const payload = {
-                    action: 'update_customer',
-                    ...currentData
-                };
-
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                const res = await response.json();
-                if (res.result !== 'success') {
-                    throw new Error(res.message || 'Server Error');
-                }
-
-                // 4. Update Local State
-                customers.push({ ...currentData });
-                cachedCloudCount++;
-
-                document.querySelectorAll('.customer-field').forEach(f => {
-                    f.value = f.dataset.field === 'profitRate' ? '15%' : '';
-                });
-                document.getElementById('customerStatus').value = 'consulting';
-                document.getElementById('asEndDateDisplay').style.display = 'none';
-                document.getElementById('emptyState').style.display = 'none';
-                document.getElementById('customerView').style.display = 'block';
-                document.getElementById('headerCustomerName').textContent = '신규 고객';
-                document.getElementById('headerCustomerId').textContent = currentCustomerId;
-
-                const clientNameField = document.querySelector('.customer-field[data-field="clientName"]');
-                if (clientNameField) clientNameField.value = name;
-                const projectNameField = document.querySelector('.customer-field[data-field="projectName"]');
-                if (projectNameField) projectNameField.value = '';
-                document.getElementById('headerCustomerName').textContent = name;
-
-                clearCostData();
-                currentData.estimateData = {};
-                currentData.estimateProfitRate = 15;
-                categories.forEach(cat => {
-                    delete currentData[`estMemo_${cat.no}`];
-                });
-
-                scheduleRows = [];
-                asListRows = [];
-                settlementRows = [];
-                currentData.schedules = [];
-                currentData.as_list = [];
-                currentData.settlementRows = [];
-                currentData.checklistData = {};
-                currentData.checklistFilters = {
-                    checklistStageFilter: ['all'],
-                    checklistCategoryFilter: ['all']
-                };
-
-                loadEstimateData();
-                if (typeof renderScheduleTable === 'function') renderScheduleTable();
-                if (typeof renderASListTable === 'function') renderASListTable();
-                if (typeof renderSettlementTable === 'function') renderSettlementTable();
-                if (typeof renderChecklistItems === 'function') renderChecklistItems();
-                if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
-
-                initYearFilter();
-                updateCustomerList();
-                syncAllFields();
-
-                showToast('신규 고객이 생성되었습니다.', 'success');
-
-            } catch (e) {
-                console.error('New Customer Error:', e);
-                showPersistentAlert(`신규 고객 생성 실패: ${e.message}`, 'error');
-            } finally {
-                setAppBusy(false);
-            }
+        // Google Apps Script returns {result: 'success'} or {success: true}
+        if (result.success || result.result === 'success') {
+            console.log('✅ [Web Save] ========== SAVE COMPLETE ==========');
+        } else {
+            console.error('❌ [Web Save] Save failed:', result.message || 'Unknown error');
+            showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
         }
 
-        function selectCustomer(customerId) {
-            if (typeof showMainView === 'function') showMainView('customer');
-            fetchASListDB(); // Load A/S DB if not already loaded
-            const customer = customers.find(c => c.customerId === customerId);
-            if (!customer) return;
+        return result;
 
-            // [Performance Optimization] Lazy Parsing
-            // Only parse the heavy checklistData when the customer is actually selected.
-            if (!customer.checklistData && customer.jsonData && typeof customer.jsonData === 'string' && customer.jsonData.trim().startsWith('{')) {
-                try {
-                    const parsed = JSON.parse(customer.jsonData);
+    } catch (error) {
+        console.error('❌ [Web Save] Error:', error);
+        showToast('저장 중 오류가 발생했습니다', 'error');
+        throw error;
+    }
+}
 
-                    // Normalize checklistData logic from syncFromCloud
-                    let normalizedData = {};
-                    if (parsed.checklistData) {
-                        if (typeof parsed.checklistData === 'object') {
-                            Object.entries(parsed.checklistData).forEach(([key, value]) => {
-                                // Handle nested object {checked: true} or simple boolean
-                                if (value && typeof value === 'object' && 'checked' in value) {
-                                    normalizedData[key] = value.checked;
-                                } else if (typeof value === 'boolean') {
-                                    normalizedData[key] = value;
-                                } else {
-                                    normalizedData[key] = !!value; // Fallback
-                                }
-                            });
+async function newCustomer() {
+    if (!isLoggedIn()) {
+        showToast('관리자 로그인이 필요합니다', 'error');
+        showAdminModal();
+        return;
+    }
+    if (isAppBusy) return;
+
+    const name = prompt('고객명을 입력하세요:');
+    if (!name) {
+        showToast('고객명을 입력해주세요', 'error');
+        return;
+    }
+
+    setAppBusy(true, '최신 정보 확인 중...');
+    // [Task 3] Stabilization: Ensure fresh state before creation
+    try {
+        // 1. Sync to get latest ID/Count
+        const syncSuccess = await syncFromCloud(true);
+        if (!syncSuccess) {
+            setAppBusy(false);
+            if (!confirm('데이터 동기화에 실패했습니다. 그래도 진행하시겠습니까? (ID 중복 위험)')) return;
+            setAppBusy(true, '신규 고객 생성 중...');
+        } else {
+            setAppBusy(true, '신규 고객 생성 중...');
+        }
+
+        // 2. Generate ID using fresh count
+        const cloudCount = cachedCloudCount;
+        const now = new Date();
+        const yy = now.getFullYear().toString().slice(-2);
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const seq = String(cloudCount + 1).padStart(3, '0');
+        currentCustomerId = `${yy}${mm}${dd} -${seq} `;
+
+        // Double check collision locally
+        if (customers.some(c => c.customerId === currentCustomerId)) {
+            const seq2 = String(cloudCount + 2).padStart(3, '0');
+            currentCustomerId = `${yy}${mm}${dd} -${seq2} `;
+        }
+
+        currentData = {
+            customerId: currentCustomerId,
+            clientName: name,
+            projectName: '',
+            status: 'consulting',
+            createdAt: new Date().toISOString().split('T')[0],
+            profitRate: '15%',
+            createdBy: currentAdmin?.id || 'unknown',
+            isLocked: false,
+            manager: '원프로 소장 (010-7653-5386)'
+        };
+
+        // 3. Save to Cloud Immediately (Source of Truth)
+        const payload = {
+            action: 'update_customer',
+            ...currentData
+        };
+
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        });
+
+        const res = await response.json();
+        if (res.result !== 'success') {
+            throw new Error(res.message || 'Server Error');
+        }
+
+        // 4. Update Local State
+        customers.push({ ...currentData });
+        cachedCloudCount++;
+
+        document.querySelectorAll('.customer-field').forEach(f => {
+            f.value = f.dataset.field === 'profitRate' ? '15%' : '';
+        });
+        document.getElementById('customerStatus').value = 'consulting';
+        document.getElementById('asEndDateDisplay').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('customerView').style.display = 'block';
+        document.getElementById('headerCustomerName').textContent = '신규 고객';
+        document.getElementById('headerCustomerId').textContent = currentCustomerId;
+
+        const clientNameField = document.querySelector('.customer-field[data-field="clientName"]');
+        if (clientNameField) clientNameField.value = name;
+        const projectNameField = document.querySelector('.customer-field[data-field="projectName"]');
+        if (projectNameField) projectNameField.value = '';
+        document.getElementById('headerCustomerName').textContent = name;
+
+        clearCostData();
+        currentData.estimateData = {};
+        currentData.estimateProfitRate = 15;
+        categories.forEach(cat => {
+            delete currentData[`estMemo_${cat.no}`];
+        });
+
+        scheduleRows = [];
+        asListRows = [];
+        settlementRows = [];
+        currentData.schedules = [];
+        currentData.as_list = [];
+        currentData.settlementRows = [];
+        currentData.checklistData = {};
+        currentData.checklistFilters = {
+            checklistStageFilter: ['all'],
+            checklistCategoryFilter: ['all']
+        };
+
+        loadEstimateData();
+        if (typeof renderScheduleTable === 'function') renderScheduleTable();
+        if (typeof renderASListTable === 'function') renderASListTable();
+        if (typeof renderSettlementTable === 'function') renderSettlementTable();
+        if (typeof renderChecklistItems === 'function') renderChecklistItems();
+        if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
+
+        initYearFilter();
+        updateCustomerList();
+        syncAllFields();
+
+        showToast('신규 고객이 생성되었습니다.', 'success');
+
+    } catch (e) {
+        console.error('New Customer Error:', e);
+        showPersistentAlert(`신규 고객 생성 실패: ${e.message}`, 'error');
+    } finally {
+        setAppBusy(false);
+    }
+}
+
+function selectCustomer(customerId) {
+    if (typeof showMainView === 'function') showMainView('customer');
+    fetchASListDB(); // Load A/S DB if not already loaded
+    const customer = customers.find(c => c.customerId === customerId);
+    if (!customer) return;
+
+    // [Performance Optimization] Lazy Parsing
+    // Only parse the heavy checklistData when the customer is actually selected.
+    if (!customer.checklistData && customer.jsonData && typeof customer.jsonData === 'string' && customer.jsonData.trim().startsWith('{')) {
+        try {
+            const parsed = JSON.parse(customer.jsonData);
+
+            // Normalize checklistData logic from syncFromCloud
+            let normalizedData = {};
+            if (parsed.checklistData) {
+                if (typeof parsed.checklistData === 'object') {
+                    Object.entries(parsed.checklistData).forEach(([key, value]) => {
+                        // Handle nested object {checked: true} or simple boolean
+                        if (value && typeof value === 'object' && 'checked' in value) {
+                            normalizedData[key] = value.checked;
+                        } else if (typeof value === 'boolean') {
+                            normalizedData[key] = value;
+                        } else {
+                            normalizedData[key] = !!value; // Fallback
                         }
-                    }
-                    customer.checklistData = normalizedData;
-                    console.log('✅ [Lazy Parse] Parsed checklistData for', customer.clientName);
-                } catch (e) {
-                    console.warn('⚠️ Lazy parse failed for', customer.clientName, e);
-                    customer.checklistData = {};
+                    });
                 }
             }
-
-            currentCustomerId = customerId;
-
-            // Legacy Data Compatibility (Cloud Compatibility Fix)
-            // Ensure old keys (pyeong, inflowPath) map to new inputs (area, clientSource)
-            customer.clientSource = customer.clientSource || customer.inflowPath || '';
-            customer.area = customer.area || customer.pyeong || '';
-
-            // 'py' 표기를 '평'으로 자동 변환 (기존 저장된 데이터 호환)
-            if (customer.area && /^\d+py$/i.test(String(customer.area).trim())) {
-                customer.area = customer.area.replace(/py$/i, '평');
-            }
-
-            if (!customer.profitRate && customer.estimateProfitRate) {
-                // Format estimateProfitRate if it's just a number
-                let rate = String(customer.estimateProfitRate);
-                if (/^\d+$/.test(rate)) rate += '%';
-                customer.profitRate = rate;
-            }
-
-
-            if (!customer.manager || customer.manager.trim() === '') {
-                customer.manager = '원프로 소장 (010-4650-7013)';
-            }
-
-
-            currentData = { ...customer };
-
-            // 접근 제한 확인
-            if (document.getElementById('accessDeniedOverlay')) {
-                const isLocked = isCustomerLocked();
-                document.getElementById('accessDeniedOverlay').style.display = isLocked ? 'flex' : 'none';
-                if (isLocked) {
-                    document.getElementById('lockedPasswordInput').value = '';
-                }
-            }
-
-            // 권한에 따른 입력 비활성화 (본인 작성 건만 수정 가능)
-            const editable = canEdit();
-            document.querySelectorAll('.customer-field, #customerStatus').forEach(el => {
-                el.disabled = !editable;
-            });
-            const delBtn = document.querySelector('.delete-btn');
-            if (delBtn) delBtn.style.visibility = (editable && !isCustomerLocked()) ? 'visible' : 'hidden';
-
-            document.querySelectorAll('.customer-field').forEach(f => {
-                f.value = currentData[f.dataset.field] || '';
-            });
-            document.getElementById('customerStatus').value = currentData.status || 'consulting';
-
-            // A/S 기간 표시
-            const asDisplay = document.getElementById('asEndDateDisplay');
-            if (currentData.status === 'as_done' && currentData.asEndDate) {
-                asDisplay.textContent = `A / S ~${currentData.asEndDate} `;
-                asDisplay.style.display = 'block';
-            } else {
-                asDisplay.style.display = 'none';
-            }
-
-            const emptyStateEl = document.getElementById('emptyState');
-            if (emptyStateEl) emptyStateEl.style.display = 'none';
-            const customerViewEl = document.getElementById('customerView');
-            if (customerViewEl) customerViewEl.style.display = 'block';
-            const headerNameEl = document.getElementById('headerCustomerName');
-            if (headerNameEl) headerNameEl.textContent = currentData.projectName || currentData.clientName || '고객명 없음';
-            const headerIdEl = document.getElementById('headerCustomerId');
-            if (headerIdEl) headerIdEl.textContent = currentCustomerId;
-            loadCostData();
-            loadEstimateData();
-
-            // [Data Consistency] Atomic switch for all modular datasets
-            if (typeof loadScheduleForCustomer === 'function') loadScheduleForCustomer(currentCustomerId);
-            if (typeof loadASList === 'function') loadASList(currentCustomerId);
-
-            settlementRows = currentData.settlementRows || [];
-            if (typeof renderSettlementTable === 'function') renderSettlementTable();
-
-            if (typeof renderChecklistItems === 'function') renderChecklistItems();
-            if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
-
-            // [PERFORMANCE FIX] Direct DOM update for selection state
-            // updateCustomerList(false); // Removed full re-render
-
-            // Remove active class from previous selection
-            document.querySelectorAll('.customer-item.active').forEach(el => el.classList.remove('active'));
-
-            // Add active class to new selection
-            // Use robust data attribute selector
-            const activeItem = document.querySelector(`.customer-item[data-customer-id="${currentCustomerId}"]`);
-            if (activeItem) {
-                activeItem.classList.add('active');
-                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-
-            syncAllFields();
-            updateLockUI(); // 잠금 상태 및 작성자 표시
-
-            // Main Dashboard Renewal: Default to Dashboard
-            showCustomerTab('dashboard');
-            if (typeof renderDashboard === 'function') renderDashboard();
-
-
-            // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
-            // Convert any stored dots (YYYY.MM.DD) to dashes.
-            ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
-                const el = document.querySelector(`.customer-field[data-field="${field}"]`);
-                if (el && currentData[field]) {
-                    el.value = currentData[field].replace(/\./g, '-');
-                }
-            });
-
-            // [CONSTRUCTION PERIOD FIX] Split string into two date inputs
-            if (currentData.constructionPeriod) {
-                // 다양한 형식 지원: "2025.01.01 ~ 2025.03.01" 또는 "2025-01-01 ~ 2025-03-01"
-                const periodStr = currentData.constructionPeriod.replace(/\s+/g, ''); // 모든 공백 제거
-                const parts = periodStr.split('~');
-                if (parts.length > 0 && parts[0]) {
-                    // 점을 대시로 변환하여 date input에 설정
-                    document.getElementById('constructionStartInput').value = parts[0].replace(/\./g, '-').trim();
-                }
-                if (parts.length > 1 && parts[1]) {
-                    document.getElementById('constructionEndInput').value = parts[1].replace(/\./g, '-').trim();
-                }
-            } else {
-                document.getElementById('constructionStartInput').value = '';
-                document.getElementById('constructionEndInput').value = '';
-            }
+            customer.checklistData = normalizedData;
+            console.log('✅ [Lazy Parse] Parsed checklistData for', customer.clientName);
+        } catch (e) {
+            console.warn('⚠️ Lazy parse failed for', customer.clientName, e);
+            customer.checklistData = {};
         }
+    }
 
-        function updateConstructionPeriod() {
-            const start = document.getElementById('constructionStartInput').value;
-            const end = document.getElementById('constructionEndInput').value;
-            const hiddenInput = document.getElementById('hiddenConstructionPeriod');
+    currentCustomerId = customerId;
 
-            if (start && end) {
-                // 일관된 형식으로 저장: "YYYY.MM.DD ~ YYYY.MM.DD"
-                hiddenInput.value = `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
-            } else if (start) {
-                hiddenInput.value = `${start.replace(/-/g, '.')}`;
-            } else {
-                hiddenInput.value = '';
-            }
-            // Trigger standard update
-            updateCustomerField(hiddenInput);
+    // Legacy Data Compatibility (Cloud Compatibility Fix)
+    // Ensure old keys (pyeong, inflowPath) map to new inputs (area, clientSource)
+    customer.clientSource = customer.clientSource || customer.inflowPath || '';
+    customer.area = customer.area || customer.pyeong || '';
+
+    // 'py' 표기를 '평'으로 자동 변환 (기존 저장된 데이터 호환)
+    if (customer.area && /^\d+py$/i.test(String(customer.area).trim())) {
+        customer.area = customer.area.replace(/py$/i, '평');
+    }
+
+    if (!customer.profitRate && customer.estimateProfitRate) {
+        // Format estimateProfitRate if it's just a number
+        let rate = String(customer.estimateProfitRate);
+        if (/^\d+$/.test(rate)) rate += '%';
+        customer.profitRate = rate;
+    }
+
+
+    if (!customer.manager || customer.manager.trim() === '') {
+        customer.manager = '원프로 소장 (010-7653-5386)';
+    }
+
+
+    currentData = { ...customer };
+
+    // 접근 제한 확인
+    if (document.getElementById('accessDeniedOverlay')) {
+        const isLocked = isCustomerLocked();
+        document.getElementById('accessDeniedOverlay').style.display = isLocked ? 'flex' : 'none';
+        if (isLocked) {
+            document.getElementById('lockedPasswordInput').value = '';
         }
+    }
 
-        // Phone Number Auto-format (Same logic as quote.html)
-        function autoFormatPhone(el) {
-            let value = el.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
+    // 권한에 따른 입력 비활성화 (본인 작성 건만 수정 가능)
+    const editable = canEdit();
+    document.querySelectorAll('.customer-field, #customerStatus').forEach(el => {
+        el.disabled = !editable;
+    });
+    const delBtn = document.querySelector('.delete-btn');
+    if (delBtn) delBtn.style.visibility = (editable && !isCustomerLocked()) ? 'visible' : 'hidden';
 
-            if (value.length <= 3) { el.value = value; } else if (value.length <= 7) {
-                el.value = value.slice(0, 3) + '-' +
-                    value.slice(3);
-            } else { el.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7); }
+    document.querySelectorAll('.customer-field').forEach(f => {
+        f.value = currentData[f.dataset.field] || '';
+    });
+    document.getElementById('customerStatus').value = currentData.status || 'consulting';
+
+    // A/S 기간 표시
+    const asDisplay = document.getElementById('asEndDateDisplay');
+    if (currentData.status === 'as_done' && currentData.asEndDate) {
+        asDisplay.textContent = `A / S ~${currentData.asEndDate} `;
+        asDisplay.style.display = 'block';
+    } else {
+        asDisplay.style.display = 'none';
+    }
+
+    const emptyStateEl = document.getElementById('emptyState');
+    if (emptyStateEl) emptyStateEl.style.display = 'none';
+    const customerViewEl = document.getElementById('customerView');
+    if (customerViewEl) customerViewEl.style.display = 'block';
+    const headerNameEl = document.getElementById('headerCustomerName');
+    if (headerNameEl) headerNameEl.textContent = currentData.projectName || currentData.clientName || '고객명 없음';
+    const headerIdEl = document.getElementById('headerCustomerId');
+    if (headerIdEl) headerIdEl.textContent = currentCustomerId;
+    loadCostData();
+    loadEstimateData();
+
+    // [Data Consistency] Atomic switch for all modular datasets
+    if (typeof loadScheduleForCustomer === 'function') loadScheduleForCustomer(currentCustomerId);
+    if (typeof loadASList === 'function') loadASList(currentCustomerId);
+
+    settlementRows = currentData.settlementRows || [];
+    if (typeof renderSettlementTable === 'function') renderSettlementTable();
+
+    if (typeof renderChecklistItems === 'function') renderChecklistItems();
+    if (typeof loadSavedChecklistState === 'function') loadSavedChecklistState(true);
+
+    // [PERFORMANCE FIX] Direct DOM update for selection state
+    // updateCustomerList(false); // Removed full re-render
+
+    // Remove active class from previous selection
+    document.querySelectorAll('.customer-item.active').forEach(el => el.classList.remove('active'));
+
+    // Add active class to new selection
+    // Use robust data attribute selector
+    const activeItem = document.querySelector(`.customer-item[data-customer-id="${currentCustomerId}"]`);
+    if (activeItem) {
+        activeItem.classList.add('active');
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    syncAllFields();
+    updateLockUI(); // 잠금 상태 및 작성자 표시
+
+    // Main Dashboard Renewal: Default to Dashboard
+    showCustomerTab('dashboard');
+    if (typeof renderDashboard === 'function') renderDashboard();
+
+
+    // [DATE FIX] input[type="date"] requires YYYY-MM-DD format.
+    // Convert any stored dots (YYYY.MM.DD) to dashes.
+    ['movingDate', 'contractDate', 'finalPaymentDate'].forEach(field => {
+        const el = document.querySelector(`.customer-field[data-field="${field}"]`);
+        if (el && currentData[field]) {
+            el.value = currentData[field].replace(/\./g, '-');
         }
+    });
 
-        // Area Auto-format (숫자만 입력 시 '평' 추가)
-        function autoFormatArea(el) {
-            let value = el.value.trim();
-            if (!value) return;
-            // 숫자만 입력된 경우 '평' 붙이기
-            if (/^\d+$/.test(value)) {
-                el.value = value + '평';
-            }
-            // 'py'가 포함된 경우 '평'으로 변환
-            else if (/^\d+py$/i.test(value)) {
-                el.value = value.replace(/py$/i, '평');
-            }
+    // [CONSTRUCTION PERIOD FIX] Split string into two date inputs
+    if (currentData.constructionPeriod) {
+        // 다양한 형식 지원: "2025.01.01 ~ 2025.03.01" 또는 "2025-01-01 ~ 2025-03-01"
+        const periodStr = currentData.constructionPeriod.replace(/\s+/g, ''); // 모든 공백 제거
+        const parts = periodStr.split('~');
+        if (parts.length > 0 && parts[0]) {
+            // 점을 대시로 변환하여 date input에 설정
+            document.getElementById('constructionStartInput').value = parts[0].replace(/\./g, '-').trim();
         }
-
-        // Profit Rate Auto-format (add '%')
-        function autoFormatProfit(el) {
-            let value = el.value.trim();
-            if (!value) return;
-            if (/^\d+$/.test(value)) { el.value = value + ' % '; }
+        if (parts.length > 1 && parts[1]) {
+            document.getElementById('constructionEndInput').value = parts[1].replace(/\./g, '-').trim();
         }
+    } else {
+        document.getElementById('constructionStartInput').value = '';
+        document.getElementById('constructionEndInput').value = '';
+    }
+}
 
-        function updateCustomerField(el) {
-            const fieldName = el.dataset.field;
-            const oldValue = currentData[fieldName] || '';
-            const newValue = el.value;
+function updateConstructionPeriod() {
+    const start = document.getElementById('constructionStartInput').value;
+    const end = document.getElementById('constructionEndInput').value;
+    const hiddenInput = document.getElementById('hiddenConstructionPeriod');
 
-            // 변경이 없으면 로그 안남김
-            if (oldValue === newValue) {
-                return;
-            }
+    if (start && end) {
+        // 일관된 형식으로 저장: "YYYY.MM.DD ~ YYYY.MM.DD"
+        hiddenInput.value = `${start.replace(/-/g, '.')} ~ ${end.replace(/-/g, '.')}`;
+    } else if (start) {
+        hiddenInput.value = `${start.replace(/-/g, '.')}`;
+    } else {
+        hiddenInput.value = '';
+    }
+    // Trigger standard update
+    updateCustomerField(hiddenInput);
+}
 
-            currentData[fieldName] = newValue;
+// Phone Number Auto-format (Same logic as quote.html)
+function autoFormatPhone(el) {
+    let value = el.value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
 
-            // customers 배열에도 변경사항 즉시 반영
-            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-            if (customerIndex !== -1) {
-                customers[customerIndex][fieldName] = newValue;
-            }
+    if (value.length <= 3) { el.value = value; } else if (value.length <= 7) {
+        el.value = value.slice(0, 3) + '-' +
+            value.slice(3);
+    } else { el.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7); }
+}
 
-            if (fieldName === 'clientName' || fieldName === 'projectName') {
-                const displayName = currentData.projectName || currentData.clientName || '고객명 없음';
-                document.getElementById('headerCustomerName').textContent = displayName;
-            }
+// Area Auto-format (숫자만 입력 시 '평' 추가)
+function autoFormatArea(el) {
+    let value = el.value.trim();
+    if (!value) return;
+    // 숫자만 입력된 경우 '평' 붙이기
+    if (/^\d+$/.test(value)) {
+        el.value = value + '평';
+    }
+    // 'py'가 포함된 경우 '평'으로 변환
+    else if (/^\d+py$/i.test(value)) {
+        el.value = value.replace(/py$/i, '평');
+    }
+}
 
-            // [추가] 작업 기록 로그
-            const fieldLabels = {
-                clientName: '고객명',
-                projectName: '현장명',
-                phone: '연락처',
-                email: '이메일',
-                address: '주소',
-                area: '평수',
-                buildingType: '건물유형',
-                clientSource: '유입경로',
-                movingDate: '입주예정일',
-                contractDate: '계약일',
-                constructionPeriod: '공사기간',
-                totalAmount: '총 계약금액',
-                finalPaymentDate: '잔금일',
-                manager: '공사담당자',
-                memo: '메모',
-                profitRate: '이익률'
-            };
-            const label = fieldLabels[fieldName] || fieldName;
-            logUserAction(`${label} 수정`, `"${newValue}"`);
+// Profit Rate Auto-format (add '%')
+function autoFormatProfit(el) {
+    let value = el.value.trim();
+    if (!value) return;
+    if (/^\d+$/.test(value)) { el.value = value + ' % '; }
+}
 
-            syncAllFields();
-        }
-        function updateStatus() {
-            const status = document.getElementById('customerStatus').value;
-            const oldStatus = currentData.status;
-            currentData.status = status;
+function updateCustomerField(el) {
+    const fieldName = el.dataset.field;
+    const oldValue = currentData[fieldName] || '';
+    const newValue = el.value;
 
-            // [추가] 상태 변경 로그
-            const statusLabelsKo = {
-                consulting: '상담중',
-                hold: '보류',
-                budget_over: '예산초과',
-                other_company: '타사계약',
-                contracted: '계약완료',
-                in_progress: '공사중',
-                completed: '공사완료',
-                as_done: 'A/S완료',
-                trash: '휴지통'
-            };
-            logUserAction('상태 변경', `${statusLabelsKo[oldStatus] || oldStatus} → ${statusLabelsKo[status] || status}`);
+    // 변경이 없으면 로그 안남김
+    if (oldValue === newValue) {
+        return;
+    }
 
-            // Auto-fill Contract Date if status is 'contracted'
-            if (status === 'contracted' && !currentData.contractDate) {
-                const today = new Date().toISOString().split('T')[0];
-                currentData.contractDate = today;
-                const contractField = document.querySelector('.customer-field[data-field="contractDate"]');
-                if (contractField) contractField.value = today;
-                showToast('계약일이 오늘 날짜로 자동 설정되었습니다');
-            }
-            // Auto-calculate A/S End Date if status is 'as_done'
-            if (status === 'as_done') {
-                calculateAsEndDate();
-            }
-            const asDisplay = document.getElementById('asEndDateDisplay');
-            if (status === 'as_done' && currentData.asEndDate) {
-                asDisplay.textContent = `A/S ~${currentData.asEndDate}`;
-                asDisplay.style.display = 'block';
-            } else {
-                asDisplay.style.display = 'none';
-            }
-            updateCustomerList();
+    currentData[fieldName] = newValue;
 
-            // Auto-sync to Google Sheets on status change
-            saveCustomers(); // Save locally first
-            syncToGoogleSheets({ ...currentData }); // Sync to cloud
-            showToast(`상태가 '${statusLabelsKo[status] || status}'(으)로 변경되었습니다`, 'success');
-        }
-        function updateAsDate() {
-            // A/S 날짜는 잔금일 기준 자동 계산으로 변경됨
-        }
-        function calculateAsEndDate() {
-            const finalPaymentDate = currentData.finalPaymentDate;
-            if (finalPaymentDate) {
-                const date = new Date(finalPaymentDate);
-                date.setMonth(date.getMonth() + 12);
-                const endDate = date.toISOString().split('T')[0];
-                currentData.asEndDate = endDate;
-                const asEndField = document.querySelector('.customer-field[data-field="asEndDate"]');
-                if (asEndField) asEndField.value = endDate;
-                syncAllFields();
-            }
-        }
-        function deleteCurrentCustomer() {
-            if (!currentCustomerId) return;
+    // customers 배열에도 변경사항 즉시 반영
+    const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+    if (customerIndex !== -1) {
+        customers[customerIndex][fieldName] = newValue;
+    }
 
-            // 1. Permission check
-            if (!canDelete()) {
-                showToast('삭제 권한이 없습니다 (본인 작성 건만 삭제 가능)', 'error');
-                return;
-            }
+    if (fieldName === 'clientName' || fieldName === 'projectName') {
+        const displayName = currentData.projectName || currentData.clientName || '고객명 없음';
+        document.getElementById('headerCustomerName').textContent = displayName;
+    }
 
-            // 2. Lock check
-            if (isCustomerLocked()) {
-                showToast('잠금 설정된 고객입니다. 메인관리자에게 문의하세요.', 'error');
-                return;
-            }
+    // [추가] 작업 기록 로그
+    const fieldLabels = {
+        clientName: '고객명',
+        projectName: '현장명',
+        phone: '연락처',
+        email: '이메일',
+        address: '주소',
+        area: '평수',
+        buildingType: '건물유형',
+        clientSource: '유입경로',
+        movingDate: '입주예정일',
+        contractDate: '계약일',
+        constructionPeriod: '공사기간',
+        totalAmount: '총 계약금액',
+        finalPaymentDate: '잔금일',
+        manager: '공사담당자',
+        memo: '메모',
+        profitRate: '이익률'
+    };
+    const label = fieldLabels[fieldName] || fieldName;
+    logUserAction(`${label} 수정`, `"${newValue}"`);
 
-            // 3. Confirm Soft Delete
-            if (!confirm('휴지통으로 이동하시겠습니까? (복구는 메인관리자만 가능합니다)')) return;
+    syncAllFields();
+}
+function updateStatus() {
+    const status = document.getElementById('customerStatus').value;
+    const oldStatus = currentData.status;
+    currentData.status = status;
 
-            // 4. Perform Soft Delete (Trash)
-            const index = customers.findIndex(c => c.customerId === currentCustomerId);
-            if (index !== -1) {
-                const deletedName = customers[index].clientName || customers[index].projectName || currentCustomerId;
-                customers[index].status = 'trash';
-                customers[index].deletedAt = new Date().toISOString();
-                customers[index].deletedBy = currentAdmin.id;
+    // [추가] 상태 변경 로그
+    const statusLabelsKo = {
+        consulting: '상담중',
+        hold: '보류',
+        budget_over: '예산초과',
+        other_company: '타사계약',
+        contracted: '계약완료',
+        in_progress: '공사중',
+        completed: '공사완료',
+        as_done: 'A/S완료',
+        trash: '휴지통'
+    };
+    logUserAction('상태 변경', `${statusLabelsKo[oldStatus] || oldStatus} → ${statusLabelsKo[status] || status}`);
 
-                // [추가] 삭제 로그
-                logUserAction('휴지통으로 이동', deletedName);
+    // Auto-fill Contract Date if status is 'contracted'
+    if (status === 'contracted' && !currentData.contractDate) {
+        const today = new Date().toISOString().split('T')[0];
+        currentData.contractDate = today;
+        const contractField = document.querySelector('.customer-field[data-field="contractDate"]');
+        if (contractField) contractField.value = today;
+        showToast('계약일이 오늘 날짜로 자동 설정되었습니다');
+    }
+    // Auto-calculate A/S End Date if status is 'as_done'
+    if (status === 'as_done') {
+        calculateAsEndDate();
+    }
+    const asDisplay = document.getElementById('asEndDateDisplay');
+    if (status === 'as_done' && currentData.asEndDate) {
+        asDisplay.textContent = `A/S ~${currentData.asEndDate}`;
+        asDisplay.style.display = 'block';
+    } else {
+        asDisplay.style.display = 'none';
+    }
+    updateCustomerList();
 
-                saveCustomers();
-                showToast('휴지통으로 이동되었습니다', 'success');
+    // Auto-sync to Google Sheets on status change
+    saveCustomers(); // Save locally first
+    syncToGoogleSheets({ ...currentData }); // Sync to cloud
+    showToast(`상태가 '${statusLabelsKo[status] || status}'(으)로 변경되었습니다`, 'success');
+}
+function updateAsDate() {
+    // A/S 날짜는 잔금일 기준 자동 계산으로 변경됨
+}
+function calculateAsEndDate() {
+    const finalPaymentDate = currentData.finalPaymentDate;
+    if (finalPaymentDate) {
+        const date = new Date(finalPaymentDate);
+        date.setMonth(date.getMonth() + 12);
+        const endDate = date.toISOString().split('T')[0];
+        currentData.asEndDate = endDate;
+        const asEndField = document.querySelector('.customer-field[data-field="asEndDate"]');
+        if (asEndField) asEndField.value = endDate;
+        syncAllFields();
+    }
+}
+function deleteCurrentCustomer() {
+    if (!currentCustomerId) return;
 
-                // Reset View
-                currentCustomerId = null;
-                currentData = {};
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('customerView').style.display = 'none';
-                updateCustomerList();
-            }
-        }
+    // 1. Permission check
+    if (!canDelete()) {
+        showToast('삭제 권한이 없습니다 (본인 작성 건만 삭제 가능)', 'error');
+        return;
+    }
 
-        // [New] Global Main Board Rendering
-        function renderMainBoard() {
-            const grid = document.getElementById('mainBoardGrid');
-            if (!grid) return;
+    // 2. Lock check
+    if (isCustomerLocked()) {
+        showToast('잠금 설정된 고객입니다. 메인관리자에게 문의하세요.', 'error');
+        return;
+    }
 
-            // [NEW] Filters
-            const yearFilter = document.getElementById('mbYearFilter')?.value;
-            const statusFilter = document.getElementById('mbStatusFilter')?.value;
+    // 3. Confirm Soft Delete
+    if (!confirm('휴지통으로 이동하시겠습니까? (복구는 메인관리자만 가능합니다)')) return;
 
-            // Filter Logic
-            let filtered = customers.filter(c => {
-                // Year Check
-                let date = c.contractDate || c.consultDate || '';
-                let year = date.split('-')[0];
-                if (yearFilter && year !== yearFilter) return false;
+    // 4. Perform Soft Delete (Trash)
+    const index = customers.findIndex(c => c.customerId === currentCustomerId);
+    if (index !== -1) {
+        const deletedName = customers[index].clientName || customers[index].projectName || currentCustomerId;
+        customers[index].status = 'trash';
+        customers[index].deletedAt = new Date().toISOString();
+        customers[index].deletedBy = currentAdmin.id;
 
-                // Status Check
-                if (statusFilter && c.status !== statusFilter) return false;
+        // [추가] 삭제 로그
+        logUserAction('휴지통으로 이동', deletedName);
 
-                return true;
-            });
+        saveCustomers();
+        showToast('휴지통으로 이동되었습니다', 'success');
 
-            // Stats Logic (Update based on filtered view)
-            const total = filtered.length;
-            const inProgress = filtered.filter(c => c.status === 'in_progress').length;
+        // Reset View
+        currentCustomerId = null;
+        currentData = {};
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('customerView').style.display = 'none';
+        updateCustomerList();
+    }
+}
 
-            const statsTotalEl = document.getElementById('statsTotal');
-            const statsProgressEl = document.getElementById('statsProgress');
+// [New] Global Main Board Rendering
+function renderMainBoard() {
+    const grid = document.getElementById('mainBoardGrid');
+    if (!grid) return;
 
-            if (statsTotalEl) statsTotalEl.innerText = total;
-            if (statsProgressEl) statsProgressEl.innerText = inProgress;
+    // [NEW] Filters
+    const yearFilter = document.getElementById('mbYearFilter')?.value;
+    const statusFilter = document.getElementById('mbStatusFilter')?.value;
 
-            // Sort
-            const sorted = [...filtered].sort((a, b) => {
-                const dateA = a.contractDate || '0000-00-00';
-                const dateB = b.contractDate || '0000-00-00';
-                return dateB.localeCompare(dateA);
-            });
+    // Filter Logic
+    let filtered = customers.filter(c => {
+        // Year Check
+        let date = c.contractDate || c.consultDate || '';
+        let year = date.split('-')[0];
+        if (yearFilter && year !== yearFilter) return false;
 
-            grid.innerHTML = sorted.map(c => {
-                let statusClass = 'status-consulting';
-                if (c.status === 'estimate') statusClass = 'status-estimate';
-                else if (c.status === 'contracted') statusClass = 'status-contracted';
-                else if (c.status === 'in_progress') statusClass = 'status-in_progress';
-                else if (c.status === 'completed' || c.status === 'as_done') statusClass = 'status-completed';
+        // Status Check
+        if (statusFilter && c.status !== statusFilter) return false;
 
-                const statusMap = {
-                    'consulting': '상담중', 'estimate': '견적', 'contracted': '계약완료',
-                    'in_progress': '공사중', 'completed': '완료', 'as_done': 'A/S',
-                    'hold': '보류', 'budget_over': '예산초과', 'other_company': '타업체'
-                };
-                const statusText = statusMap[c.status] || c.status;
+        return true;
+    });
 
-                return `
+    // Stats Logic (Update based on filtered view)
+    const total = filtered.length;
+    const inProgress = filtered.filter(c => c.status === 'in_progress').length;
+
+    const statsTotalEl = document.getElementById('statsTotal');
+    const statsProgressEl = document.getElementById('statsProgress');
+
+    if (statsTotalEl) statsTotalEl.innerText = total;
+    if (statsProgressEl) statsProgressEl.innerText = inProgress;
+
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+        const dateA = a.contractDate || '0000-00-00';
+        const dateB = b.contractDate || '0000-00-00';
+        return dateB.localeCompare(dateA);
+    });
+
+    grid.innerHTML = sorted.map(c => {
+        let statusClass = 'status-consulting';
+        if (c.status === 'estimate') statusClass = 'status-estimate';
+        else if (c.status === 'contracted') statusClass = 'status-contracted';
+        else if (c.status === 'in_progress') statusClass = 'status-in_progress';
+        else if (c.status === 'completed' || c.status === 'as_done') statusClass = 'status-completed';
+
+        const statusMap = {
+            'consulting': '상담중', 'estimate': '견적', 'contracted': '계약완료',
+            'in_progress': '공사중', 'completed': '완료', 'as_done': 'A/S',
+            'hold': '보류', 'budget_over': '예산초과', 'other_company': '타업체'
+        };
+        const statusText = statusMap[c.status] || c.status;
+
+        return `
                     <div class="project-card" onclick="selectCustomer('${c.customerId}')">
                         <div class="project-card-header">
                             <div class="project-card-title">${c.clientName || '고객명 없음'}</div>
@@ -4607,151 +4607,151 @@
                         </div>
                     </div>
                  `;
-            }).join('');
-        }
+    }).join('');
+}
 
-        function updateCustomerList(resetPage = true) {
-            const container = document.getElementById('customerList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const yearFilter = document.getElementById('yearFilter').value;
-            const monthFilter = document.getElementById('monthFilter').value;
+function updateCustomerList(resetPage = true) {
+    const container = document.getElementById('customerList');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const yearFilter = document.getElementById('yearFilter').value;
+    const monthFilter = document.getElementById('monthFilter').value;
 
-            // 필터링
-            filteredCustomers = customers.filter(c => {
-                // customerId가 없는 항목 제외
-                if (!c.customerId) return false;
+    // 필터링
+    filteredCustomers = customers.filter(c => {
+        // customerId가 없는 항목 제외
+        if (!c.customerId) return false;
 
-                // 휴지통 항목 제외
-                if (c.status === 'trash') return false;
+        // 휴지통 항목 제외
+        if (c.status === 'trash') return false;
 
-                const matchSearch = [c.name, c.phone, c.siteAddress, c.projectName].join(' ').toLowerCase().includes(searchTerm);
-                const matchStatus = currentStatusFilter === 'all' || c.status === currentStatusFilter;
+        const matchSearch = [c.name, c.phone, c.siteAddress, c.projectName].join(' ').toLowerCase().includes(searchTerm);
+        const matchStatus = currentStatusFilter === 'all' || c.status === currentStatusFilter;
 
-                // 년/월 필터 (customerId 기준: YYMMDD-XXX)
-                let matchDate = true;
-                if (yearFilter || monthFilter) {
-                    const idParts = (c.customerId || '').split('-')[0];
-                    if (idParts && idParts.length >= 4) {
-                        const year = '20' + idParts.substring(0, 2);
-                        const month = idParts.substring(2, 4);
-                        if (yearFilter && year !== yearFilter) matchDate = false;
-                        if (monthFilter && month !== monthFilter) matchDate = false;
-                    }
-                }
-
-                return matchSearch && matchStatus && matchDate;
-            });
-
-            // 최신순 정렬 (customerId 기준: YYMMDD-XXX)
-            filteredCustomers.sort((a, b) => {
-                // createdAt이 있으면 우선 사용
-                if (a.createdAt && b.createdAt) {
-                    return new Date(b.createdAt) - new Date(a.createdAt);
-                }
-                // customerId로 정렬 (내림차순) - YYMMDD-NNN 형식
-                const aId = a.customerId || '';
-                const bId = b.customerId || '';
-                const [aDate, aNum] = aId.split('-');
-                const [bDate, bNum] = bId.split('-');
-                // 날짜 비교 (내림차순)
-                if (aDate !== bDate) {
-                    return bDate.localeCompare(aDate);
-                }
-                // 같은 날짜면 번호 비교 (내림차순)
-                return parseInt(bNum || 0) - parseInt(aNum || 0);
-            });
-
-            // 페이지 리셋 (필터 변경 시)
-            if (resetPage) {
-                currentPage = 1;
-            }
-
-            // 페이징 적용 여부 결정
-            const paginationContainer = document.getElementById('paginationContainer');
-            const usePaging = filteredCustomers.length >= PAGE_THRESHOLD;
-
-            if (usePaging) {
-                // 페이징 UI 표시
-                paginationContainer.style.display = 'block';
-
-                const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
-                const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-                const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, filteredCustomers.length);
-                const pageItems = filteredCustomers.slice(startIdx, endIdx);
-
-                // 페이징 정보 업데이트
-                document.getElementById('paginationInfo').textContent =
-                    `전체 ${filteredCustomers.length}명 중 ${startIdx + 1}-${endIdx}명 표시`;
-                document.getElementById('currentPageSpan').textContent =
-                    `${currentPage} / ${totalPages}`;
-                document.getElementById('prevPageBtn').disabled = currentPage <= 1;
-                document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
-
-                // 페이징된 목록 렌더링
-                renderCustomerItems(container, pageItems);
-            } else {
-                // 페이징 UI 숨김
-                paginationContainer.style.display = 'none';
-
-                // 전체 목록 렌더링
-                renderCustomerItems(container, filteredCustomers);
-            }
-            // [NEW] Update Main Board if visible
-            const mainBoard = document.getElementById('mainBoardView');
-            if (mainBoard && mainBoard.style.display !== 'none') {
-                if (typeof renderMainBoard === 'function') renderMainBoard();
+        // 년/월 필터 (customerId 기준: YYMMDD-XXX)
+        let matchDate = true;
+        if (yearFilter || monthFilter) {
+            const idParts = (c.customerId || '').split('-')[0];
+            if (idParts && idParts.length >= 4) {
+                const year = '20' + idParts.substring(0, 2);
+                const month = idParts.substring(2, 4);
+                if (yearFilter && year !== yearFilter) matchDate = false;
+                if (monthFilter && month !== monthFilter) matchDate = false;
             }
         }
 
-        // [NEW] 메인 보드 보기 (홈 버튼)
-        function showMainBoardView() {
-            // 1. 고객 상세 뷰 숨기기
-            const customerView = document.getElementById('customerView');
-            if (customerView) customerView.style.display = 'none';
+        return matchSearch && matchStatus && matchDate;
+    });
 
-            // 2. 메인 보드 보이기
-            const mainBoard = document.getElementById('mainBoardView');
-            if (mainBoard) {
-                mainBoard.style.display = 'block';
-                renderMainBoard(); // 데이터 갱신
-            }
-
-            // 3. 사이드바 선택 해제
-            const activeItems = document.querySelectorAll('.customer-item.active');
-            activeItems.forEach(el => el.classList.remove('active'));
-
-            // 4. 상태 변수 초기화
-            currentCustomerId = null;
+    // 최신순 정렬 (customerId 기준: YYMMDD-XXX)
+    filteredCustomers.sort((a, b) => {
+        // createdAt이 있으면 우선 사용
+        if (a.createdAt && b.createdAt) {
+            return new Date(b.createdAt) - new Date(a.createdAt);
         }
+        // customerId로 정렬 (내림차순) - YYMMDD-NNN 형식
+        const aId = a.customerId || '';
+        const bId = b.customerId || '';
+        const [aDate, aNum] = aId.split('-');
+        const [bDate, bNum] = bId.split('-');
+        // 날짜 비교 (내림차순)
+        if (aDate !== bDate) {
+            return bDate.localeCompare(aDate);
+        }
+        // 같은 날짜면 번호 비교 (내림차순)
+        return parseInt(bNum || 0) - parseInt(aNum || 0);
+    });
 
-        // 고객 목록 아이템 렌더링 (공통)
-        function renderCustomerItems(container, items) {
-            if (items.length === 0) {
-                container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
-            } else {
-                container.innerHTML = items.map(c => {
-                    let statusKey = (c.status || '').trim();
-                    if (!statusLabels[statusKey] && statusLabels[statusKey.toLowerCase()]) {
-                        statusKey = statusKey.toLowerCase();
-                    }
-                    let statusText = statusLabels[statusKey] || c.status;
-                    if (c.status === 'as_done' && c.asEndDate) {
-                        statusText = `A/S ~${c.asEndDate}`;
-                    }
-                    // [MOD] Format: Name | Spouse | Project
-                    let displayParts = [];
-                    if (c.clientName || c.name) displayParts.push(c.clientName || c.name);
-                    if (c.spouseName) displayParts.push(c.spouseName);
-                    displayParts.push(c.projectName || '현장명 미지정');
-                    const displayName = displayParts.join(' | ');
+    // 페이지 리셋 (필터 변경 시)
+    if (resetPage) {
+        currentPage = 1;
+    }
 
-                    // Sub info: Site Address only
-                    let subInfo = c.siteAddress || '주소 미입력';
-                    const lockIcon = c.isLocked ? '🔒' : '';
-                    const creatorInfo = c.createdBy ? ` / <span style="color:#ff9500; font-weight:600;">${c.createdBy}</span>` : '';
-                    // [수정] 날짜(updatedAt) 제거 - 고객목록에서 날짜 표시 안함
+    // 페이징 적용 여부 결정
+    const paginationContainer = document.getElementById('paginationContainer');
+    const usePaging = filteredCustomers.length >= PAGE_THRESHOLD;
 
-                    return `
+    if (usePaging) {
+        // 페이징 UI 표시
+        paginationContainer.style.display = 'block';
+
+        const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
+        const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, filteredCustomers.length);
+        const pageItems = filteredCustomers.slice(startIdx, endIdx);
+
+        // 페이징 정보 업데이트
+        document.getElementById('paginationInfo').textContent =
+            `전체 ${filteredCustomers.length}명 중 ${startIdx + 1}-${endIdx}명 표시`;
+        document.getElementById('currentPageSpan').textContent =
+            `${currentPage} / ${totalPages}`;
+        document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+        document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+
+        // 페이징된 목록 렌더링
+        renderCustomerItems(container, pageItems);
+    } else {
+        // 페이징 UI 숨김
+        paginationContainer.style.display = 'none';
+
+        // 전체 목록 렌더링
+        renderCustomerItems(container, filteredCustomers);
+    }
+    // [NEW] Update Main Board if visible
+    const mainBoard = document.getElementById('mainBoardView');
+    if (mainBoard && mainBoard.style.display !== 'none') {
+        if (typeof renderMainBoard === 'function') renderMainBoard();
+    }
+}
+
+// [NEW] 메인 보드 보기 (홈 버튼)
+function showMainBoardView() {
+    // 1. 고객 상세 뷰 숨기기
+    const customerView = document.getElementById('customerView');
+    if (customerView) customerView.style.display = 'none';
+
+    // 2. 메인 보드 보이기
+    const mainBoard = document.getElementById('mainBoardView');
+    if (mainBoard) {
+        mainBoard.style.display = 'block';
+        renderMainBoard(); // 데이터 갱신
+    }
+
+    // 3. 사이드바 선택 해제
+    const activeItems = document.querySelectorAll('.customer-item.active');
+    activeItems.forEach(el => el.classList.remove('active'));
+
+    // 4. 상태 변수 초기화
+    currentCustomerId = null;
+}
+
+// 고객 목록 아이템 렌더링 (공통)
+function renderCustomerItems(container, items) {
+    if (items.length === 0) {
+        container.innerHTML = '<div style="padding:30px 16px;text-align:center;color:#86868b;font-size:12px;">해당 조건의 고객이 없습니다.</div>';
+    } else {
+        container.innerHTML = items.map(c => {
+            let statusKey = (c.status || '').trim();
+            if (!statusLabels[statusKey] && statusLabels[statusKey.toLowerCase()]) {
+                statusKey = statusKey.toLowerCase();
+            }
+            let statusText = statusLabels[statusKey] || c.status;
+            if (c.status === 'as_done' && c.asEndDate) {
+                statusText = `A/S ~${c.asEndDate}`;
+            }
+            // [MOD] Format: Name | Spouse | Project
+            let displayParts = [];
+            if (c.clientName || c.name) displayParts.push(c.clientName || c.name);
+            if (c.spouseName) displayParts.push(c.spouseName);
+            displayParts.push(c.projectName || '현장명 미지정');
+            const displayName = displayParts.join(' | ');
+
+            // Sub info: Site Address only
+            let subInfo = c.siteAddress || '주소 미입력';
+            const lockIcon = c.isLocked ? '🔒' : '';
+            const creatorInfo = c.createdBy ? ` / <span style="color:#ff9500; font-weight:600;">${c.createdBy}</span>` : '';
+            // [수정] 날짜(updatedAt) 제거 - 고객목록에서 날짜 표시 안함
+
+            return `
                 <div class="customer-item ${c.customerId === currentCustomerId ? 'active' : ''}"
                     data-customer-id="${c.customerId}"
                     onclick="selectCustomer('${c.customerId}')">
@@ -4762,486 +4762,486 @@
                     <div class="customer-item-name" style="font-weight: 700;">${displayName}</div>
                     <div class="customer-item-info">${subInfo}</div>
                 </div>`;
-                }).join('');
+        }).join('');
+    }
+}
+
+// 페이징 함수
+function goToPrevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        updateCustomerList(false);
+    }
+}
+
+function goToNextPage() {
+    const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
+    if (currentPage < totalPages) {
+        currentPage++;
+        updateCustomerList(false);
+    }
+}
+
+// 년도 필터 옵션 초기화
+function initYearFilter() {
+    const yearFilter = document.getElementById('yearFilter');
+    const years = new Set();
+
+    customers.forEach(c => {
+        if (!c.customerId) return; // customerId가 없으면 건너뛰기
+        const idParts = (c.customerId || '').split('-')[0];
+        if (idParts && idParts.length >= 2) {
+            years.add('20' + idParts.substring(0, 2));
+        }
+    });
+
+    // 현재 년도도 추가
+    const currentYear = new Date().getFullYear().toString();
+    years.add(currentYear);
+
+    // 정렬 후 옵션 추가
+    const sortedYears = [...years].sort().reverse();
+    yearFilter.innerHTML = '<option value="">전체 년도</option>' +
+        sortedYears.map(y => `<option value = "${y}" > ${y}년</option> `).join('');
+}
+
+function filterCustomers() { updateCustomerList(); }
+
+
+// ==========================================
+// [원가관리표 DB 복구]
+// ==========================================
+async function restoreCostDB() {
+    if (!isMainAdmin()) {
+        showToast('메인관리자만 실행할 수 있습니다', 'error');
+        return;
+    }
+
+    if (!confirm('현재 화면에 보이는 데이터로\n구글 시트의 [원가관리표데이터베이스]를 업데이트(저장)합니다.\n\n구글 시트의 기존 데이터는 현재 데이터로 대체됩니다.\n진행하시겠습니까?')) {
+        return;
+    }
+
+    showToast('DB 저장(동기화) 중...', 'info');
+
+    // DOM에서 데이터 추출
+    const rows = [];
+    const categoryDivs = document.querySelectorAll('#costCategories .category-section');
+    let totalItems = 0;
+
+    categoryDivs.forEach(div => {
+        // 카테고리명 추출 (예: "01 가설공사")
+        const catText = div.querySelector('h3')?.innerText || '';
+        // "01 " 제거 (선택사항이나 깔끔하게)
+        const catName = catText.replace(/^[0-9]+\s*/, '').trim();
+
+        const trs = div.querySelectorAll('tbody tr');
+
+        trs.forEach(tr => {
+            const inputs = tr.querySelectorAll('input');
+            const select = tr.querySelector('select');
+
+            // inputs: 0=구분, 1=품명, 2=상세, 3=수량, 4=단가
+            // (addCostRow 구조 기준)
+
+            const noVal = tr.querySelector('.col-no')?.textContent.trim() || '';
+            const name = inputs[1]?.value.trim() || '';
+            const spec = inputs[2]?.value.trim() || '';
+            const unit = select?.value || '';
+            const price = inputs[4]?.value.replace(/,/g, '') || '0';
+
+            // 품명이 있는 경우만 저장
+            if (name) {
+                // ['카테고리', 'No', '품명', '상세내용', '단위', '단가']
+                rows.push([catName, noVal, name, spec, unit, price]);
+                totalItems++;
             }
+        });
+    });
+
+    if (rows.length === 0) {
+        showToast('저장할 데이터가 없습니다', 'error');
+        return;
+    }
+
+    console.log(`Saving ${rows.length} items to DB...`, rows);
+
+    try {
+        // CORS 모드: no-cors 제거
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'restoreCostDatabase',
+                data: rows
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`DB 저장 완료! (${result.message})`, 'success');
+        } else {
+            // 에러 메시지가 message 혹은 error 프로퍼티에 있을 수 있음
+            const errMsg = result.message || result.error || '알 수 없는 오류';
+            showToast('저장 실패: ' + errMsg, 'error');
         }
 
-        // 페이징 함수
-        function goToPrevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                updateCustomerList(false);
-            }
+    } catch (error) {
+        console.error('DB Restore Error:', error);
+        showToast('전송 오류: ' + error.message, 'error');
+    }
+}
+
+// ==========================================
+// [커스텀 알림 함수] - 사라지지 않는 알림창
+// ==========================================
+function showPersistentAlert(message, type = 'success') {
+    showToast(message, type);
+}
+
+// ==========================================
+// [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
+// ==========================================
+// [Helper] Normalize status for UI compatibility
+function normalizeCustomerStatus(customerList) {
+    const statusMapNormalizer = {
+        '상담중': 'consulting',
+        '견적': 'estimate',
+        '계약완료': 'contracted',
+        '공사중': 'in_progress',
+        '완료': 'completed',
+        '공사완료': 'completed',
+        'AS완료': 'as_done', 'A/S': 'as_done', 'A/S완료': 'as_done',
+        '보류': 'hold',
+        '예산초과': 'budget_over',
+        '타업체': 'other_company', '타사계약': 'other_company'
+    };
+
+    customerList.forEach(c => {
+        if (c.status && statusMapNormalizer[c.status]) {
+            c.status = statusMapNormalizer[c.status];
+        }
+        // Flatten key fields if needed (compatibility)
+        if (!c.clientName && c.name) c.clientName = c.name;
+    });
+}
+
+async function syncFromCloud(silent = false) {
+    // [Task 3] Stabilization: Block UI during sync
+    if (!silent) setAppBusy(true, '최신 현장 불러오는 중...');
+
+    try {
+        // [Phase 1] Load recent items first for speed (Pagination)
+        const INITIAL_LOAD_LIMIT = 50;
+        // Add sorting param if supported, but relying on backend "Recent First" logic for page=1
+        const params = new URLSearchParams({
+            sheet: '고객관리_견적서',
+            page: '1',
+            limit: INITIAL_LOAD_LIMIT.toString(),
+            t: new Date().getTime()
+        });
+
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        function goToNextPage() {
-            const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
-            if (currentPage < totalPages) {
-                currentPage++;
-                updateCustomerList(false);
-            }
+        let initialData = await response.json();
+
+        // Handle various response types (Array or {data: [], meta: {}})
+        if (!Array.isArray(initialData) && initialData.data) {
+            initialData = initialData.data;
+        } else if (!Array.isArray(initialData)) {
+            // If error object or unknown
+            if (initialData.error) throw new Error(initialData.error);
+            initialData = [];
         }
 
-        // 년도 필터 옵션 초기화
-        function initYearFilter() {
-            const yearFilter = document.getElementById('yearFilter');
-            const years = new Set();
+        if (initialData.length === 0) {
+            if (!silent) showToast('데이터가 없습니다.', 'info');
+            customers = [];
+            updateCustomerList();
+            return true;
+        }
 
-            customers.forEach(c => {
-                if (!c.customerId) return; // customerId가 없으면 건너뛰기
-                const idParts = (c.customerId || '').split('-')[0];
-                if (idParts && idParts.length >= 2) {
-                    years.add('20' + idParts.substring(0, 2));
-                }
+        // 1. Normalize & Update UI immediately
+        normalizeCustomerStatus(initialData);
+
+        // Replace local data with cloud data
+        cloudCustomers = initialData;
+        customers = cloudCustomers;
+
+        // Render List
+        updateCustomerList(true);
+        initYearFilter();
+
+        // Unblock UI immediately
+        if (!silent) {
+            setAppBusy(false);
+            // showToast(`최신 ${initialData.length}건 로드 완료`, 'success');
+        }
+
+        // [Phase 2] Load remaining data in background if needed
+        // If we received a full page (limit reached), assume there is more.
+        // If backend ignored 'limit' and sent 1000 items, length > limit.
+        if (initialData.length >= INITIAL_LOAD_LIMIT) {
+            console.log('🔄 [Background Sync] Fetching remaining data...');
+
+            const restParams = new URLSearchParams({
+                sheet: '고객관리_견적서',
+                page: '2',          // Get the rest
+                limit: '10000',     // Large limit
+                t: new Date().getTime()
             });
 
-            // 현재 년도도 추가
-            const currentYear = new Date().getFullYear().toString();
-            years.add(currentYear);
+            // Background fetch - do not await
+            fetch(`${CUSTOMER_SYNC_URL}?${restParams}`)
+                .then(res => res.json())
+                .then(restData => {
+                    let restList = restData;
+                    if (!Array.isArray(restList) && restList.data) restList = restList.data;
 
-            // 정렬 후 옵션 추가
-            const sortedYears = [...years].sort().reverse();
-            yearFilter.innerHTML = '<option value="">전체 년도</option>' +
-                sortedYears.map(y => `<option value = "${y}" > ${y}년</option> `).join('');
-        }
+                    if (Array.isArray(restList) && restList.length > 0) {
+                        console.log(`🔄 [Background Sync] Received ${restList.length} more records.`);
+                        normalizeCustomerStatus(restList);
 
-        function filterCustomers() { updateCustomerList(); }
+                        // Merge: We append restList to cloudCustomers
+                        // (Assuming 'page=2' returns OLDER items if page=1 was recent)
 
+                        // Use Map to ensure no duplicates in case of overlap or ID collision
+                        const currentMap = new Map();
+                        cloudCustomers.forEach(c => currentMap.set(c.customerId, c));
+                        restList.forEach(c => currentMap.set(c.customerId, c));
 
-        // ==========================================
-        // [원가관리표 DB 복구]
-        // ==========================================
-        async function restoreCostDB() {
-            if (!isMainAdmin()) {
-                showToast('메인관리자만 실행할 수 있습니다', 'error');
-                return;
-            }
+                        // Update global list
+                        cloudCustomers = Array.from(currentMap.values());
+                        customers = cloudCustomers;
 
-            if (!confirm('현재 화면에 보이는 데이터로\n구글 시트의 [원가관리표데이터베이스]를 업데이트(저장)합니다.\n\n구글 시트의 기존 데이터는 현재 데이터로 대체됩니다.\n진행하시겠습니까?')) {
-                return;
-            }
+                        // Silent update (maintain scroll/page)
+                        updateCustomerList(false);
+                        initYearFilter();
 
-            showToast('DB 저장(동기화) 중...', 'info');
-
-            // DOM에서 데이터 추출
-            const rows = [];
-            const categoryDivs = document.querySelectorAll('#costCategories .category-section');
-            let totalItems = 0;
-
-            categoryDivs.forEach(div => {
-                // 카테고리명 추출 (예: "01 가설공사")
-                const catText = div.querySelector('h3')?.innerText || '';
-                // "01 " 제거 (선택사항이나 깔끔하게)
-                const catName = catText.replace(/^[0-9]+\s*/, '').trim();
-
-                const trs = div.querySelectorAll('tbody tr');
-
-                trs.forEach(tr => {
-                    const inputs = tr.querySelectorAll('input');
-                    const select = tr.querySelector('select');
-
-                    // inputs: 0=구분, 1=품명, 2=상세, 3=수량, 4=단가
-                    // (addCostRow 구조 기준)
-
-                    const noVal = tr.querySelector('.col-no')?.textContent.trim() || '';
-                    const name = inputs[1]?.value.trim() || '';
-                    const spec = inputs[2]?.value.trim() || '';
-                    const unit = select?.value || '';
-                    const price = inputs[4]?.value.replace(/,/g, '') || '0';
-
-                    // 품명이 있는 경우만 저장
-                    if (name) {
-                        // ['카테고리', 'No', '품명', '상세내용', '단위', '단가']
-                        rows.push([catName, noVal, name, spec, unit, price]);
-                        totalItems++;
+                        console.log('✅ [Background Sync] Complete. Total:', cloudCustomers.length);
+                        if (!silent) showToast(`전체 동기화 완료 (총 ${cloudCustomers.length}명)`, 'success');
                     }
-                });
-            });
-
-            if (rows.length === 0) {
-                showToast('저장할 데이터가 없습니다', 'error');
-                return;
-            }
-
-            console.log(`Saving ${rows.length} items to DB...`, rows);
-
-            try {
-                // CORS 모드: no-cors 제거
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'restoreCostDatabase',
-                        data: rows
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast(`DB 저장 완료! (${result.message})`, 'success');
-                } else {
-                    // 에러 메시지가 message 혹은 error 프로퍼티에 있을 수 있음
-                    const errMsg = result.message || result.error || '알 수 없는 오류';
-                    showToast('저장 실패: ' + errMsg, 'error');
-                }
-
-            } catch (error) {
-                console.error('DB Restore Error:', error);
-                showToast('전송 오류: ' + error.message, 'error');
-            }
+                })
+                .catch(err => console.error('Background fetch failed:', err));
+        } else {
+            if (!silent) showToast(`동기화 완료 (총 ${cloudCustomers.length}명)`, 'success');
         }
 
-        // ==========================================
-        // [커스텀 알림 함수] - 사라지지 않는 알림창
-        // ==========================================
-        function showPersistentAlert(message, type = 'success') {
-            showToast(message, type);
+        return true;
+
+    } catch (error) {
+        console.error('❌ [Cloud Sync] Error:', error);
+        if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
+        return false;
+    } finally {
+        // Safety: Ensure busy is off
+        if (!silent) setAppBusy(false);
+    }
+}
+
+async function syncToGoogleSheets(data) {
+    console.log('📤 [Google Sheets Sync] Starting sync process...');
+    console.log('📋 [Google Sheets Sync] Customer Data:', data);
+
+    try {
+        const statusKey = (data.status || '').trim();
+        let koreanStatus = statusLabels[statusKey] || statusLabels[statusKey.toLowerCase()] || data.status;
+
+        const payload = {
+            sheetName: '고객관리_견적서',
+            data: {
+                customerId: data.customerId || '',
+                clientName: data.clientName || '',
+                clientPhone: data.clientPhone || '',
+                clientEmail: data.clientEmail || '',
+                status: koreanStatus, // Send Korean status
+                createdAt: data.createdAt || new Date().toISOString(),
+                clientAddress: data.clientAddress || '',
+                projectName: data.projectName || '',
+                siteAddress: data.siteAddress || '',
+                constructionPeriod: data.constructionPeriod || '',
+                movingDate: data.movingDate || '',           // 이사예정일 추가
+                finalPaymentDate: data.finalPaymentDate || '', // 잔금일
+                contractDate: data.contractDate || '', // 계약일
+                warrantyPeriod: data.asEndDate ? (data.asEndDate) : '', // A/S 기간
+                asEndDate: data.asEndDate || '',             // A/S 종료일 추가
+
+                pyeong: data.area || '',
+                inflowPath: data.clientSource || '',      // 유입경로
+                buildingType: data.buildingType || '',    // 건물유형
+                totalAmount: data.totalAmount || '',
+                estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
+                manager: data.manager || '',              // 담당자 추가
+                updatedAt: data.updatedAt || '',          // 최종수정일 추가
+                jsonData: JSON.stringify(data)
+            }
+        };
+
+
+        console.log('📦 [Web Save] Payload:', payload);
+        console.log('📦 [Web Save] Payload (full):', JSON.stringify(payload, null, 2));
+        console.log('📦 [Web Save] jsonData field length:', payload.data.jsonData.length);
+        console.log('📦 [Web Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
+
+        // Parse jsonData to verify checklistData is included
+        try {
+            const parsedJsonData = JSON.parse(payload.data.jsonData);
+            console.log('📦 [Web Save] Verified - checklistData in jsonData:', Object.keys(parsedJsonData.checklistData || {}).length, 'items');
+            if (parsedJsonData.checklistData && Object.keys(parsedJsonData.checklistData).length > 0) {
+                console.log('📦 [Web Save] Sample checklist items:', Object.entries(parsedJsonData.checklistData).slice(0, 3).map(([k, v]) => `${k}: ${v}`));
+            }
+        } catch (e) {
+            console.error('❌ [Web Save] Failed to verify jsonData:', e);
         }
 
-        // ==========================================
-        // [클라우드 동기화] Google Sheets에서 고객 데이터 불러오기
-        // ==========================================
-        // [Helper] Normalize status for UI compatibility
-        function normalizeCustomerStatus(customerList) {
-            const statusMapNormalizer = {
-                '상담중': 'consulting',
-                '견적': 'estimate',
-                '계약완료': 'contracted',
-                '공사중': 'in_progress',
-                '완료': 'completed',
-                '공사완료': 'completed',
-                'AS완료': 'as_done', 'A/S': 'as_done', 'A/S완료': 'as_done',
-                '보류': 'hold',
-                '예산초과': 'budget_over',
-                '타업체': 'other_company', '타사계약': 'other_company'
-            };
+        console.log('🌐 [Google Sheets Sync] Target URL:', CUSTOMER_SYNC_URL);
 
-            customerList.forEach(c => {
-                if (c.status && statusMapNormalizer[c.status]) {
-                    c.status = statusMapNormalizer[c.status];
-                }
-                // Flatten key fields if needed (compatibility)
-                if (!c.clientName && c.name) c.clientName = c.name;
-            });
+        // no-cors 모드 제거하여 실제 응답 확인 가능
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
+
+        console.log('📡 [Google Sheets Sync] Response status:', response.status);
+        console.log('📡 [Google Sheets Sync] Response headers:', [...response.headers.entries()]);
+
+        // 응답 본문 확인
+        const responseText = await response.text();
+        console.log('📄 [Google Sheets Sync] Response text:', responseText);
+
+        let result;
+        try {
+            result = JSON.parse(responseText);
+            console.log('✅ [Google Sheets Sync] Parsed response:', result);
+        } catch (e) {
+            console.warn('⚠️ [Google Sheets Sync] Response is not JSON:', responseText);
         }
 
-        async function syncFromCloud(silent = false) {
-            // [Task 3] Stabilization: Block UI during sync
-            if (!silent) setAppBusy(true, '최신 현장 불러오는 중...');
-
-            try {
-                // [Phase 1] Load recent items first for speed (Pagination)
-                const INITIAL_LOAD_LIMIT = 50;
-                // Add sorting param if supported, but relying on backend "Recent First" logic for page=1
-                const params = new URLSearchParams({
-                    sheet: '고객관리_견적서',
-                    page: '1',
-                    limit: INITIAL_LOAD_LIMIT.toString(),
-                    t: new Date().getTime()
-                });
-
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                let initialData = await response.json();
-
-                // Handle various response types (Array or {data: [], meta: {}})
-                if (!Array.isArray(initialData) && initialData.data) {
-                    initialData = initialData.data;
-                } else if (!Array.isArray(initialData)) {
-                    // If error object or unknown
-                    if (initialData.error) throw new Error(initialData.error);
-                    initialData = [];
-                }
-
-                if (initialData.length === 0) {
-                    if (!silent) showToast('데이터가 없습니다.', 'info');
-                    customers = [];
-                    updateCustomerList();
-                    return true;
-                }
-
-                // 1. Normalize & Update UI immediately
-                normalizeCustomerStatus(initialData);
-
-                // Replace local data with cloud data
-                cloudCustomers = initialData;
-                customers = cloudCustomers;
-
-                // Render List
-                updateCustomerList(true);
-                initYearFilter();
-
-                // Unblock UI immediately
-                if (!silent) {
-                    setAppBusy(false);
-                    // showToast(`최신 ${initialData.length}건 로드 완료`, 'success');
-                }
-
-                // [Phase 2] Load remaining data in background if needed
-                // If we received a full page (limit reached), assume there is more.
-                // If backend ignored 'limit' and sent 1000 items, length > limit.
-                if (initialData.length >= INITIAL_LOAD_LIMIT) {
-                    console.log('🔄 [Background Sync] Fetching remaining data...');
-
-                    const restParams = new URLSearchParams({
-                        sheet: '고객관리_견적서',
-                        page: '2',          // Get the rest
-                        limit: '10000',     // Large limit
-                        t: new Date().getTime()
-                    });
-
-                    // Background fetch - do not await
-                    fetch(`${CUSTOMER_SYNC_URL}?${restParams}`)
-                        .then(res => res.json())
-                        .then(restData => {
-                            let restList = restData;
-                            if (!Array.isArray(restList) && restList.data) restList = restList.data;
-
-                            if (Array.isArray(restList) && restList.length > 0) {
-                                console.log(`🔄 [Background Sync] Received ${restList.length} more records.`);
-                                normalizeCustomerStatus(restList);
-
-                                // Merge: We append restList to cloudCustomers
-                                // (Assuming 'page=2' returns OLDER items if page=1 was recent)
-
-                                // Use Map to ensure no duplicates in case of overlap or ID collision
-                                const currentMap = new Map();
-                                cloudCustomers.forEach(c => currentMap.set(c.customerId, c));
-                                restList.forEach(c => currentMap.set(c.customerId, c));
-
-                                // Update global list
-                                cloudCustomers = Array.from(currentMap.values());
-                                customers = cloudCustomers;
-
-                                // Silent update (maintain scroll/page)
-                                updateCustomerList(false);
-                                initYearFilter();
-
-                                console.log('✅ [Background Sync] Complete. Total:', cloudCustomers.length);
-                                if (!silent) showToast(`전체 동기화 완료 (총 ${cloudCustomers.length}명)`, 'success');
-                            }
-                        })
-                        .catch(err => console.error('Background fetch failed:', err));
-                } else {
-                    if (!silent) showToast(`동기화 완료 (총 ${cloudCustomers.length}명)`, 'success');
-                }
-
-                return true;
-
-            } catch (error) {
-                console.error('❌ [Cloud Sync] Error:', error);
-                if (!silent) showPersistentAlert(`클라우드 동기화 실패\n\n${error.message}`, 'error');
-                return false;
-            } finally {
-                // Safety: Ensure busy is off
-                if (!silent) setAppBusy(false);
-            }
+        if (response.ok || response.status === 200) {
+            console.log('✅ [Google Sheets Sync] Request completed successfully');
+            showToast('구글 시트 동기화 완료!', 'success');
+        } else {
+            throw new Error(`HTTP${response.status}: ${responseText} `);
         }
 
-        async function syncToGoogleSheets(data) {
-            console.log('📤 [Google Sheets Sync] Starting sync process...');
-            console.log('📋 [Google Sheets Sync] Customer Data:', data);
+    } catch (error) {
+        console.error('❌ [Google Sheets Sync] Error:', error);
+        console.error('❌ [Google Sheets Sync] Error name:', error.name);
+        console.error('❌ [Google Sheets Sync] Error message:', error.message);
+        console.error('❌ [Google Sheets Sync] Error stack:', error.stack);
 
-            try {
-                const statusKey = (data.status || '').trim();
-                let koreanStatus = statusLabels[statusKey] || statusLabels[statusKey.toLowerCase()] || data.status;
-
-                const payload = {
-                    sheetName: '고객관리_견적서',
-                    data: {
-                        customerId: data.customerId || '',
-                        clientName: data.clientName || '',
-                        clientPhone: data.clientPhone || '',
-                        clientEmail: data.clientEmail || '',
-                        status: koreanStatus, // Send Korean status
-                        createdAt: data.createdAt || new Date().toISOString(),
-                        clientAddress: data.clientAddress || '',
-                        projectName: data.projectName || '',
-                        siteAddress: data.siteAddress || '',
-                        constructionPeriod: data.constructionPeriod || '',
-                        movingDate: data.movingDate || '',           // 이사예정일 추가
-                        finalPaymentDate: data.finalPaymentDate || '', // 잔금일
-                        contractDate: data.contractDate || '', // 계약일
-                        warrantyPeriod: data.asEndDate ? (data.asEndDate) : '', // A/S 기간
-                        asEndDate: data.asEndDate || '',             // A/S 종료일 추가
-
-                        pyeong: data.area || '',
-                        inflowPath: data.clientSource || '',      // 유입경로
-                        buildingType: data.buildingType || '',    // 건물유형
-                        totalAmount: data.totalAmount || '',
-                        estimateProfitRate: data.profitRate || (data.estimateProfitRate ? data.estimateProfitRate + '%' : '15%'),
-                        manager: data.manager || '',              // 담당자 추가
-                        updatedAt: data.updatedAt || '',          // 최종수정일 추가
-                        jsonData: JSON.stringify(data)
-                    }
-                };
-
-
-                console.log('📦 [Web Save] Payload:', payload);
-                console.log('📦 [Web Save] Payload (full):', JSON.stringify(payload, null, 2));
-                console.log('📦 [Web Save] jsonData field length:', payload.data.jsonData.length);
-                console.log('📦 [Web Save] jsonData contains checklistData?', payload.data.jsonData.includes('checklistData'));
-
-                // Parse jsonData to verify checklistData is included
-                try {
-                    const parsedJsonData = JSON.parse(payload.data.jsonData);
-                    console.log('📦 [Web Save] Verified - checklistData in jsonData:', Object.keys(parsedJsonData.checklistData || {}).length, 'items');
-                    if (parsedJsonData.checklistData && Object.keys(parsedJsonData.checklistData).length > 0) {
-                        console.log('📦 [Web Save] Sample checklist items:', Object.entries(parsedJsonData.checklistData).slice(0, 3).map(([k, v]) => `${k}: ${v}`));
-                    }
-                } catch (e) {
-                    console.error('❌ [Web Save] Failed to verify jsonData:', e);
-                }
-
-                console.log('🌐 [Google Sheets Sync] Target URL:', CUSTOMER_SYNC_URL);
-
-                // no-cors 모드 제거하여 실제 응답 확인 가능
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload)
-                });
-
-                console.log('📡 [Google Sheets Sync] Response status:', response.status);
-                console.log('📡 [Google Sheets Sync] Response headers:', [...response.headers.entries()]);
-
-                // 응답 본문 확인
-                const responseText = await response.text();
-                console.log('📄 [Google Sheets Sync] Response text:', responseText);
-
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                    console.log('✅ [Google Sheets Sync] Parsed response:', result);
-                } catch (e) {
-                    console.warn('⚠️ [Google Sheets Sync] Response is not JSON:', responseText);
-                }
-
-                if (response.ok || response.status === 200) {
-                    console.log('✅ [Google Sheets Sync] Request completed successfully');
-                    showToast('구글 시트 동기화 완료!', 'success');
-                } else {
-                    throw new Error(`HTTP${response.status}: ${responseText} `);
-                }
-
-            } catch (error) {
-                console.error('❌ [Google Sheets Sync] Error:', error);
-                console.error('❌ [Google Sheets Sync] Error name:', error.name);
-                console.error('❌ [Google Sheets Sync] Error message:', error.message);
-                console.error('❌ [Google Sheets Sync] Error stack:', error.stack);
-
-                // CORS 에러인 경우 특별 처리
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    showToast('구글 시트 동기화: CORS 에러. GAS 배포를 확인하세요.', 'error');
-                    console.error('💡 [Google Sheets Sync] Hint: Apps Script가 "모든 사용자(익명 사용자 포함)" 권한으로 배포되었는지 확인하세요.');
-                } else {
-                    showToast('구글 시트 동기화 실패: ' + error.message, 'error');
-                }
-            }
+        // CORS 에러인 경우 특별 처리
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            showToast('구글 시트 동기화: CORS 에러. GAS 배포를 확인하세요.', 'error');
+            console.error('💡 [Google Sheets Sync] Hint: Apps Script가 "모든 사용자(익명 사용자 포함)" 권한으로 배포되었는지 확인하세요.');
+        } else {
+            showToast('구글 시트 동기화 실패: ' + error.message, 'error');
         }
+    }
+}
 
-        async function saveData() {
-            if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
+async function saveData() {
+    if (!currentCustomerId) return showToast('먼저 고객을 등록하세요', 'error');
 
-            if (!isLoggedIn()) {
-                showToast('관리자 로그인이 필요합니다 (열람 모드에서는 저장할 수 없습니다)', 'error');
-                showAdminModal();
-                return;
-            }
+    if (!isLoggedIn()) {
+        showToast('관리자 로그인이 필요합니다 (열람 모드에서는 저장할 수 없습니다)', 'error');
+        showAdminModal();
+        return;
+    }
 
-            // 잠금된 고객은 비밀번호 필요
-            if (isCustomerLocked()) {
-                showDeletePasswordModal(() => {
-                    performSaveData();
-                });
-                return;
-            }
-
+    // 잠금된 고객은 비밀번호 필요
+    if (isCustomerLocked()) {
+        showDeletePasswordModal(() => {
             performSaveData();
+        });
+        return;
+    }
+
+    performSaveData();
+}
+
+function performSaveData() {
+    // [수정] 원가관리표(CostData)는 고객 데이터(Quote)를 위해 저장합니다.
+    // 단, 글로벌 DB(Master Spec)에는 영향을 주지 않습니다. (Read-Only Policy)
+    if (isLoggedIn()) {
+        saveCostData();
+    }
+
+    // 고객별 견적 데이터는 항상 저장
+    saveEstimateData();
+
+    // [추가] 체크리스트 필터 상태 저장
+    if (typeof multiSelectState !== 'undefined') {
+        currentData.checklistFilters = JSON.parse(JSON.stringify(multiSelectState));
+    }
+    const idx = customers.findIndex(c => c.customerId === currentCustomerId);
+
+    // FUNDAMENTAL LOCK CHECK
+    if (idx >= 0) {
+        const original = customers[idx];
+
+        // If it was locked, BLOCK save operations (except for main admin)
+        if (original.isLocked && !isMainAdmin()) {
+            showToast('잠금 상태에서는 저장할 수 없습니다.', 'error');
+            return;
         }
 
-        function performSaveData() {
-            // [수정] 원가관리표(CostData)는 고객 데이터(Quote)를 위해 저장합니다.
-            // 단, 글로벌 DB(Master Spec)에는 영향을 주지 않습니다. (Read-Only Policy)
-            if (isLoggedIn()) {
-                saveCostData();
-            }
-
-            // 고객별 견적 데이터는 항상 저장
-            saveEstimateData();
-
-            // [추가] 체크리스트 필터 상태 저장
-            if (typeof multiSelectState !== 'undefined') {
-                currentData.checklistFilters = JSON.parse(JSON.stringify(multiSelectState));
-            }
-            const idx = customers.findIndex(c => c.customerId === currentCustomerId);
-
-            // FUNDAMENTAL LOCK CHECK
-            if (idx >= 0) {
-                const original = customers[idx];
-
-                // If it was locked, BLOCK save operations (except for main admin)
-                if (original.isLocked && !isMainAdmin()) {
-                    showToast('잠금 상태에서는 저장할 수 없습니다.', 'error');
-                    return;
-                }
-
-                // 작성자 권한 체크: 작성자 또는 메인관리자만 수정 가능
-                if (original.createdBy && String(original.createdBy).trim().toLowerCase() !== String(currentAdmin?.id).trim().toLowerCase() && !isMainAdmin()) {
-                    showToast(`수정 권한이 없습니다. (작성자: ${original.createdBy})`, 'error');
-                    return;
-                }
-
-                // 첫 저장 시 작성자 할당 (createdBy가 없는 경우)
-                if (!original.createdBy && currentAdmin) {
-                    currentData.createdBy = currentAdmin.id;
-                }
-
-                // 수정일 업데이트
-                currentData.updatedAt = new Date().toISOString().split('T')[0];
-
-                customers[idx] = { ...currentData };
-            } else {
-                // 새 고객: 작성자 할당
-                if (!currentData.createdBy && currentAdmin) {
-                    currentData.createdBy = currentAdmin.id;
-                }
-                customers.push({ ...currentData });
-            }
-            // Phase 2: 업무 데이터 로컬 저장 금지
-
-
-            // 리스트 UI 즉시 갱신 (최종수정일 등 반영)
-            updateCustomerList();
-
-            if (isLoggedIn()) {
-                showSaveConfirmToast('✅ 저장 완료! (원가관리표 제외)');
-            } else {
-                showSaveConfirmToast('✅ 저장 완료!');
-            }
-
-            // Google Sheets 동기화 (백그라운드)
-            syncToGoogleSheets({ ...currentData });
-
-            // 저장 후 화면 유지 (고객 목록만 갱신)
-            updateCustomerList();
+        // 작성자 권한 체크: 작성자 또는 메인관리자만 수정 가능
+        if (original.createdBy && String(original.createdBy).trim().toLowerCase() !== String(currentAdmin?.id).trim().toLowerCase() && !isMainAdmin()) {
+            showToast(`수정 권한이 없습니다. (작성자: ${original.createdBy})`, 'error');
+            return;
         }
 
-        function createCoverTable() {
-            const tbody = document.getElementById('coverTableBody');
-            let html = categories.map((cat, i) => `
+        // 첫 저장 시 작성자 할당 (createdBy가 없는 경우)
+        if (!original.createdBy && currentAdmin) {
+            currentData.createdBy = currentAdmin.id;
+        }
+
+        // 수정일 업데이트
+        currentData.updatedAt = new Date().toISOString().split('T')[0];
+
+        customers[idx] = { ...currentData };
+    } else {
+        // 새 고객: 작성자 할당
+        if (!currentData.createdBy && currentAdmin) {
+            currentData.createdBy = currentAdmin.id;
+        }
+        customers.push({ ...currentData });
+    }
+    // Phase 2: 업무 데이터 로컬 저장 금지
+
+
+    // 리스트 UI 즉시 갱신 (최종수정일 등 반영)
+    updateCustomerList();
+
+    if (isLoggedIn()) {
+        showSaveConfirmToast('✅ 저장 완료! (원가관리표 제외)');
+    } else {
+        showSaveConfirmToast('✅ 저장 완료!');
+    }
+
+    // Google Sheets 동기화 (백그라운드)
+    syncToGoogleSheets({ ...currentData });
+
+    // 저장 후 화면 유지 (고객 목록만 갱신)
+    updateCustomerList();
+}
+
+function createCoverTable() {
+    const tbody = document.getElementById('coverTableBody');
+    let html = categories.map((cat, i) => `
                 <tr >
                 <td class="no">${i + 1}</td>
                 <td>${cat.name}</td>
                 <td class="amount" id="coverCat${cat.no}"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
                 `).join('');
-            html += `
+    html += `
                 <tr class="subtotal" >
                 <td></td>
                 <td>소계 (공급가액)</td>
@@ -5263,13 +5263,13 @@
                 <td class="amount" id="coverTotal"><div class="money-align"><span class="currency">₩</span><span class="value">0</span></div></td>
             </tr>
             `;
-            tbody.innerHTML = html;
-        }
+    tbody.innerHTML = html;
+}
 
 
-        function createCostCategories() {
-            const container = document.getElementById('costCategories');
-            container.innerHTML = categories.map(cat => `
+function createCostCategories() {
+    const container = document.getElementById('costCategories');
+    container.innerHTML = categories.map(cat => `
                 <div class="category-section" >
                 <div class="category-header">
                     <h3><span class="cat-no">${cat.no}</span> ${cat.name}</h3>
@@ -5316,13 +5316,13 @@
                 <!-- Master DB 보호를 위해 항목 추가 버튼 제거 -->
             </div>
             `).join('');
-        }
+}
 
-        function addCostRow(catNo) {
-            const tbody = document.getElementById(`costBody${catNo}`);
-            const n = tbody.querySelectorAll('tr').length + 1;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="col-no">${n}</td>
+function addCostRow(catNo) {
+    const tbody = document.getElementById(`costBody${catNo}`);
+    const n = tbody.querySelectorAll('tr').length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="col-no">${n}</td>
             <td class="col-div"><input type="text"></td>
             <td class="col-name"><input type="text"></td>
             <td class="col-spec"><input type="text"></td>
@@ -5330,56 +5330,56 @@
             <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
             <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
             <td class="col-total">0</td>`;
-            tbody.appendChild(tr);
-        }
+    tbody.appendChild(tr);
+}
 
-        // 원가관리표는 전역 데이터로 관리 (모든 고객에게 동일)
-        // 계약견적서는 고객별로 독립 관리
+// 원가관리표는 전역 데이터로 관리 (모든 고객에게 동일)
+// 계약견적서는 고객별로 독립 관리
 
-        // 계약견적서에서 상세내용 드롭다운 선택 시
+// 계약견적서에서 상세내용 드롭다운 선택 시
 
 
-        // 원가관리표 행별 합계 계산
-        function calcCostRow(input) {
-            const row = input.closest('tr');
-            const inputs = row.querySelectorAll('input');
-            const qty = parseNumber(inputs[3]?.value) || 0;
-            const price = parseNumber(inputs[4]?.value) || 0;
-            const total = qty * price;
+// 원가관리표 행별 합계 계산
+function calcCostRow(input) {
+    const row = input.closest('tr');
+    const inputs = row.querySelectorAll('input');
+    const qty = parseNumber(inputs[3]?.value) || 0;
+    const price = parseNumber(inputs[4]?.value) || 0;
+    const total = qty * price;
 
-            const totalCell = row.querySelector('.col-total');
-            if (totalCell) {
-                totalCell.textContent = formatNumber(total);
-            }
+    const totalCell = row.querySelector('.col-total');
+    if (totalCell) {
+        totalCell.textContent = formatNumber(total);
+    }
 
-            // 카테고리 소계 업데이트
-            const tbody = row.closest('tbody');
-            if (tbody && tbody.id) {
-                const catNo = tbody.id.replace('costBody', '');
-                updateCostCategorySubtotal(catNo);
-            }
-        }
+    // 카테고리 소계 업데이트
+    const tbody = row.closest('tbody');
+    if (tbody && tbody.id) {
+        const catNo = tbody.id.replace('costBody', '');
+        updateCostCategorySubtotal(catNo);
+    }
+}
 
-        // 원가관리표 카테고리별 소계 계산
-        function updateCostCategorySubtotal(catNo) {
-            const tbody = document.getElementById(`costBody${catNo}`);
-            const subtotalSpan = document.getElementById(`costSubtotal${catNo}`);
-            if (!tbody || !subtotalSpan) return;
+// 원가관리표 카테고리별 소계 계산
+function updateCostCategorySubtotal(catNo) {
+    const tbody = document.getElementById(`costBody${catNo}`);
+    const subtotalSpan = document.getElementById(`costSubtotal${catNo}`);
+    if (!tbody || !subtotalSpan) return;
 
-            let subtotal = 0;
-            tbody.querySelectorAll('tr').forEach(row => {
-                const inputs = row.querySelectorAll('input');
-                const qty = parseNumber(inputs[3]?.value) || 0;
-                const price = parseNumber(inputs[4]?.value) || 0;
-                subtotal += qty * price;
-            });
+    let subtotal = 0;
+    tbody.querySelectorAll('tr').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const qty = parseNumber(inputs[3]?.value) || 0;
+        const price = parseNumber(inputs[4]?.value) || 0;
+        subtotal += qty * price;
+    });
 
-            subtotalSpan.textContent = formatNumber(subtotal);
-        }
+    subtotalSpan.textContent = formatNumber(subtotal);
+}
 
-        function createEstimateCategories() {
-            const container = document.getElementById('estimateCategories');
-            container.innerHTML = categories.map(cat => `
+function createEstimateCategories() {
+    const container = document.getElementById('estimateCategories');
+    container.innerHTML = categories.map(cat => `
             <div class="category-section">
                 <div class="category-header">
                     <h3><span class="cat-no">${cat.no}</span> ${cat.name}</h3>
@@ -5448,263 +5448,263 @@
             </div>
             `).join('');
 
-            // 각 카테고리별 구분 옵션 초기화
-            categories.forEach(cat => {
-                updateDivOptions(cat.no);
-            });
+    // 각 카테고리별 구분 옵션 초기화
+    categories.forEach(cat => {
+        updateDivOptions(cat.no);
+    });
 
-            // 셀 클릭 편집 이벤트 위임 (spec-cell, unit-cell, price-cell, div-cell, name-cell)
-            container.addEventListener('click', function (e) {
-                const divCell = e.target.closest('.div-cell');
-                const nameCell = e.target.closest('.name-cell');
-                const specCell = e.target.closest('.spec-cell');
-                const unitCell = e.target.closest('.unit-cell');
-                const priceCell = e.target.closest('.price-cell');
+    // 셀 클릭 편집 이벤트 위임 (spec-cell, unit-cell, price-cell, div-cell, name-cell)
+    container.addEventListener('click', function (e) {
+        const divCell = e.target.closest('.div-cell');
+        const nameCell = e.target.closest('.name-cell');
+        const specCell = e.target.closest('.spec-cell');
+        const unitCell = e.target.closest('.unit-cell');
+        const priceCell = e.target.closest('.price-cell');
 
-                if (divCell && !divCell.querySelector('select') && !divCell.querySelector('input')) {
-                    const row = divCell.closest('tr');
-                    const catNo = row.closest('tbody').id.replace('estBody', '');
-                    makeDivEditable(divCell, catNo);
-                    return;
-                }
-                if (nameCell && !nameCell.querySelector('select') && !nameCell.querySelector('input')) {
-                    const row = nameCell.closest('tr');
-                    const catNo = row.closest('tbody').id.replace('estBody', '');
-                    makeNameEditable(nameCell, catNo);
-                    return;
-                }
-
-                if (specCell && !specCell.querySelector('input')) {
-                    // 드롭다운(select)이 아닌 텍스트 영역을 클릭한 경우 편집 모드 전환
-                    if (!specCell.querySelector('select')) {
-                        const row = specCell.closest('tr');
-                        const catNo = row.closest('tbody').id.replace('estBody', '');
-                        makeSpecEditable(specCell, catNo);
-                        return;
-                    }
-                }
-                if (unitCell && !unitCell.querySelector('input')) {
-                    const row = unitCell.closest('tr');
-                    const catNo = row.closest('tbody').id.replace('estBody', '');
-                    makeUnitEditable(unitCell, catNo);
-                    return;
-                }
-                if (priceCell && !priceCell.querySelector('input')) {
-                    const row = priceCell.closest('tr');
-                    const catNo = row.closest('tbody').id.replace('estBody', '');
-                    makePriceEditable(priceCell, catNo);
-                    return;
-                }
-            });
-
-            // 더블클릭: 드롭다운이 있는 spec-cell도 직접 편집 모드로 전환
-            container.addEventListener('dblclick', function (e) {
-                const specCell = e.target.closest('.spec-cell');
-                if (specCell && specCell.querySelector('select') && !specCell.querySelector('input')) {
-                    const row = specCell.closest('tr');
-                    const catNo = row.closest('tbody').id.replace('estBody', '');
-                    convertSpecSelectToInput(specCell, catNo);
-                    return;
-                }
-            });
-
-            // 엔터 키로 모든 입력 필드 포커스 해제 (전역 이벤트 위임)
-            container.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    const target = e.target;
-                    // input, textarea에서 엔터 시 blur (textarea는 shift+enter로 줄바꿈 허용)
-                    if (target.tagName === 'INPUT' || (target.tagName === 'TEXTAREA' && !e.shiftKey)) {
-                        e.preventDefault();
-                        target.blur();
-                    }
-                }
-            });
-
-            // select 더블클릭 감지 (select는 브라우저가 dblclick을 먹으므로 mousedown 타이밍으로 처리)
-            let lastSelectClick = { time: 0, target: null };
-            container.addEventListener('mousedown', function (e) {
-                const selectEl = e.target.closest('select.div-select, select.name-select');
-                if (!selectEl) { lastSelectClick = { time: 0, target: null }; return; }
-
-                const now = Date.now();
-                if (lastSelectClick.target === selectEl && (now - lastSelectClick.time) < 400) {
-                    // 더블클릭 감지
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const row = selectEl.closest('tr');
-                    const catNo = row.closest('tbody').id.replace('estBody', '');
-
-                    if (selectEl.classList.contains('div-select')) {
-                        convertDivSelectToInput(selectEl, row, catNo);
-                    } else if (selectEl.classList.contains('name-select')) {
-                        convertNameSelectToInput(selectEl, row, catNo);
-                    }
-                    lastSelectClick = { time: 0, target: null };
-                } else {
-                    lastSelectClick = { time: now, target: selectEl };
-                }
-            });
-
-            // select의 이전 값 추적 (focus 시 저장) - 내용수정용
-            container.addEventListener('focus', function (e) {
-                const sel = e.target;
-                if (sel.tagName === 'SELECT' && (sel.classList.contains('div-select') || sel.classList.contains('name-select') || sel.classList.contains('spec-select'))) {
-                    sel._prevValue = sel.value;
-                    sel._prevText = sel.selectedOptions[0]?.textContent?.trim() || '';
-                }
-            }, true);
+        if (divCell && !divCell.querySelector('select') && !divCell.querySelector('input')) {
+            const row = divCell.closest('tr');
+            const catNo = row.closest('tbody').id.replace('estBody', '');
+            makeDivEditable(divCell, catNo);
+            return;
+        }
+        if (nameCell && !nameCell.querySelector('select') && !nameCell.querySelector('input')) {
+            const row = nameCell.closest('tr');
+            const catNo = row.closest('tbody').id.replace('estBody', '');
+            makeNameEditable(nameCell, catNo);
+            return;
         }
 
-        // 구분 select → input 전환 (더블클릭용)
-        function convertDivSelectToInput(selectEl, row, catNo) {
-            const td = selectEl.closest('td');
-            const currentVal = selectEl.value || '';
-            const currentText = selectEl.selectedOptions[0]?.textContent?.trim() || '';
-            const items = getCostItemsByCategory(catNo);
-            const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-            const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
-
-            td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${currentVal && currentVal !== '__custom_div__' ? currentVal : ''}" placeholder="구분 입력"
-                onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
-            const inp = td.querySelector('input');
-            inp.focus();
-            inp.select();
-            inp.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Enter') {
-                    ev.preventDefault();
-                    inp.blur();
-                } else if (ev.key === 'Escape') {
-                    td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
-                        <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
-                    if (currentVal && currentVal !== '__custom_div__') {
-                        td.querySelector('.div-select').value = currentVal;
-                    }
-                    saveEstimateData();
-                }
-            });
-        }
-
-        // 품명 select → input 전환 (더블클릭용)
-        function convertNameSelectToInput(selectEl, row, catNo) {
-            const td = selectEl.closest('td');
-            const currentVal = selectEl.value || '';
-            const currentText = selectEl.selectedOptions[0]?.textContent?.trim() || '';
-            const divSelect = row.querySelector('.div-select');
-            const divCustom = row.querySelector('.div-custom-input');
-            const curDiv = divCustom ? divCustom.value : (divSelect ? divSelect.value : '');
-            const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
-            const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
-            const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
-
-            const displayVal = currentVal && currentVal !== '__custom_name__' && currentText !== '품명 선택' && currentText !== '구분 먼저 선택' ? currentText : '';
-            td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${displayVal}" placeholder="품명 입력"
-                onchange="saveEstimateData()">`;
-            const inp = td.querySelector('input');
-            inp.focus();
-            inp.select();
-            inp.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Enter') {
-                    ev.preventDefault();
-                    inp.blur();
-                } else if (ev.key === 'Escape') {
-                    td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
-                        ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
-                    if (currentVal && currentVal !== '__custom_name__') {
-                        const ns = td.querySelector('.name-select');
-                        for (let opt of ns.options) {
-                            if (opt.value === currentVal) { opt.selected = true; break; }
-                        }
-                    }
-                    saveEstimateData();
-                }
-            });
-        }
-
-        // 상세내용 select → input 전환 (더블클릭용)
-        function convertSpecSelectToInput(specCell, catNo) {
-            const specSelect = specCell.querySelector('select');
-            const selectedOpt = specSelect?.selectedOptions[0];
-            const currentSpec = selectedOpt?.dataset?.spec || selectedOpt?.textContent?.trim() || '';
-            const savedHTML = specCell.innerHTML;
-
-            specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${currentSpec && currentSpec !== '상세 선택' ? currentSpec : ''}"
-                placeholder="상세내용 입력" onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
-            const inp = specCell.querySelector('input');
-            inp.focus();
-            inp.select();
-            inp.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Enter') {
-                    ev.preventDefault();
-                    inp.blur();
-                } else if (ev.key === 'Escape') {
-                    specCell.innerHTML = savedHTML;
-                    saveEstimateData();
-                }
-            });
-
-        }
-
-        // 해당 카테고리의 구분 옵션 업데이트
-        function updateDivOptions(catNo) {
-            const items = getCostItemsByCategory(catNo);
-            const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-
-            const tbody = document.getElementById(`estBody${catNo}`);
-            if (!tbody) return;
-
-            tbody.querySelectorAll('.div-select').forEach(select => {
-                const currentVal = select.value;
-                select.innerHTML = '<option value="">선택</option>' + divs.map(d =>
-                    `<option value="${d}" ${d === currentVal ? 'selected' : ''}>${d}</option>`
-                ).join('') + '<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option>';
-            });
-        }
-
-        // 특정 카테고리의 원가 항목 가져오기 (전역 원가관리표 데이터 사용)
-        function getCostItemsByCategory(catNo) {
-            // 전역 원가관리표 데이터에서 가져오기 (Phase 2: In-memory 사용)
-            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
-            let data = globalCostData[`cost_${catNo}`] || [];
-
-            // 전역 데이터가 없으면 기본 데이터 사용
-            if (data.length === 0 && defaultCostData[catNo]) {
-                data = defaultCostData[catNo];
+        if (specCell && !specCell.querySelector('input')) {
+            // 드롭다운(select)이 아닌 텍스트 영역을 클릭한 경우 편집 모드 전환
+            if (!specCell.querySelector('select')) {
+                const row = specCell.closest('tr');
+                const catNo = row.closest('tbody').id.replace('estBody', '');
+                makeSpecEditable(specCell, catNo);
+                return;
             }
+        }
+        if (unitCell && !unitCell.querySelector('input')) {
+            const row = unitCell.closest('tr');
+            const catNo = row.closest('tbody').id.replace('estBody', '');
+            makeUnitEditable(unitCell, catNo);
+            return;
+        }
+        if (priceCell && !priceCell.querySelector('input')) {
+            const row = priceCell.closest('tr');
+            const catNo = row.closest('tbody').id.replace('estBody', '');
+            makePriceEditable(priceCell, catNo);
+            return;
+        }
+    });
 
-            const items = [];
-            data.forEach(item => {
-                if (item.name) {
-                    // price 필드 우선, 없으면 material+labor+expense 합산 (기존 데이터 호환)
-                    const unitPrice = parseNumber(item.price) || ((parseNumber(item.material) || 0) + (parseNumber(item.labor)
-                        || 0) + (parseNumber(item.expense) || 0));
-                    items.push({
-                        div: item.div || '',
-                        name: item.name,
-                        spec: item.spec || '',
-                        unit: item.unit || '',
-                        unitPrice: unitPrice
-                    });
+    // 더블클릭: 드롭다운이 있는 spec-cell도 직접 편집 모드로 전환
+    container.addEventListener('dblclick', function (e) {
+        const specCell = e.target.closest('.spec-cell');
+        if (specCell && specCell.querySelector('select') && !specCell.querySelector('input')) {
+            const row = specCell.closest('tr');
+            const catNo = row.closest('tbody').id.replace('estBody', '');
+            convertSpecSelectToInput(specCell, catNo);
+            return;
+        }
+    });
+
+    // 엔터 키로 모든 입력 필드 포커스 해제 (전역 이벤트 위임)
+    container.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            const target = e.target;
+            // input, textarea에서 엔터 시 blur (textarea는 shift+enter로 줄바꿈 허용)
+            if (target.tagName === 'INPUT' || (target.tagName === 'TEXTAREA' && !e.shiftKey)) {
+                e.preventDefault();
+                target.blur();
+            }
+        }
+    });
+
+    // select 더블클릭 감지 (select는 브라우저가 dblclick을 먹으므로 mousedown 타이밍으로 처리)
+    let lastSelectClick = { time: 0, target: null };
+    container.addEventListener('mousedown', function (e) {
+        const selectEl = e.target.closest('select.div-select, select.name-select');
+        if (!selectEl) { lastSelectClick = { time: 0, target: null }; return; }
+
+        const now = Date.now();
+        if (lastSelectClick.target === selectEl && (now - lastSelectClick.time) < 400) {
+            // 더블클릭 감지
+            e.preventDefault();
+            e.stopPropagation();
+            const row = selectEl.closest('tr');
+            const catNo = row.closest('tbody').id.replace('estBody', '');
+
+            if (selectEl.classList.contains('div-select')) {
+                convertDivSelectToInput(selectEl, row, catNo);
+            } else if (selectEl.classList.contains('name-select')) {
+                convertNameSelectToInput(selectEl, row, catNo);
+            }
+            lastSelectClick = { time: 0, target: null };
+        } else {
+            lastSelectClick = { time: now, target: selectEl };
+        }
+    });
+
+    // select의 이전 값 추적 (focus 시 저장) - 내용수정용
+    container.addEventListener('focus', function (e) {
+        const sel = e.target;
+        if (sel.tagName === 'SELECT' && (sel.classList.contains('div-select') || sel.classList.contains('name-select') || sel.classList.contains('spec-select'))) {
+            sel._prevValue = sel.value;
+            sel._prevText = sel.selectedOptions[0]?.textContent?.trim() || '';
+        }
+    }, true);
+}
+
+// 구분 select → input 전환 (더블클릭용)
+function convertDivSelectToInput(selectEl, row, catNo) {
+    const td = selectEl.closest('td');
+    const currentVal = selectEl.value || '';
+    const currentText = selectEl.selectedOptions[0]?.textContent?.trim() || '';
+    const items = getCostItemsByCategory(catNo);
+    const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+    const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+
+    td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${currentVal && currentVal !== '__custom_div__' ? currentVal : ''}" placeholder="구분 입력"
+                onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
+    const inp = td.querySelector('input');
+    inp.focus();
+    inp.select();
+    inp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            inp.blur();
+        } else if (ev.key === 'Escape') {
+            td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+                        <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
+            if (currentVal && currentVal !== '__custom_div__') {
+                td.querySelector('.div-select').value = currentVal;
+            }
+            saveEstimateData();
+        }
+    });
+}
+
+// 품명 select → input 전환 (더블클릭용)
+function convertNameSelectToInput(selectEl, row, catNo) {
+    const td = selectEl.closest('td');
+    const currentVal = selectEl.value || '';
+    const currentText = selectEl.selectedOptions[0]?.textContent?.trim() || '';
+    const divSelect = row.querySelector('.div-select');
+    const divCustom = row.querySelector('.div-custom-input');
+    const curDiv = divCustom ? divCustom.value : (divSelect ? divSelect.value : '');
+    const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+    const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+    const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+
+    const displayVal = currentVal && currentVal !== '__custom_name__' && currentText !== '품명 선택' && currentText !== '구분 먼저 선택' ? currentText : '';
+    td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${displayVal}" placeholder="품명 입력"
+                onchange="saveEstimateData()">`;
+    const inp = td.querySelector('input');
+    inp.focus();
+    inp.select();
+    inp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            inp.blur();
+        } else if (ev.key === 'Escape') {
+            td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+                        ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
+            if (currentVal && currentVal !== '__custom_name__') {
+                const ns = td.querySelector('.name-select');
+                for (let opt of ns.options) {
+                    if (opt.value === currentVal) { opt.selected = true; break; }
                 }
+            }
+            saveEstimateData();
+        }
+    });
+}
+
+// 상세내용 select → input 전환 (더블클릭용)
+function convertSpecSelectToInput(specCell, catNo) {
+    const specSelect = specCell.querySelector('select');
+    const selectedOpt = specSelect?.selectedOptions[0];
+    const currentSpec = selectedOpt?.dataset?.spec || selectedOpt?.textContent?.trim() || '';
+    const savedHTML = specCell.innerHTML;
+
+    specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${currentSpec && currentSpec !== '상세 선택' ? currentSpec : ''}"
+                placeholder="상세내용 입력" onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
+    const inp = specCell.querySelector('input');
+    inp.focus();
+    inp.select();
+    inp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            inp.blur();
+        } else if (ev.key === 'Escape') {
+            specCell.innerHTML = savedHTML;
+            saveEstimateData();
+        }
+    });
+
+}
+
+// 해당 카테고리의 구분 옵션 업데이트
+function updateDivOptions(catNo) {
+    const items = getCostItemsByCategory(catNo);
+    const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+
+    const tbody = document.getElementById(`estBody${catNo}`);
+    if (!tbody) return;
+
+    tbody.querySelectorAll('.div-select').forEach(select => {
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">선택</option>' + divs.map(d =>
+            `<option value="${d}" ${d === currentVal ? 'selected' : ''}>${d}</option>`
+        ).join('') + '<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option>';
+    });
+}
+
+// 특정 카테고리의 원가 항목 가져오기 (전역 원가관리표 데이터 사용)
+function getCostItemsByCategory(catNo) {
+    // 전역 원가관리표 데이터에서 가져오기 (Phase 2: In-memory 사용)
+    // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
+    let data = globalCostData[`cost_${catNo}`] || [];
+
+    // 전역 데이터가 없으면 기본 데이터 사용
+    if (data.length === 0 && defaultCostData[catNo]) {
+        data = defaultCostData[catNo];
+    }
+
+    const items = [];
+    data.forEach(item => {
+        if (item.name) {
+            // price 필드 우선, 없으면 material+labor+expense 합산 (기존 데이터 호환)
+            const unitPrice = parseNumber(item.price) || ((parseNumber(item.material) || 0) + (parseNumber(item.labor)
+                || 0) + (parseNumber(item.expense) || 0));
+            items.push({
+                div: item.div || '',
+                name: item.name,
+                spec: item.spec || '',
+                unit: item.unit || '',
+                unitPrice: unitPrice
             });
-            return items;
         }
+    });
+    return items;
+}
 
-        // 구분별 품명 목록
-        function getItemsByDivInCat(catNo, div) {
-            const items = getCostItemsByCategory(catNo);
-            return items.filter(i => i.div === div);
-        }
+// 구분별 품명 목록
+function getItemsByDivInCat(catNo, div) {
+    const items = getCostItemsByCategory(catNo);
+    return items.filter(i => i.div === div);
+}
 
-        // 견적 행 추가
-        function addEstimateRowTo(catNo) {
-            const tbody = document.getElementById(`estBody${catNo}`);
-            const rowCount = tbody.querySelectorAll('tr').length + 1;
-            const items = getCostItemsByCategory(catNo);
-            const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-            const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+// 견적 행 추가
+function addEstimateRowTo(catNo) {
+    const tbody = document.getElementById(`estBody${catNo}`);
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const items = getCostItemsByCategory(catNo);
+    const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+    const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
             <td style="position: relative;">
                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
@@ -5727,258 +5727,258 @@
             <td class="amount-cell"><div class="money-wrapper"><span style="margin:auto">-</span></div></td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)"></textarea></td>
             `;
-            tbody.appendChild(tr);
-        }
+    tbody.appendChild(tr);
+}
 
-        // 견적 행 삭제
-        function deleteEstimateRow(btn, catNo) {
-            const row = btn.closest('tr');
-            const tbody = row.closest('tbody');
-            row.remove();
+// 견적 행 삭제
+function deleteEstimateRow(btn, catNo) {
+    const row = btn.closest('tr');
+    const tbody = row.closest('tbody');
+    row.remove();
 
-            // 번호 재정렬 및 삭제 버튼 유지
-            tbody.querySelectorAll('tr').forEach((tr, i) => {
-                const firstTd = tr.querySelector('td:first-child');
-                firstTd.style.position = 'relative'; // 안전장치
-                firstTd.innerHTML = `
+    // 번호 재정렬 및 삭제 버튼 유지
+    tbody.querySelectorAll('tr').forEach((tr, i) => {
+        const firstTd = tr.querySelector('td:first-child');
+        firstTd.style.position = 'relative'; // 안전장치
+        firstTd.innerHTML = `
                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${catNo}')" title="삭제">
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
                 </button>
                 ${i + 1}
                 `;
-            });
+    });
 
-            updateCategorySubtotal(catNo);
-            updateEstimateTotals();
-            saveEstimateData();
-        }
+    updateCategorySubtotal(catNo);
+    updateEstimateTotals();
+    saveEstimateData();
+}
 
-        // 구분 선택 변경
-        function onEstDivChange(select, catNo) {
-            const row = select.closest('tr');
-            const nameSelect = row.querySelector('.name-select');
-            const div = select.value;
+// 구분 선택 변경
+function onEstDivChange(select, catNo) {
+    const row = select.closest('tr');
+    const nameSelect = row.querySelector('.name-select');
+    const div = select.value;
 
-            // _prevValue는 focus 이벤트에서 저장 (아래 initSelectPrevTracking 참조)
-            if (div === '__edit_div__') {
-                // 내용수정: 이전에 선택된 값을 유지한 채 input으로 전환
-                const td = select.closest('td');
-                const prevSelected = select._prevValue || '';
-                const items = getCostItemsByCategory(catNo);
-                const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-                const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
-                td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${prevSelected}" placeholder="구분 수정"
+    // _prevValue는 focus 이벤트에서 저장 (아래 initSelectPrevTracking 참조)
+    if (div === '__edit_div__') {
+        // 내용수정: 이전에 선택된 값을 유지한 채 input으로 전환
+        const td = select.closest('td');
+        const prevSelected = select._prevValue || '';
+        const items = getCostItemsByCategory(catNo);
+        const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+        const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+        td.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${prevSelected}" placeholder="구분 수정"
                     onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
-                const editInput = td.querySelector('input');
-                editInput.focus();
-                editInput.select();
-                editInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        editInput.blur();
-                    } else if (e.key === 'Escape') {
-                        td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+        const editInput = td.querySelector('input');
+        editInput.focus();
+        editInput.select();
+        editInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                editInput.blur();
+            } else if (e.key === 'Escape') {
+                td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                             <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
-                        if (prevSelected) td.querySelector('.div-select').value = prevSelected;
-                        saveEstimateData();
-                    }
-                });
-                editInput.addEventListener('blur', function () {
-                    const val = editInput.value.trim();
-                    if (val) {
-                        td.textContent = val;
-                        saveEstimateData();
-                    }
-                });
-                return;
-
+                if (prevSelected) td.querySelector('.div-select').value = prevSelected;
+                saveEstimateData();
             }
+        });
+        editInput.addEventListener('blur', function () {
+            const val = editInput.value.trim();
+            if (val) {
+                td.textContent = val;
+                saveEstimateData();
+            }
+        });
+        return;
 
-            if (div === '__custom_div__') {
-                // 직접입력: select를 input으로 교체 (ESC로 복원 가능)
-                const td = select.closest('td');
-                const items = getCostItemsByCategory(catNo);
-                const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-                const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
-                td.innerHTML = `<input type="text" class="editable-input div-custom-input" placeholder="구분 입력"
+    }
+
+    if (div === '__custom_div__') {
+        // 직접입력: select를 input으로 교체 (ESC로 복원 가능)
+        const td = select.closest('td');
+        const items = getCostItemsByCategory(catNo);
+        const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+        const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+        td.innerHTML = `<input type="text" class="editable-input div-custom-input" placeholder="구분 입력"
                     onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
-                const divInput = td.querySelector('input');
-                divInput.focus();
-                divInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        divInput.blur();
-                    } else if (e.key === 'Escape') {
-                        td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+        const divInput = td.querySelector('input');
+        divInput.focus();
+        divInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                divInput.blur();
+            } else if (e.key === 'Escape') {
+                td.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                             <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
-                        // 품명도 다시 select로
-                        const nameTd = row.children[2];
-                        nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
+                // 품명도 다시 select로
+                const nameTd = row.children[2];
+                nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" disabled>
                             <option value="">구분 먼저 선택</option></select>`;
-                        resetEstRowValues(row);
-                        revertEditCellsToReadonly(row);
-                        saveEstimateData();
-                    }
-                });
-                divInput.addEventListener('blur', function () {
-                    const val = divInput.value.trim();
-                    if (val) {
-                        td.textContent = val;
-                        saveEstimateData();
-                    }
-                });
-                // 품명도 직접입력 모드로
-                const nameTd = nameSelect.closest('td');
-                nameTd.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
+                resetEstRowValues(row);
+                revertEditCellsToReadonly(row);
+                saveEstimateData();
+            }
+        });
+        divInput.addEventListener('blur', function () {
+            const val = divInput.value.trim();
+            if (val) {
+                td.textContent = val;
+                saveEstimateData();
+            }
+        });
+        // 품명도 직접입력 모드로
+        const nameTd = nameSelect.closest('td');
+        nameTd.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
                     onchange="saveEstimateData()">`;
-                const nameInput = nameTd.querySelector('input');
-                nameInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        nameInput.blur();
-                    } else if (e.key === 'Escape') {
-                        const divSel = row.querySelector('.div-select');
-                        const curDiv = divSel ? divSel.value : '';
-                        nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+        const nameInput = nameTd.querySelector('input');
+        nameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                nameInput.blur();
+            } else if (e.key === 'Escape') {
+                const divSel = row.querySelector('.div-select');
+                const curDiv = divSel ? divSel.value : '';
+                nameTd.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                             <option value="">${curDiv ? '품명 선택' : '구분 먼저 선택'}</option></select>`;
-                        resetEstRowValues(row);
-                        revertEditCellsToReadonly(row);
-                        saveEstimateData();
-                    }
-                });
-                nameInput.addEventListener('blur', function () {
-                    const val = nameInput.value.trim();
-                    if (val) {
-                        nameTd.textContent = val;
-                        saveEstimateData();
-                    }
-                });
                 resetEstRowValues(row);
-                enableDirectEditCells(row, catNo);
-                return;
+                revertEditCellsToReadonly(row);
+                saveEstimateData();
             }
-
-            if (!div) {
-                nameSelect.innerHTML = '<option value="">구분 먼저 선택</option>';
-                nameSelect.disabled = true;
-                resetEstRowValues(row);
-                return;
+        });
+        nameInput.addEventListener('blur', function () {
+            const val = nameInput.value.trim();
+            if (val) {
+                nameTd.textContent = val;
+                saveEstimateData();
             }
+        });
+        resetEstRowValues(row);
+        enableDirectEditCells(row, catNo);
+        return;
+    }
 
-            const items = getItemsByDivInCat(catNo, div);
+    if (!div) {
+        nameSelect.innerHTML = '<option value="">구분 먼저 선택</option>';
+        nameSelect.disabled = true;
+        resetEstRowValues(row);
+        return;
+    }
 
-            // 고유한 품명만 추출 (중복 제거)
-            const uniqueNames = [...new Set(items.map(item => item.name).filter(n => n))];
+    const items = getItemsByDivInCat(catNo, div);
 
-            nameSelect.innerHTML = '<option value="">품명 선택</option>' + uniqueNames.map(name =>
-                `<option value="${name}">${name}</option>`
-            ).join('') + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>';
-            nameSelect.disabled = false;
-            resetEstRowValues(row);
-        }
+    // 고유한 품명만 추출 (중복 제거)
+    const uniqueNames = [...new Set(items.map(item => item.name).filter(n => n))];
 
-        // 품명 선택 변경
-        function onEstNameChange(select, catNo) {
-            const row = select.closest('tr');
-            const option = select.selectedOptions[0];
+    nameSelect.innerHTML = '<option value="">품명 선택</option>' + uniqueNames.map(name =>
+        `<option value="${name}">${name}</option>`
+    ).join('') + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>';
+    nameSelect.disabled = false;
+    resetEstRowValues(row);
+}
 
-            if (select.value === '__edit_name__') {
-                // 내용수정: 이전에 선택된 값을 유지한 채 input으로 전환
-                const td = select.closest('td');
-                const prevText = select._prevText || '';
-                const prevVal = select._prevValue || '';
-                const divSelect = row.querySelector('.div-select');
-                const curDiv = divSelect ? divSelect.value : '';
-                const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
-                const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
-                const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
-                td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${prevText && prevText !== '품명 선택' && prevText !== '구분 먼저 선택' ? prevText : ''}" placeholder="품명 수정"
+// 품명 선택 변경
+function onEstNameChange(select, catNo) {
+    const row = select.closest('tr');
+    const option = select.selectedOptions[0];
+
+    if (select.value === '__edit_name__') {
+        // 내용수정: 이전에 선택된 값을 유지한 채 input으로 전환
+        const td = select.closest('td');
+        const prevText = select._prevText || '';
+        const prevVal = select._prevValue || '';
+        const divSelect = row.querySelector('.div-select');
+        const curDiv = divSelect ? divSelect.value : '';
+        const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+        const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+        const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+        td.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${prevText && prevText !== '품명 선택' && prevText !== '구분 먼저 선택' ? prevText : ''}" placeholder="품명 수정"
                     onchange="saveEstimateData()">`;
-                const nameInput = td.querySelector('input');
-                nameInput.focus();
-                nameInput.select();
-                nameInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        nameInput.blur();
-                    } else if (e.key === 'Escape') {
-                        td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+        const nameInput = td.querySelector('input');
+        nameInput.focus();
+        nameInput.select();
+        nameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                nameInput.blur();
+            } else if (e.key === 'Escape') {
+                td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                             ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
-                        if (prevVal) {
-                            const ns = td.querySelector('.name-select');
-                            for (let opt of ns.options) { if (opt.value === prevVal) { opt.selected = true; break; } }
-                        }
-                        saveEstimateData();
-                    }
-                });
-                nameInput.addEventListener('blur', function () {
-                    const val = nameInput.value.trim();
-                    if (val) {
-                        td.textContent = val;
-                        saveEstimateData();
-                    }
-                });
-                return;
+                if (prevVal) {
+                    const ns = td.querySelector('.name-select');
+                    for (let opt of ns.options) { if (opt.value === prevVal) { opt.selected = true; break; } }
+                }
+                saveEstimateData();
             }
+        });
+        nameInput.addEventListener('blur', function () {
+            const val = nameInput.value.trim();
+            if (val) {
+                td.textContent = val;
+                saveEstimateData();
+            }
+        });
+        return;
+    }
 
-            if (select.value === '__custom_name__') {
-                // 직접입력: select를 input으로 교체 (ESC로 복원 가능)
-                const td = select.closest('td');
-                const divSelect = row.querySelector('.div-select');
-                const curDiv = divSelect ? divSelect.value : '';
-                const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
-                const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
-                const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
-                td.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
+    if (select.value === '__custom_name__') {
+        // 직접입력: select를 input으로 교체 (ESC로 복원 가능)
+        const td = select.closest('td');
+        const divSelect = row.querySelector('.div-select');
+        const curDiv = divSelect ? divSelect.value : '';
+        const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+        const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+        const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+        td.innerHTML = `<input type="text" class="editable-input name-custom-input" placeholder="품명 입력"
                     onchange="saveEstimateData()">`;
-                const nameInput = td.querySelector('input');
-                nameInput.focus();
-                nameInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        nameInput.blur();
-                    } else if (e.key === 'Escape') {
-                        td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+        const nameInput = td.querySelector('input');
+        nameInput.focus();
+        nameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                nameInput.blur();
+            } else if (e.key === 'Escape') {
+                td.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                             ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
-                        resetEstRowValues(row);
-                        revertEditCellsToReadonly(row);
-                        saveEstimateData();
-                    }
-                });
-                nameInput.addEventListener('blur', function () {
-                    const val = nameInput.value.trim();
-                    if (val) {
-                        td.textContent = val;
-                        saveEstimateData();
-                    }
-                });
                 resetEstRowValues(row);
-                enableDirectEditCells(row, catNo);
-                return;
+                revertEditCellsToReadonly(row);
+                saveEstimateData();
             }
-
-            if (!option || !option.value) {
-                resetEstRowValues(row);
-                return;
+        });
+        nameInput.addEventListener('blur', function () {
+            const val = nameInput.value.trim();
+            if (val) {
+                td.textContent = val;
+                saveEstimateData();
             }
+        });
+        resetEstRowValues(row);
+        enableDirectEditCells(row, catNo);
+        return;
+    }
 
-            const selectedName = option.value.trim(); // 선택된 품명 (value가 품명 이름)
-            const divSelect = row.querySelector('.div-select');
-            const div = divSelect ? divSelect.value : '';
+    if (!option || !option.value) {
+        resetEstRowValues(row);
+        return;
+    }
 
-            // 같은 구분 내에서 같은 품명을 가진 항목들 찾기
-            const items = getItemsByDivInCat(catNo, div);
-            const sameNameItems = items.filter(item => item.name && item.name.trim() === selectedName);
+    const selectedName = option.value.trim(); // 선택된 품명 (value가 품명 이름)
+    const divSelect = row.querySelector('.div-select');
+    const div = divSelect ? divSelect.value : '';
 
-            if (sameNameItems.length > 1) {
-                // 같은 품명이 여러 개 있으면 상세내용 드롭다운 표시
-                const specCell = row.querySelector('.spec-cell');
-                const specOptions = sameNameItems.map((item, i) =>
-                    `<option value="${i}" data-spec="${item.spec || ''}" data-unit="${item.unit || ''}" data-price="${item.unitPrice || 0}">
+    // 같은 구분 내에서 같은 품명을 가진 항목들 찾기
+    const items = getItemsByDivInCat(catNo, div);
+    const sameNameItems = items.filter(item => item.name && item.name.trim() === selectedName);
+
+    if (sameNameItems.length > 1) {
+        // 같은 품명이 여러 개 있으면 상세내용 드롭다운 표시
+        const specCell = row.querySelector('.spec-cell');
+        const specOptions = sameNameItems.map((item, i) =>
+            `<option value="${i}" data-spec="${item.spec || ''}" data-unit="${item.unit || ''}" data-price="${item.unitPrice || 0}">
                 ${item.spec || '(상세내용 없음)'}</option>`
-                ).join('');
+        ).join('');
 
-                specCell.innerHTML = `
+        specCell.innerHTML = `
             <select class="spec-select" onchange="onEstSpecSelect(this, '${catNo}')"
                 style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;">
                 <option value="">상세 선택</option>
@@ -5988,793 +5988,793 @@
             </select>
             `;
 
-                // 단위/단가/금액은 아직 선택 안 됨
-                row.querySelector('.unit-cell').textContent = '-';
-                row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
-                row.querySelector('.price-cell').dataset.price = '0';
-                row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
-            } else if (sameNameItems.length === 1) {
-                // 같은 품명이 하나만 있으면 자동 입력
-                const item = sameNameItems[0];
-                const spec = item.spec || '-';
-                const unit = item.unit || '-';
-                const price = parseInt(item.unitPrice) || 0;
+        // 단위/단가/금액은 아직 선택 안 됨
+        row.querySelector('.unit-cell').textContent = '-';
+        row.querySelector('.price-cell').innerHTML = '<span style="margin:auto">-</span>';
+        row.querySelector('.price-cell').dataset.price = '0';
+        row.querySelector('.amount-cell').innerHTML = '<span style="margin:auto">-</span>';
+    } else if (sameNameItems.length === 1) {
+        // 같은 품명이 하나만 있으면 자동 입력
+        const item = sameNameItems[0];
+        const spec = item.spec || '-';
+        const unit = item.unit || '-';
+        const price = parseInt(item.unitPrice) || 0;
 
-                // 단위가 "평"이면 고객 정보의 평수를 자동 입력
-                let qty = parseInt(row.querySelector('.qty-input').value) || 1;
-                if (unit === '평' || unit === 'py') {
-                    const customerArea = getCustomerArea();
-                    if (customerArea > 0) {
-                        qty = customerArea;
-                        row.querySelector('.qty-input').value = qty;
-                    }
-                }
-
-                const amount = price * qty;
-
-                row.querySelector('.spec-cell').textContent = spec;
-                row.querySelector('.unit-cell').textContent = unit;
-                row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                row.querySelector('.price-cell').dataset.price = price;
-                row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-            } else {
-                // 항목을 찾지 못한 경우
-                resetEstRowValues(row);
+        // 단위가 "평"이면 고객 정보의 평수를 자동 입력
+        let qty = parseInt(row.querySelector('.qty-input').value) || 1;
+        if (unit === '평' || unit === 'py') {
+            const customerArea = getCustomerArea();
+            if (customerArea > 0) {
+                qty = customerArea;
+                row.querySelector('.qty-input').value = qty;
             }
-
-            updateCategorySubtotal(catNo);
-            updateEstimateTotals();
-            saveEstimateData();
         }
 
-        // 고객 평수 가져오기
-        function getCustomerArea() {
-            if (!currentCustomerId) return 0;
-            const customer = customers.find(c => c.customerId === currentCustomerId);
-            if (!customer) return 0;
+        const amount = price * qty;
 
-            // 평수 파싱 (숫자만 추출)
-            const areaStr = customer.area || customer.pyeong || '';
-            const match = areaStr.toString().match(/[\d.]+/);
-            return match ? parseFloat(match[0]) : 0;
-        }
+        row.querySelector('.spec-cell').textContent = spec;
+        row.querySelector('.unit-cell').textContent = unit;
+        row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+        row.querySelector('.price-cell').dataset.price = price;
+        row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    } else {
+        // 항목을 찾지 못한 경우
+        resetEstRowValues(row);
+    }
 
-        // 계약견적서 상세내용 드롭다운 선택 시
-        function onEstSpecSelect(select, catNo) {
-            const row = select.closest('tr');
-            const option = select.selectedOptions[0];
+    updateCategorySubtotal(catNo);
+    updateEstimateTotals();
+    saveEstimateData();
+}
 
-            if (select.value === '__edit_spec__') {
-                // 내용수정: 이전에 선택된 상세내용을 유지한 채 input으로 전환
-                const specCell = row.querySelector('.spec-cell');
-                const prevSpec = select._prevText || '';
-                const savedHTML = specCell.innerHTML;
-                specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${prevSpec && prevSpec !== '상세 선택' ? prevSpec : ''}" placeholder="상세 수정"
+// 고객 평수 가져오기
+function getCustomerArea() {
+    if (!currentCustomerId) return 0;
+    const customer = customers.find(c => c.customerId === currentCustomerId);
+    if (!customer) return 0;
+
+    // 평수 파싱 (숫자만 추출)
+    const areaStr = customer.area || customer.pyeong || '';
+    const match = areaStr.toString().match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : 0;
+}
+
+// 계약견적서 상세내용 드롭다운 선택 시
+function onEstSpecSelect(select, catNo) {
+    const row = select.closest('tr');
+    const option = select.selectedOptions[0];
+
+    if (select.value === '__edit_spec__') {
+        // 내용수정: 이전에 선택된 상세내용을 유지한 채 input으로 전환
+        const specCell = row.querySelector('.spec-cell');
+        const prevSpec = select._prevText || '';
+        const savedHTML = specCell.innerHTML;
+        specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${prevSpec && prevSpec !== '상세 선택' ? prevSpec : ''}" placeholder="상세 수정"
                 style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;"
                 onchange="saveEstimateData()">`;
-                const inp = specCell.querySelector('input');
-                inp.focus();
-                inp.select();
-                inp.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        inp.blur();
-                    } else if (e.key === 'Escape') {
-                        specCell.innerHTML = savedHTML;
-                        const restoredSelect = specCell.querySelector('select');
-                        if (restoredSelect && select._prevValue) restoredSelect.value = select._prevValue;
-                        saveEstimateData();
-                    }
-                });
-                inp.addEventListener('blur', function () {
-                    const val = inp.value.trim();
-                    if (val) {
-                        specCell.textContent = val;
-                        saveEstimateData();
-                    }
-                });
-                return;
+        const inp = specCell.querySelector('input');
+        inp.focus();
+        inp.select();
+        inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                inp.blur();
+            } else if (e.key === 'Escape') {
+                specCell.innerHTML = savedHTML;
+                const restoredSelect = specCell.querySelector('select');
+                if (restoredSelect && select._prevValue) restoredSelect.value = select._prevValue;
+                saveEstimateData();
             }
-
-            if (select.value === '__custom__') {
-                const specCell = row.querySelector('.spec-cell');
-                // 기존 드롭다운 옵션 저장 (ESC 복원용)
-                const savedHTML = specCell.innerHTML;
-                specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세 입력"
-                style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;"
-                onchange="saveEstimateData()">`;
-                const inp = specCell.querySelector('input');
-                inp.focus();
-                inp.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        inp.blur();
-                    } else if (e.key === 'Escape') {
-                        specCell.innerHTML = savedHTML;
-                        // 드롭다운 복원 후 첫 번째 옵션 선택
-                        const restoredSelect = specCell.querySelector('select');
-                        if (restoredSelect) restoredSelect.value = '';
-                        saveEstimateData();
-                    }
-                });
-                inp.addEventListener('blur', function () {
-                    const val = inp.value.trim();
-                    if (val) {
-                        specCell.textContent = val;
-                        saveEstimateData();
-                    }
-                });
-                return;
-            }
-
-            if (!option || !option.value) {
-                row.querySelector('.unit-cell').textContent = '-';
-                row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-                row.querySelector('.price-cell').dataset.price = '0';
-                row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-                return;
-            }
-
-            // 선택된 상세내용의 단위, 단가 적용
-            const unit = option.dataset.unit || '-';
-            const price = parseInt(option.dataset.price) || 0;
-
-            // 단위가 "평"이면 고객 정보의 평수를 자동 입력
-            let qty = parseInt(row.querySelector('.qty-input').value) || 1;
-            if (unit === '평' || unit === 'py') {
-                const customerArea = getCustomerArea();
-                if (customerArea > 0) {
-                    qty = customerArea;
-                    row.querySelector('.qty-input').value = qty;
-                }
-            }
-
-            const amount = price * qty;
-
-            row.querySelector('.unit-cell').textContent = unit;
-            row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-            row.querySelector('.price-cell').dataset.price = price;
-            row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-
-            // 소계 업데이트
-            const effectiveCatNo = catNo || row.closest('tbody').id.replace('estBody', '');
-            updateCategorySubtotal(effectiveCatNo);
-            updateEstimateTotals();
-            saveEstimateData();
-        }
-
-        // 계약견적서 행 계산
-        function calcEstimateRow(row) {
-            const priceCell = row.querySelector('.price-cell');
-            const priceInput = priceCell?.querySelector('input');
-            const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell?.dataset.price) || 0);
-            const qty = parseInt(row.querySelector('.qty-input')?.value) || 1;
-            const amount = price * qty;
-            row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-        }
-
-        // 수량 변경
-        function onEstQtyChange(input, catNo) {
-            const row = input.closest('tr');
-            const priceCell = row.querySelector('.price-cell');
-            const priceInput = priceCell.querySelector('input');
-            const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell.dataset.price) || 0);
-            const qty = parseInt(input.value) || 0;
-            const amount = price * qty;
-
-            row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-            updateCategorySubtotal(catNo);
-            updateEstimateTotals();
-            saveEstimateData();
-        }
-
-        // 행 값 초기화
-        function resetEstRowValues(row) {
-            row.querySelector('.spec-cell').textContent = '-';
-            row.querySelector('.unit-cell').textContent = '-';
-            row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-            row.querySelector('.price-cell').dataset.price = '0';
-            row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-        }
-
-        // 직접입력 모드: 상세내용, 단위, 단가를 입력 필드로 전환
-        function enableDirectEditCells(row, catNo) {
-            const specCell = row.querySelector('.spec-cell');
-            const unitCell = row.querySelector('.unit-cell');
-            const priceCell = row.querySelector('.price-cell');
-
-            // 상세내용 input
-            specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
-                onchange="saveEstimateData()">`;
-            const specInp = specCell.querySelector('input');
-            specInp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') { e.preventDefault(); specInp.blur(); }
-                else if (e.key === 'Escape') { specCell.textContent = '-'; saveEstimateData(); }
-            });
-            specInp.addEventListener('blur', function () {
-                const val = specInp.value.trim() || '-';
+        });
+        inp.addEventListener('blur', function () {
+            const val = inp.value.trim();
+            if (val) {
                 specCell.textContent = val;
                 saveEstimateData();
-            });
+            }
+        });
+        return;
+    }
 
-            // 단위 input
-            unitCell.innerHTML = `<input type="text" class="editable-input" placeholder="단위" style="width:100%; text-align:center;"
+    if (select.value === '__custom__') {
+        const specCell = row.querySelector('.spec-cell');
+        // 기존 드롭다운 옵션 저장 (ESC 복원용)
+        const savedHTML = specCell.innerHTML;
+        specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세 입력"
+                style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;"
                 onchange="saveEstimateData()">`;
-            const unitInp = unitCell.querySelector('input');
-            unitInp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') { e.preventDefault(); unitInp.blur(); }
-                else if (e.key === 'Escape') { unitCell.textContent = '-'; saveEstimateData(); }
-            });
-            unitInp.addEventListener('blur', function () {
-                const val = unitInp.value.trim() || '-';
-                unitCell.textContent = val;
+        const inp = specCell.querySelector('input');
+        inp.focus();
+        inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                inp.blur();
+            } else if (e.key === 'Escape') {
+                specCell.innerHTML = savedHTML;
+                // 드롭다운 복원 후 첫 번째 옵션 선택
+                const restoredSelect = specCell.querySelector('select');
+                if (restoredSelect) restoredSelect.value = '';
                 saveEstimateData();
-            });
+            }
+        });
+        inp.addEventListener('blur', function () {
+            const val = inp.value.trim();
+            if (val) {
+                specCell.textContent = val;
+                saveEstimateData();
+            }
+        });
+        return;
+    }
+
+    if (!option || !option.value) {
+        row.querySelector('.unit-cell').textContent = '-';
+        row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+        row.querySelector('.price-cell').dataset.price = '0';
+        row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+        return;
+    }
+
+    // 선택된 상세내용의 단위, 단가 적용
+    const unit = option.dataset.unit || '-';
+    const price = parseInt(option.dataset.price) || 0;
+
+    // 단위가 "평"이면 고객 정보의 평수를 자동 입력
+    let qty = parseInt(row.querySelector('.qty-input').value) || 1;
+    if (unit === '평' || unit === 'py') {
+        const customerArea = getCustomerArea();
+        if (customerArea > 0) {
+            qty = customerArea;
+            row.querySelector('.qty-input').value = qty;
+        }
+    }
+
+    const amount = price * qty;
+
+    row.querySelector('.unit-cell').textContent = unit;
+    row.querySelector('.price-cell').innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    row.querySelector('.price-cell').dataset.price = price;
+    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+
+    // 소계 업데이트
+    const effectiveCatNo = catNo || row.closest('tbody').id.replace('estBody', '');
+    updateCategorySubtotal(effectiveCatNo);
+    updateEstimateTotals();
+    saveEstimateData();
+}
+
+// 계약견적서 행 계산
+function calcEstimateRow(row) {
+    const priceCell = row.querySelector('.price-cell');
+    const priceInput = priceCell?.querySelector('input');
+    const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell?.dataset.price) || 0);
+    const qty = parseInt(row.querySelector('.qty-input')?.value) || 1;
+    const amount = price * qty;
+    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+}
+
+// 수량 변경
+function onEstQtyChange(input, catNo) {
+    const row = input.closest('tr');
+    const priceCell = row.querySelector('.price-cell');
+    const priceInput = priceCell.querySelector('input');
+    const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell.dataset.price) || 0);
+    const qty = parseInt(input.value) || 0;
+    const amount = price * qty;
+
+    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    updateCategorySubtotal(catNo);
+    updateEstimateTotals();
+    saveEstimateData();
+}
+
+// 행 값 초기화
+function resetEstRowValues(row) {
+    row.querySelector('.spec-cell').textContent = '-';
+    row.querySelector('.unit-cell').textContent = '-';
+    row.querySelector('.price-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+    row.querySelector('.price-cell').dataset.price = '0';
+    row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+}
+
+// 직접입력 모드: 상세내용, 단위, 단가를 입력 필드로 전환
+function enableDirectEditCells(row, catNo) {
+    const specCell = row.querySelector('.spec-cell');
+    const unitCell = row.querySelector('.unit-cell');
+    const priceCell = row.querySelector('.price-cell');
+
+    // 상세내용 input
+    specCell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
+                onchange="saveEstimateData()">`;
+    const specInp = specCell.querySelector('input');
+    specInp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); specInp.blur(); }
+        else if (e.key === 'Escape') { specCell.textContent = '-'; saveEstimateData(); }
+    });
+    specInp.addEventListener('blur', function () {
+        const val = specInp.value.trim() || '-';
+        specCell.textContent = val;
+        saveEstimateData();
+    });
+
+    // 단위 input
+    unitCell.innerHTML = `<input type="text" class="editable-input" placeholder="단위" style="width:100%; text-align:center;"
+                onchange="saveEstimateData()">`;
+    const unitInp = unitCell.querySelector('input');
+    unitInp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); unitInp.blur(); }
+        else if (e.key === 'Escape') { unitCell.textContent = '-'; saveEstimateData(); }
+    });
+    unitInp.addEventListener('blur', function () {
+        const val = unitInp.value.trim() || '-';
+        unitCell.textContent = val;
+        saveEstimateData();
+    });
 
 
-            // 단가 input (blur 시 ₩ 표시)
-            priceCell.innerHTML = `<input type="text" class="editable-price-input" placeholder="단가" value=""
+    // 단가 input (blur 시 ₩ 표시)
+    priceCell.innerHTML = `<input type="text" class="editable-price-input" placeholder="단가" value=""
                 oninput="onEstDirectPriceInput(this, '${catNo}')" onchange="saveEstimateData()">`;
+    priceCell.dataset.price = '0';
+    const priceInp = priceCell.querySelector('input');
+    priceInp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            priceInp.blur();
+        } else if (e.key === 'Escape') {
+            priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
             priceCell.dataset.price = '0';
-            const priceInp = priceCell.querySelector('input');
-            priceInp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    priceInp.blur();
-                } else if (e.key === 'Escape') {
-                    priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-                    priceCell.dataset.price = '0';
-                    row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-                    updateCategorySubtotal(catNo);
-                    updateEstimateTotals();
-                    saveEstimateData();
-                }
-            });
-            // blur 시 ₩ 형식으로 표시
-            priceInp.addEventListener('blur', function () {
-                const price = parseNumber(priceInp.value) || 0;
-                priceCell.dataset.price = price;
-                priceCell.innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
-                const amount = price * qty;
-                row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                updateCategorySubtotal(catNo);
-                updateEstimateTotals();
-                saveEstimateData();
-            });
-        }
-
-
-        // 직접입력 모드 해제: 상세내용, 단위, 단가를 읽기 전용으로 되돌리기
-        function revertEditCellsToReadonly(row) {
-            const specCell = row.querySelector('.spec-cell');
-            const unitCell = row.querySelector('.unit-cell');
-            const priceCell = row.querySelector('.price-cell');
-
-            if (specCell && specCell.querySelector('.spec-custom-input')) {
-                specCell.textContent = '-';
-            }
-            if (unitCell && unitCell.querySelector('input')) {
-                unitCell.textContent = '-';
-            }
-            if (priceCell && priceCell.querySelector('input')) {
-                priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-                priceCell.dataset.price = '0';
-            }
             row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
-        }
-
-        // 직접입력 단가 변경 시 금액 계산
-        function onEstDirectPriceInput(input, catNo) {
-            const row = input.closest('tr');
-            const price = parseNumber(input.value) || 0;
-            row.querySelector('.price-cell').dataset.price = price;
-            const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
-            const amount = price * qty;
-            row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-            input.value = formatNumber(price);
             updateCategorySubtotal(catNo);
             updateEstimateTotals();
-        }
-
-        // 셀 클릭으로 편집 모드 전환 (spec-cell)
-        function makeSpecEditable(cell, catNo) {
-            const currentText = cell.textContent?.trim() || '';
-            const originalText = currentText;
-            if (currentText === '-') {
-                cell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
-                    onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
-            } else {
-                cell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${currentText}"
-                    onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
-            }
-            const inp = cell.querySelector('input');
-            inp.focus();
-            inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    inp.blur();
-                } else if (e.key === 'Escape') {
-                    cell.textContent = originalText || '-';
-                    saveEstimateData();
-                }
-            });
-        }
-
-        function finalizeSpecEdit(input, catNo) {
-            const val = input.value.trim();
-            const cell = input.closest('.spec-cell');
-            if (cell) {
-                cell.textContent = val || '-';
-            }
             saveEstimateData();
         }
+    });
+    // blur 시 ₩ 형식으로 표시
+    priceInp.addEventListener('blur', function () {
+        const price = parseNumber(priceInp.value) || 0;
+        priceCell.dataset.price = price;
+        priceCell.innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+        const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+        const amount = price * qty;
+        row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+        updateCategorySubtotal(catNo);
+        updateEstimateTotals();
+        saveEstimateData();
+    });
+}
 
-        // 셀 클릭으로 편집 모드 전환 (unit-cell)
-        function makeUnitEditable(cell, catNo) {
-            const currentText = cell.textContent?.trim() || '';
-            const originalText = currentText;
-            if (cell.querySelector('input')) return;
-            cell.innerHTML = `<input type="text" class="editable-input" value="${currentText === '-' ? '' : currentText}"
+
+// 직접입력 모드 해제: 상세내용, 단위, 단가를 읽기 전용으로 되돌리기
+function revertEditCellsToReadonly(row) {
+    const specCell = row.querySelector('.spec-cell');
+    const unitCell = row.querySelector('.unit-cell');
+    const priceCell = row.querySelector('.price-cell');
+
+    if (specCell && specCell.querySelector('.spec-custom-input')) {
+        specCell.textContent = '-';
+    }
+    if (unitCell && unitCell.querySelector('input')) {
+        unitCell.textContent = '-';
+    }
+    if (priceCell && priceCell.querySelector('input')) {
+        priceCell.innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+        priceCell.dataset.price = '0';
+    }
+    row.querySelector('.amount-cell').innerHTML = '<div class="money-wrapper"><span style="margin:auto">-</span></div>';
+}
+
+// 직접입력 단가 변경 시 금액 계산
+function onEstDirectPriceInput(input, catNo) {
+    const row = input.closest('tr');
+    const price = parseNumber(input.value) || 0;
+    row.querySelector('.price-cell').dataset.price = price;
+    const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+    const amount = price * qty;
+    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    input.value = formatNumber(price);
+    updateCategorySubtotal(catNo);
+    updateEstimateTotals();
+}
+
+// 셀 클릭으로 편집 모드 전환 (spec-cell)
+function makeSpecEditable(cell, catNo) {
+    const currentText = cell.textContent?.trim() || '';
+    const originalText = currentText;
+    if (currentText === '-') {
+        cell.innerHTML = `<input type="text" class="editable-input spec-custom-input" placeholder="상세내용 입력"
+                    onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
+    } else {
+        cell.innerHTML = `<input type="text" class="editable-input spec-custom-input" value="${currentText}"
+                    onchange="saveEstimateData()" onblur="finalizeSpecEdit(this, '${catNo}')">`;
+    }
+    const inp = cell.querySelector('input');
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            inp.blur();
+        } else if (e.key === 'Escape') {
+            cell.textContent = originalText || '-';
+            saveEstimateData();
+        }
+    });
+}
+
+function finalizeSpecEdit(input, catNo) {
+    const val = input.value.trim();
+    const cell = input.closest('.spec-cell');
+    if (cell) {
+        cell.textContent = val || '-';
+    }
+    saveEstimateData();
+}
+
+// 셀 클릭으로 편집 모드 전환 (unit-cell)
+function makeUnitEditable(cell, catNo) {
+    const currentText = cell.textContent?.trim() || '';
+    const originalText = currentText;
+    if (cell.querySelector('input')) return;
+    cell.innerHTML = `<input type="text" class="editable-input" value="${currentText === '-' ? '' : currentText}"
                 placeholder="단위" style="width:100%; text-align:center;"
                 onchange="saveEstimateData()" onblur="finalizeUnitEdit(this)">`;
-            const inp = cell.querySelector('input');
-            inp.focus();
-            inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    inp.blur();
-                } else if (e.key === 'Escape') {
-                    cell.textContent = originalText || '-';
-                    saveEstimateData();
-                }
-            });
-        }
-
-        function finalizeUnitEdit(input) {
-            const val = input.value.trim();
-            const cell = input.closest('.unit-cell');
-            if (cell) {
-                cell.textContent = val || '-';
-            }
+    const inp = cell.querySelector('input');
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            inp.blur();
+        } else if (e.key === 'Escape') {
+            cell.textContent = originalText || '-';
             saveEstimateData();
         }
+    });
+}
 
-        // 셀 클릭으로 편집 모드 전환 (div-cell)
-        function makeDivEditable(cell, catNo) {
-            if (cell.querySelector('input') || cell.querySelector('select')) return;
-            const currentText = cell.textContent.trim();
-            const items = getCostItemsByCategory(catNo);
-            const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-            const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+function finalizeUnitEdit(input) {
+    const val = input.value.trim();
+    const cell = input.closest('.unit-cell');
+    if (cell) {
+        cell.textContent = val || '-';
+    }
+    saveEstimateData();
+}
 
-            cell.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${currentText}" placeholder="구분 입력"
+// 셀 클릭으로 편집 모드 전환 (div-cell)
+function makeDivEditable(cell, catNo) {
+    if (cell.querySelector('input') || cell.querySelector('select')) return;
+    const currentText = cell.textContent.trim();
+    const items = getCostItemsByCategory(catNo);
+    const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+    const divOpts = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+
+    cell.innerHTML = `<input type="text" class="editable-input div-custom-input" value="${currentText}" placeholder="구분 입력"
                 onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
-            const inp = cell.querySelector('input');
-            inp.focus();
-            inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    inp.blur();
-                } else if (e.key === 'Escape') {
-                    cell.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
+    const inp = cell.querySelector('input');
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            inp.blur();
+        } else if (e.key === 'Escape') {
+            cell.innerHTML = `<select class="div-select" onchange="onEstDivChange(this, '${catNo}')">
                         <option value="">선택</option>${divOpts}<option value="__edit_div__">📝 내용수정</option><option value="__custom_div__">✏️ 직접입력</option></select>`;
-                    saveEstimateData();
-                }
-            });
-            inp.addEventListener('blur', function () {
-                const val = inp.value.trim();
-                if (val) {
-                    cell.textContent = val;
-                } else {
-                    cell.textContent = currentText || '-'; // Revert if empty? Or just let it be empty?
-                }
-                saveEstimateData();
-            });
+            saveEstimateData();
         }
+    });
+    inp.addEventListener('blur', function () {
+        const val = inp.value.trim();
+        if (val) {
+            cell.textContent = val;
+        } else {
+            cell.textContent = currentText || '-'; // Revert if empty? Or just let it be empty?
+        }
+        saveEstimateData();
+    });
+}
 
-        // 셀 클릭으로 편집 모드 전환 (name-cell)
-        function makeNameEditable(cell, catNo) {
-            if (cell.querySelector('input') || cell.querySelector('select')) return;
-            const currentText = cell.textContent.trim();
-            const row = cell.closest('tr');
+// 셀 클릭으로 편집 모드 전환 (name-cell)
+function makeNameEditable(cell, catNo) {
+    if (cell.querySelector('input') || cell.querySelector('select')) return;
+    const currentText = cell.textContent.trim();
+    const row = cell.closest('tr');
 
-            // 구분 정보 가져오기 (select, custom input, or text cell)
-            const divSelect = row.querySelector('.div-select');
-            const divCustom = row.querySelector('.div-custom-input');
-            let curDiv = '';
-            if (divSelect) curDiv = divSelect.value;
-            else if (divCustom) curDiv = divCustom.value;
-            else curDiv = row.querySelector('.div-cell')?.textContent.trim() || '';
+    // 구분 정보 가져오기 (select, custom input, or text cell)
+    const divSelect = row.querySelector('.div-select');
+    const divCustom = row.querySelector('.div-custom-input');
+    let curDiv = '';
+    if (divSelect) curDiv = divSelect.value;
+    else if (divCustom) curDiv = divCustom.value;
+    else curDiv = row.querySelector('.div-cell')?.textContent.trim() || '';
 
-            const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
-            const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
-            const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+    const nameItems = curDiv ? getItemsByDivInCat(catNo, curDiv) : [];
+    const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+    const nameOpts = uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
 
-            cell.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${currentText}" placeholder="품명 입력"
+    cell.innerHTML = `<input type="text" class="editable-input name-custom-input" value="${currentText}" placeholder="품명 입력"
                 onchange="saveEstimateData()">`;
-            const inp = cell.querySelector('input');
-            inp.focus();
-            inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    inp.blur();
-                } else if (e.key === 'Escape') {
-                    cell.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
+    const inp = cell.querySelector('input');
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            inp.blur();
+        } else if (e.key === 'Escape') {
+            cell.innerHTML = `<select class="name-select" onchange="onEstNameChange(this, '${catNo}')" ${curDiv ? '' : 'disabled'}>
                         ${curDiv ? '<option value="">품명 선택</option>' + nameOpts + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
-                    saveEstimateData();
-                }
-            });
-            inp.addEventListener('blur', function () {
-                const val = inp.value.trim();
-                if (val) {
-                    cell.textContent = val;
-                } else {
-                    cell.textContent = currentText || '-';
-                }
-                saveEstimateData();
-            });
+            saveEstimateData();
         }
+    });
+    inp.addEventListener('blur', function () {
+        const val = inp.value.trim();
+        if (val) {
+            cell.textContent = val;
+        } else {
+            cell.textContent = currentText || '-';
+        }
+        saveEstimateData();
+    });
+}
 
-        // 셀 클릭으로 편집 모드 전환 (price-cell)
-        function makePriceEditable(cell, catNo) {
-            if (cell.querySelector('input')) return;
-            const currentPrice = parseInt(cell.dataset.price) || 0;
-            const originalPrice = currentPrice;
-            cell.innerHTML = `<input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
+// 셀 클릭으로 편집 모드 전환 (price-cell)
+function makePriceEditable(cell, catNo) {
+    if (cell.querySelector('input')) return;
+    const currentPrice = parseInt(cell.dataset.price) || 0;
+    const originalPrice = currentPrice;
+    cell.innerHTML = `<input type="text" class="editable-price-input" value="${currentPrice > 0 ? formatNumber(currentPrice) : ''}"
                 placeholder="단가" oninput="onEstDirectPriceInput(this, '${catNo}')"
                 onblur="finalizePriceEdit(this, '${catNo}')" onchange="saveEstimateData()">`;
-            const inp = cell.querySelector('input');
-            inp.focus();
-            inp.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    // 엔터 키: 편집 완료, ₩ 표시, blur 처리
-                    e.preventDefault();
-                    inp.blur(); // blur 이벤트가 finalizePriceEdit 호출
-                } else if (e.key === 'Escape') {
-                    cell.dataset.price = originalPrice;
-                    cell.innerHTML = `<div class="money-wrapper">${originalPrice > 0 ? `<span>₩</span><span>${formatNumber(originalPrice)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                    const row = cell.closest('tr');
-                    const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
-                    const amount = originalPrice * qty;
-                    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                    updateCategorySubtotal(catNo);
-                    updateEstimateTotals();
-                    saveEstimateData();
-                }
-            });
-        }
-
-
-        function finalizePriceEdit(input, catNo) {
-            const price = parseNumber(input.value) || 0;
-            const cell = input.closest('.price-cell');
-            cell.dataset.price = price;
-            cell.innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    const inp = cell.querySelector('input');
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            // 엔터 키: 편집 완료, ₩ 표시, blur 처리
+            e.preventDefault();
+            inp.blur(); // blur 이벤트가 finalizePriceEdit 호출
+        } else if (e.key === 'Escape') {
+            cell.dataset.price = originalPrice;
+            cell.innerHTML = `<div class="money-wrapper">${originalPrice > 0 ? `<span>₩</span><span>${formatNumber(originalPrice)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
             const row = cell.closest('tr');
             const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
-            const amount = price * qty;
+            const amount = originalPrice * qty;
             row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
             updateCategorySubtotal(catNo);
             updateEstimateTotals();
             saveEstimateData();
         }
+    });
+}
 
-        // 카테고리 소계 업데이트
-        function updateCategorySubtotal(catNo) {
-            const tbody = document.getElementById(`estBody${catNo}`);
-            let subtotal = 0;
 
-            tbody.querySelectorAll('tr').forEach(row => {
-                const priceCell = row.querySelector('.price-cell');
-                const priceInput = priceCell?.querySelector('input');
-                const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell?.dataset.price) || 0);
-                const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
-                subtotal += price * qty;
-            });
+function finalizePriceEdit(input, catNo) {
+    const price = parseNumber(input.value) || 0;
+    const cell = input.closest('.price-cell');
+    cell.dataset.price = price;
+    cell.innerHTML = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    const row = cell.closest('tr');
+    const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+    const amount = price * qty;
+    row.querySelector('.amount-cell').innerHTML = `<div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+    updateCategorySubtotal(catNo);
+    updateEstimateTotals();
+    saveEstimateData();
+}
 
-            document.getElementById(`estSubtotal${catNo}`).textContent = formatNumber(subtotal);
-            return subtotal;
+// 카테고리 소계 업데이트
+function updateCategorySubtotal(catNo) {
+    const tbody = document.getElementById(`estBody${catNo}`);
+    let subtotal = 0;
+
+    tbody.querySelectorAll('tr').forEach(row => {
+        const priceCell = row.querySelector('.price-cell');
+        const priceInput = priceCell?.querySelector('input');
+        const price = priceInput ? (parseNumber(priceInput.value) || 0) : (parseInt(priceCell?.dataset.price) || 0);
+        const qty = parseInt(row.querySelector('.qty-input')?.value) || 0;
+        subtotal += price * qty;
+    });
+
+    document.getElementById(`estSubtotal${catNo}`).textContent = formatNumber(subtotal);
+    return subtotal;
+}
+
+// 전체 합계 계산
+function updateEstimateTotals() {
+    let grandTotal = 0;
+    const categoryTotals = {};
+
+    categories.forEach(cat => {
+        const catTotal = updateCategorySubtotal(cat.no);
+        categoryTotals[cat.no] = catTotal;
+        grandTotal += catTotal;
+    });
+
+    const profitRate = parseFloat(document.getElementById('estimateProfitRate')?.value) || 0;
+    const profit = Math.round(grandTotal * profitRate / 100);
+    const subtotalWithProfit = grandTotal + profit;
+    const vat = Math.round(subtotalWithProfit * 0.1);
+    const total = subtotalWithProfit + vat;
+
+    document.getElementById('estimateSubtotal').textContent = '₩ ' + formatNumber(grandTotal);
+    document.getElementById('estimateProfit').textContent = '₩ ' + formatNumber(profit);
+    document.getElementById('estimateVat').textContent = '₩ ' + formatNumber(vat);
+    document.getElementById('estimateTotal').textContent = '₩ ' + formatNumber(total);
+
+    // 고객정보에 총 계약금액 반영
+    const totalAmountField = document.querySelector('.customer-field[data-field="totalAmount"]');
+    if (totalAmountField) {
+        totalAmountField.value = '₩ ' + formatNumber(total);
+        currentData.totalAmount = '₩ ' + formatNumber(total);
+    }
+
+    currentData.estimateProfitRate = profitRate;
+
+    // 표지계약서 연동
+    updateCoverFromEstimate(categoryTotals, grandTotal, profitRate, profit, vat, total);
+
+    // 도급계약서 대금지급 연동
+    updateContractPayments(total);
+}
+
+// 표지계약서 금액 업데이트
+function updateCoverFromEstimate(categoryTotals, subtotal, profitRate, profit, vat, total) {
+    // 금액을 정렬된 HTML로 변환하는 헬퍼 함수
+    function formatAmountHtml(amount) {
+        if (amount > 0) {
+            return `<div class="money-align"><span class="currency">₩</span><span class="value">${formatNumber(amount)}</span></div>`;
         }
+        return '<div class="money-align"><span class="currency"></span><span class="value">-</span></div>';
+    }
 
-        // 전체 합계 계산
-        function updateEstimateTotals() {
-            let grandTotal = 0;
-            const categoryTotals = {};
+    // 각 카테고리별 금액 업데이트
+    categories.forEach(cat => {
+        const el = document.getElementById(`coverCat${cat.no}`);
+        if (el) {
+            const amount = categoryTotals[cat.no] || 0;
+            el.innerHTML = formatAmountHtml(amount);
+        }
+    });
 
-            categories.forEach(cat => {
-                const catTotal = updateCategorySubtotal(cat.no);
-                categoryTotals[cat.no] = catTotal;
-                grandTotal += catTotal;
-            });
+    // 소계, 기업이윤, VAT, 총액 업데이트
+    const coverSubtotal = document.getElementById('coverSubtotal');
+    const coverProfitRate = document.getElementById('coverProfitRate');
+    const coverProfit = document.getElementById('coverProfit');
+    const coverVat = document.getElementById('coverVat');
+    const coverTotal = document.getElementById('coverTotal');
 
-            const profitRate = parseFloat(document.getElementById('estimateProfitRate')?.value) || 0;
-            const profit = Math.round(grandTotal * profitRate / 100);
-            const subtotalWithProfit = grandTotal + profit;
-            const vat = Math.round(subtotalWithProfit * 0.1);
-            const total = subtotalWithProfit + vat;
+    if (coverSubtotal) coverSubtotal.innerHTML = formatAmountHtml(subtotal);
+    if (coverProfitRate) coverProfitRate.textContent = profitRate;
+    if (coverProfit) coverProfit.innerHTML = formatAmountHtml(profit);
+    if (coverVat) coverVat.innerHTML = formatAmountHtml(vat);
+    if (coverTotal) coverTotal.innerHTML = formatAmountHtml(total);
+}
 
-            document.getElementById('estimateSubtotal').textContent = '₩ ' + formatNumber(grandTotal);
-            document.getElementById('estimateProfit').textContent = '₩ ' + formatNumber(profit);
-            document.getElementById('estimateVat').textContent = '₩ ' + formatNumber(vat);
-            document.getElementById('estimateTotal').textContent = '₩ ' + formatNumber(total);
 
-            // 고객정보에 총 계약금액 반영
-            const totalAmountField = document.querySelector('.customer-field[data-field="totalAmount"]');
-            if (totalAmountField) {
-                totalAmountField.value = '₩ ' + formatNumber(total);
-                currentData.totalAmount = '₩ ' + formatNumber(total);
+// 도급계약서 대금지급 자동 계산
+function updateContractPayments(total) {
+    // 대금 지급 비율: 1차 27%, 2차 23%, 3차 23%, 4차 23%, 잔금 4%
+    const payment1 = Math.round(total * 0.27);
+    const payment2 = Math.round(total * 0.23);
+    const payment3 = Math.round(total * 0.23);
+    const payment4 = Math.round(total * 0.23);
+    const payment5 = total - payment1 - payment2 - payment3 - payment4; // 나머지 잔금
+
+    // currentData에 저장
+    currentData.payment1 = '₩ ' + formatNumber(payment1) + ' (27%)';
+    currentData.payment2 = '₩ ' + formatNumber(payment2) + ' (23%)';
+    currentData.payment3 = '₩ ' + formatNumber(payment3) + ' (23%)';
+    currentData.payment4 = '₩ ' + formatNumber(payment4) + ' (23%)';
+    currentData.payment5 = '₩ ' + formatNumber(payment5) + ' (4%)';
+
+    // synced-input 업데이트
+    document.querySelectorAll('.synced-input[data-sync="payment1"]').forEach(el => el.value =
+        currentData.payment1);
+    document.querySelectorAll('.synced-input[data-sync="payment2"]').forEach(el => el.value =
+        currentData.payment2);
+    document.querySelectorAll('.synced-input[data-sync="payment3"]').forEach(el => el.value =
+        currentData.payment3);
+    document.querySelectorAll('.synced-input[data-sync="payment4"]').forEach(el => el.value =
+        currentData.payment4);
+    document.querySelectorAll('.synced-input[data-sync="payment5"]').forEach(el => el.value =
+        currentData.payment5);
+
+    // 도급계약서 총 계약금액 업데이트
+    document.querySelectorAll('.synced-input[data-sync="totalAmount"]').forEach(el => {
+        el.value = '₩ ' + formatNumber(total);
+    });
+}
+
+// 견적 데이터 저장
+function saveEstimateData() {
+    const estimateData = {};
+    const estimateMemos = {};
+
+    categories.forEach(cat => {
+        const tbody = document.getElementById(`estBody${cat.no}`);
+        const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
+        if (!tbody) return;
+
+        const rows = [];
+        tbody.querySelectorAll('tr').forEach(row => {
+            const divSelect = row.querySelector('.div-select');
+            const divCustomInput = row.querySelector('.div-custom-input');
+            const nameSelect = row.querySelector('.name-select');
+            const nameCustomInput = row.querySelector('.name-custom-input');
+            const qtyInput = row.querySelector('.qty-input');
+            const specCell = row.querySelector('.spec-cell');
+
+            // 구분 값: select 또는 직접입력
+            let divValue = '';
+            let isCustomDiv = false;
+            if (divCustomInput) {
+                divValue = divCustomInput.value || '';
+                isCustomDiv = true;
+            } else if (divSelect) {
+                divValue = divSelect.value || '';
             }
 
-            currentData.estimateProfitRate = profitRate;
-
-            // 표지계약서 연동
-            updateCoverFromEstimate(categoryTotals, grandTotal, profitRate, profit, vat, total);
-
-            // 도급계약서 대금지급 연동
-            updateContractPayments(total);
-        }
-
-        // 표지계약서 금액 업데이트
-        function updateCoverFromEstimate(categoryTotals, subtotal, profitRate, profit, vat, total) {
-            // 금액을 정렬된 HTML로 변환하는 헬퍼 함수
-            function formatAmountHtml(amount) {
-                if (amount > 0) {
-                    return `<div class="money-align"><span class="currency">₩</span><span class="value">${formatNumber(amount)}</span></div>`;
-                }
-                return '<div class="money-align"><span class="currency"></span><span class="value">-</span></div>';
+            // 품명 값: select 또는 직접입력
+            let nameValue = '';
+            let nameIndexValue = '';
+            let isCustomName = false;
+            if (nameCustomInput) {
+                nameValue = nameCustomInput.value || '';
+                nameIndexValue = '';
+                isCustomName = true;
+            } else if (nameSelect) {
+                nameIndexValue = nameSelect.value || '';
+                nameValue = nameSelect.selectedOptions[0]?.textContent || '';
             }
 
-            // 각 카테고리별 금액 업데이트
-            categories.forEach(cat => {
-                const el = document.getElementById(`coverCat${cat.no}`);
-                if (el) {
-                    const amount = categoryTotals[cat.no] || 0;
-                    el.innerHTML = formatAmountHtml(amount);
+            // spec-cell이 select나 input인 경우 값 가져오기
+            let specValue = '-';
+            if (specCell) {
+                const specSelect = specCell.querySelector('select');
+                const specInput = specCell.querySelector('input');
+                if (specSelect) {
+                    const selectedOpt = specSelect.selectedOptions[0];
+                    specValue = selectedOpt?.dataset?.spec || selectedOpt?.textContent || '-';
+                } else if (specInput) {
+                    specValue = specInput.value || '-';
+                } else {
+                    specValue = specCell.textContent || '-';
                 }
-            });
+            }
 
-            // 소계, 기업이윤, VAT, 총액 업데이트
-            const coverSubtotal = document.getElementById('coverSubtotal');
-            const coverProfitRate = document.getElementById('coverProfitRate');
-            const coverProfit = document.getElementById('coverProfit');
-            const coverVat = document.getElementById('coverVat');
-            const coverTotal = document.getElementById('coverTotal');
+            // 단위: input 또는 텍스트
+            const unitCell = row.querySelector('.unit-cell');
+            let unitValue = '-';
+            if (unitCell) {
+                const unitInput = unitCell.querySelector('input');
+                unitValue = unitInput ? (unitInput.value || '-') : (unitCell.textContent || '-');
+            }
 
-            if (coverSubtotal) coverSubtotal.innerHTML = formatAmountHtml(subtotal);
-            if (coverProfitRate) coverProfitRate.textContent = profitRate;
-            if (coverProfit) coverProfit.innerHTML = formatAmountHtml(profit);
-            if (coverVat) coverVat.innerHTML = formatAmountHtml(vat);
-            if (coverTotal) coverTotal.innerHTML = formatAmountHtml(total);
-        }
+            // 비고 입력값 가져오기
+            const remarkInput = row.querySelector('.remark-input');
+            const remarkValue = remarkInput?.value || '';
 
-
-        // 도급계약서 대금지급 자동 계산
-        function updateContractPayments(total) {
-            // 대금 지급 비율: 1차 27%, 2차 23%, 3차 23%, 4차 23%, 잔금 4%
-            const payment1 = Math.round(total * 0.27);
-            const payment2 = Math.round(total * 0.23);
-            const payment3 = Math.round(total * 0.23);
-            const payment4 = Math.round(total * 0.23);
-            const payment5 = total - payment1 - payment2 - payment3 - payment4; // 나머지 잔금
-
-            // currentData에 저장
-            currentData.payment1 = '₩ ' + formatNumber(payment1) + ' (27%)';
-            currentData.payment2 = '₩ ' + formatNumber(payment2) + ' (23%)';
-            currentData.payment3 = '₩ ' + formatNumber(payment3) + ' (23%)';
-            currentData.payment4 = '₩ ' + formatNumber(payment4) + ' (23%)';
-            currentData.payment5 = '₩ ' + formatNumber(payment5) + ' (4%)';
-
-            // synced-input 업데이트
-            document.querySelectorAll('.synced-input[data-sync="payment1"]').forEach(el => el.value =
-                currentData.payment1);
-            document.querySelectorAll('.synced-input[data-sync="payment2"]').forEach(el => el.value =
-                currentData.payment2);
-            document.querySelectorAll('.synced-input[data-sync="payment3"]').forEach(el => el.value =
-                currentData.payment3);
-            document.querySelectorAll('.synced-input[data-sync="payment4"]').forEach(el => el.value =
-                currentData.payment4);
-            document.querySelectorAll('.synced-input[data-sync="payment5"]').forEach(el => el.value =
-                currentData.payment5);
-
-            // 도급계약서 총 계약금액 업데이트
-            document.querySelectorAll('.synced-input[data-sync="totalAmount"]').forEach(el => {
-                el.value = '₩ ' + formatNumber(total);
-            });
-        }
-
-        // 견적 데이터 저장
-        function saveEstimateData() {
-            const estimateData = {};
-            const estimateMemos = {};
-
-            categories.forEach(cat => {
-                const tbody = document.getElementById(`estBody${cat.no}`);
-                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
-                if (!tbody) return;
-
-                const rows = [];
-                tbody.querySelectorAll('tr').forEach(row => {
-                    const divSelect = row.querySelector('.div-select');
-                    const divCustomInput = row.querySelector('.div-custom-input');
-                    const nameSelect = row.querySelector('.name-select');
-                    const nameCustomInput = row.querySelector('.name-custom-input');
-                    const qtyInput = row.querySelector('.qty-input');
-                    const specCell = row.querySelector('.spec-cell');
-
-                    // 구분 값: select 또는 직접입력
-                    let divValue = '';
-                    let isCustomDiv = false;
-                    if (divCustomInput) {
-                        divValue = divCustomInput.value || '';
-                        isCustomDiv = true;
-                    } else if (divSelect) {
-                        divValue = divSelect.value || '';
-                    }
-
-                    // 품명 값: select 또는 직접입력
-                    let nameValue = '';
-                    let nameIndexValue = '';
-                    let isCustomName = false;
-                    if (nameCustomInput) {
-                        nameValue = nameCustomInput.value || '';
-                        nameIndexValue = '';
-                        isCustomName = true;
-                    } else if (nameSelect) {
-                        nameIndexValue = nameSelect.value || '';
-                        nameValue = nameSelect.selectedOptions[0]?.textContent || '';
-                    }
-
-                    // spec-cell이 select나 input인 경우 값 가져오기
-                    let specValue = '-';
-                    if (specCell) {
-                        const specSelect = specCell.querySelector('select');
-                        const specInput = specCell.querySelector('input');
-                        if (specSelect) {
-                            const selectedOpt = specSelect.selectedOptions[0];
-                            specValue = selectedOpt?.dataset?.spec || selectedOpt?.textContent || '-';
-                        } else if (specInput) {
-                            specValue = specInput.value || '-';
-                        } else {
-                            specValue = specCell.textContent || '-';
-                        }
-                    }
-
-                    // 단위: input 또는 텍스트
-                    const unitCell = row.querySelector('.unit-cell');
-                    let unitValue = '-';
-                    if (unitCell) {
-                        const unitInput = unitCell.querySelector('input');
-                        unitValue = unitInput ? (unitInput.value || '-') : (unitCell.textContent || '-');
-                    }
-
-                    // 비고 입력값 가져오기
-                    const remarkInput = row.querySelector('.remark-input');
-                    const remarkValue = remarkInput?.value || '';
-
-                    // 단가: input 또는 dataset
-                    const priceCell = row.querySelector('.price-cell');
-                    const priceInput = priceCell?.querySelector('input');
-                    let priceValue = '0';
-                    if (priceInput) {
-                        priceValue = String(parseNumber(priceInput.value) || 0);
-                    } else {
-                        priceValue = priceCell?.dataset.price || '0';
-                    }
-
-                    rows.push({
-                        div: divValue,
-                        nameIndex: nameIndexValue,
-                        name: nameValue,
-                        spec: specValue,
-                        unit: unitValue,
-                        qty: qtyInput?.value || '1',
-                        price: priceValue,
-                        remark: remarkValue,
-                        isCustomDiv: isCustomDiv,
-                        isCustomName: isCustomName
-                    });
-                });
-
-                estimateData[cat.no] = rows;
-
-                // 메모 저장
-                if (memoTextarea) {
-                    currentData[`estMemo_${cat.no}`] = memoTextarea.value;
-                }
-            });
-
-            currentData.estimateData = estimateData;
-            currentData.estimateProfitRate = document.getElementById('estimateProfitRate')?.value || 15;
-        }
-
-        // 견적 데이터 로드
-        function loadEstimateData() {
-            const profitRateInput = document.getElementById('estimateProfitRate');
-
-            // 기업이윤율 로드
-            if (currentData.estimateProfitRate !== undefined) {
-                profitRateInput.value = currentData.estimateProfitRate;
+            // 단가: input 또는 dataset
+            const priceCell = row.querySelector('.price-cell');
+            const priceInput = priceCell?.querySelector('input');
+            let priceValue = '0';
+            if (priceInput) {
+                priceValue = String(parseNumber(priceInput.value) || 0);
             } else {
-                profitRateInput.value = 15;
+                priceValue = priceCell?.dataset.price || '0';
             }
 
-            // 저장된 견적 데이터가 있으면 로드
-            if (currentData.estimateData) {
-                categories.forEach(cat => {
-                    const tbody = document.getElementById(`estBody${cat.no}`);
-                    if (!tbody) return;
+            rows.push({
+                div: divValue,
+                nameIndex: nameIndexValue,
+                name: nameValue,
+                spec: specValue,
+                unit: unitValue,
+                qty: qtyInput?.value || '1',
+                price: priceValue,
+                remark: remarkValue,
+                isCustomDiv: isCustomDiv,
+                isCustomName: isCustomName
+            });
+        });
 
-                    const savedRows = currentData.estimateData[cat.no];
-                    if (!savedRows || savedRows.length === 0) {
-                        // 기본 빈 행 유지
-                        updateDivOptions(cat.no);
-                        return;
-                    }
+        estimateData[cat.no] = rows;
 
-                    tbody.innerHTML = '';
-                    const items = getCostItemsByCategory(cat.no);
-                    const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
-                    const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+        // 메모 저장
+        if (memoTextarea) {
+            currentData[`estMemo_${cat.no}`] = memoTextarea.value;
+        }
+    });
+
+    currentData.estimateData = estimateData;
+    currentData.estimateProfitRate = document.getElementById('estimateProfitRate')?.value || 15;
+}
+
+// 견적 데이터 로드
+function loadEstimateData() {
+    const profitRateInput = document.getElementById('estimateProfitRate');
+
+    // 기업이윤율 로드
+    if (currentData.estimateProfitRate !== undefined) {
+        profitRateInput.value = currentData.estimateProfitRate;
+    } else {
+        profitRateInput.value = 15;
+    }
+
+    // 저장된 견적 데이터가 있으면 로드
+    if (currentData.estimateData) {
+        categories.forEach(cat => {
+            const tbody = document.getElementById(`estBody${cat.no}`);
+            if (!tbody) return;
+
+            const savedRows = currentData.estimateData[cat.no];
+            if (!savedRows || savedRows.length === 0) {
+                // 기본 빈 행 유지
+                updateDivOptions(cat.no);
+                return;
+            }
+
+            tbody.innerHTML = '';
+            const items = getCostItemsByCategory(cat.no);
+            const divs = [...new Set(items.map(i => i.div).filter(d => d))].sort();
+            const divOptions = divs.map(d => `<option value="${d}">${d}</option>`).join('');
 
 
-                    savedRows.forEach((item, i) => {
-                        const isCustomDiv = item.isCustomDiv || false;
-                        const isCustomName = item.isCustomName || false;
-                        const nameItems = (!isCustomDiv && item.div) ? getItemsByDivInCat(cat.no, item.div) : [];
+            savedRows.forEach((item, i) => {
+                const isCustomDiv = item.isCustomDiv || false;
+                const isCustomName = item.isCustomName || false;
+                const nameItems = (!isCustomDiv && item.div) ? getItemsByDivInCat(cat.no, item.div) : [];
 
-                        // 고유한 품명만 추출 (중복 제거)
-                        const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
+                // 고유한 품명만 추출 (중복 제거)
+                const uniqueNames = [...new Set(nameItems.map(it => it.name).filter(n => n))];
 
-                        const currentName = item.name || '';
+                const currentName = item.name || '';
 
-                        const nameOptions = uniqueNames.map(name =>
-                            `<option value="${name}" ${name === currentName ? 'selected' : ''}>${name}</option>`
-                        ).join('');
+                const nameOptions = uniqueNames.map(name =>
+                    `<option value="${name}" ${name === currentName ? 'selected' : ''}>${name}</option>`
+                ).join('');
 
-                        const price = parseInt(item.price) || 0;
-                        const qty = parseInt(item.qty) || 0;
-                        const amount = price * qty;
+                const price = parseInt(item.price) || 0;
+                const qty = parseInt(item.qty) || 0;
+                const amount = price * qty;
 
-                        // 구분 셀 처리
-                        let divCellContent;
-                        if (isCustomDiv) {
-                            divCellContent = `<input type="text" class="editable-input div-custom-input" value="${item.div || ''}" placeholder="구분 입력"
+                // 구분 셀 처리
+                let divCellContent;
+                if (isCustomDiv) {
+                    divCellContent = `<input type="text" class="editable-input div-custom-input" value="${item.div || ''}" placeholder="구분 입력"
                                 onchange="saveEstimateData()" style="width:100%; text-align:center;">`;
-                        } else {
-                            divCellContent = `<select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
+                } else {
+                    divCellContent = `<select class="div-select" onchange="onEstDivChange(this, '${cat.no}')">
                                 <option value="">선택</option>${divOptions.replace(`"${item.div}"`, `"${item.div}" selected`)}
                                 <option value="__edit_div__">📝 내용수정</option>
                                 <option value="__custom_div__">✏️ 직접입력</option>
                             </select>`;
-                        }
+                }
 
-                        // 품명 셀 처리
-                        let nameCellContent;
-                        if (isCustomName) {
-                            nameCellContent = `<input type="text" class="editable-input name-custom-input" value="${currentName}" placeholder="품명 입력"
+                // 품명 셀 처리
+                let nameCellContent;
+                if (isCustomName) {
+                    nameCellContent = `<input type="text" class="editable-input name-custom-input" value="${currentName}" placeholder="품명 입력"
                                 onchange="saveEstimateData()">`;
-                        } else {
-                            nameCellContent = `<select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
-                                }>${item.div ? '<option value="">품명 선택</option>' + nameOptions + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
-                        }
+                } else {
+                    nameCellContent = `<select class="name-select" onchange="onEstNameChange(this, '${cat.no}')" ${item.div ? '' : 'disabled'
+                        }>${item.div ? '<option value="">품명 선택</option>' + nameOptions + '<option value="__edit_name__">📝 내용수정</option><option value="__custom_name__">✏️ 직접입력</option>' : '<option value="">구분 먼저 선택</option>'}</select>`;
+                }
 
-                        // 상세내용 셀 처리
-                        let specCellContent = item.spec || '-';
-                        const sameNameItems = nameItems.filter(it => it.name === currentName);
+                // 상세내용 셀 처리
+                let specCellContent = item.spec || '-';
+                const sameNameItems = nameItems.filter(it => it.name === currentName);
 
-                        if (isCustomDiv || isCustomName) {
-                            // 직접입력 모드면 상세내용도 입력 필드
-                            specCellContent = `<input type="text" class="editable-input spec-custom-input" value="${item.spec && item.spec !== '-' ? item.spec : ''}" placeholder="상세내용 입력"
+                if (isCustomDiv || isCustomName) {
+                    // 직접입력 모드면 상세내용도 입력 필드
+                    specCellContent = `<input type="text" class="editable-input spec-custom-input" value="${item.spec && item.spec !== '-' ? item.spec : ''}" placeholder="상세내용 입력"
                                 onchange="saveEstimateData()">`;
-                        } else if (sameNameItems.length > 1) {
-                            const specOptions = sameNameItems.map((it, idx) => {
-                                const isSelected = (it.spec || '') === item.spec || (it.spec === null && item.spec === '-');
-                                return `<option value="${idx}" data-spec="${it.spec || ''}" data-unit="${it.unit || ''}" data-price="${it.unitPrice || 0}" ${isSelected ? 'selected' : ''}>
+                } else if (sameNameItems.length > 1) {
+                    const specOptions = sameNameItems.map((it, idx) => {
+                        const isSelected = (it.spec || '') === item.spec || (it.spec === null && item.spec === '-');
+                        return `<option value="${idx}" data-spec="${it.spec || ''}" data-unit="${it.unit || ''}" data-price="${it.unitPrice || 0}" ${isSelected ? 'selected' : ''}>
                                 ${it.spec || '(상세내용 없음)'}</option>`;
-                            }).join('');
+                    }).join('');
 
-                            specCellContent = `
+                    specCellContent = `
                             <select class="spec-select" onchange="onEstSpecSelect(this, '${cat.no}')"
                                 style="width:100%; padding:4px; border:1px solid #0071e3; border-radius:4px; font-size:11px; background:#f0f7ff;">
                                 <option value="">상세 선택</option>
@@ -6782,28 +6782,28 @@
                                 <option value="__edit_spec__">📝 내용수정</option>
                                 <option value="__custom__" ${item.spec && !sameNameItems.find(it => it.spec === item.spec) ? 'selected' : ''}>✏️ 직접입력</option>
                             </select>`;
-                        }
+                }
 
-                        // 단위 셀 처리
-                        let unitCellContent;
-                        if (isCustomDiv || isCustomName) {
-                            unitCellContent = `<input type="text" class="editable-input" value="${item.unit && item.unit !== '-' ? item.unit : ''}" placeholder="단위" style="width:100%; text-align:center;"
+                // 단위 셀 처리
+                let unitCellContent;
+                if (isCustomDiv || isCustomName) {
+                    unitCellContent = `<input type="text" class="editable-input" value="${item.unit && item.unit !== '-' ? item.unit : ''}" placeholder="단위" style="width:100%; text-align:center;"
                                 onchange="saveEstimateData()">`;
-                        } else {
-                            unitCellContent = item.unit || '-';
-                        }
+                } else {
+                    unitCellContent = item.unit || '-';
+                }
 
-                        // 단가 셀 처리
-                        let priceCellContent;
-                        if (isCustomDiv || isCustomName) {
-                            priceCellContent = `<input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
+                // 단가 셀 처리
+                let priceCellContent;
+                if (isCustomDiv || isCustomName) {
+                    priceCellContent = `<input type="text" class="editable-price-input" value="${price > 0 ? formatNumber(price) : ''}"
                                 placeholder="단가" oninput="onEstDirectPriceInput(this, '${cat.no}')" onchange="saveEstimateData()">`;
-                        } else {
-                            priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
-                        }
+                } else {
+                    priceCellContent = `<div class="money-wrapper">${price > 0 ? `<span>₩</span><span>${formatNumber(price)}</span>` : '<span style="margin:auto">-</span>'}</div>`;
+                }
 
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
             <td style="position: relative;">
                 <button class="del-btn-floating no-print" onclick="deleteEstimateRow(this, '${cat.no}')" title="삭제">
                      <span style="font-size: 14px; font-weight: bold; line-height: 0;">-</span>
@@ -6820,519 +6820,519 @@
             <td class="amount-cell"><div class="money-wrapper">${amount > 0 ? `<span>₩</span><span>${formatNumber(amount)}</span>` : '<span style="margin:auto">-</span>'}</div></td>
             <td><textarea class="remark-input" placeholder="" rows="1" oninput="autoResizeTextarea(this)">${item.remark || ''}</textarea></td>
                         `;
-                        tbody.appendChild(tr);
-                    });
-                });
-            } else {
-                // 구분 옵션만 초기화
-                categories.forEach(cat => {
-                    updateDivOptions(cat.no);
-                });
+                tbody.appendChild(tr);
+            });
+        });
+    } else {
+        // 구분 옵션만 초기화
+        categories.forEach(cat => {
+            updateDivOptions(cat.no);
+        });
+    }
+
+    // 메모 로드
+    categories.forEach(cat => {
+        const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
+        if (memoTextarea && currentData[`estMemo_${cat.no}`] !== undefined) {
+            memoTextarea.value = currentData[`estMemo_${cat.no}`];
+            autoResizeTextarea(memoTextarea);
+        }
+    });
+
+    updateEstimateTotals();
+    // 로드된 비고란 높이 자동 조절
+    document.querySelectorAll('.estimate-table .remark-input').forEach(textarea => {
+        autoResizeTextarea(textarea);
+    });
+
+    syncCostMemoToEstimate(); // 원가관리표 메모를 견적서에 동기화
+
+    // 작성자 표시
+    const authorSpan = document.getElementById('estimateAuthor');
+    if (authorSpan) {
+        authorSpan.textContent = currentData?.createdBy || '-';
+    }
+}
+
+// textarea 자동 높이 조절
+function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+// 원가관리표 메모를 계약견적서에 동기화
+function syncCostMemoToEstimate() {
+    // 원가관리표 메모를 기본값으로 사용 (항상 표시) (Phase 2: In-memory 사용)
+    // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
+
+    categories.forEach(cat => {
+        const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
+        const costMemoTextarea = document.getElementById(`costMemo${cat.no}`);
+
+        if (estMemoTextarea) {
+            // 원가관리표 메모 (기본값으로 항상 표시)
+            const costMemo = globalCostData[`costMemo_${cat.no}`] ||
+                (costMemoTextarea ? costMemoTextarea.value : '') || '';
+
+            // 항상 원가관리표 메모 표시
+            estMemoTextarea.value = costMemo;
+            autoResizeTextarea(estMemoTextarea);
+        }
+    });
+}
+
+// 기존 함수들 제거/교체
+function updateEstimateFromCost() { }
+function getAllCostItems() { return []; }
+function loadAllCostItems() { }
+function clearEstimateRows() { }
+function onCheckChange() { }
+function onQtyChange() { }
+
+// 원가관리표 저장 (전역 데이터로 저장 - 모든 고객에게 동일하게 적용)
+function saveCostData() {
+    const globalCostData = {};
+
+    categories.forEach(cat => {
+        const tbody = document.getElementById(`costBody${cat.no}`);
+        const memo = document.getElementById(`costMemo${cat.no}`);
+        if (!tbody) return;
+        globalCostData[`cost_${cat.no}`] = [];
+        tbody.querySelectorAll('tr').forEach(row => {
+            const inputs = row.querySelectorAll('.col-div input, .col-name input');
+            const specCell = row.querySelector('.col-spec');
+            const unitCell = row.querySelector('.col-unit');
+            const qtyInput = row.querySelector('.col-qty input');
+            const priceInput = row.querySelector('.col-price input');
+
+            // 상세내용: select 또는 input에서 값 가져오기
+            let specValue = '';
+            if (specCell) {
+                const specSelect = specCell.querySelector('select');
+                const specInput = specCell.querySelector('input');
+                specValue = specSelect ? specSelect.value : (specInput ? specInput.value : '');
             }
 
-            // 메모 로드
-            categories.forEach(cat => {
-                const memoTextarea = document.getElementById(`estMemoText${cat.no}`);
-                if (memoTextarea && currentData[`estMemo_${cat.no}`] !== undefined) {
-                    memoTextarea.value = currentData[`estMemo_${cat.no}`];
-                    autoResizeTextarea(memoTextarea);
-                }
-            });
-
-            updateEstimateTotals();
-            // 로드된 비고란 높이 자동 조절
-            document.querySelectorAll('.estimate-table .remark-input').forEach(textarea => {
-                autoResizeTextarea(textarea);
-            });
-
-            syncCostMemoToEstimate(); // 원가관리표 메모를 견적서에 동기화
-
-            // 작성자 표시
-            const authorSpan = document.getElementById('estimateAuthor');
-            if (authorSpan) {
-                authorSpan.textContent = currentData?.createdBy || '-';
+            // 단위: select 또는 input에서 값 가져오기
+            let unitValue = '';
+            if (unitCell) {
+                const unitSelect = unitCell.querySelector('.unit-select');
+                const unitInput = unitCell.querySelector('.unit-input');
+                unitValue = unitSelect ? unitSelect.value : (unitInput ? unitInput.value : '');
             }
-        }
 
-        // textarea 자동 높이 조절
-        function autoResizeTextarea(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
-
-        // 원가관리표 메모를 계약견적서에 동기화
-        function syncCostMemoToEstimate() {
-            // 원가관리표 메모를 기본값으로 사용 (항상 표시) (Phase 2: In-memory 사용)
-            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
-
-            categories.forEach(cat => {
-                const estMemoTextarea = document.getElementById(`estMemoText${cat.no}`);
-                const costMemoTextarea = document.getElementById(`costMemo${cat.no}`);
-
-                if (estMemoTextarea) {
-                    // 원가관리표 메모 (기본값으로 항상 표시)
-                    const costMemo = globalCostData[`costMemo_${cat.no}`] ||
-                        (costMemoTextarea ? costMemoTextarea.value : '') || '';
-
-                    // 항상 원가관리표 메모 표시
-                    estMemoTextarea.value = costMemo;
-                    autoResizeTextarea(estMemoTextarea);
-                }
-            });
-        }
-
-        // 기존 함수들 제거/교체
-        function updateEstimateFromCost() { }
-        function getAllCostItems() { return []; }
-        function loadAllCostItems() { }
-        function clearEstimateRows() { }
-        function onCheckChange() { }
-        function onQtyChange() { }
-
-        // 원가관리표 저장 (전역 데이터로 저장 - 모든 고객에게 동일하게 적용)
-        function saveCostData() {
-            const globalCostData = {};
-
-            categories.forEach(cat => {
-                const tbody = document.getElementById(`costBody${cat.no}`);
-                const memo = document.getElementById(`costMemo${cat.no}`);
-                if (!tbody) return;
-                globalCostData[`cost_${cat.no}`] = [];
-                tbody.querySelectorAll('tr').forEach(row => {
-                    const inputs = row.querySelectorAll('.col-div input, .col-name input');
-                    const specCell = row.querySelector('.col-spec');
-                    const unitCell = row.querySelector('.col-unit');
-                    const qtyInput = row.querySelector('.col-qty input');
-                    const priceInput = row.querySelector('.col-price input');
-
-                    // 상세내용: select 또는 input에서 값 가져오기
-                    let specValue = '';
-                    if (specCell) {
-                        const specSelect = specCell.querySelector('select');
-                        const specInput = specCell.querySelector('input');
-                        specValue = specSelect ? specSelect.value : (specInput ? specInput.value : '');
-                    }
-
-                    // 단위: select 또는 input에서 값 가져오기
-                    let unitValue = '';
-                    if (unitCell) {
-                        const unitSelect = unitCell.querySelector('.unit-select');
-                        const unitInput = unitCell.querySelector('.unit-input');
-                        unitValue = unitSelect ? unitSelect.value : (unitInput ? unitInput.value : '');
-                    }
-
-                    if (inputs.length >= 2 && inputs[1].value) {
-                        globalCostData[`cost_${cat.no}`].push({
-                            div: inputs[0].value,
-                            name: inputs[1].value,
-                            spec: specValue,
-                            unit: unitValue,
-                            qty: qtyInput ? qtyInput.value : '',
-                            price: priceInput ? priceInput.value : ''
-                        });
-                    }
+            if (inputs.length >= 2 && inputs[1].value) {
+                globalCostData[`cost_${cat.no}`].push({
+                    div: inputs[0].value,
+                    name: inputs[1].value,
+                    spec: specValue,
+                    unit: unitValue,
+                    qty: qtyInput ? qtyInput.value : '',
+                    price: priceInput ? priceInput.value : ''
                 });
-                // MEMO 저장
-                if (memo) {
-                    globalCostData[`costMemo_${cat.no}`] = memo.value;
-                }
-            });
-
-            // Master DB는 이 화면에서 저장할 수 없습니다. (Read-Only)
-            // if (currentAdmin && currentAdmin.role === 'main') { syncCostToCloud(globalCostData); }
-        }
-
-        // 원가관리표 저장 요청 (비활성화 - Read Only)
-        async function requestCostSave() {
-            showToast('마스터 원가관리표는 시트에서 직접 수정해야 합니다.', 'info');
-        }
-
-        // ==========================================
-        // [원가관리표 클라우드 동기화]
-        // ==========================================
-
-        // 원가관리표를 Google Sheets에서 불러오기
-        async function syncCostFromCloud() {
-            try {
-                showToast('원가관리표 불러오는 중...', 'info');
-
-                const params = new URLSearchParams({
-                    sheet: '원가관리표',
-                    t: new Date().getTime()
-                });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                if (!response.ok) {
-                    throw new Error('서버 응답 오류: ' + response.status);
-                }
-
-                const result = await response.json();
-
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
-                if (result.data && Array.isArray(result.data)) {
-                    // 데이터를 카테고리별로 정리
-                    let cloudCostData = {};
-                    let loadCount = 0;
-                    let unmappedCount = 0;
-
-                    result.data.forEach(item => {
-                        // 카테고리 번호 매핑 (헤더값 우선, 없으면 구분값 사용)
-                        // item.category가 상위 헤더(예: '욕실공사')일 가능성이 높으므로 이것부터 매핑 시도
-                        let catNo = mapCategoryToNo(item.category);
-                        if (!catNo) catNo = mapCategoryToNo(item.div);
-
-                        if (!catNo) {
-                            unmappedCount++;
-                            // console.warn('분류 실패:', item.category, item.div, item.name); // 디버깅용
-                            return;
-                        }
-
-                        if (!cloudCostData[`cost_${catNo}`]) {
-                            cloudCostData[`cost_${catNo}`] = [];
-                        }
-
-                        cloudCostData[`cost_${catNo}`].push({
-                            div: item.div || '',
-                            name: item.name || '',
-                            spec: item.spec || '',
-                            unit: item.unit || '',
-                            qty: item.qty || '',
-                            price: item.price || ''
-                        });
-                        loadCount++;
-                    });
-
-                    // 메모 데이터 처리
-                    if (result.memos && typeof result.memos === 'object') {
-                        Object.keys(result.memos).forEach(categoryName => {
-                            const catNo = mapCategoryToNo(categoryName);
-                            if (catNo && result.memos[categoryName] && result.memos[categoryName].length > 0) {
-                                // 메모 배열을 줄 단위 텍스트로 변환 (앞에 동그라미 추가)
-                                const memoLines = result.memos[categoryName]
-                                    .map(m => m.content || '')
-                                    .filter(line => line.trim())
-                                    .map(line => '• ' + line)
-                                    .join('\n');
-                                cloudCostData[`costMemo_${catNo}`] = memoLines;
-                            }
-                        });
-                    }
-
-                    // In-memory 데이터 업데이트
-                    globalCostData = cloudCostData;
-                    // Phase 2: 업무 데이터 로컬 저장 금지
-
-
-                    // UI 리로드
-                    createCostCategories();
-                    loadCostData();
-
-                    let msg = `원가관리표 ${loadCount}개 항목을 불러왔습니다.`;
-                    if (unmappedCount > 0) {
-                        msg += ` (분류 실패: ${unmappedCount}건)`;
-                        console.warn(`총 ${unmappedCount}개 항목을 분류하지 못했습니다. 구글 시트의 [구분] 또는 [카테고리] 명칭을 확인해주세요.`);
-                        showToast(`일부 항목(${unmappedCount}개)을 분류하지 못했습니다. 구글 시트 양식을 확인해주세요.`, 'warning');
-                    } else {
-                        showToast(msg, 'success');
-                    }
-                } else {
-                    showToast('원가관리표 데이터가 없습니다.', 'warning');
-                }
-
-                return true;
-
-            } catch (error) {
-                console.error('원가관리표 불러오기 실패:', error);
-                showToast('원가관리표 불러오기 실패: ' + error.message, 'error');
-                return false;
             }
+        });
+        // MEMO 저장
+        if (memo) {
+            globalCostData[`costMemo_${cat.no}`] = memo.value;
+        }
+    });
+
+    // Master DB는 이 화면에서 저장할 수 없습니다. (Read-Only)
+    // if (currentAdmin && currentAdmin.role === 'main') { syncCostToCloud(globalCostData); }
+}
+
+// 원가관리표 저장 요청 (비활성화 - Read Only)
+async function requestCostSave() {
+    showToast('마스터 원가관리표는 시트에서 직접 수정해야 합니다.', 'info');
+}
+
+// ==========================================
+// [원가관리표 클라우드 동기화]
+// ==========================================
+
+// 원가관리표를 Google Sheets에서 불러오기
+async function syncCostFromCloud() {
+    try {
+        showToast('원가관리표 불러오는 중...', 'info');
+
+        const params = new URLSearchParams({
+            sheet: '원가관리표',
+            t: new Date().getTime()
+        });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('서버 응답 오류: ' + response.status);
         }
 
+        const result = await response.json();
 
-        // 카테고리 이름을 번호로 매핑
-        function mapCategoryToNo(categoryName) {
-            if (!categoryName) return null;
-            const name = categoryName.trim();
-
-            const categoryMap = {
-                '가설공사': '01', '가설': '01',
-                '설계 및 관리비': '00', '설계': '00', '관리비': '00', '설계비': '00',
-                '철거공사': '02', '철거': '02',
-                '설비/방수공사': '03', '설비': '03', '방수': '03',
-                '확장/단열공사': '04', '확장': '04', '단열': '04',
-                '창호공사': '05', '창호': '05', '샤시': '05', '샷시': '05',
-                '전기/조명공사': '06', '전기': '06', '조명': '06', '콘센트': '06',
-                '에어컨공사': '07', '에어컨 공사': '07', '에어컨': '07',
-                '목공/도어공사': '08', '목공': '08', '도어': '08', '몰딩': '08', '걸레받이': '08',
-                '필름공사': '09', '필름': '09', '인테리어필름': '09',
-                '타일공사': '10', '타일': '10',
-                '욕실공사': '11', '욕실': '11', '도기': '11', '수전': '11', '세면': '11', '양변기': '11', '욕조': '11', '젠다이': '11', '파티션': '11',
-                '도장공사': '12', '도장': '12', '페인트': '12', '탄성': '12',
-                '도배공사': '13', '도배': '13', '벽지': '13',
-                '바닥재공사': '14', '바닥': '14', '바닥재': '14', '마루': '14', '장판': '14', '데코타일': '14',
-                '가구공사': '15', '가구': '15', '싱크대': '15', '신발장': '15', '붙박이장': '15',
-                '마감공사': '16', '마감': '16', '입주청소': '16', '준공청소': '16',
-                '기타공사': '17', '기타': '17'
-            };
-
-            // 1. 완전 일치 또는 매핑 테이블 검색
-            if (categoryMap[name]) return categoryMap[name];
-
-            // 2. 키워드 부분 일치 검색 (우선순위에 주의)
-            // 설계 및 관리비 키워드 체크
-            if (name.includes('설계') || name.includes('관리비')) return '00';
-            // 욕실 관련 키워드를 가장 먼저 체크 (욕실공사에 다양한 세부 공정이 포함됨)
-            if (name.includes('욕실') || name.includes('UBR') || name.includes('수도') ||
-                name.includes('조적') || name.includes('참고') || name.includes('악세') ||
-                name.includes('액세') || name.includes('라디에이터') || name.includes('돔') ||
-                name.includes('천장') || name.includes('환풍') || name.includes('변기') ||
-                name.includes('세면') || name.includes('샤워') || name.includes('욕조')) return '11';
-            if (name.includes('타일')) return '10';
-            if (name.includes('목공') || name.includes('도어') || name.includes('문')) return '08';
-            if (name.includes('필름')) return '09';
-            if (name.includes('도배')) return '13';
-            if (name.includes('바닥') || name.includes('마루') || name.includes('장판')) return '14';
-            if (name.includes('가구') || name.includes('싱크')) return '15';
-            if (name.includes('전기') || name.includes('조명') || name.includes('스위치')) return '06';
-            if (name.includes('설비') || name.includes('방수') || name.includes('보일러')) return '03';
-            if (name.includes('철거')) return '02';
-            if (name.includes('창호') || name.includes('샤시') || name.includes('샷시')) return '05';
-            if (name.includes('에어컨')) return '07';
-            if (name.includes('도장') || name.includes('페인트')) return '12';
-            if (name.includes('마감') || name.includes('청소')) return '16';
-
-            return null;
+        if (result.error) {
+            throw new Error(result.error);
         }
 
+        if (result.data && Array.isArray(result.data)) {
+            // 데이터를 카테고리별로 정리
+            let cloudCostData = {};
+            let loadCount = 0;
+            let unmappedCount = 0;
 
+            result.data.forEach(item => {
+                // 카테고리 번호 매핑 (헤더값 우선, 없으면 구분값 사용)
+                // item.category가 상위 헤더(예: '욕실공사')일 가능성이 높으므로 이것부터 매핑 시도
+                let catNo = mapCategoryToNo(item.category);
+                if (!catNo) catNo = mapCategoryToNo(item.div);
 
-        // 원가관리표 데이터 로드 (전역 데이터)
-        function loadCostData() {
-            // 전역 원가관리표 데이터 로드 (Phase 2: In-memory 사용)
-            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
-
-            categories.forEach(cat => {
-                const tbody = document.getElementById(`costBody${cat.no}`);
-                const memo = document.getElementById(`costMemo${cat.no}`);
-                if (!tbody) return;
-
-                // 전역 데이터가 있으면 사용, 없으면 기본 데이터 사용
-                let data = globalCostData[`cost_${cat.no}`] || [];
-                if (data.length === 0 && defaultCostData[cat.no]) {
-                    data = defaultCostData[cat.no];
-                }
-
-                if (data.length === 0) {
-                    tbody.innerHTML = `<tr>
-                <td class="col-no">1</td>
-                <td class="col-div"><input type="text"></td>
-                <td class="col-name"><input type="text"></td>
-                <td class="col-spec"><input type="text"></td>
-                <td class="col-unit">${getUnitSelectHTML()}</td>
-                <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
-                <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
-                <td class="col-total">0</td>
-            </tr>`;
-                } else {
-                    tbody.innerHTML = data.map((item, i) => {
-                        const price = item.price || ((parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) +
-                            (parseNumber(item.expense) || 0)) || '';
-                        const qty = parseNumber(item.qty) || 0;
-                        const priceNum = parseNumber(price) || 0;
-                        const total = qty * priceNum;
-                        return `<tr>
-                <td class="col-no">${i + 1}</td>
-                <td class="col-div"><input type="text" value="${item.div || ''}"></td>
-                <td class="col-name"><input type="text" value="${item.name || ''}"></td>
-                <td class="col-spec"><input type="text" value="${item.spec || ''}"></td>
-                <td class="col-unit">${getUnitSelectHTML(item.unit || '식')}</td>
-                <td class="col-qty"><input type="text" value="${item.qty || ''}" oninput="calcCostRow(this)"></td>
-                <td class="col-price"><input type="text" value="${price}" oninput="calcCostRow(this)"></td>
-                <td class="col-total">${formatNumber(total)}</td>
-            </tr>`;
-                    }).join('');
-                }
-                // MEMO 로드 (저장된 메모가 없으면 기본 메모 사용)
-                if (memo) {
-                    memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
-                    autoResizeTextarea(memo);
-                }
-                // 소계 업데이트
-                updateCostCategorySubtotal(cat.no);
-            });
-            // 메모를 계약견적서에 동기화
-            syncCostMemoToEstimate();
-        }
-
-        function clearCostData() {
-            // 전역 원가관리표 데이터 로드 (Phase 2: In-memory 사용)
-            // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
-
-            categories.forEach(cat => {
-                const tbody = document.getElementById(`costBody${cat.no}`);
-                const memo = document.getElementById(`costMemo${cat.no}`);
-
-                // 전역 데이터가 있으면 사용, 없으면 기본 데이터
-                let data = globalCostData[`cost_${cat.no}`] || [];
-                if (data.length === 0) {
-                    data = defaultCostData[cat.no] || [];
-                }
-
-                if (tbody) {
-                    if (data.length > 0) {
-                        tbody.innerHTML = data.map((item, i) => {
-                            const price = item.price || ((parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) +
-                                (parseNumber(item.expense) || 0)) || '';
-                            const qty = parseNumber(item.qty) || 0;
-                            const priceNum = parseNumber(price) || 0;
-                            const total = qty * priceNum;
-                            return `<tr>
-                <td class="col-no">${i + 1}</td>
-                <td class="col-div"><input type="text" value="${item.div || ''}"></td>
-                <td class="col-name"><input type="text" value="${item.name || ''}"></td>
-                <td class="col-spec"><input type="text" value="${item.spec || ''}"></td>
-                <td class="col-unit">${getUnitSelectHTML(item.unit || '식')}</td>
-                <td class="col-qty"><input type="text" value="${item.qty || ''}" oninput="calcCostRow(this)"></td>
-                <td class="col-price"><input type="text" value="${price}" oninput="calcCostRow(this)"></td>
-                <td class="col-total">${formatNumber(total)}</td>
-            </tr>`;
-                        }).join('');
-                    } else {
-                        tbody.innerHTML = `<tr>
-                <td class="col-no">1</td>
-                <td class="col-div"><input type="text"></td>
-                <td class="col-name"><input type="text"></td>
-                <td class="col-spec"><input type="text"></td>
-                <td class="col-unit">${getUnitSelectHTML()}</td>
-                <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
-                <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
-                <td class="col-total">0</td>
-            </tr>`;
-                    }
-                }
-                if (memo) {
-                    memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
-                    autoResizeTextarea(memo);
-                }
-                // 소계 업데이트
-                updateCostCategorySubtotal(cat.no);
-            });
-        }
-
-        function downloadPDF(elementId, filename) {
-            const element = document.getElementById(elementId);
-            if (!element) {
-                showToast('문서를 찾을 수 없습니다', 'error');
-                return;
-            }
-
-            const customerName = currentData.clientName || '고객';
-            const today = new Date().toISOString().split('T')[0];
-            const pdfFilename = ` ${customerName}_${filename}_${today} `;
-
-            // 새 창에서 인쇄
-            const printWindow = window.open('', '_blank');
-
-            if (!printWindow) {
-                showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
-                return;
-            }
-
-            // 스타일 복사
-            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-            let styleHTML = '';
-            styles.forEach(s => styleHTML += s.outerHTML);
-
-            // element 복제
-            const clonedElement = element.cloneNode(true);
-
-            // 인쇄에 불필요한 요소 제거 (노션 버튼, 아이콘 등)
-            clonedElement.querySelectorAll('.no-print, .btn, .pdf-btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
-
-            // [Fix] Clone does not copy dynamic values! Sync manually.
-            const originalInputs = element.querySelectorAll('input, textarea, select');
-            const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
-            originalInputs.forEach((inp, i) => {
-                if (clonedInputs[i]) {
-                    if (inp.type === 'checkbox' || inp.type === 'radio') {
-                        clonedInputs[i].checked = inp.checked;
-                    } else {
-                        clonedInputs[i].value = inp.value;
-                    }
-                }
-            });
-
-            // 모든 input을 텍스트로 변환
-            clonedElement.querySelectorAll('input').forEach(input => {
-                // Radio/Checkbox handling
-                if (input.type === 'radio' || input.type === 'checkbox') {
-                    const span = document.createElement('span');
-                    span.textContent = input.checked ? '☑' : '☐';
-                    span.style.cssText = 'display:inline-block; margin-right:4px; font-weight:bold;';
-                    input.parentNode.replaceChild(span, input);
+                if (!catNo) {
+                    unmappedCount++;
+                    // console.warn('분류 실패:', item.category, item.div, item.name); // 디버깅용
                     return;
                 }
 
-                const span = document.createElement('span');
-                span.textContent = input.value || '-';
-                span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
-                input.parentNode.replaceChild(span, input);
+                if (!cloudCostData[`cost_${catNo}`]) {
+                    cloudCostData[`cost_${catNo}`] = [];
+                }
+
+                cloudCostData[`cost_${catNo}`].push({
+                    div: item.div || '',
+                    name: item.name || '',
+                    spec: item.spec || '',
+                    unit: item.unit || '',
+                    qty: item.qty || '',
+                    price: item.price || ''
+                });
+                loadCount++;
             });
 
-            // 모든 textarea를 텍스트로 변환 (스크롤 없이 전체 표시)
-            clonedElement.querySelectorAll('textarea').forEach(textarea => {
-                const div = document.createElement('div');
-                div.textContent = textarea.value || '';
-                div.style.cssText = 'white-space:pre-wrap; padding:6px 0; font-size:inherit; line-height:1.5;';
-                textarea.parentNode.replaceChild(div, textarea);
-            });
-
-            // 모든 select를 텍스트로 변환
-            clonedElement.querySelectorAll('select').forEach(select => {
-                const span = document.createElement('span');
-                const selectedOption = select.options[select.selectedIndex];
-                span.textContent = selectedOption ? selectedOption.text : '-';
-                span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
-                select.parentNode.replaceChild(span, select);
-            });
-
-            // 견적서인 경우 추가 처리
-            if (elementId === 'estimateDoc') {
-                // 품명이 선택되지 않은 행 제거 (금액이 '-'인 행)
-                clonedElement.querySelectorAll('.estimate-table tbody tr').forEach(tr => {
-                    const amountCell = tr.querySelector('.amount-cell');
-                    if (amountCell && (amountCell.textContent === '-' || amountCell.textContent === '0')) {
-                        tr.remove();
+            // 메모 데이터 처리
+            if (result.memos && typeof result.memos === 'object') {
+                Object.keys(result.memos).forEach(categoryName => {
+                    const catNo = mapCategoryToNo(categoryName);
+                    if (catNo && result.memos[categoryName] && result.memos[categoryName].length > 0) {
+                        // 메모 배열을 줄 단위 텍스트로 변환 (앞에 동그라미 추가)
+                        const memoLines = result.memos[categoryName]
+                            .map(m => m.content || '')
+                            .filter(line => line.trim())
+                            .map(line => '• ' + line)
+                            .join('\n');
+                        cloudCostData[`costMemo_${catNo}`] = memoLines;
                     }
                 });
-
-                // 각 카테고리별 번호 재정렬
-                clonedElement.querySelectorAll('.estimate-table tbody').forEach(tbody => {
-                    tbody.querySelectorAll('tr').forEach((tr, i) => {
-                        const cells = tr.querySelectorAll('td');
-                        if (cells[0]) cells[0].textContent = i + 1;
-                    });
-                });
-
-                // 빈 카테고리 숨기기 (항목이 없는 카테고리)
-                clonedElement.querySelectorAll('.category-section').forEach(section => {
-                    const tbody = section.querySelector('.estimate-table tbody');
-                    if (tbody && tbody.querySelectorAll('tr').length === 0) {
-                        section.style.display = 'none';
-                    }
-                });
-
-
             }
 
-            // 인쇄용 HTML 생성
-            printWindow.document.write(`
+            // In-memory 데이터 업데이트
+            globalCostData = cloudCostData;
+            // Phase 2: 업무 데이터 로컬 저장 금지
+
+
+            // UI 리로드
+            createCostCategories();
+            loadCostData();
+
+            let msg = `원가관리표 ${loadCount}개 항목을 불러왔습니다.`;
+            if (unmappedCount > 0) {
+                msg += ` (분류 실패: ${unmappedCount}건)`;
+                console.warn(`총 ${unmappedCount}개 항목을 분류하지 못했습니다. 구글 시트의 [구분] 또는 [카테고리] 명칭을 확인해주세요.`);
+                showToast(`일부 항목(${unmappedCount}개)을 분류하지 못했습니다. 구글 시트 양식을 확인해주세요.`, 'warning');
+            } else {
+                showToast(msg, 'success');
+            }
+        } else {
+            showToast('원가관리표 데이터가 없습니다.', 'warning');
+        }
+
+        return true;
+
+    } catch (error) {
+        console.error('원가관리표 불러오기 실패:', error);
+        showToast('원가관리표 불러오기 실패: ' + error.message, 'error');
+        return false;
+    }
+}
+
+
+// 카테고리 이름을 번호로 매핑
+function mapCategoryToNo(categoryName) {
+    if (!categoryName) return null;
+    const name = categoryName.trim();
+
+    const categoryMap = {
+        '가설공사': '01', '가설': '01',
+        '설계 및 관리비': '00', '설계': '00', '관리비': '00', '설계비': '00',
+        '철거공사': '02', '철거': '02',
+        '설비/방수공사': '03', '설비': '03', '방수': '03',
+        '확장/단열공사': '04', '확장': '04', '단열': '04',
+        '창호공사': '05', '창호': '05', '샤시': '05', '샷시': '05',
+        '전기/조명공사': '06', '전기': '06', '조명': '06', '콘센트': '06',
+        '에어컨공사': '07', '에어컨 공사': '07', '에어컨': '07',
+        '목공/도어공사': '08', '목공': '08', '도어': '08', '몰딩': '08', '걸레받이': '08',
+        '필름공사': '09', '필름': '09', '인테리어필름': '09',
+        '타일공사': '10', '타일': '10',
+        '욕실공사': '11', '욕실': '11', '도기': '11', '수전': '11', '세면': '11', '양변기': '11', '욕조': '11', '젠다이': '11', '파티션': '11',
+        '도장공사': '12', '도장': '12', '페인트': '12', '탄성': '12',
+        '도배공사': '13', '도배': '13', '벽지': '13',
+        '바닥재공사': '14', '바닥': '14', '바닥재': '14', '마루': '14', '장판': '14', '데코타일': '14',
+        '가구공사': '15', '가구': '15', '싱크대': '15', '신발장': '15', '붙박이장': '15',
+        '마감공사': '16', '마감': '16', '입주청소': '16', '준공청소': '16',
+        '기타공사': '17', '기타': '17'
+    };
+
+    // 1. 완전 일치 또는 매핑 테이블 검색
+    if (categoryMap[name]) return categoryMap[name];
+
+    // 2. 키워드 부분 일치 검색 (우선순위에 주의)
+    // 설계 및 관리비 키워드 체크
+    if (name.includes('설계') || name.includes('관리비')) return '00';
+    // 욕실 관련 키워드를 가장 먼저 체크 (욕실공사에 다양한 세부 공정이 포함됨)
+    if (name.includes('욕실') || name.includes('UBR') || name.includes('수도') ||
+        name.includes('조적') || name.includes('참고') || name.includes('악세') ||
+        name.includes('액세') || name.includes('라디에이터') || name.includes('돔') ||
+        name.includes('천장') || name.includes('환풍') || name.includes('변기') ||
+        name.includes('세면') || name.includes('샤워') || name.includes('욕조')) return '11';
+    if (name.includes('타일')) return '10';
+    if (name.includes('목공') || name.includes('도어') || name.includes('문')) return '08';
+    if (name.includes('필름')) return '09';
+    if (name.includes('도배')) return '13';
+    if (name.includes('바닥') || name.includes('마루') || name.includes('장판')) return '14';
+    if (name.includes('가구') || name.includes('싱크')) return '15';
+    if (name.includes('전기') || name.includes('조명') || name.includes('스위치')) return '06';
+    if (name.includes('설비') || name.includes('방수') || name.includes('보일러')) return '03';
+    if (name.includes('철거')) return '02';
+    if (name.includes('창호') || name.includes('샤시') || name.includes('샷시')) return '05';
+    if (name.includes('에어컨')) return '07';
+    if (name.includes('도장') || name.includes('페인트')) return '12';
+    if (name.includes('마감') || name.includes('청소')) return '16';
+
+    return null;
+}
+
+
+
+// 원가관리표 데이터 로드 (전역 데이터)
+function loadCostData() {
+    // 전역 원가관리표 데이터 로드 (Phase 2: In-memory 사용)
+    // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
+
+    categories.forEach(cat => {
+        const tbody = document.getElementById(`costBody${cat.no}`);
+        const memo = document.getElementById(`costMemo${cat.no}`);
+        if (!tbody) return;
+
+        // 전역 데이터가 있으면 사용, 없으면 기본 데이터 사용
+        let data = globalCostData[`cost_${cat.no}`] || [];
+        if (data.length === 0 && defaultCostData[cat.no]) {
+            data = defaultCostData[cat.no];
+        }
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr>
+                <td class="col-no">1</td>
+                <td class="col-div"><input type="text"></td>
+                <td class="col-name"><input type="text"></td>
+                <td class="col-spec"><input type="text"></td>
+                <td class="col-unit">${getUnitSelectHTML()}</td>
+                <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
+                <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
+                <td class="col-total">0</td>
+            </tr>`;
+        } else {
+            tbody.innerHTML = data.map((item, i) => {
+                const price = item.price || ((parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) +
+                    (parseNumber(item.expense) || 0)) || '';
+                const qty = parseNumber(item.qty) || 0;
+                const priceNum = parseNumber(price) || 0;
+                const total = qty * priceNum;
+                return `<tr>
+                <td class="col-no">${i + 1}</td>
+                <td class="col-div"><input type="text" value="${item.div || ''}"></td>
+                <td class="col-name"><input type="text" value="${item.name || ''}"></td>
+                <td class="col-spec"><input type="text" value="${item.spec || ''}"></td>
+                <td class="col-unit">${getUnitSelectHTML(item.unit || '식')}</td>
+                <td class="col-qty"><input type="text" value="${item.qty || ''}" oninput="calcCostRow(this)"></td>
+                <td class="col-price"><input type="text" value="${price}" oninput="calcCostRow(this)"></td>
+                <td class="col-total">${formatNumber(total)}</td>
+            </tr>`;
+            }).join('');
+        }
+        // MEMO 로드 (저장된 메모가 없으면 기본 메모 사용)
+        if (memo) {
+            memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
+            autoResizeTextarea(memo);
+        }
+        // 소계 업데이트
+        updateCostCategorySubtotal(cat.no);
+    });
+    // 메모를 계약견적서에 동기화
+    syncCostMemoToEstimate();
+}
+
+function clearCostData() {
+    // 전역 원가관리표 데이터 로드 (Phase 2: In-memory 사용)
+    // const globalCostData = JSON.parse(localStorage.getItem('DJ_global_cost') || '{}');
+
+    categories.forEach(cat => {
+        const tbody = document.getElementById(`costBody${cat.no}`);
+        const memo = document.getElementById(`costMemo${cat.no}`);
+
+        // 전역 데이터가 있으면 사용, 없으면 기본 데이터
+        let data = globalCostData[`cost_${cat.no}`] || [];
+        if (data.length === 0) {
+            data = defaultCostData[cat.no] || [];
+        }
+
+        if (tbody) {
+            if (data.length > 0) {
+                tbody.innerHTML = data.map((item, i) => {
+                    const price = item.price || ((parseNumber(item.material) || 0) + (parseNumber(item.labor) || 0) +
+                        (parseNumber(item.expense) || 0)) || '';
+                    const qty = parseNumber(item.qty) || 0;
+                    const priceNum = parseNumber(price) || 0;
+                    const total = qty * priceNum;
+                    return `<tr>
+                <td class="col-no">${i + 1}</td>
+                <td class="col-div"><input type="text" value="${item.div || ''}"></td>
+                <td class="col-name"><input type="text" value="${item.name || ''}"></td>
+                <td class="col-spec"><input type="text" value="${item.spec || ''}"></td>
+                <td class="col-unit">${getUnitSelectHTML(item.unit || '식')}</td>
+                <td class="col-qty"><input type="text" value="${item.qty || ''}" oninput="calcCostRow(this)"></td>
+                <td class="col-price"><input type="text" value="${price}" oninput="calcCostRow(this)"></td>
+                <td class="col-total">${formatNumber(total)}</td>
+            </tr>`;
+                }).join('');
+            } else {
+                tbody.innerHTML = `<tr>
+                <td class="col-no">1</td>
+                <td class="col-div"><input type="text"></td>
+                <td class="col-name"><input type="text"></td>
+                <td class="col-spec"><input type="text"></td>
+                <td class="col-unit">${getUnitSelectHTML()}</td>
+                <td class="col-qty"><input type="text" oninput="calcCostRow(this)"></td>
+                <td class="col-price"><input type="text" oninput="calcCostRow(this)"></td>
+                <td class="col-total">0</td>
+            </tr>`;
+            }
+        }
+        if (memo) {
+            memo.value = globalCostData[`costMemo_${cat.no}`] || defaultCostMemos[cat.no] || '';
+            autoResizeTextarea(memo);
+        }
+        // 소계 업데이트
+        updateCostCategorySubtotal(cat.no);
+    });
+}
+
+function downloadPDF(elementId, filename) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        showToast('문서를 찾을 수 없습니다', 'error');
+        return;
+    }
+
+    const customerName = currentData.clientName || '고객';
+    const today = new Date().toISOString().split('T')[0];
+    const pdfFilename = ` ${customerName}_${filename}_${today} `;
+
+    // 새 창에서 인쇄
+    const printWindow = window.open('', '_blank');
+
+    if (!printWindow) {
+        showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+        return;
+    }
+
+    // 스타일 복사
+    const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+    let styleHTML = '';
+    styles.forEach(s => styleHTML += s.outerHTML);
+
+    // element 복제
+    const clonedElement = element.cloneNode(true);
+
+    // 인쇄에 불필요한 요소 제거 (노션 버튼, 아이콘 등)
+    clonedElement.querySelectorAll('.no-print, .btn, .pdf-btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
+
+    // [Fix] Clone does not copy dynamic values! Sync manually.
+    const originalInputs = element.querySelectorAll('input, textarea, select');
+    const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+    originalInputs.forEach((inp, i) => {
+        if (clonedInputs[i]) {
+            if (inp.type === 'checkbox' || inp.type === 'radio') {
+                clonedInputs[i].checked = inp.checked;
+            } else {
+                clonedInputs[i].value = inp.value;
+            }
+        }
+    });
+
+    // 모든 input을 텍스트로 변환
+    clonedElement.querySelectorAll('input').forEach(input => {
+        // Radio/Checkbox handling
+        if (input.type === 'radio' || input.type === 'checkbox') {
+            const span = document.createElement('span');
+            span.textContent = input.checked ? '☑' : '☐';
+            span.style.cssText = 'display:inline-block; margin-right:4px; font-weight:bold;';
+            input.parentNode.replaceChild(span, input);
+            return;
+        }
+
+        const span = document.createElement('span');
+        span.textContent = input.value || '-';
+        span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
+        input.parentNode.replaceChild(span, input);
+    });
+
+    // 모든 textarea를 텍스트로 변환 (스크롤 없이 전체 표시)
+    clonedElement.querySelectorAll('textarea').forEach(textarea => {
+        const div = document.createElement('div');
+        div.textContent = textarea.value || '';
+        div.style.cssText = 'white-space:pre-wrap; padding:6px 0; font-size:inherit; line-height:1.5;';
+        textarea.parentNode.replaceChild(div, textarea);
+    });
+
+    // 모든 select를 텍스트로 변환
+    clonedElement.querySelectorAll('select').forEach(select => {
+        const span = document.createElement('span');
+        const selectedOption = select.options[select.selectedIndex];
+        span.textContent = selectedOption ? selectedOption.text : '-';
+        span.style.cssText = 'display:inline-block; padding:3px 0; font-size:inherit;';
+        select.parentNode.replaceChild(span, select);
+    });
+
+    // 견적서인 경우 추가 처리
+    if (elementId === 'estimateDoc') {
+        // 품명이 선택되지 않은 행 제거 (금액이 '-'인 행)
+        clonedElement.querySelectorAll('.estimate-table tbody tr').forEach(tr => {
+            const amountCell = tr.querySelector('.amount-cell');
+            if (amountCell && (amountCell.textContent === '-' || amountCell.textContent === '0')) {
+                tr.remove();
+            }
+        });
+
+        // 각 카테고리별 번호 재정렬
+        clonedElement.querySelectorAll('.estimate-table tbody').forEach(tbody => {
+            tbody.querySelectorAll('tr').forEach((tr, i) => {
+                const cells = tr.querySelectorAll('td');
+                if (cells[0]) cells[0].textContent = i + 1;
+            });
+        });
+
+        // 빈 카테고리 숨기기 (항목이 없는 카테고리)
+        clonedElement.querySelectorAll('.category-section').forEach(section => {
+            const tbody = section.querySelector('.estimate-table tbody');
+            if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                section.style.display = 'none';
+            }
+        });
+
+
+    }
+
+    // 인쇄용 HTML 생성
+    printWindow.document.write(`
                             <!DOCTYPE html>
                                 <html>
 
@@ -7702,74 +7702,74 @@
 </html>
 `);
 
-            printWindow.document.close();
-            showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
+    printWindow.document.close();
+    showToast('인쇄 옵션에서 "머리글/바닥글" 해제 후 PDF 저장', 'success');
+}
+
+function printSchedule(isPdf) {
+    const element = document.getElementById('scheduleDoc');
+    if (!element) {
+        showToast('스케줄 영역을 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    // Clone the element to perform modifications specifically for printing
+    const clonedElement = element.cloneNode(true);
+
+    // Remove elements marked as no-print, buttons, and emoji icons
+    clonedElement.querySelectorAll('.no-print, .btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
+
+    // Convert input, select, textarea values to text for static printing
+    const originalInputs = element.querySelectorAll('input, textarea, select');
+    const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+
+    for (let i = 0; i < originalInputs.length; i++) {
+        const origin = originalInputs[i]; const clone = clonedInputs[i]; if
+            (!clone) continue; let text = ''; if (origin.tagName === 'SELECT') {
+                if (origin.options.length > 0 &&
+                    origin.selectedIndex >= 0) {
+                    text = origin.options[origin.selectedIndex].text;
+                    // '선택' 같은 기본값은 빈칸으로 처리
+                    if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
+                }
+            } else {
+            text = origin.value;
         }
 
-        function printSchedule(isPdf) {
-            const element = document.getElementById('scheduleDoc');
-            if (!element) {
-                showToast('스케줄 영역을 찾을 수 없습니다.', 'error');
-                return;
-            }
+        // Create a text span to replace the input element
+        const span = document.createElement('span');
 
-            // Clone the element to perform modifications specifically for printing
-            const clonedElement = element.cloneNode(true);
+        // Handle Radios and Checkboxes specifically - keep them visual or convert to text
+        if (origin.type === 'radio' || origin.type === 'checkbox') {
+            // For print, we might want to just show the checked status text or a symbol
+            // However, the original code had labels around them.
+            // Simplest approach: If checked, show "☑ ", if not "☐ "
+            // But the user's HTML has label wrapping text.
+            // Let's just keep the checked one's text and hide the unchecked ones?
+            // Or better: Replace the entire parent label with just the text if checked.
 
-            // Remove elements marked as no-print, buttons, and emoji icons
-            clonedElement.querySelectorAll('.no-print, .btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
+            // Current fallback: Just let them render but minimize checkmark size
+            // Actually, the previous issue might be the label spacing.
+            const symbol = origin.checked ? '☑' : '☐';
+            span.textContent = symbol;
+            span.style.cssText = 'font-size: 10px; margin-right: 2px; line-height: 24px; vertical-align: middle;';
+            if (clone.parentNode) clone.parentNode.replaceChild(span, clone);
+            continue;
+        }
 
-            // Convert input, select, textarea values to text for static printing
-            const originalInputs = element.querySelectorAll('input, textarea, select');
-            const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+        span.textContent = text || ''; // Ensure explicit empty string if null
 
-            for (let i = 0; i < originalInputs.length; i++) {
-                const origin = originalInputs[i]; const clone = clonedInputs[i]; if
-                    (!clone) continue; let text = ''; if (origin.tagName === 'SELECT') {
-                        if (origin.options.length > 0 &&
-                            origin.selectedIndex >= 0) {
-                            text = origin.options[origin.selectedIndex].text;
-                            // '선택' 같은 기본값은 빈칸으로 처리
-                            if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
-                        }
-                    } else {
-                    text = origin.value;
-                }
+        // Apply strict minimal styles to avoid inheritance bloat
+        span.style.cssText = 'border:none; background:transparent; padding:0; margin:0; display:inline-block; width:100%; height:100%; line-height:24px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px;';
 
-                // Create a text span to replace the input element
-                const span = document.createElement('span');
+        if (clone.parentNode) {
+            clone.parentNode.replaceChild(span, clone);
+        }
+    }
 
-                // Handle Radios and Checkboxes specifically - keep them visual or convert to text
-                if (origin.type === 'radio' || origin.type === 'checkbox') {
-                    // For print, we might want to just show the checked status text or a symbol
-                    // However, the original code had labels around them.
-                    // Simplest approach: If checked, show "☑ ", if not "☐ "
-                    // But the user's HTML has label wrapping text.
-                    // Let's just keep the checked one's text and hide the unchecked ones?
-                    // Or better: Replace the entire parent label with just the text if checked.
-
-                    // Current fallback: Just let them render but minimize checkmark size
-                    // Actually, the previous issue might be the label spacing.
-                    const symbol = origin.checked ? '☑' : '☐';
-                    span.textContent = symbol;
-                    span.style.cssText = 'font-size: 10px; margin-right: 2px; line-height: 24px; vertical-align: middle;';
-                    if (clone.parentNode) clone.parentNode.replaceChild(span, clone);
-                    continue;
-                }
-
-                span.textContent = text || ''; // Ensure explicit empty string if null
-
-                // Apply strict minimal styles to avoid inheritance bloat
-                span.style.cssText = 'border:none; background:transparent; padding:0; margin:0; display:inline-block; width:100%; height:100%; line-height:24px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px;';
-
-                if (clone.parentNode) {
-                    clone.parentNode.replaceChild(span, clone);
-                }
-            }
-
-            // Open print window
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
     <!DOCTYPE html>
     <html>
 
@@ -7936,71 +7936,71 @@
                 </body>
                 </html>
             `);
-            printWindow.document.close();
+    printWindow.document.close();
 
-            if (isPdf) {
-                showToast('인쇄 미리보기에서 "PDF로 저장"을 선택하세요.', 'success');
+    if (isPdf) {
+        showToast('인쇄 미리보기에서 "PDF로 저장"을 선택하세요.', 'success');
+    }
+}
+
+function printASList(isPdf) {
+    const element = document.getElementById('asListDoc');
+    if (!element) {
+        showToast('A/S 리스트 영역을 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    // Clone the element to perform modifications specifically for printing
+    const clonedElement = element.cloneNode(true);
+
+    // Remove elements marked as no-print, buttons, and emoji icons
+    clonedElement.querySelectorAll('.no-print, .btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
+
+    // Convert input, select, textarea values to text for static printing
+    const originalInputs = element.querySelectorAll('input, textarea, select');
+    const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+
+    for (let i = 0; i < originalInputs.length; i++) {
+        const origin = originalInputs[i];
+        const clone = clonedInputs[i];
+        if (!clone) continue;
+
+        let text = '';
+        if (origin.tagName === 'SELECT') {
+            if (origin.options.length > 0 && origin.selectedIndex >= 0) {
+                text = origin.options[origin.selectedIndex].text;
+                // '선택' 같은 기본값은 빈칸으로 처리
+                if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
             }
+        } else {
+            text = origin.value;
         }
 
-        function printASList(isPdf) {
-            const element = document.getElementById('asListDoc');
-            if (!element) {
-                showToast('A/S 리스트 영역을 찾을 수 없습니다.', 'error');
-                return;
-            }
+        // Create a text span to replace the input element
+        const span = document.createElement('span');
 
-            // Clone the element to perform modifications specifically for printing
-            const clonedElement = element.cloneNode(true);
+        // Handle Radios and Checkboxes specifically
+        if (origin.type === 'radio' || origin.type === 'checkbox') {
+            const symbol = origin.checked ? '☑' : '☐';
+            span.textContent = symbol;
+            span.style.cssText = 'font-size: 10px; margin-right: 2px; line-height: 24px; vertical-align: middle;';
+            if (clone.parentNode) clone.parentNode.replaceChild(span, clone);
+            continue;
+        }
 
-            // Remove elements marked as no-print, buttons, and emoji icons
-            clonedElement.querySelectorAll('.no-print, .btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
+        span.textContent = text || ''; // Ensure explicit empty string if null
 
-            // Convert input, select, textarea values to text for static printing
-            const originalInputs = element.querySelectorAll('input, textarea, select');
-            const clonedInputs = clonedElement.querySelectorAll('input, textarea, select');
+        // Apply strict minimal styles to avoid inheritance bloat
+        span.style.cssText = 'border:none; background:transparent; padding:0; margin:0; display:inline-block; width:100%; height:100%; line-height:24px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px;';
 
-            for (let i = 0; i < originalInputs.length; i++) {
-                const origin = originalInputs[i];
-                const clone = clonedInputs[i];
-                if (!clone) continue;
+        if (clone.parentNode) {
+            clone.parentNode.replaceChild(span, clone);
+        }
+    }
 
-                let text = '';
-                if (origin.tagName === 'SELECT') {
-                    if (origin.options.length > 0 && origin.selectedIndex >= 0) {
-                        text = origin.options[origin.selectedIndex].text;
-                        // '선택' 같은 기본값은 빈칸으로 처리
-                        if (text === '선택' || text === '카테고리 먼저 선택' || text === '담당자 선택') text = '';
-                    }
-                } else {
-                    text = origin.value;
-                }
-
-                // Create a text span to replace the input element
-                const span = document.createElement('span');
-
-                // Handle Radios and Checkboxes specifically
-                if (origin.type === 'radio' || origin.type === 'checkbox') {
-                    const symbol = origin.checked ? '☑' : '☐';
-                    span.textContent = symbol;
-                    span.style.cssText = 'font-size: 10px; margin-right: 2px; line-height: 24px; vertical-align: middle;';
-                    if (clone.parentNode) clone.parentNode.replaceChild(span, clone);
-                    continue;
-                }
-
-                span.textContent = text || ''; // Ensure explicit empty string if null
-
-                // Apply strict minimal styles to avoid inheritance bloat
-                span.style.cssText = 'border:none; background:transparent; padding:0; margin:0; display:inline-block; width:100%; height:100%; line-height:24px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px;';
-
-                if (clone.parentNode) {
-                    clone.parentNode.replaceChild(span, clone);
-                }
-            }
-
-            // Open print window
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -8097,24 +8097,24 @@
                 </body>
                 </html>
             `);
-            printWindow.document.close();
+    printWindow.document.close();
 
-            if (isPdf) {
-                showToast('인쇄 미리보기에서 "PDF로 저장"을 선택하세요.', 'success');
-            }
-        }
+    if (isPdf) {
+        showToast('인쇄 미리보기에서 "PDF로 저장"을 선택하세요.', 'success');
+    }
+}
 
 
-        async function exportAllData() {
-            // Capture currentCustomerId before showing modal
-            const capturedCustomerId = currentCustomerId;
+async function exportAllData() {
+    // Capture currentCustomerId before showing modal
+    const capturedCustomerId = currentCustomerId;
 
-            // Excel 내보내기 옵션 선택
-            const choice = await new Promise(resolve => {
-                const modal = document.createElement('div');
-                modal.className = 'admin-modal show';
-                modal.id = 'exportExcelModal';
-                modal.innerHTML = `
+    // Excel 내보내기 옵션 선택
+    const choice = await new Promise(resolve => {
+        const modal = document.createElement('div');
+        modal.className = 'admin-modal show';
+        modal.id = 'exportExcelModal';
+        modal.innerHTML = `
                     <div class="admin-modal-content" style="width:360px;">
                         <h3>📊 Excel 내보내기</h3>
                         <p style="margin-bottom:16px;">내보낼 범위를 선택하세요</p>
@@ -8133,804 +8133,804 @@
                         </div>
                     </div>
                 `;
-                document.body.appendChild(modal);
+        document.body.appendChild(modal);
 
-                // Attach event listeners after modal is in DOM
-                document.getElementById('exportChoiceAll').onclick = () => {
-                    modal.remove();
-                    resolve('all');
-                };
-                if (capturedCustomerId) {
-                    document.getElementById('exportChoiceCurrent').onclick = () => {
-                        modal.remove();
-                        resolve('current');
-                    };
-                }
-                document.getElementById('exportChoiceCancel').onclick = () => {
-                    modal.remove();
-                    resolve('cancel');
-                };
-            });
-
-            if (choice === 'cancel') return;
-
-            const customerId = choice === 'current' ? capturedCustomerId : 'all';
-
-            showToast('Excel 데이터 준비 중...', 'info');
-
-            try {
-                // 서버에서 데이터 가져오기
-                const params = new URLSearchParams({
-                    action: 'exportExcel',
-                    customerId: customerId,
-                    t: Date.now()
-                });
-
-                const response = await fetch(CUSTOMER_SYNC_URL + '?' + params.toString());
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || '데이터 로드 실패');
-                }
-
-                if (result.fileName && result.data) {
-                    // Base64 to Blob 변환
-                    const byteCharacters = atob(result.data);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray], { type: result.mimeType });
-
-                    // 파일 다운로드 트리거
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'designjig_data_' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xlsx';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    showToast('성공적으로 내보냈습니다. (' + result.customerCount + '명)', 'success');
-                    logUserAction('Excel 내보내기', `${result.customerCount}명 고객 데이터 내보내기`);
-                } else {
-                    throw new Error('엑셀 파일 데이터가 없습니다.');
-                }
-
-            } catch (error) {
-                console.error('Excel Export Error:', error);
-                showToast('Excel 내보내기 실패: ' + error.message, 'error');
-            }
-        }
-
-
-        function importData() {
-            if (!isLoggedIn()) {
-                showToast('관리자 로그인이 필요합니다', 'error');
-                showAdminModal();
-                return;
-            }
-            document.getElementById('importFile').click();
-        }
-        function handleImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.customers) {
-                        customers = data.customers;
-                        // [Phase 2] 로컬 스토리지 저장 중단
-
-                        updateCustomerList();
-                        showToast('데이터를 불러왔습니다', 'success');
-                    }
-                } catch { showToast('파일을 읽을 수 없습니다', 'error'); }
+        // Attach event listeners after modal is in DOM
+        document.getElementById('exportChoiceAll').onclick = () => {
+            modal.remove();
+            resolve('all');
+        };
+        if (capturedCustomerId) {
+            document.getElementById('exportChoiceCurrent').onclick = () => {
+                modal.remove();
+                resolve('current');
             };
-            reader.readAsText(file);
+        }
+        document.getElementById('exportChoiceCancel').onclick = () => {
+            modal.remove();
+            resolve('cancel');
+        };
+    });
+
+    if (choice === 'cancel') return;
+
+    const customerId = choice === 'current' ? capturedCustomerId : 'all';
+
+    showToast('Excel 데이터 준비 중...', 'info');
+
+    try {
+        // 서버에서 데이터 가져오기
+        const params = new URLSearchParams({
+            action: 'exportExcel',
+            customerId: customerId,
+            t: Date.now()
+        });
+
+        const response = await fetch(CUSTOMER_SYNC_URL + '?' + params.toString());
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || '데이터 로드 실패');
         }
 
-        function parseNumber(str) {
-            if (typeof str === 'number') return str;
-            return parseInt((String(str || '')).replace(/[^0-9-]/g, '')) || 0;
-        }
-        function formatNumber(num) { return num.toLocaleString('ko-KR'); }
-
-        // 통계 모달
-        let chartInstances = {};
-
-        function openStatsModal() {
-            document.getElementById('statsModal').classList.add('show');
-            renderAllStats();
-        }
-
-        function closeStatsModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            document.getElementById('statsModal').classList.remove('show');
-            // 차트 인스턴스 정리
-            Object.values(chartInstances).forEach(chart => chart.destroy());
-            chartInstances = {};
-        }
-
-        // 집계 단위 변수 (기본: 월별)
-        let statsAggregationType = 'monthly';
-
-        function setAggregationType(type) {
-            statsAggregationType = type;
-            // 버튼 스타일 업데이트
-            const monthlyBtn = document.getElementById('filterMonthly');
-            const yearlyBtn = document.getElementById('filterYearly');
-            if (type === 'monthly') {
-                monthlyBtn.style.background = '#0071e3';
-                monthlyBtn.style.color = 'white';
-                yearlyBtn.style.background = 'white';
-                yearlyBtn.style.color = '#64748b';
-            } else {
-                yearlyBtn.style.background = '#0071e3';
-                yearlyBtn.style.color = 'white';
-                monthlyBtn.style.background = 'white';
-                monthlyBtn.style.color = '#64748b';
+        if (result.fileName && result.data) {
+            // Base64 to Blob 변환
+            const byteCharacters = atob(result.data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
-            renderAllStats();
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: result.mimeType });
+
+            // 파일 다운로드 트리거
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'designjig_data_' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('성공적으로 내보냈습니다. (' + result.customerCount + '명)', 'success');
+            logUserAction('Excel 내보내기', `${result.customerCount}명 고객 데이터 내보내기`);
+        } else {
+            throw new Error('엑셀 파일 데이터가 없습니다.');
         }
 
-        function renderAllStats() {
-            const data = customers;
-            const periodFilter = document.getElementById('statsPeriodFilter')?.value || 'all';
-            const now = new Date();
-            const thisYear = now.getFullYear().toString();
-            const lastYear = (now.getFullYear() - 1).toString();
+    } catch (error) {
+        console.error('Excel Export Error:', error);
+        showToast('Excel 내보내기 실패: ' + error.message, 'error');
+    }
+}
 
-            // 기간 필터링 함수
-            function filterByPeriod(dateStr) {
-                if (!dateStr) return false;
-                const date = new Date(dateStr);
-                if (periodFilter === '12months') {
-                    const twelveMonthsAgo = new Date();
-                    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-                    return date >= twelveMonthsAgo;
-                } else if (periodFilter === 'thisyear') {
-                    return dateStr.startsWith(thisYear);
-                } else if (periodFilter === 'lastyear') {
-                    return dateStr.startsWith(lastYear);
-                }
-                return true; // all
+
+function importData() {
+    if (!isLoggedIn()) {
+        showToast('관리자 로그인이 필요합니다', 'error');
+        showAdminModal();
+        return;
+    }
+    document.getElementById('importFile').click();
+}
+function handleImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.customers) {
+                customers = data.customers;
+                // [Phase 2] 로컬 스토리지 저장 중단
+
+                updateCustomerList();
+                showToast('데이터를 불러왔습니다', 'success');
             }
+        } catch { showToast('파일을 읽을 수 없습니다', 'error'); }
+    };
+    reader.readAsText(file);
+}
 
-            // 요약 통계
-            const filteredData = data.filter(c => filterByPeriod(c.createdAt || c.contractDate));
-            const totalCustomers = filteredData.length;
-            const contractedCustomers = filteredData.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status));
-            const totalContracts = contractedCustomers.length;
-            const totalRevenue = contractedCustomers.reduce((sum, c) => sum + parseNumber(c.totalAmount), 0);
-            const avgContract = totalContracts > 0 ? Math.round(totalRevenue / totalContracts) : 0;
+function parseNumber(str) {
+    if (typeof str === 'number') return str;
+    return parseInt((String(str || '')).replace(/[^0-9-]/g, '')) || 0;
+}
+function formatNumber(num) { return num.toLocaleString('ko-KR'); }
 
-            // 지출 합계 (운영비)
-            let totalExpense = 0;
-            let expenseCount = 0;
-            if (typeof expensesRows !== 'undefined') {
-                expensesRows.forEach(e => {
-                    if (filterByPeriod(e.date)) {
-                        totalExpense += parseNumber(e.amount);
-                        expenseCount++;
-                    }
-                });
-            }
+// 통계 모달
+let chartInstances = {};
 
-            // 순이익 및 이익률
-            const netProfit = totalRevenue - totalExpense;
-            const profitRate = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
+function openStatsModal() {
+    document.getElementById('statsModal').classList.add('show');
+    renderAllStats();
+}
 
-            // 핵심 KPI 업데이트
-            const kpiRevenueEl = document.getElementById('kpiTotalRevenue');
-            const kpiExpenseEl = document.getElementById('kpiTotalExpense');
-            const kpiNetProfitEl = document.getElementById('kpiNetProfit');
-            const kpiProfitRateEl = document.getElementById('kpiProfitRate');
-            const kpiContractCountEl = document.getElementById('kpiContractCount');
-            const kpiExpenseItemsEl = document.getElementById('kpiExpenseItems');
+function closeStatsModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('statsModal').classList.remove('show');
+    // 차트 인스턴스 정리
+    Object.values(chartInstances).forEach(chart => chart.destroy());
+    chartInstances = {};
+}
 
-            if (kpiRevenueEl) kpiRevenueEl.textContent = '₩' + formatNumber(totalRevenue);
-            if (kpiExpenseEl) kpiExpenseEl.textContent = '₩' + formatNumber(totalExpense);
-            if (kpiNetProfitEl) kpiNetProfitEl.textContent = '₩' + formatNumber(netProfit);
-            if (kpiProfitRateEl) kpiProfitRateEl.textContent = profitRate;
-            if (kpiContractCountEl) kpiContractCountEl.textContent = totalContracts;
-            if (kpiExpenseItemsEl) kpiExpenseItemsEl.textContent = expenseCount;
+// 집계 단위 변수 (기본: 월별)
+let statsAggregationType = 'monthly';
 
-            // 보조 KPI 업데이트
-            const kpiCustomersEl = document.getElementById('kpiTotalCustomers');
-            const kpiContractsTotalEl = document.getElementById('kpiContractsTotal');
-            const kpiAvgEl = document.getElementById('kpiAvgContract');
+function setAggregationType(type) {
+    statsAggregationType = type;
+    // 버튼 스타일 업데이트
+    const monthlyBtn = document.getElementById('filterMonthly');
+    const yearlyBtn = document.getElementById('filterYearly');
+    if (type === 'monthly') {
+        monthlyBtn.style.background = '#0071e3';
+        monthlyBtn.style.color = 'white';
+        yearlyBtn.style.background = 'white';
+        yearlyBtn.style.color = '#64748b';
+    } else {
+        yearlyBtn.style.background = '#0071e3';
+        yearlyBtn.style.color = 'white';
+        monthlyBtn.style.background = 'white';
+        monthlyBtn.style.color = '#64748b';
+    }
+    renderAllStats();
+}
 
-            if (kpiCustomersEl) kpiCustomersEl.textContent = totalCustomers;
-            if (kpiContractsTotalEl) kpiContractsTotalEl.textContent = totalContracts;
-            if (kpiAvgEl) kpiAvgEl.textContent = '₩' + formatNumber(avgContract);
+function renderAllStats() {
+    const data = customers;
+    const periodFilter = document.getElementById('statsPeriodFilter')?.value || 'all';
+    const now = new Date();
+    const thisYear = now.getFullYear().toString();
+    const lastYear = (now.getFullYear() - 1).toString();
 
-            // 기존 요약 업데이트 (호환성)
-            const oldTotalCustomers = document.getElementById('totalCustomers');
-            const oldTotalContracts = document.getElementById('totalContracts');
-            const oldTotalRevenue = document.getElementById('totalRevenue');
-            const oldAvgContract = document.getElementById('avgContract');
-            if (oldTotalCustomers) oldTotalCustomers.textContent = totalCustomers;
-            if (oldTotalContracts) oldTotalContracts.textContent = totalContracts;
-            if (oldTotalRevenue) oldTotalRevenue.textContent = '₩' + formatNumber(totalRevenue);
-            if (oldAvgContract) oldAvgContract.textContent = '₩' + formatNumber(avgContract);
-
-            // 차트 렌더링
-            renderProfitabilityChart(filteredData, periodFilter); // 새로운 통합 수익성 차트
-            renderStatusChart(data);
-            renderSourceChart(data);
-            renderBuildingChart(data);
-            renderConversionRate(data);
-            renderExpenseBreakdownChart(); // 운영비 분석
-
-            // [추가] 작업 로그 렌더링
-            renderAuditLog();
+    // 기간 필터링 함수
+    function filterByPeriod(dateStr) {
+        if (!dateStr) return false;
+        const date = new Date(dateStr);
+        if (periodFilter === '12months') {
+            const twelveMonthsAgo = new Date();
+            twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+            return date >= twelveMonthsAgo;
+        } else if (periodFilter === 'thisyear') {
+            return dateStr.startsWith(thisYear);
+        } else if (periodFilter === 'lastyear') {
+            return dateStr.startsWith(lastYear);
         }
+        return true; // all
+    }
 
-        // [신규] 통합 수익성 차트 (매출 막대, 지출 막대, 순이익 선, 이익률 선)
-        function renderProfitabilityChart(data, periodFilter) {
-            const canvas = document.getElementById('profitabilityChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
+    // 요약 통계
+    const filteredData = data.filter(c => filterByPeriod(c.createdAt || c.contractDate));
+    const totalCustomers = filteredData.length;
+    const contractedCustomers = filteredData.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status));
+    const totalContracts = contractedCustomers.length;
+    const totalRevenue = contractedCustomers.reduce((sum, c) => sum + parseNumber(c.totalAmount), 0);
+    const avgContract = totalContracts > 0 ? Math.round(totalRevenue / totalContracts) : 0;
 
-            // 집계 데이터 구조
-            const aggregatedData = {};
-            const isMonthly = statsAggregationType === 'monthly';
-
-            // 1. 매출 집계
-            data.forEach(c => {
-                const date = c.createdAt || c.contractDate;
-                if (!date) return;
-
-                const key = isMonthly ? date.substring(0, 7) : date.substring(0, 4); // YYYY-MM or YYYY
-                if (!aggregatedData[key]) aggregatedData[key] = { revenue: 0, expense: 0 };
-
-                if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
-                    aggregatedData[key].revenue += parseNumber(c.totalAmount);
-                }
-            });
-
-            // 2. 지출 집계
-            if (typeof expensesRows !== 'undefined') {
-                expensesRows.forEach(e => {
-                    if (!e.date) return;
-                    const key = isMonthly ? e.date.substring(0, 7) : e.date.substring(0, 4);
-                    if (!aggregatedData[key]) aggregatedData[key] = { revenue: 0, expense: 0 };
-                    aggregatedData[key].expense += parseNumber(e.amount);
-                });
+    // 지출 합계 (운영비)
+    let totalExpense = 0;
+    let expenseCount = 0;
+    if (typeof expensesRows !== 'undefined') {
+        expensesRows.forEach(e => {
+            if (filterByPeriod(e.date)) {
+                totalExpense += parseNumber(e.amount);
+                expenseCount++;
             }
+        });
+    }
 
-            const sortedKeys = Object.keys(aggregatedData).sort();
-            const labels = sortedKeys.map(k => {
-                if (isMonthly) {
-                    const [y, m] = k.split('-');
-                    return `${y.slice(2)}/${m}`;
-                }
-                return k + '년';
-            });
+    // 순이익 및 이익률
+    const netProfit = totalRevenue - totalExpense;
+    const profitRate = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
 
-            const revenueData = sortedKeys.map(k => aggregatedData[k].revenue);
-            const expenseData = sortedKeys.map(k => aggregatedData[k].expense);
-            const netProfitData = sortedKeys.map(k => aggregatedData[k].revenue - aggregatedData[k].expense);
-            const profitRateData = sortedKeys.map(k => {
-                const rev = aggregatedData[k].revenue;
-                const net = rev - aggregatedData[k].expense;
-                return rev > 0 ? ((net / rev) * 100).toFixed(1) : 0;
-            });
+    // 핵심 KPI 업데이트
+    const kpiRevenueEl = document.getElementById('kpiTotalRevenue');
+    const kpiExpenseEl = document.getElementById('kpiTotalExpense');
+    const kpiNetProfitEl = document.getElementById('kpiNetProfit');
+    const kpiProfitRateEl = document.getElementById('kpiProfitRate');
+    const kpiContractCountEl = document.getElementById('kpiContractCount');
+    const kpiExpenseItemsEl = document.getElementById('kpiExpenseItems');
 
-            if (chartInstances.profitability) chartInstances.profitability.destroy();
+    if (kpiRevenueEl) kpiRevenueEl.textContent = '₩' + formatNumber(totalRevenue);
+    if (kpiExpenseEl) kpiExpenseEl.textContent = '₩' + formatNumber(totalExpense);
+    if (kpiNetProfitEl) kpiNetProfitEl.textContent = '₩' + formatNumber(netProfit);
+    if (kpiProfitRateEl) kpiProfitRateEl.textContent = profitRate;
+    if (kpiContractCountEl) kpiContractCountEl.textContent = totalContracts;
+    if (kpiExpenseItemsEl) kpiExpenseItemsEl.textContent = expenseCount;
 
-            chartInstances.profitability = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.length ? labels : ['데이터 없음'],
-                    datasets: [
-                        {
-                            label: '매출',
-                            data: revenueData,
-                            backgroundColor: 'rgba(14, 165, 233, 0.8)',
-                            borderRadius: 6,
-                            yAxisID: 'y',
-                            order: 3
-                        },
-                        {
-                            label: '지출',
-                            data: expenseData,
-                            backgroundColor: 'rgba(244, 63, 94, 0.8)',
-                            borderRadius: 6,
-                            yAxisID: 'y',
-                            order: 4
-                        },
-                        {
-                            label: '순이익',
-                            data: netProfitData,
-                            type: 'line',
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 3,
-                            pointRadius: 5,
-                            pointBackgroundColor: '#10b981',
-                            fill: true,
-                            tension: 0.3,
-                            yAxisID: 'y',
-                            order: 1
-                        },
-                        {
-                            label: '이익률(%)',
-                            data: profitRateData,
-                            type: 'line',
-                            borderColor: '#8b5cf6',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            pointRadius: 4,
-                            pointBackgroundColor: '#8b5cf6',
-                            yAxisID: 'y1',
-                            order: 2
-                        }
-                    ]
+    // 보조 KPI 업데이트
+    const kpiCustomersEl = document.getElementById('kpiTotalCustomers');
+    const kpiContractsTotalEl = document.getElementById('kpiContractsTotal');
+    const kpiAvgEl = document.getElementById('kpiAvgContract');
+
+    if (kpiCustomersEl) kpiCustomersEl.textContent = totalCustomers;
+    if (kpiContractsTotalEl) kpiContractsTotalEl.textContent = totalContracts;
+    if (kpiAvgEl) kpiAvgEl.textContent = '₩' + formatNumber(avgContract);
+
+    // 기존 요약 업데이트 (호환성)
+    const oldTotalCustomers = document.getElementById('totalCustomers');
+    const oldTotalContracts = document.getElementById('totalContracts');
+    const oldTotalRevenue = document.getElementById('totalRevenue');
+    const oldAvgContract = document.getElementById('avgContract');
+    if (oldTotalCustomers) oldTotalCustomers.textContent = totalCustomers;
+    if (oldTotalContracts) oldTotalContracts.textContent = totalContracts;
+    if (oldTotalRevenue) oldTotalRevenue.textContent = '₩' + formatNumber(totalRevenue);
+    if (oldAvgContract) oldAvgContract.textContent = '₩' + formatNumber(avgContract);
+
+    // 차트 렌더링
+    renderProfitabilityChart(filteredData, periodFilter); // 새로운 통합 수익성 차트
+    renderStatusChart(data);
+    renderSourceChart(data);
+    renderBuildingChart(data);
+    renderConversionRate(data);
+    renderExpenseBreakdownChart(); // 운영비 분석
+
+    // [추가] 작업 로그 렌더링
+    renderAuditLog();
+}
+
+// [신규] 통합 수익성 차트 (매출 막대, 지출 막대, 순이익 선, 이익률 선)
+function renderProfitabilityChart(data, periodFilter) {
+    const canvas = document.getElementById('profitabilityChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // 집계 데이터 구조
+    const aggregatedData = {};
+    const isMonthly = statsAggregationType === 'monthly';
+
+    // 1. 매출 집계
+    data.forEach(c => {
+        const date = c.createdAt || c.contractDate;
+        if (!date) return;
+
+        const key = isMonthly ? date.substring(0, 7) : date.substring(0, 4); // YYYY-MM or YYYY
+        if (!aggregatedData[key]) aggregatedData[key] = { revenue: 0, expense: 0 };
+
+        if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
+            aggregatedData[key].revenue += parseNumber(c.totalAmount);
+        }
+    });
+
+    // 2. 지출 집계
+    if (typeof expensesRows !== 'undefined') {
+        expensesRows.forEach(e => {
+            if (!e.date) return;
+            const key = isMonthly ? e.date.substring(0, 7) : e.date.substring(0, 4);
+            if (!aggregatedData[key]) aggregatedData[key] = { revenue: 0, expense: 0 };
+            aggregatedData[key].expense += parseNumber(e.amount);
+        });
+    }
+
+    const sortedKeys = Object.keys(aggregatedData).sort();
+    const labels = sortedKeys.map(k => {
+        if (isMonthly) {
+            const [y, m] = k.split('-');
+            return `${y.slice(2)}/${m}`;
+        }
+        return k + '년';
+    });
+
+    const revenueData = sortedKeys.map(k => aggregatedData[k].revenue);
+    const expenseData = sortedKeys.map(k => aggregatedData[k].expense);
+    const netProfitData = sortedKeys.map(k => aggregatedData[k].revenue - aggregatedData[k].expense);
+    const profitRateData = sortedKeys.map(k => {
+        const rev = aggregatedData[k].revenue;
+        const net = rev - aggregatedData[k].expense;
+        return rev > 0 ? ((net / rev) * 100).toFixed(1) : 0;
+    });
+
+    if (chartInstances.profitability) chartInstances.profitability.destroy();
+
+    chartInstances.profitability = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.length ? labels : ['데이터 없음'],
+            datasets: [
+                {
+                    label: '매출',
+                    data: revenueData,
+                    backgroundColor: 'rgba(14, 165, 233, 0.8)',
+                    borderRadius: 6,
+                    yAxisID: 'y',
+                    order: 3
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    if (context.dataset.label === '이익률(%)') {
-                                        return context.dataset.label + ': ' + context.parsed.y + '%';
-                                    }
-                                    return context.dataset.label + ': ₩' + formatNumber(context.parsed.y);
-                                }
+                {
+                    label: '지출',
+                    data: expenseData,
+                    backgroundColor: 'rgba(244, 63, 94, 0.8)',
+                    borderRadius: 6,
+                    yAxisID: 'y',
+                    order: 4
+                },
+                {
+                    label: '순이익',
+                    data: netProfitData,
+                    type: 'line',
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#10b981',
+                    fill: true,
+                    tension: 0.3,
+                    yAxisID: 'y',
+                    order: 1
+                },
+                {
+                    label: '이익률(%)',
+                    data: profitRateData,
+                    type: 'line',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 4,
+                    pointBackgroundColor: '#8b5cf6',
+                    yAxisID: 'y1',
+                    order: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            if (context.dataset.label === '이익률(%)') {
+                                return context.dataset.label + ': ' + context.parsed.y + '%';
                             }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            position: 'left',
-                            title: { display: true, text: '금액 (원)' },
-                            ticks: {
-                                callback: v => {
-                                    if (v >= 100000000) return (v / 100000000).toFixed(0) + '억';
-                                    if (v >= 10000000) return (v / 10000000).toFixed(0) + '천만';
-                                    if (v >= 1000000) return (v / 1000000).toFixed(0) + 'M';
-                                    return v;
-                                }
-                            }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            position: 'right',
-                            title: { display: true, text: '이익률 (%)' },
-                            max: 100,
-                            grid: { display: false },
-                            ticks: { callback: v => v + '%' }
+                            return context.dataset.label + ': ₩' + formatNumber(context.parsed.y);
                         }
                     }
                 }
-            });
-        }
-
-        // 운영비 분석 차트 (도넛)
-        function renderExpenseBreakdownChart() {
-            const canvas = document.getElementById('expenseBreakdownChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-
-            const categoryTotals = {};
-            if (typeof expensesRows !== 'undefined') {
-                expensesRows.forEach(e => {
-                    const cat = e.category || '기타';
-                    categoryTotals[cat] = (categoryTotals[cat] || 0) + parseNumber(e.amount);
-                });
+            },
+            scales: {
+                x: {
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: { display: true, text: '금액 (원)' },
+                    ticks: {
+                        callback: v => {
+                            if (v >= 100000000) return (v / 100000000).toFixed(0) + '억';
+                            if (v >= 10000000) return (v / 10000000).toFixed(0) + '천만';
+                            if (v >= 1000000) return (v / 1000000).toFixed(0) + 'M';
+                            return v;
+                        }
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    title: { display: true, text: '이익률 (%)' },
+                    max: 100,
+                    grid: { display: false },
+                    ticks: { callback: v => v + '%' }
+                }
             }
+        }
+    });
+}
 
-            const labels = Object.keys(categoryTotals);
-            const values = Object.values(categoryTotals);
-            const colors = ['#0ea5e9', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+// 운영비 분석 차트 (도넛)
+function renderExpenseBreakdownChart() {
+    const canvas = document.getElementById('expenseBreakdownChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
 
-            if (chartInstances.expenseBreakdown) chartInstances.expenseBreakdown.destroy();
+    const categoryTotals = {};
+    if (typeof expensesRows !== 'undefined') {
+        expensesRows.forEach(e => {
+            const cat = e.category || '기타';
+            categoryTotals[cat] = (categoryTotals[cat] || 0) + parseNumber(e.amount);
+        });
+    }
 
-            chartInstances.expenseBreakdown = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels.length ? labels : ['데이터 없음'],
-                    datasets: [{
-                        data: values.length ? values : [1],
-                        backgroundColor: colors.slice(0, labels.length || 1),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const pct = ((context.parsed / total) * 100).toFixed(1);
-                                    return context.label + ': ₩' + formatNumber(context.parsed) + ' (' + pct + '%)';
-                                }
-                            }
+    const labels = Object.keys(categoryTotals);
+    const values = Object.values(categoryTotals);
+    const colors = ['#0ea5e9', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+
+    if (chartInstances.expenseBreakdown) chartInstances.expenseBreakdown.destroy();
+
+    chartInstances.expenseBreakdown = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels.length ? labels : ['데이터 없음'],
+            datasets: [{
+                data: values.length ? values : [1],
+                backgroundColor: colors.slice(0, labels.length || 1),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ₩' + formatNumber(context.parsed) + ' (' + pct + '%)';
                         }
                     }
                 }
-            });
-        }
-
-        function renderMonthlyChart(data) {
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
-            const yearFilter = document.getElementById('statsYearFilter');
-            const selectedYear = yearFilter ? yearFilter.value : 'all';
-
-            // 월별 매출/운영비 집계
-            const monthlyData = {};
-
-            // 1. 매출 집계
-            data.forEach(c => {
-                const date = c.createdAt || c.contractDate;
-                if (date) {
-                    const year = date.substring(0, 4);
-                    if (selectedYear !== 'all' && year !== selectedYear) return;
-
-                    const month = date.substring(0, 7); // YYYY-MM
-                    if (!monthlyData[month]) monthlyData[month] = { count: 0, revenue: 0, expense: 0 };
-
-                    monthlyData[month].count++;
-                    if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
-                        const amount = parseNumber(c.totalAmount);
-                        monthlyData[month].revenue += Math.round(amount / 1.1); // VAT 별도
-                    }
-                }
-            });
-
-            // 2. 운영비 집계 (전역 expensesRows 사용)
-            if (typeof expensesRows !== 'undefined') {
-                expensesRows.forEach(e => {
-                    if (!e.date) return;
-                    const year = e.date.substring(0, 4);
-                    if (selectedYear !== 'all' && year !== selectedYear) return;
-
-                    const month = e.date.substring(0, 7);
-                    if (!monthlyData[month]) monthlyData[month] = { count: 0, revenue: 0, expense: 0 };
-
-                    monthlyData[month].expense += parseNumber(e.amount);
-                });
             }
-
-            const sortedMonths = Object.keys(monthlyData).sort();
-            const labels = sortedMonths.map(m => {
-                const [y, mo] = m.split('-');
-                return `${y.slice(2)}년 ${parseInt(mo)}월`;
-            });
-
-            if (chartInstances.monthly) chartInstances.monthly.destroy();
-
-            chartInstances.monthly = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.length ? labels : ['데이터 없음'],
-                    datasets: [
-                        {
-                            label: '운영비 (지출)',
-                            data: sortedMonths.map(m => monthlyData[m].expense),
-                            type: 'bar',
-                            backgroundColor: '#ff3b30', // Red
-                            borderRadius: 4,
-                            yAxisID: 'y1',
-                            stack: 'money'
-                        },
-                        {
-                            label: '공급가액 (매출, VAT별도)',
-                            data: sortedMonths.map(m => monthlyData[m].revenue),
-                            type: 'bar', // 매출도 막대로 비교 (Stack or Group)
-                            backgroundColor: '#34c759', // Green
-                            borderRadius: 4,
-                            yAxisID: 'y1',
-                            stack: 'money2' // 겹치지 않게 별도 스택 혹은 같게
-                        },
-                        {
-                            label: '고객 등록 수',
-                            data: sortedMonths.map(m => monthlyData[m].count),
-                            type: 'line',
-                            borderColor: '#0071e3', // Blue
-                            borderWidth: 2,
-                            pointBackgroundColor: '#0071e3',
-                            yAxisID: 'y'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            position: 'left',
-                            title: { display: true, text: '건수' },
-                            grid: { display: false }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            position: 'right',
-                            title: { display: true, text: '금액' },
-                            ticks: { callback: v => '₩' + (v / 1000000).toFixed(0) + 'M' }
-                        }
-                    }
-                }
-            });
         }
+    });
+}
 
-        // [신규] 연도별 차트 (VAT 별도)
-        function renderYearlyChart(data) {
-            const ctx = document.getElementById('yearlyChart').getContext('2d');
+function renderMonthlyChart(data) {
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const yearFilter = document.getElementById('statsYearFilter');
+    const selectedYear = yearFilter ? yearFilter.value : 'all';
 
-            const yearlyData = {};
-            // 1. 매출
-            data.forEach(c => {
-                const date = c.createdAt || c.contractDate;
-                if (date) {
-                    const year = date.substring(0, 4);
-                    if (!yearlyData[year]) yearlyData[year] = { count: 0, revenue: 0, expense: 0 };
+    // 월별 매출/운영비 집계
+    const monthlyData = {};
 
-                    yearlyData[year].count++;
-                    if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
-                        const amount = parseNumber(c.totalAmount);
-                        yearlyData[year].revenue += Math.round(amount / 1.1);
-                    }
-                }
-            });
+    // 1. 매출 집계
+    data.forEach(c => {
+        const date = c.createdAt || c.contractDate;
+        if (date) {
+            const year = date.substring(0, 4);
+            if (selectedYear !== 'all' && year !== selectedYear) return;
 
-            // 2. 운영비
-            if (typeof expensesRows !== 'undefined') {
-                expensesRows.forEach(e => {
-                    if (!e.date) return;
-                    const year = e.date.substring(0, 4);
-                    if (!yearlyData[year]) yearlyData[year] = { count: 0, revenue: 0, expense: 0 };
+            const month = date.substring(0, 7); // YYYY-MM
+            if (!monthlyData[month]) monthlyData[month] = { count: 0, revenue: 0, expense: 0 };
 
-                    yearlyData[year].expense += parseNumber(e.amount);
-                });
+            monthlyData[month].count++;
+            if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
+                const amount = parseNumber(c.totalAmount);
+                monthlyData[month].revenue += Math.round(amount / 1.1); // VAT 별도
             }
+        }
+    });
 
-            const sortedYears = Object.keys(yearlyData).sort();
+    // 2. 운영비 집계 (전역 expensesRows 사용)
+    if (typeof expensesRows !== 'undefined') {
+        expensesRows.forEach(e => {
+            if (!e.date) return;
+            const year = e.date.substring(0, 4);
+            if (selectedYear !== 'all' && year !== selectedYear) return;
 
-            if (chartInstances.yearly) chartInstances.yearly.destroy();
+            const month = e.date.substring(0, 7);
+            if (!monthlyData[month]) monthlyData[month] = { count: 0, revenue: 0, expense: 0 };
 
-            chartInstances.yearly = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedYears.length ? sortedYears : ['데이터 없음'],
-                    datasets: [
-                        {
-                            label: '총 운영비 (지출)',
-                            data: sortedYears.map(y => yearlyData[y].expense),
-                            backgroundColor: '#ff3b30',
-                            borderRadius: 6,
-                            yAxisID: 'y1'
-                        },
-                        {
-                            label: '총 공급가액 (매출)',
-                            data: sortedYears.map(y => yearlyData[y].revenue),
-                            backgroundColor: '#34c759',
-                            borderRadius: 6,
-                            yAxisID: 'y1'
-                        },
-                        {
-                            label: '총 계약 건수',
-                            data: sortedYears.map(y => yearlyData[y].count),
-                            type: 'line',
-                            borderColor: '#0071e3',
-                            borderWidth: 2,
-                            pointBackgroundColor: '#0071e3',
-                            yAxisID: 'y'
-                        }
-                    ]
+            monthlyData[month].expense += parseNumber(e.amount);
+        });
+    }
+
+    const sortedMonths = Object.keys(monthlyData).sort();
+    const labels = sortedMonths.map(m => {
+        const [y, mo] = m.split('-');
+        return `${y.slice(2)}년 ${parseInt(mo)}월`;
+    });
+
+    if (chartInstances.monthly) chartInstances.monthly.destroy();
+
+    chartInstances.monthly = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.length ? labels : ['데이터 없음'],
+            datasets: [
+                {
+                    label: '운영비 (지출)',
+                    data: sortedMonths.map(m => monthlyData[m].expense),
+                    type: 'bar',
+                    backgroundColor: '#ff3b30', // Red
+                    borderRadius: 4,
+                    yAxisID: 'y1',
+                    stack: 'money'
                 },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    if (context.dataset.yAxisID === 'y1') {
-                                        label += '₩' + context.raw.toLocaleString();
-                                        label += context.raw + '건';
-                                    }
-                                    return label;
-                                }
+                {
+                    label: '공급가액 (매출, VAT별도)',
+                    data: sortedMonths.map(m => monthlyData[m].revenue),
+                    type: 'bar', // 매출도 막대로 비교 (Stack or Group)
+                    backgroundColor: '#34c759', // Green
+                    borderRadius: 4,
+                    yAxisID: 'y1',
+                    stack: 'money2' // 겹치지 않게 별도 스택 혹은 같게
+                },
+                {
+                    label: '고객 등록 수',
+                    data: sortedMonths.map(m => monthlyData[m].count),
+                    type: 'line',
+                    borderColor: '#0071e3', // Blue
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0071e3',
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: { display: true, text: '건수' },
+                    grid: { display: false }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    title: { display: true, text: '금액' },
+                    ticks: { callback: v => '₩' + (v / 1000000).toFixed(0) + 'M' }
+                }
+            }
+        }
+    });
+}
+
+// [신규] 연도별 차트 (VAT 별도)
+function renderYearlyChart(data) {
+    const ctx = document.getElementById('yearlyChart').getContext('2d');
+
+    const yearlyData = {};
+    // 1. 매출
+    data.forEach(c => {
+        const date = c.createdAt || c.contractDate;
+        if (date) {
+            const year = date.substring(0, 4);
+            if (!yearlyData[year]) yearlyData[year] = { count: 0, revenue: 0, expense: 0 };
+
+            yearlyData[year].count++;
+            if (['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)) {
+                const amount = parseNumber(c.totalAmount);
+                yearlyData[year].revenue += Math.round(amount / 1.1);
+            }
+        }
+    });
+
+    // 2. 운영비
+    if (typeof expensesRows !== 'undefined') {
+        expensesRows.forEach(e => {
+            if (!e.date) return;
+            const year = e.date.substring(0, 4);
+            if (!yearlyData[year]) yearlyData[year] = { count: 0, revenue: 0, expense: 0 };
+
+            yearlyData[year].expense += parseNumber(e.amount);
+        });
+    }
+
+    const sortedYears = Object.keys(yearlyData).sort();
+
+    if (chartInstances.yearly) chartInstances.yearly.destroy();
+
+    chartInstances.yearly = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedYears.length ? sortedYears : ['데이터 없음'],
+            datasets: [
+                {
+                    label: '총 운영비 (지출)',
+                    data: sortedYears.map(y => yearlyData[y].expense),
+                    backgroundColor: '#ff3b30',
+                    borderRadius: 6,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: '총 공급가액 (매출)',
+                    data: sortedYears.map(y => yearlyData[y].revenue),
+                    backgroundColor: '#34c759',
+                    borderRadius: 6,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: '총 계약 건수',
+                    data: sortedYears.map(y => yearlyData[y].count),
+                    type: 'line',
+                    borderColor: '#0071e3',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0071e3',
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.dataset.yAxisID === 'y1') {
+                                label += '₩' + context.raw.toLocaleString();
+                                label += context.raw + '건';
                             }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            position: 'right',
-                            title: { display: true, text: '건수' },
-                            grid: { display: false }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            position: 'left',
-                            title: { display: true, text: '금액' },
-                            ticks: { callback: v => '₩' + (v / 1000000).toFixed(0) + 'M' }
+                            return label;
                         }
                     }
                 }
-            });
-        }
-
-        function renderStatusChart(data) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-
-            const statusCount = {};
-            data.forEach(c => {
-                const status = c.status || 'consulting';
-                statusCount[status] = (statusCount[status] || 0) + 1;
-            });
-
-            const statusColors = {
-                consulting: '#ff9500',
-                hold: '#8e8e93',
-                budget_over: '#ff3b30',
-                other_company: '#5856d6',
-                contracted: '#34c759',
-                in_progress: '#ff9500',
-                completed: '#30d158',
-                as_done: '#00c7be'
-            };
-
-            if (chartInstances.status) chartInstances.status.destroy();
-
-            chartInstances.status = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(statusCount).map(s => statusLabels[s] || s),
-                    datasets: [{
-                        data: Object.values(statusCount),
-                        backgroundColor: Object.keys(statusCount).map(s => statusColors[s] || '#86868b'),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'right',
+                    title: { display: true, text: '건수' },
+                    grid: { display: false }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { font: { size: 10 }, padding: 8 } }
-                    }
+                y1: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: { display: true, text: '금액' },
+                    ticks: { callback: v => '₩' + (v / 1000000).toFixed(0) + 'M' }
                 }
-            });
+            }
         }
+    });
+}
 
-        function renderSourceChart(data) {
-            const ctx = document.getElementById('sourceChart').getContext('2d');
+function renderStatusChart(data) {
+    const ctx = document.getElementById('statusChart').getContext('2d');
 
-            const sourceCount = {};
-            data.forEach(c => {
-                const source = c.clientSource || '미지정';
-                sourceCount[source] = (sourceCount[source] || 0) + 1;
-            });
+    const statusCount = {};
+    data.forEach(c => {
+        const status = c.status || 'consulting';
+        statusCount[status] = (statusCount[status] || 0) + 1;
+    });
 
-            const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a'];
+    const statusColors = {
+        consulting: '#ff9500',
+        hold: '#8e8e93',
+        budget_over: '#ff3b30',
+        other_company: '#5856d6',
+        contracted: '#34c759',
+        in_progress: '#ff9500',
+        completed: '#30d158',
+        as_done: '#00c7be'
+    };
 
-            if (chartInstances.source) chartInstances.source.destroy();
+    if (chartInstances.status) chartInstances.status.destroy();
 
-            chartInstances.source = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(sourceCount),
-                    datasets: [{
-                        data: Object.values(sourceCount),
-                        backgroundColor: colors.slice(0, Object.keys(sourceCount).length),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { font: { size: 10 }, padding: 8 } }
-                    }
-                }
-            });
+    chartInstances.status = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(statusCount).map(s => statusLabels[s] || s),
+            datasets: [{
+                data: Object.values(statusCount),
+                backgroundColor: Object.keys(statusCount).map(s => statusColors[s] || '#86868b'),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { font: { size: 10 }, padding: 8 } }
+            }
         }
+    });
+}
 
-        function renderBuildingChart(data) {
-            const ctx = document.getElementById('buildingChart').getContext('2d');
+function renderSourceChart(data) {
+    const ctx = document.getElementById('sourceChart').getContext('2d');
 
-            const buildingCount = {};
-            data.forEach(c => {
-                const building = c.buildingType || '미지정';
-                buildingCount[building] = (buildingCount[building] || 0) + 1;
-            });
+    const sourceCount = {};
+    data.forEach(c => {
+        const source = c.clientSource || '미지정';
+        sourceCount[source] = (sourceCount[source] || 0) + 1;
+    });
 
-            if (chartInstances.building) chartInstances.building.destroy();
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a'];
 
-            chartInstances.building = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(buildingCount),
-                    datasets: [{
-                        label: '건수',
-                        data: Object.values(buildingCount),
-                        backgroundColor: [
-                            'rgba(102, 126, 234, 0.8)',
-                            'rgba(118, 75, 162, 0.8)',
-                            'rgba(240, 147, 251, 0.8)',
-                            'rgba(245, 87, 108, 0.8)',
-                            'rgba(79, 172, 254, 0.8)'
-                        ],
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: { legend: { display: false } },
-                    scales: { x: { beginAtZero: true } }
-                }
-            });
+    if (chartInstances.source) chartInstances.source.destroy();
+
+    chartInstances.source = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(sourceCount),
+            datasets: [{
+                data: Object.values(sourceCount),
+                backgroundColor: colors.slice(0, Object.keys(sourceCount).length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { font: { size: 10 }, padding: 8 } }
+            }
         }
+    });
+}
 
-        function renderConversionRate(data) {
-            const contracted = data.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)).length;
-            const notContracted = data.filter(c => ['budget_over', 'other_company'].includes(c.status)).length;
-            const consulting = data.filter(c => ['consulting', 'hold'].includes(c.status)).length;
+function renderBuildingChart(data) {
+    const ctx = document.getElementById('buildingChart').getContext('2d');
 
-            const total = contracted + notContracted;
-            const rate = total > 0 ? Math.round((contracted / total) * 100) : 0;
+    const buildingCount = {};
+    data.forEach(c => {
+        const building = c.buildingType || '미지정';
+        buildingCount[building] = (buildingCount[building] || 0) + 1;
+    });
 
-            document.getElementById('conversionRate').textContent = rate + '%';
-            document.getElementById('contractedCount').textContent = contracted;
-            document.getElementById('notContractedCount').textContent = notContracted;
-            document.getElementById('consultingCount').textContent = consulting;
+    if (chartInstances.building) chartInstances.building.destroy();
 
-            // 원형 그래프 업데이트
-            const circle = document.getElementById('conversionCircle');
-            circle.style.background = `conic-gradient(#34c759 0%, #34c759${rate}%, #e8e8ed${rate}%, #e8e8ed 100%)`;
+    chartInstances.building = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(buildingCount),
+            datasets: [{
+                label: '건수',
+                data: Object.values(buildingCount),
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(240, 147, 251, 0.8)',
+                    'rgba(245, 87, 108, 0.8)',
+                    'rgba(79, 172, 254, 0.8)'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true } }
         }
+    });
+}
 
-        // =====================
-        // 샘플 견적서 기능
-        // =====================
+function renderConversionRate(data) {
+    const contracted = data.filter(c => ['contracted', 'in_progress', 'completed', 'as_done'].includes(c.status)).length;
+    const notContracted = data.filter(c => ['budget_over', 'other_company'].includes(c.status)).length;
+    const consulting = data.filter(c => ['consulting', 'hold'].includes(c.status)).length;
 
-        // 샘플 견적서 모달 열기
-        function openSampleEstimateModal() {
-            document.getElementById('sampleEstimateModal').style.display = 'flex';
-            document.getElementById('sampleEstimateTitle').value = '';
-            loadSampleEstimateList();
-        }
+    const total = contracted + notContracted;
+    const rate = total > 0 ? Math.round((contracted / total) * 100) : 0;
 
-        // 샘플 견적서 모달 닫기
-        function closeSampleEstimateModal() {
-            document.getElementById('sampleEstimateModal').style.display = 'none';
-        }
+    document.getElementById('conversionRate').textContent = rate + '%';
+    document.getElementById('contractedCount').textContent = contracted;
+    document.getElementById('notContractedCount').textContent = notContracted;
+    document.getElementById('consultingCount').textContent = consulting;
 
-        // 샘플 견적서 목록 로드
-        async function loadSampleEstimateList() {
-            const listContainer = document.getElementById('sampleEstimateList');
-            listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">로딩 중...</div>';
+    // 원형 그래프 업데이트
+    const circle = document.getElementById('conversionCircle');
+    circle.style.background = `conic-gradient(#34c759 0%, #34c759${rate}%, #e8e8ed${rate}%, #e8e8ed 100%)`;
+}
 
-            try {
-                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleEstimates`);
-                const result = await response.json();
+// =====================
+// 샘플 견적서 기능
+// =====================
 
-                if (result.success && result.samples && result.samples.length > 0) {
-                    listContainer.innerHTML = result.samples.map(sample => `
+// 샘플 견적서 모달 열기
+function openSampleEstimateModal() {
+    document.getElementById('sampleEstimateModal').style.display = 'flex';
+    document.getElementById('sampleEstimateTitle').value = '';
+    loadSampleEstimateList();
+}
+
+// 샘플 견적서 모달 닫기
+function closeSampleEstimateModal() {
+    document.getElementById('sampleEstimateModal').style.display = 'none';
+}
+
+// 샘플 견적서 목록 로드
+async function loadSampleEstimateList() {
+    const listContainer = document.getElementById('sampleEstimateList');
+    listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">로딩 중...</div>';
+
+    try {
+        const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleEstimates`);
+        const result = await response.json();
+
+        if (result.success && result.samples && result.samples.length > 0) {
+            listContainer.innerHTML = result.samples.map(sample => `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 8px;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 600; color: #333; margin-bottom: 4px;">${sample.title}</div>
@@ -8944,590 +8944,590 @@
                             </div>
                         </div>
                     `).join('');
-                } else {
-                    listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">저장된 샘플이 없습니다</div>';
-                }
-            } catch (error) {
-                console.error('샘플 목록 로드 실패:', error);
-                listContainer.innerHTML = '<div style="text-align: center; color: #ff3b30; padding: 20px;">목록을 불러오지 못했습니다</div>';
-            }
+        } else {
+            listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">저장된 샘플이 없습니다</div>';
         }
+    } catch (error) {
+        console.error('샘플 목록 로드 실패:', error);
+        listContainer.innerHTML = '<div style="text-align: center; color: #ff3b30; padding: 20px;">목록을 불러오지 못했습니다</div>';
+    }
+}
 
-        // 현재 견적을 샘플로 저장
-        async function saveSampleEstimate() {
-            const title = document.getElementById('sampleEstimateTitle').value.trim();
-            if (!title) {
-                showToast('샘플 제목을 입력하세요', 'error');
-                return;
-            }
+// 현재 견적을 샘플로 저장
+async function saveSampleEstimate() {
+    const title = document.getElementById('sampleEstimateTitle').value.trim();
+    if (!title) {
+        showToast('샘플 제목을 입력하세요', 'error');
+        return;
+    }
 
-            // 현재 견적 데이터 수집
-            saveEstimateData(); // 먼저 현재 데이터 저장
+    // 현재 견적 데이터 수집
+    saveEstimateData(); // 먼저 현재 데이터 저장
 
-            const sampleData = {
-                action: 'saveSampleEstimate',
-                title: title,
-                estimateData: currentData.estimateData || {},
-                estimateProfitRate: currentData.estimateProfitRate || 15,
-                estimateMemos: {},
-                createdBy: currentAdmin?.id || 'unknown',
-                createdAt: new Date().toISOString()
-            };
+    const sampleData = {
+        action: 'saveSampleEstimate',
+        title: title,
+        estimateData: currentData.estimateData || {},
+        estimateProfitRate: currentData.estimateProfitRate || 15,
+        estimateMemos: {},
+        createdBy: currentAdmin?.id || 'unknown',
+        createdAt: new Date().toISOString()
+    };
 
-            // 메모 데이터 수집
-            categories.forEach(cat => {
-                if (currentData[`estMemo_${cat.no}`]) {
-                    sampleData.estimateMemos[cat.no] = currentData[`estMemo_${cat.no}`];
-                }
-            });
+    // 메모 데이터 수집
+    categories.forEach(cat => {
+        if (currentData[`estMemo_${cat.no}`]) {
+            sampleData.estimateMemos[cat.no] = currentData[`estMemo_${cat.no}`];
+        }
+    });
 
-            try {
-                showToast('저장 중...', 'info');
-                const response = await fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(sampleData)
+    try {
+        showToast('저장 중...', 'info');
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(sampleData)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`샘플 "${title}" 저장 완료!`, 'success');
+            document.getElementById('sampleEstimateTitle').value = '';
+            loadSampleEstimateList();
+        } else {
+            showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
+        }
+    } catch (error) {
+        console.error('샘플 저장 실패:', error);
+        showToast('저장 중 오류가 발생했습니다', 'error');
+    }
+}
+
+// 샘플 견적 불러오기
+async function loadSampleEstimate(sampleId) {
+    if (!confirm('현재 견적 데이터를 샘플로 덮어쓰시겠습니까?')) return;
+
+    try {
+        showToast('불러오는 중...', 'info');
+        const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleEstimate&id=${sampleId}`);
+        const result = await response.json();
+
+        if (result.success && result.sample) {
+            const sample = result.sample;
+
+            // 견적 데이터 적용
+            currentData.estimateData = sample.estimateData || {};
+            currentData.estimateProfitRate = sample.estimateProfitRate || 15;
+
+            // 메모 적용
+            if (sample.estimateMemos) {
+                Object.keys(sample.estimateMemos).forEach(catNo => {
+                    currentData[`estMemo_${catNo}`] = sample.estimateMemos[catNo];
                 });
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast(`샘플 "${title}" 저장 완료!`, 'success');
-                    document.getElementById('sampleEstimateTitle').value = '';
-                    loadSampleEstimateList();
-                } else {
-                    showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
-                }
-            } catch (error) {
-                console.error('샘플 저장 실패:', error);
-                showToast('저장 중 오류가 발생했습니다', 'error');
             }
+
+            // UI 새로고침
+            loadEstimateData();
+
+            closeSampleEstimateModal();
+            showToast(`샘플 "${sample.title}" 적용 완료!`, 'success');
+        } else {
+            showToast('샘플을 불러올 수 없습니다', 'error');
         }
+    } catch (error) {
+        console.error('샘플 불러오기 실패:', error);
+        showToast('불러오기 중 오류가 발생했습니다', 'error');
+    }
+}
 
-        // 샘플 견적 불러오기
-        async function loadSampleEstimate(sampleId) {
-            if (!confirm('현재 견적 데이터를 샘플로 덮어쓰시겠습니까?')) return;
+// 샘플 삭제
+async function deleteSampleEstimate(sampleId, sampleTitle) {
+    if (!confirm(`"${sampleTitle}" 샘플을 삭제하시겠습니까?`)) return;
 
-            try {
-                showToast('불러오는 중...', 'info');
-                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleEstimate&id=${sampleId}`);
-                const result = await response.json();
+    try {
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'deleteSampleEstimate',
+                id: sampleId
+            })
+        });
+        const result = await response.json();
 
-                if (result.success && result.sample) {
-                    const sample = result.sample;
-
-                    // 견적 데이터 적용
-                    currentData.estimateData = sample.estimateData || {};
-                    currentData.estimateProfitRate = sample.estimateProfitRate || 15;
-
-                    // 메모 적용
-                    if (sample.estimateMemos) {
-                        Object.keys(sample.estimateMemos).forEach(catNo => {
-                            currentData[`estMemo_${catNo}`] = sample.estimateMemos[catNo];
-                        });
-                    }
-
-                    // UI 새로고침
-                    loadEstimateData();
-
-                    closeSampleEstimateModal();
-                    showToast(`샘플 "${sample.title}" 적용 완료!`, 'success');
-                } else {
-                    showToast('샘플을 불러올 수 없습니다', 'error');
-                }
-            } catch (error) {
-                console.error('샘플 불러오기 실패:', error);
-                showToast('불러오기 중 오류가 발생했습니다', 'error');
-            }
+        if (result.success) {
+            showToast('샘플이 삭제되었습니다', 'success');
+            loadSampleEstimateList();
+        } else {
+            showToast('삭제 실패', 'error');
         }
+    } catch (error) {
+        console.error('샘플 삭제 실패:', error);
+        showToast('삭제 중 오류가 발생했습니다', 'error');
+    }
+}
 
-        // 샘플 삭제
-        async function deleteSampleEstimate(sampleId, sampleTitle) {
-            if (!confirm(`"${sampleTitle}" 샘플을 삭제하시겠습니까?`)) return;
-
-            try {
-                const response = await fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'deleteSampleEstimate',
-                        id: sampleId
-                    })
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast('샘플이 삭제되었습니다', 'success');
-                    loadSampleEstimateList();
-                } else {
-                    showToast('삭제 실패', 'error');
-                }
-            } catch (error) {
-                console.error('샘플 삭제 실패:', error);
-                showToast('삭제 중 오류가 발생했습니다', 'error');
-            }
+function importMasterSchedule() {
+    if (scheduleRows.length > 0) {
+        if (!confirm('현재 작성된 스케줄이 모두 삭제되고, 마스터 스케줄 템플릿으로 대체됩니다. 계속하시겠습니까?')) {
+            return;
         }
+    }
 
-        function importMasterSchedule() {
-            if (scheduleRows.length > 0) {
-                if (!confirm('현재 작성된 스케줄이 모두 삭제되고, 마스터 스케줄 템플릿으로 대체됩니다. 계속하시겠습니까?')) {
-                    return;
-                }
-            }
+    if (!defaultScheduleSteps || defaultScheduleSteps.length === 0) {
+        alert('마스터 스케줄 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        fetchScheduleTemplate(); // Try fetching again
+        return;
+    }
 
-            if (!defaultScheduleSteps || defaultScheduleSteps.length === 0) {
-                alert('마스터 스케줄 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-                fetchScheduleTemplate(); // Try fetching again
-                return;
-            }
+    // Copy template
+    scheduleRows = defaultScheduleSteps.map(step => ({
+        id: Date.now() + Math.random(),
+        category: step.category || '',
+        name: step.name || '',
+        checkPoint: step.checkPoint || '',
+        start: '', // Date is usually empty in template
+        end: '',
+        inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-7653-5386)',
+        memo: step.memo || ''
+    }));
 
-            // Copy template
-            scheduleRows = defaultScheduleSteps.map(step => ({
-                id: Date.now() + Math.random(),
-                category: step.category || '',
-                name: step.name || '',
-                checkPoint: step.checkPoint || '',
-                start: '', // Date is usually empty in template
-                end: '',
-                inCharge: step.inCharge || currentData.manager || '원프로 소장 (010-4650-7013)',
-                memo: step.memo || ''
-            }));
+    renderScheduleTable();
+    saveScheduleToCustomer();
+    alert('마스터 스케줄을 불러왔습니다.');
+}
 
-            renderScheduleTable();
-            saveScheduleToCustomer();
-            alert('마스터 스케줄을 불러왔습니다.');
-        }
+async function syncScheduleToNotion() {
+    if (!currentData.clientName) {
+        alert('고객명이 없습니다. 고객을 먼저 선택하거나 생성해주세요.');
+        return;
+    }
 
-        async function syncScheduleToNotion() {
-            if (!currentData.clientName) {
-                alert('고객명이 없습니다. 고객을 먼저 선택하거나 생성해주세요.');
-                return;
-            }
-
-            if (confirm(`'${currentData.clientName}' 고객의 스케줄을 Notion으로 전송하시겠습니까?`)) {
-                try {
-                    const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
-                    if (btn) {
-                        btn.innerHTML = '⏳ 전송 중...';
-                        btn.disabled = true;
-                    }
-
-                    const payload = {
-                        action: 'exportToNotion',
-                        type: 'schedule',
-                        customerId: currentData.customerId,
-                        data: JSON.stringify({
-                            project: currentData.clientName,
-                            schedules: scheduleRows // scheduleRows 전역 변수
-                        })
-                    };
-
-                    const response = await fetch(CUSTOMER_SYNC_URL, {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        alert(`✅ Notion 동기화 성공!`);
-                        if (result.notionUrl) {
-                            // console.log(result.notionUrl);
-                        }
-                    } else {
-                        throw new Error(result.message || '동기화 실패');
-                    }
-                } catch (error) {
-                    console.error('Notion Sync Error:', error);
-                    alert(`요청이 전송되었습니다.\n(응답 확인 중 오류: ${error.message})`);
-                } finally {
-                    const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
-                    if (btn) {
-                        btn.innerHTML = '📥 Notion 동기화';
-                        btn.disabled = false;
-                    }
-                }
-            }
-        }
-
-        // Initialize Master Data
-        fetchScheduleTemplate();
-        // ============================
-        // 공정별 체크리스트 기능
-        // ============================
-        // 체크리스트는 CUSTOMER_SYNC_URL 사용
-        // [Fix] 체크리스트 데이터 로컬 스토리지 연동 (초기화 방지)
-        let checklistMasterData = [];
-        // Phase 2: 업무 데이터 로컬 저장 금지
-
-        // 체크리스트 마스터 데이터 불러오기 (Google Sheet)
-        async function syncChecklistFromCloud() {
-            // Phase 2: 초기 동기화 게이트를 위해 로그인 체크 생략 (GET 전용)
-            // if (!isLoggedIn()) { ... }
-
-            const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
-            const originalHTML = btn ? btn.innerHTML : '🔄 DB 불러오기';
-
+    if (confirm(`'${currentData.clientName}' 고객의 스케줄을 Notion으로 전송하시겠습니까?`)) {
+        try {
+            const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
             if (btn) {
-                btn.innerHTML = '<span class="loading-spinner"></span> 불러오는 중...';
+                btn.innerHTML = '⏳ 전송 중...';
                 btn.disabled = true;
             }
 
-            console.log('[Checklist Load] Request started...');
+            const payload = {
+                action: 'exportToNotion',
+                type: 'schedule',
+                customerId: currentData.customerId,
+                data: JSON.stringify({
+                    project: currentData.clientName,
+                    schedules: scheduleRows // scheduleRows 전역 변수
+                })
+            };
 
-            try {
-                // [Fix] 시트 이름을 'checklist'로 변경 (서버 호환성 명확화) 및 에러 핸들링 강화
-                const params = new URLSearchParams({ sheet: 'checklist' });
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
-                const result = await response.json();
-
-                console.log('[Checklist Load] Response:', result);
-
-                if (result.success === true || result.result === 'success' || Array.isArray(result) || (result.data && Array.isArray(result.data))) {
-                    let items = [];
-                    if (Array.isArray(result)) items = result;
-                    else if (result.data) items = result.data;
-                    else if (result.items) items = result.items;
-
-                    // [Fix] Empty checklist is a valid state, not an error
-                    if (!items || items.length === 0) {
-                        console.warn('⚠️ [Checklist Load] 체크리스트 데이터가 비어있습니다. (0건)');
-                        checklistMasterData = [];
-
-                        // 빈 데이터라도 렌더링 갱신 필요
-                        renderChecklistItems();
-                        return true;
-                    }
-
-                    // [Fix] 데이터 공백 제거 (필터링 정확도 향상)
-                    checklistMasterData = items.map(item => ({
-                        ...item,
-                        '진행단계': String(item['진행단계'] || '').trim(),
-                        'category': String(item['category'] || item['카테고리'] || item['분류'] || '').trim()
-                    }));
-
-                    // Phase 2: 업무 데이터 로컬 저장 금지
-
-                    console.log(`✅ [Checklist Load] Loaded ${items.length} items.`);
-                    console.log(`📊 [Web Debug] checklistMasterData length:`, checklistMasterData.length);
-                    console.log(`📊 [Web Debug] First 3 items:`, checklistMasterData.slice(0, 3).map(i => i['항목명'] || i.번호));
-
-                    // 필터 옵션 업데이트
-                    updateChecklistFilters();
-
-                    // 테이블 렌더링
-                    renderChecklistItems();
-
-                    showToast(`체크리스트 불러오기 완료 (${items.length}건)`, 'success');
-                    return true;
-                } else {
-                    throw new Error(result.message || '데이터를 불러올 수 없습니다');
-                }
-            } catch (error) {
-                console.error('❌ [Checklist Load Error]', error);
-
-                // [Fix] 시트가 없거나 찾을 수 없는 경우, 에러 대신 빈 상태로 초기화하여 앱 중단 방지
-                if (error.message && (error.message.includes('시트를 찾을 수 없습니다') || error.message.includes('Sheet not found'))) {
-                    console.warn('⚠️ [Safeguard] 체크리스트 시트 미발견 -> 빈 목록으로 초기화합니다.');
-                    checklistMasterData = [];
-                    renderChecklistItems();
-                    showToast('체크리스트 데이터가 없습니다. (시트 미발견)', 'info');
-                    return true; // 성공으로 간주하여 초기 로딩 흐름 유지
-                }
-
-                showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
-                return false;
-            } finally {
-                if (btn) {
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                }
-            }
-        }
-
-
-        // [추가] 저장된 체크리스트 필터 상태 불러오기
-        function loadSavedChecklistState(silent = false) {
-            if (!currentData || !currentData.checklistFilters) {
-                if (!silent) showToast('저장된 필터 상태가 없습니다.', 'info');
-                return;
-            }
-
-            const savedFilters = currentData.checklistFilters;
-
-            // 저장된 필터 적용
-            Object.keys(savedFilters).forEach(key => {
-                const values = savedFilters[key];
-                multiSelectState[key] = values;
-
-                // UI 체크박스 상태 동기화
-                const dropdown = document.getElementById(key + 'Dropdown');
-                if (dropdown) {
-                    // 전체 체크박스
-                    const allCb = dropdown.querySelector('input[value="all"]');
-                    if (allCb) allCb.checked = values.includes('all');
-
-                    // 개별 체크박스
-                    dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                        if (cb.value !== 'all') {
-                            cb.checked = values.includes(cb.value);
-                        }
-                    });
-
-                    updateMultiSelectLabel(key);
-                }
+            const response = await fetch(CUSTOMER_SYNC_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
             });
 
-            // 필터 종속성 업데이트 (진행단계 -> 카테고리)
-            if (typeof updateCategoryOptionsBasedOnStage === 'function') {
-                updateCategoryOptionsBasedOnStage();
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`✅ Notion 동기화 성공!`);
+                if (result.notionUrl) {
+                    // console.log(result.notionUrl);
+                }
+            } else {
+                throw new Error(result.message || '동기화 실패');
+            }
+        } catch (error) {
+            console.error('Notion Sync Error:', error);
+            alert(`요청이 전송되었습니다.\n(응답 확인 중 오류: ${error.message})`);
+        } finally {
+            const btn = document.querySelector('button[onclick="syncScheduleToNotion()"]');
+            if (btn) {
+                btn.innerHTML = '📥 Notion 동기화';
+                btn.disabled = false;
+            }
+        }
+    }
+}
+
+// Initialize Master Data
+fetchScheduleTemplate();
+// ============================
+// 공정별 체크리스트 기능
+// ============================
+// 체크리스트는 CUSTOMER_SYNC_URL 사용
+// [Fix] 체크리스트 데이터 로컬 스토리지 연동 (초기화 방지)
+let checklistMasterData = [];
+// Phase 2: 업무 데이터 로컬 저장 금지
+
+// 체크리스트 마스터 데이터 불러오기 (Google Sheet)
+async function syncChecklistFromCloud() {
+    // Phase 2: 초기 동기화 게이트를 위해 로그인 체크 생략 (GET 전용)
+    // if (!isLoggedIn()) { ... }
+
+    const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
+    const originalHTML = btn ? btn.innerHTML : '🔄 DB 불러오기';
+
+    if (btn) {
+        btn.innerHTML = '<span class="loading-spinner"></span> 불러오는 중...';
+        btn.disabled = true;
+    }
+
+    console.log('[Checklist Load] Request started...');
+
+    try {
+        // [Fix] 시트 이름을 'checklist'로 변경 (서버 호환성 명확화) 및 에러 핸들링 강화
+        const params = new URLSearchParams({ sheet: 'checklist' });
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?${params}`);
+        const result = await response.json();
+
+        console.log('[Checklist Load] Response:', result);
+
+        if (result.success === true || result.result === 'success' || Array.isArray(result) || (result.data && Array.isArray(result.data))) {
+            let items = [];
+            if (Array.isArray(result)) items = result;
+            else if (result.data) items = result.data;
+            else if (result.items) items = result.items;
+
+            // [Fix] Empty checklist is a valid state, not an error
+            if (!items || items.length === 0) {
+                console.warn('⚠️ [Checklist Load] 체크리스트 데이터가 비어있습니다. (0건)');
+                checklistMasterData = [];
+
+                // 빈 데이터라도 렌더링 갱신 필요
+                renderChecklistItems();
+                return true;
             }
 
+            // [Fix] 데이터 공백 제거 (필터링 정확도 향상)
+            checklistMasterData = items.map(item => ({
+                ...item,
+                '진행단계': String(item['진행단계'] || '').trim(),
+                'category': String(item['category'] || item['카테고리'] || item['분류'] || '').trim()
+            }));
+
+            // Phase 2: 업무 데이터 로컬 저장 금지
+
+            console.log(`✅ [Checklist Load] Loaded ${items.length} items.`);
+            console.log(`📊 [Web Debug] checklistMasterData length:`, checklistMasterData.length);
+            console.log(`📊 [Web Debug] First 3 items:`, checklistMasterData.slice(0, 3).map(i => i['항목명'] || i.번호));
+
+            // 필터 옵션 업데이트
+            updateChecklistFilters();
+
+            // 테이블 렌더링
             renderChecklistItems();
-            if (!silent) showToast('이전 필터 상태를 불러왔습니다.', 'success');
+
+            showToast(`체크리스트 불러오기 완료 (${items.length}건)`, 'success');
+            return true;
+        } else {
+            throw new Error(result.message || '데이터를 불러올 수 없습니다');
+        }
+    } catch (error) {
+        console.error('❌ [Checklist Load Error]', error);
+
+        // [Fix] 시트가 없거나 찾을 수 없는 경우, 에러 대신 빈 상태로 초기화하여 앱 중단 방지
+        if (error.message && (error.message.includes('시트를 찾을 수 없습니다') || error.message.includes('Sheet not found'))) {
+            console.warn('⚠️ [Safeguard] 체크리스트 시트 미발견 -> 빈 목록으로 초기화합니다.');
+            checklistMasterData = [];
+            renderChecklistItems();
+            showToast('체크리스트 데이터가 없습니다. (시트 미발견)', 'info');
+            return true; // 성공으로 간주하여 초기 로딩 흐름 유지
         }
 
-        // 필터 옵션 업데이트 (멀티 셀렉트 초기화)
-        function updateChecklistFilters() {
-            // [Fix] 데이터가 없어도 필터 초기화 (빈 상태라도 '전체' 옵션 표시)
-            const data = checklistMasterData || [];
+        showToast('체크리스트 불러오기 실패: ' + error.message, 'error');
+        return false;
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    }
+}
 
-            // 진행단계 옵션
-            const stages = [...new Set(data.map(item => item.진행단계).filter(Boolean))].sort();
-            initMultiSelect('checklistStageFilter', stages);
 
-            // 카테고리 옵션 (번호순 정렬)
-            const categories = [...new Set(data.map(item => item.category).filter(Boolean))].sort((a, b) => {
-                // 각 카테고리의 대표 아이템(가장 작은 번호) 찾기
-                const itemA = data.find(i => i.category === a);
-                const itemB = data.find(i => i.category === b);
-                return (itemA ? parseInt(itemA.번호) : 9999) - (itemB ? parseInt(itemB.번호) : 9999);
+// [추가] 저장된 체크리스트 필터 상태 불러오기
+function loadSavedChecklistState(silent = false) {
+    if (!currentData || !currentData.checklistFilters) {
+        if (!silent) showToast('저장된 필터 상태가 없습니다.', 'info');
+        return;
+    }
+
+    const savedFilters = currentData.checklistFilters;
+
+    // 저장된 필터 적용
+    Object.keys(savedFilters).forEach(key => {
+        const values = savedFilters[key];
+        multiSelectState[key] = values;
+
+        // UI 체크박스 상태 동기화
+        const dropdown = document.getElementById(key + 'Dropdown');
+        if (dropdown) {
+            // 전체 체크박스
+            const allCb = dropdown.querySelector('input[value="all"]');
+            if (allCb) allCb.checked = values.includes('all');
+
+            // 개별 체크박스
+            dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                if (cb.value !== 'all') {
+                    cb.checked = values.includes(cb.value);
+                }
             });
-            initMultiSelect('checklistCategoryFilter', categories);
+
+            updateMultiSelectLabel(key);
+        }
+    });
+
+    // 필터 종속성 업데이트 (진행단계 -> 카테고리)
+    if (typeof updateCategoryOptionsBasedOnStage === 'function') {
+        updateCategoryOptionsBasedOnStage();
+    }
+
+    renderChecklistItems();
+    if (!silent) showToast('이전 필터 상태를 불러왔습니다.', 'success');
+}
+
+// 필터 옵션 업데이트 (멀티 셀렉트 초기화)
+function updateChecklistFilters() {
+    // [Fix] 데이터가 없어도 필터 초기화 (빈 상태라도 '전체' 옵션 표시)
+    const data = checklistMasterData || [];
+
+    // 진행단계 옵션
+    const stages = [...new Set(data.map(item => item.진행단계).filter(Boolean))].sort();
+    initMultiSelect('checklistStageFilter', stages);
+
+    // 카테고리 옵션 (번호순 정렬)
+    const categories = [...new Set(data.map(item => item.category).filter(Boolean))].sort((a, b) => {
+        // 각 카테고리의 대표 아이템(가장 작은 번호) 찾기
+        const itemA = data.find(i => i.category === a);
+        const itemB = data.find(i => i.category === b);
+        return (itemA ? parseInt(itemA.번호) : 9999) - (itemB ? parseInt(itemB.번호) : 9999);
+    });
+    initMultiSelect('checklistCategoryFilter', categories);
+}
+
+// [추가] 체크리스트 순서 저장
+async function saveChecklistOrder() {
+    if (!checklistMasterData || checklistMasterData.length === 0) {
+        showToast('저장할 체크리스트 데이터가 없습니다.', 'warning');
+        return;
+    }
+
+    if (!confirm('현재 화면에 보이는 순서대로 번호를 다시 매겨서 저장하시겠습니까?\n(기존 시트의 데이터 순서가 변경됩니다)')) {
+        return;
+    }
+
+    const btn = document.querySelector('button[onclick="saveChecklistOrder()"]');
+    const originalHTML = btn ? btn.innerHTML : '💾 순서 저장';
+
+    try {
+        if (btn) {
+            btn.innerHTML = '<span class="loading-spinner"></span> 저장 중...';
+            btn.disabled = true;
         }
 
-        // [추가] 체크리스트 순서 저장
-        async function saveChecklistOrder() {
-            if (!checklistMasterData || checklistMasterData.length === 0) {
-                showToast('저장할 체크리스트 데이터가 없습니다.', 'warning');
-                return;
-            }
+        // 1. 순서 재정렬 및 번호 갱신 (이미 drag drop 시 했지만 안전을 위해 다시 확인)
+        // 현재 checklistMasterData는 이미 화면 순서대로 정렬되어 있음
+        const sortedData = checklistMasterData.map((item, index) => ({
+            ...item,
+            '번호': index + 1
+        }));
 
-            if (!confirm('현재 화면에 보이는 순서대로 번호를 다시 매겨서 저장하시겠습니까?\n(기존 시트의 데이터 순서가 변경됩니다)')) {
-                return;
-            }
+        // 2. 서버 전송
+        const payload = {
+            action: 'updateChecklistMaster',
+            data: sortedData
+        };
 
-            const btn = document.querySelector('button[onclick="saveChecklistOrder()"]');
-            const originalHTML = btn ? btn.innerHTML : '💾 순서 저장';
+        // sendPostRequest 대신 직접 fetch 사용 (handleChecklistMasterUpdate 라우팅 확인됨)
+        // 하지만 기존 함수 재사용 권장 -> doPost가 action을 처리하므로 fetch 사용
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Apps Script POST often requires no-cors or redirect handling, but we usually use a proxy or specific setup. 
+            // Wait, standard fetch to Apps Script Web App works if we handle redirects or return JSON.
+            // Existing syncChecklistFromCloud uses GET. 
+            // Let's copy the pattern from other save functions in this file.
+            // Actually, looking at other save functions would be safer.
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: JSON.stringify(payload)
+        });
 
-            try {
-                if (btn) {
-                    btn.innerHTML = '<span class="loading-spinner"></span> 저장 중...';
-                    btn.disabled = true;
-                }
-
-                // 1. 순서 재정렬 및 번호 갱신 (이미 drag drop 시 했지만 안전을 위해 다시 확인)
-                // 현재 checklistMasterData는 이미 화면 순서대로 정렬되어 있음
-                const sortedData = checklistMasterData.map((item, index) => ({
-                    ...item,
-                    '번호': index + 1
-                }));
-
-                // 2. 서버 전송
-                const payload = {
-                    action: 'updateChecklistMaster',
-                    data: sortedData
-                };
-
-                // sendPostRequest 대신 직접 fetch 사용 (handleChecklistMasterUpdate 라우팅 확인됨)
-                // 하지만 기존 함수 재사용 권장 -> doPost가 action을 처리하므로 fetch 사용
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Apps Script POST often requires no-cors or redirect handling, but we usually use a proxy or specific setup. 
-                    // Wait, standard fetch to Apps Script Web App works if we handle redirects or return JSON.
-                    // Existing syncChecklistFromCloud uses GET. 
-                    // Let's copy the pattern from other save functions in this file.
-                    // Actually, looking at other save functions would be safer.
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: JSON.stringify(payload)
-                });
-
-                // Apps Script 'no-cors' issue means we can't read response directly if it redirects.
-                // However, updated_apps_script.js returns JSON.
-                // Let's trust the deployment.
-                if (response.ok || response.type === 'opaque') {
-                    // 3. 로컬 데이터 갱신
-                    checklistMasterData = sortedData;
-                    renderChecklistItems();
-                    showToast('체크리스트 순서가 저장되었습니다.', 'success');
-                } else {
-                    throw new Error('Server response not ok');
-                }
-
-                // * Fetch with Apps Script POST can be tricky with CORS. 
-                // Let's use the text output directly if possible or the typical 'fetch' pattern used in this project.
-                // Re-reading 'syncChecklistFromCloud' -> it uses GET.
-                // Re-reading 'saveCustomers' -> it likely uses POST.
-
-            } catch (error) {
-                console.error('Save Order Error:', error);
-
-                // Fallback: If fetch failed, it might still have succeeded on server if no-cors.
-                // But to be sure, we can also try 'saveChecklistMaster' action if we added it? Yes we did.
-
-                showToast('순서 저장 요청을 보냈습니다. (새로고침하여 확인해보세요)', 'info');
-            } finally {
-                if (btn) {
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                }
-            }
+        // Apps Script 'no-cors' issue means we can't read response directly if it redirects.
+        // However, updated_apps_script.js returns JSON.
+        // Let's trust the deployment.
+        if (response.ok || response.type === 'opaque') {
+            // 3. 로컬 데이터 갱신
+            checklistMasterData = sortedData;
+            renderChecklistItems();
+            showToast('체크리스트 순서가 저장되었습니다.', 'success');
+        } else {
+            throw new Error('Server response not ok');
         }
 
-        // [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
-        function updateCategoryOptionsBasedOnStage() {
-            const selectedStages = multiSelectState['checklistStageFilter'];
-            console.log('[Filter Logic] Selected Stages:', selectedStages);
+        // * Fetch with Apps Script POST can be tricky with CORS. 
+        // Let's use the text output directly if possible or the typical 'fetch' pattern used in this project.
+        // Re-reading 'syncChecklistFromCloud' -> it uses GET.
+        // Re-reading 'saveCustomers' -> it likely uses POST.
 
-            // [Fix] 데이터가 없어도 진행 (빈 상태라도 필터 리셋을 위해)
-            const data = checklistMasterData || [];
+    } catch (error) {
+        console.error('Save Order Error:', error);
 
-            if (data.length === 0) {
-                console.warn('[Filter Logic] No master data available for filtering (Proceeding with empty)');
-            }
+        // Fallback: If fetch failed, it might still have succeeded on server if no-cors.
+        // But to be sure, we can also try 'saveChecklistMaster' action if we added it? Yes we did.
 
-            let validCategories = [];
-
-            if (selectedStages.includes('all') || selectedStages.length === 0) {
-                // 전체 선택 시 -> 모든 카테고리 표시
-                validCategories = [...new Set(data.map(item => (item.category || '').trim()).filter(Boolean))].sort();
-            } else {
-                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
-                const filteredItems = data.filter(item => {
-                    const itemStage = (item.진행단계 || '').trim();
-                    // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
-                    // To be safe, we rely on exact values from options. 
-                    // But here we just used item.진행단계 to build options, so it should match.
-                    return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
-                });
-                validCategories = [...new Set(filteredItems.map(item => (item.category || '').trim()).filter(Boolean))].sort();
-            }
-
-            console.log('[Filter Logic] Valid Categories:', validCategories);
-
-            // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
-            const currentCategoryState = multiSelectState['checklistCategoryFilter'];
-
-            if (!currentCategoryState.includes('all')) {
-                const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
-                // 하나도 없으면 'all'로 리셋
-                multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
-            } else {
-                // If it was 'all', keep it 'all' unless validCategories is empty? 
-                // 'all' is always valid if validCategories has items.
-            }
-
-            // 카테고리 필터 옵션 재생성
-            initMultiSelect('checklistCategoryFilter', validCategories);
+        showToast('순서 저장 요청을 보냈습니다. (새로고침하여 확인해보세요)', 'info');
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
         }
+    }
+}
 
-        // 체크리스트 아이템 렌더링
-        function renderChecklistItems() {
-            if (!checklistMasterData || checklistMasterData.length === 0) {
-                document.getElementById('checklistTableBody').innerHTML = `
+// [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
+function updateCategoryOptionsBasedOnStage() {
+    const selectedStages = multiSelectState['checklistStageFilter'];
+    console.log('[Filter Logic] Selected Stages:', selectedStages);
+
+    // [Fix] 데이터가 없어도 진행 (빈 상태라도 필터 리셋을 위해)
+    const data = checklistMasterData || [];
+
+    if (data.length === 0) {
+        console.warn('[Filter Logic] No master data available for filtering (Proceeding with empty)');
+    }
+
+    let validCategories = [];
+
+    if (selectedStages.includes('all') || selectedStages.length === 0) {
+        // 전체 선택 시 -> 모든 카테고리 표시
+        validCategories = [...new Set(data.map(item => (item.category || '').trim()).filter(Boolean))].sort();
+    } else {
+        // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
+        const filteredItems = data.filter(item => {
+            const itemStage = (item.진행단계 || '').trim();
+            // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
+            // To be safe, we rely on exact values from options. 
+            // But here we just used item.진행단계 to build options, so it should match.
+            return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
+        });
+        validCategories = [...new Set(filteredItems.map(item => (item.category || '').trim()).filter(Boolean))].sort();
+    }
+
+    console.log('[Filter Logic] Valid Categories:', validCategories);
+
+    // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
+    const currentCategoryState = multiSelectState['checklistCategoryFilter'];
+
+    if (!currentCategoryState.includes('all')) {
+        const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
+        // 하나도 없으면 'all'로 리셋
+        multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
+    } else {
+        // If it was 'all', keep it 'all' unless validCategories is empty? 
+        // 'all' is always valid if validCategories has items.
+    }
+
+    // 카테고리 필터 옵션 재생성
+    initMultiSelect('checklistCategoryFilter', validCategories);
+}
+
+// 체크리스트 아이템 렌더링
+function renderChecklistItems() {
+    if (!checklistMasterData || checklistMasterData.length === 0) {
+        document.getElementById('checklistTableBody').innerHTML = `
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 40px; color: #86868b;">
                             동기화 버튼을 클릭하여 체크리스트를 불러오세요.
                         </td>
                     </tr>`;
-                return;
-            }
+        return;
+    }
 
-            // 현재 고객의 체크 상태 가져오기
-            const customerChecklistData = getCurrentCustomerChecklistData();
-            console.log('🔍 [Web Render] Customer ID:', currentCustomerId);
-            console.log('🔍 [Web Render] customerChecklistData:', customerChecklistData);
-            console.log('🔍 [Web Render] customerChecklistData keys:', Object.keys(customerChecklistData));
-            console.log('🔍 [Web Render] Sample values:', Object.entries(customerChecklistData).slice(0, 3));
+    // 현재 고객의 체크 상태 가져오기
+    const customerChecklistData = getCurrentCustomerChecklistData();
+    console.log('🔍 [Web Render] Customer ID:', currentCustomerId);
+    console.log('🔍 [Web Render] customerChecklistData:', customerChecklistData);
+    console.log('🔍 [Web Render] customerChecklistData keys:', Object.keys(customerChecklistData));
+    console.log('🔍 [Web Render] Sample values:', Object.entries(customerChecklistData).slice(0, 3));
 
-            // 필터 적용 (멀티 셀렉트 지원)
-            let stageFilter = ['all'];
-            let categoryFilter = ['all'];
+    // 필터 적용 (멀티 셀렉트 지원)
+    let stageFilter = ['all'];
+    let categoryFilter = ['all'];
 
-            if (typeof getMultiSelectValues === 'function') {
-                stageFilter = getMultiSelectValues('checklistStageFilter');
-                categoryFilter = getMultiSelectValues('checklistCategoryFilter');
-            }
+    if (typeof getMultiSelectValues === 'function') {
+        stageFilter = getMultiSelectValues('checklistStageFilter');
+        categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+    }
 
-            // [CRITICAL] 고객이 선택한 항목만 표시 (checklistData에 있는 항목 번호)
-            const savedItemNumbers = Object.keys(customerChecklistData || {});
-            console.log('📊 [Web Debug] Customer selected items:', savedItemNumbers.length, 'items');
-            console.log('📊 [Web Debug] Selected item numbers:', savedItemNumbers);
+    // [CRITICAL] 고객이 선택한 항목만 표시 (checklistData에 있는 항목 번호)
+    const savedItemNumbers = Object.keys(customerChecklistData || {});
+    console.log('📊 [Web Debug] Customer selected items:', savedItemNumbers.length, 'items');
+    console.log('📊 [Web Debug] Selected item numbers:', savedItemNumbers);
 
-            let filteredData = checklistMasterData.filter(item => {
-                // 1. [CRITICAL] 고객이 선택한 항목만 표시
-                if (!savedItemNumbers.includes(String(item.번호))) return false;
+    let filteredData = checklistMasterData.filter(item => {
+        // 1. [CRITICAL] 고객이 선택한 항목만 표시
+        if (!savedItemNumbers.includes(String(item.번호))) return false;
 
-                // 2. 진행단계 필터
-                if (!stageFilter.includes('all')) {
-                    if (!stageFilter.includes(item.진행단계 || '')) return false;
-                }
-                // 3. 카테고리 필터
-                if (!categoryFilter.includes('all')) {
-                    if (!categoryFilter.includes(item.category || '')) return false;
-                }
+        // 2. 진행단계 필터
+        if (!stageFilter.includes('all')) {
+            if (!stageFilter.includes(item.진행단계 || '')) return false;
+        }
+        // 3. 카테고리 필터
+        if (!categoryFilter.includes('all')) {
+            if (!categoryFilter.includes(item.category || '')) return false;
+        }
 
-                return true;
-            });
+        return true;
+    });
 
-            // 테이블 렌더링
-            const tbody = document.getElementById('checklistTableBody');
+    // 테이블 렌더링
+    const tbody = document.getElementById('checklistTableBody');
 
-            // 카테고리별 노션 색상 매핑
-            function getCategoryColor(category) {
-                if (!category) return { bg: '#F1F1EF', text: '#37352F' }; // 기본
+    // 카테고리별 노션 색상 매핑
+    function getCategoryColor(category) {
+        if (!category) return { bg: '#F1F1EF', text: '#37352F' }; // 기본
 
-                const c = category.trim();
+        const c = category.trim();
 
-                // Notion Color Palette (Standard)
-                const palette = [
-                    { bg: '#E3E2E0', text: '#32302C' }, // Gray
-                    { bg: '#EEE0DA', text: '#442A1E' }, // Brown
-                    { bg: '#FADEC9', text: '#49290E' }, // Orange
-                    { bg: '#FDECC8', text: '#402C1B' }, // Yellow
-                    { bg: '#DBEDDB', text: '#1C3829' }, // Green
-                    { bg: '#D3E5EF', text: '#183347' }, // Blue
-                    { bg: '#E8DEEE', text: '#412454' }, // Purple
-                    { bg: '#F5E0E9', text: '#4C2337' }, // Pink
-                    { bg: '#FFE2DD', text: '#5D1715' }, // Red
-                ];
+        // Notion Color Palette (Standard)
+        const palette = [
+            { bg: '#E3E2E0', text: '#32302C' }, // Gray
+            { bg: '#EEE0DA', text: '#442A1E' }, // Brown
+            { bg: '#FADEC9', text: '#49290E' }, // Orange
+            { bg: '#FDECC8', text: '#402C1B' }, // Yellow
+            { bg: '#DBEDDB', text: '#1C3829' }, // Green
+            { bg: '#D3E5EF', text: '#183347' }, // Blue
+            { bg: '#E8DEEE', text: '#412454' }, // Purple
+            { bg: '#F5E0E9', text: '#4C2337' }, // Pink
+            { bg: '#FFE2DD', text: '#5D1715' }, // Red
+        ];
 
-                // [Optional] 주요 키워드 고정 매핑
-                if (c.includes('철거')) return palette[8]; // Red
-                if (c.includes('설비') || c.includes('수도')) return palette[5]; // Blue
-                if (c.includes('전기') || c.includes('조명')) return palette[3]; // Yellow
-                if (c.includes('목공')) return palette[2]; // Orange
-                if (c.includes('타일') || c.includes('욕실')) return palette[4]; // Green
-                if (c.includes('도배') || c.includes('바닥') || c.includes('마루')) return palette[1]; // Brown
-                if (c.includes('도장') || c.includes('필름') || c.includes('페인트')) return palette[7]; // Pink
-                if (c.includes('가구') || c.includes('싱크') || c.includes('주방')) return palette[6]; // Purple
-                if (c.includes('공통') || c.includes('가설') || c.includes('준공') || c.includes('마감')) return palette[0]; // Gray
+        // [Optional] 주요 키워드 고정 매핑
+        if (c.includes('철거')) return palette[8]; // Red
+        if (c.includes('설비') || c.includes('수도')) return palette[5]; // Blue
+        if (c.includes('전기') || c.includes('조명')) return palette[3]; // Yellow
+        if (c.includes('목공')) return palette[2]; // Orange
+        if (c.includes('타일') || c.includes('욕실')) return palette[4]; // Green
+        if (c.includes('도배') || c.includes('바닥') || c.includes('마루')) return palette[1]; // Brown
+        if (c.includes('도장') || c.includes('필름') || c.includes('페인트')) return palette[7]; // Pink
+        if (c.includes('가구') || c.includes('싱크') || c.includes('주방')) return palette[6]; // Purple
+        if (c.includes('공통') || c.includes('가설') || c.includes('준공') || c.includes('마감')) return palette[0]; // Gray
 
-                // 그 외: 문자열 해시로 자동 색상 선택 (모든 카테고리에 색상 적용 보장)
-                let hash = 0;
-                for (let i = 0; i < c.length; i++) {
-                    hash = c.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const index = Math.abs(hash) % palette.length;
-                return palette[index];
-            }
+        // 그 외: 문자열 해시로 자동 색상 선택 (모든 카테고리에 색상 적용 보장)
+        let hash = 0;
+        for (let i = 0; i < c.length; i++) {
+            hash = c.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % palette.length;
+        return palette[index];
+    }
 
-            tbody.innerHTML = filteredData.map((item, index) => {
-                const isChecked = customerChecklistData[item.번호] || false;
-                if (index === 0) {
-                    console.log('🔍 [Web Render] First item #' + item.번호 + ' isChecked:', isChecked, 'value:', customerChecklistData[item.번호]);
-                }
-                const categoryColor = getCategoryColor(item.category);
-                return `
+    tbody.innerHTML = filteredData.map((item, index) => {
+        const isChecked = customerChecklistData[item.번호] || false;
+        if (index === 0) {
+            console.log('🔍 [Web Render] First item #' + item.번호 + ' isChecked:', isChecked, 'value:', customerChecklistData[item.번호]);
+        }
+        const categoryColor = getCategoryColor(item.category);
+        return `
                     <tr draggable="true" 
                         ondragstart="handleChecklistDragStart(event, ${index})" 
                         ondragover="handleChecklistDragOver(event)" 
@@ -9565,354 +9565,354 @@
                         </td>
                     </tr>
                 `;
-            }).join('');
+    }).join('');
 
-            // 통계 업데이트
-            updateChecklistStats();
+    // 통계 업데이트
+    updateChecklistStats();
+}
+
+// 현재 고객의 체크리스트 데이터 가져오기
+function getCurrentCustomerChecklistData() {
+    if (!currentCustomerId) return {};
+
+    const customer = customers.find(c => c.customerId === currentCustomerId);
+    if (!customer) return {};
+
+    return customer.checklistData || {};
+}
+
+// 체크리스트 아이템 토글
+function toggleChecklistItem(itemNumber) {
+    if (!currentCustomerId) {
+        showToast('고객을 먼저 선택하세요', 'error');
+        return;
+    }
+
+    const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+    if (customerIndex === -1) return;
+
+    // checklistData 초기화
+    if (!customers[customerIndex].checklistData) {
+        customers[customerIndex].checklistData = {};
+    }
+
+    // 체크 상태 토글
+    const currentState = customers[customerIndex].checklistData[itemNumber] || false;
+    const newState = !currentState;
+    customers[customerIndex].checklistData[itemNumber] = newState;
+
+    // [FIX] currentData에도 즉시 반영 (저장 버튼 클릭 시 덮어쓰기 방지)
+    if (!currentData.checklistData) currentData.checklistData = {};
+    currentData.checklistData[itemNumber] = newState;
+
+    // 저장
+    saveCustomers();
+
+    // 다시 렌더링
+    renderChecklistItems();
+
+    showToast(currentState ? '체크 해제되었습니다' : '체크되었습니다', 'success');
+}
+
+// [수정] 체크리스트 아이템 삭제 - 현재 고객의 항목만 제거
+async function deleteChecklistItem(itemNumber) {
+    if (!currentCustomerId) {
+        showToast('고객을 먼저 선택하세요', 'error');
+        return;
+    }
+
+    // 현재 고객의 checklistData에서 해당 항목 번호 제거
+    const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+    if (customerIndex !== -1 && customers[customerIndex].checklistData) {
+        delete customers[customerIndex].checklistData[itemNumber];
+        console.log('🗑️ [Web] Removed item', itemNumber, 'from customer', currentCustomerId);
+    }
+
+    // currentData에도 반영
+    if (currentData.checklistData) {
+        delete currentData.checklistData[itemNumber];
+    }
+
+    // Google Sheets에 저장
+    await saveCustomers();
+
+    // UI 갱신
+    renderChecklistItems();
+
+    showToast('항목이 제거되었습니다.', 'success');
+}
+
+// [수정] 필터 기반 체크리스트 항목 일괄 추가 기능
+async function showAddChecklistItemModal() {
+    if (!currentData || !currentData.checklistData) {
+        showToast('고객을 먼저 선택해주세요.', 'warning');
+        return;
+    }
+
+    if (!checklistMasterData || checklistMasterData.length === 0) {
+        showToast('마스터 체크리스트를 먼저 불러오세요. (🔄 DB 불러오기)', 'warning');
+        return;
+    }
+
+    // 현재 필터 상태 가져오기
+    let stageFilter = ['all'];
+    let categoryFilter = ['all'];
+
+    if (typeof getMultiSelectValues === 'function') {
+        stageFilter = getMultiSelectValues('checklistStageFilter');
+        categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+    }
+
+    // 현재 고객이 이미 선택한 항목 번호
+    const selectedItemNumbers = Object.keys(currentData.checklistData);
+
+    // 필터링된 항목 중 아직 선택하지 않은 항목
+    const availableItems = checklistMasterData.filter(item => {
+        // 이미 선택한 항목 제외
+        if (selectedItemNumbers.includes(String(item.번호))) return false;
+
+        // 진행단계 필터
+        if (!stageFilter.includes('all')) {
+            if (!stageFilter.includes(item.진행단계 || '')) return false;
         }
 
-        // 현재 고객의 체크리스트 데이터 가져오기
-        function getCurrentCustomerChecklistData() {
-            if (!currentCustomerId) return {};
-
-            const customer = customers.find(c => c.customerId === currentCustomerId);
-            if (!customer) return {};
-
-            return customer.checklistData || {};
+        // 카테고리 필터
+        if (!categoryFilter.includes('all')) {
+            if (!categoryFilter.includes(item.category || '')) return false;
         }
 
-        // 체크리스트 아이템 토글
-        function toggleChecklistItem(itemNumber) {
-            if (!currentCustomerId) {
-                showToast('고객을 먼저 선택하세요', 'error');
-                return;
-            }
+        return true;
+    });
 
-            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-            if (customerIndex === -1) return;
+    if (availableItems.length === 0) {
+        showToast('현재 필터 조건에 추가할 항목이 없습니다.', 'info');
+        return;
+    }
 
-            // checklistData 초기화
+    // 일괄 추가 (confirm 제거)
+    let addedCount = 0;
+    availableItems.forEach(item => {
+        if (!currentData.checklistData[item.번호]) {
+            currentData.checklistData[item.번호] = false;
+            addedCount++;
+        }
+    });
+
+    // 로컬 customers 배열에도 반영
+    if (currentCustomerId) {
+        const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+        if (customerIndex !== -1) {
             if (!customers[customerIndex].checklistData) {
                 customers[customerIndex].checklistData = {};
             }
-
-            // 체크 상태 토글
-            const currentState = customers[customerIndex].checklistData[itemNumber] || false;
-            const newState = !currentState;
-            customers[customerIndex].checklistData[itemNumber] = newState;
-
-            // [FIX] currentData에도 즉시 반영 (저장 버튼 클릭 시 덮어쓰기 방지)
-            if (!currentData.checklistData) currentData.checklistData = {};
-            currentData.checklistData[itemNumber] = newState;
-
-            // 저장
-            saveCustomers();
-
-            // 다시 렌더링
-            renderChecklistItems();
-
-            showToast(currentState ? '체크 해제되었습니다' : '체크되었습니다', 'success');
-        }
-
-        // [수정] 체크리스트 아이템 삭제 - 현재 고객의 항목만 제거
-        async function deleteChecklistItem(itemNumber) {
-            if (!currentCustomerId) {
-                showToast('고객을 먼저 선택하세요', 'error');
-                return;
-            }
-
-            // 현재 고객의 checklistData에서 해당 항목 번호 제거
-            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-            if (customerIndex !== -1 && customers[customerIndex].checklistData) {
-                delete customers[customerIndex].checklistData[itemNumber];
-                console.log('🗑️ [Web] Removed item', itemNumber, 'from customer', currentCustomerId);
-            }
-
-            // currentData에도 반영
-            if (currentData.checklistData) {
-                delete currentData.checklistData[itemNumber];
-            }
-
-            // Google Sheets에 저장
-            await saveCustomers();
-
-            // UI 갱신
-            renderChecklistItems();
-
-            showToast('항목이 제거되었습니다.', 'success');
-        }
-
-        // [수정] 필터 기반 체크리스트 항목 일괄 추가 기능
-        async function showAddChecklistItemModal() {
-            if (!currentData || !currentData.checklistData) {
-                showToast('고객을 먼저 선택해주세요.', 'warning');
-                return;
-            }
-
-            if (!checklistMasterData || checklistMasterData.length === 0) {
-                showToast('마스터 체크리스트를 먼저 불러오세요. (🔄 DB 불러오기)', 'warning');
-                return;
-            }
-
-            // 현재 필터 상태 가져오기
-            let stageFilter = ['all'];
-            let categoryFilter = ['all'];
-
-            if (typeof getMultiSelectValues === 'function') {
-                stageFilter = getMultiSelectValues('checklistStageFilter');
-                categoryFilter = getMultiSelectValues('checklistCategoryFilter');
-            }
-
-            // 현재 고객이 이미 선택한 항목 번호
-            const selectedItemNumbers = Object.keys(currentData.checklistData);
-
-            // 필터링된 항목 중 아직 선택하지 않은 항목
-            const availableItems = checklistMasterData.filter(item => {
-                // 이미 선택한 항목 제외
-                if (selectedItemNumbers.includes(String(item.번호))) return false;
-
-                // 진행단계 필터
-                if (!stageFilter.includes('all')) {
-                    if (!stageFilter.includes(item.진행단계 || '')) return false;
-                }
-
-                // 카테고리 필터
-                if (!categoryFilter.includes('all')) {
-                    if (!categoryFilter.includes(item.category || '')) return false;
-                }
-
-                return true;
-            });
-
-            if (availableItems.length === 0) {
-                showToast('현재 필터 조건에 추가할 항목이 없습니다.', 'info');
-                return;
-            }
-
-            // 일괄 추가 (confirm 제거)
-            let addedCount = 0;
             availableItems.forEach(item => {
-                if (!currentData.checklistData[item.번호]) {
-                    currentData.checklistData[item.번호] = false;
-                    addedCount++;
+                if (!customers[customerIndex].checklistData[item.번호]) {
+                    customers[customerIndex].checklistData[item.번호] = false;
                 }
             });
+        }
+    }
 
-            // 로컬 customers 배열에도 반영
-            if (currentCustomerId) {
-                const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-                if (customerIndex !== -1) {
-                    if (!customers[customerIndex].checklistData) {
-                        customers[customerIndex].checklistData = {};
-                    }
-                    availableItems.forEach(item => {
-                        if (!customers[customerIndex].checklistData[item.번호]) {
-                            customers[customerIndex].checklistData[item.번호] = false;
-                        }
-                    });
+    console.log('✅ [Web] Added', addedCount, 'items to customer checklist');
+
+    // Google Sheets에 저장
+    await saveCustomers();
+
+    // UI 갱신
+    renderChecklistItems();
+
+    showToast(`${addedCount}개 항목이 추가되었습니다.`, 'success');
+}
+
+// [제거됨] closeAddChecklistModal() - 더 이상 모달을 사용하지 않음
+
+// [제거됨] addChecklistItemToCustomer() - showAddChecklistItemModal()에서 일괄 처리
+
+async function addChecklistItemToCustomer_DEPRECATED(itemNumber) {
+    // 이 함수는 더 이상 사용되지 않음 (필터 기반 일괄 추가로 변경)
+    if (!currentData || !currentData.checklistData) {
+        showToast('고객 데이터가 없습니다.', 'warning');
+        closeAddChecklistModal();
+        return;
+    }
+
+    // 마스터 데이터에서 해당 항목 찾기
+    const item = checklistMasterData.find(i => i.번호 === itemNumber);
+    if (!item) {
+        showToast('항목을 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    // 고객의 체크리스트에 추가 (기본값: 체크 안됨, boolean 저장)
+    currentData.checklistData[itemNumber] = false;
+
+    // 로컬 customers 배열에도 반영
+    if (currentCustomerId) {
+        const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+        if (customerIndex !== -1) {
+            if (!customers[customerIndex].checklistData) {
+                customers[customerIndex].checklistData = {};
+            }
+            customers[customerIndex].checklistData[itemNumber] = false;
+        }
+    }
+
+    console.log('✅ [Web] Added item', itemNumber, 'to customer checklist');
+
+    // Google Sheets에 저장
+    await saveCustomers();
+
+    // UI 갱신
+    renderChecklistItems();
+
+    // 모달 닫기
+    closeAddChecklistModal();
+
+    showToast(`"${item.항목}" 항목이 추가되었습니다.`, 'success');
+}
+
+// [추가] 체크리스트 드래그 앤 드롭 기능
+let checklistDraggedIndex = null;
+let checklistFilteredData = []; // 필터링된 데이터 저장용
+
+function handleChecklistDragStart(e, index) {
+    checklistDraggedIndex = index;
+    e.target.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+
+    // 현재 필터링된 데이터 저장
+    const stageFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistStageFilter') : ['all'];
+    const categoryFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistCategoryFilter') : ['all'];
+
+    checklistFilteredData = checklistMasterData.filter(item => {
+        if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
+        if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
+        return true;
+    });
+}
+
+function handleChecklistDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const row = e.target.closest('tr');
+    if (row) {
+        row.style.borderTop = '2px solid #0071e3';
+    }
+}
+
+function handleChecklistDrop(e, targetIndex) {
+    e.preventDefault();
+    if (checklistDraggedIndex === null || checklistDraggedIndex === targetIndex) return;
+
+    // 필터된 데이터에서 실제 마스터 데이터의 인덱스 찾기
+    const draggedItem = checklistFilteredData[checklistDraggedIndex];
+    const targetItem = checklistFilteredData[targetIndex];
+
+    const draggedMasterIndex = checklistMasterData.findIndex(item => item.번호 === draggedItem.번호);
+    const targetMasterIndex = checklistMasterData.findIndex(item => item.번호 === targetItem.번호);
+
+    if (draggedMasterIndex === -1 || targetMasterIndex === -1) return;
+
+    // 마스터 데이터에서 순서 변경
+    const [removed] = checklistMasterData.splice(draggedMasterIndex, 1);
+    checklistMasterData.splice(targetMasterIndex, 0, removed);
+
+    // [추가] 번호 재정렬 (1, 2, 3, 4, 5... 순서로)
+    checklistMasterData.forEach((item, idx) => {
+        item.번호 = idx + 1;
+    });
+
+    // 로컬 스토리지 업데이트 (Phase 2: 금지)
+
+
+    // UI 갱신
+    renderChecklistItems();
+    showToast('순서가 변경되었습니다.', 'success');
+}
+
+function handleChecklistDragEnd(e) {
+    e.target.style.opacity = '1';
+    checklistDraggedIndex = null;
+    // 모든 행의 border 초기화
+    document.querySelectorAll('#checklistTableBody tr').forEach(row => {
+        row.style.borderTop = '';
+    });
+}
+
+// 체크리스트 통계 업데이트
+function updateChecklistStats() {
+    // 현재 필터 적용하여 보이는 항목만 계산
+    let stageFilter = ['all'];
+    let categoryFilter = ['all'];
+
+    if (typeof getMultiSelectValues === 'function') {
+        stageFilter = getMultiSelectValues('checklistStageFilter');
+        categoryFilter = getMultiSelectValues('checklistCategoryFilter');
+    }
+
+    const filteredData = checklistMasterData.filter(item => {
+        if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
+        if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
+        return true;
+    });
+
+    const total = filteredData.length; // 필터된 항목 수
+    const customerChecklistData = getCurrentCustomerChecklistData();
+
+    // 필터된 항목 중 체크된 것만 카운트
+    const completed = filteredData.filter(item => customerChecklistData[item.번호] === true).length;
+    const inProgress = total - completed;
+    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    document.getElementById('checklistTotalCount').textContent = total;
+    document.getElementById('checklistCompletedCount').textContent = completed;
+    document.getElementById('checklistInProgressCount').textContent = inProgress;
+    document.getElementById('checklistProgressRate').textContent = rate + '%';
+}
+
+// 체크리스트 인쇄
+function printChecklist() {
+    const element = document.querySelector('#panel-checklist .document-wrapper');
+    if (!element) {
+        showToast('체크리스트 영역을 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    // Clone element
+    const clonedElement = element.cloneNode(true);
+
+    // Remove elements marked as no-print, buttons, and emoji icons
+    clonedElement.querySelectorAll('.no-print, .btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
+
+    // Checkbox/Input handling
+    const originalInputs = element.querySelectorAll('input, select, textarea');
+    const clonedInputs = clonedElement.querySelectorAll('input, select, textarea');
+
+    originalInputs.forEach((inp, i) => {
+        if (clonedInputs[i]) {
+            if (inp.type === 'checkbox' || inp.type === 'radio') {
+                // Replace checkbox with symbol
+                const span = document.createElement('span');
+                span.textContent = inp.checked ? '☑' : '☐';
+                span.style.cssText = 'font-weight:bold; font-size:14px; margin-right:5px;';
+                if (clonedInputs[i].parentNode) {
+                    clonedInputs[i].parentNode.replaceChild(span, clonedInputs[i]);
                 }
-            }
-
-            console.log('✅ [Web] Added', addedCount, 'items to customer checklist');
-
-            // Google Sheets에 저장
-            await saveCustomers();
-
-            // UI 갱신
-            renderChecklistItems();
-
-            showToast(`${addedCount}개 항목이 추가되었습니다.`, 'success');
-        }
-
-        // [제거됨] closeAddChecklistModal() - 더 이상 모달을 사용하지 않음
-
-        // [제거됨] addChecklistItemToCustomer() - showAddChecklistItemModal()에서 일괄 처리
-
-        async function addChecklistItemToCustomer_DEPRECATED(itemNumber) {
-            // 이 함수는 더 이상 사용되지 않음 (필터 기반 일괄 추가로 변경)
-            if (!currentData || !currentData.checklistData) {
-                showToast('고객 데이터가 없습니다.', 'warning');
-                closeAddChecklistModal();
-                return;
-            }
-
-            // 마스터 데이터에서 해당 항목 찾기
-            const item = checklistMasterData.find(i => i.번호 === itemNumber);
-            if (!item) {
-                showToast('항목을 찾을 수 없습니다.', 'error');
-                return;
-            }
-
-            // 고객의 체크리스트에 추가 (기본값: 체크 안됨, boolean 저장)
-            currentData.checklistData[itemNumber] = false;
-
-            // 로컬 customers 배열에도 반영
-            if (currentCustomerId) {
-                const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
-                if (customerIndex !== -1) {
-                    if (!customers[customerIndex].checklistData) {
-                        customers[customerIndex].checklistData = {};
-                    }
-                    customers[customerIndex].checklistData[itemNumber] = false;
-                }
-            }
-
-            console.log('✅ [Web] Added item', itemNumber, 'to customer checklist');
-
-            // Google Sheets에 저장
-            await saveCustomers();
-
-            // UI 갱신
-            renderChecklistItems();
-
-            // 모달 닫기
-            closeAddChecklistModal();
-
-            showToast(`"${item.항목}" 항목이 추가되었습니다.`, 'success');
-        }
-
-        // [추가] 체크리스트 드래그 앤 드롭 기능
-        let checklistDraggedIndex = null;
-        let checklistFilteredData = []; // 필터링된 데이터 저장용
-
-        function handleChecklistDragStart(e, index) {
-            checklistDraggedIndex = index;
-            e.target.style.opacity = '0.4';
-            e.dataTransfer.effectAllowed = 'move';
-
-            // 현재 필터링된 데이터 저장
-            const stageFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistStageFilter') : ['all'];
-            const categoryFilter = typeof getMultiSelectValues === 'function' ? getMultiSelectValues('checklistCategoryFilter') : ['all'];
-
-            checklistFilteredData = checklistMasterData.filter(item => {
-                if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
-                return true;
-            });
-        }
-
-        function handleChecklistDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const row = e.target.closest('tr');
-            if (row) {
-                row.style.borderTop = '2px solid #0071e3';
+            } else if (inp.tagName === 'SELECT') {
+                const span = document.createElement('span');
+                span.textContent = inp.options[inp.selectedIndex]?.text || '';
+                if (clonedInputs[i].parentNode) clonedInputs[i].parentNode.replaceChild(span, clonedInputs[i]);
+            } else {
+                const span = document.createElement('span');
+                span.textContent = inp.value;
+                if (clonedInputs[i].parentNode) clonedInputs[i].parentNode.replaceChild(span, clonedInputs[i]);
             }
         }
+    });
 
-        function handleChecklistDrop(e, targetIndex) {
-            e.preventDefault();
-            if (checklistDraggedIndex === null || checklistDraggedIndex === targetIndex) return;
-
-            // 필터된 데이터에서 실제 마스터 데이터의 인덱스 찾기
-            const draggedItem = checklistFilteredData[checklistDraggedIndex];
-            const targetItem = checklistFilteredData[targetIndex];
-
-            const draggedMasterIndex = checklistMasterData.findIndex(item => item.번호 === draggedItem.번호);
-            const targetMasterIndex = checklistMasterData.findIndex(item => item.번호 === targetItem.번호);
-
-            if (draggedMasterIndex === -1 || targetMasterIndex === -1) return;
-
-            // 마스터 데이터에서 순서 변경
-            const [removed] = checklistMasterData.splice(draggedMasterIndex, 1);
-            checklistMasterData.splice(targetMasterIndex, 0, removed);
-
-            // [추가] 번호 재정렬 (1, 2, 3, 4, 5... 순서로)
-            checklistMasterData.forEach((item, idx) => {
-                item.번호 = idx + 1;
-            });
-
-            // 로컬 스토리지 업데이트 (Phase 2: 금지)
-
-
-            // UI 갱신
-            renderChecklistItems();
-            showToast('순서가 변경되었습니다.', 'success');
-        }
-
-        function handleChecklistDragEnd(e) {
-            e.target.style.opacity = '1';
-            checklistDraggedIndex = null;
-            // 모든 행의 border 초기화
-            document.querySelectorAll('#checklistTableBody tr').forEach(row => {
-                row.style.borderTop = '';
-            });
-        }
-
-        // 체크리스트 통계 업데이트
-        function updateChecklistStats() {
-            // 현재 필터 적용하여 보이는 항목만 계산
-            let stageFilter = ['all'];
-            let categoryFilter = ['all'];
-
-            if (typeof getMultiSelectValues === 'function') {
-                stageFilter = getMultiSelectValues('checklistStageFilter');
-                categoryFilter = getMultiSelectValues('checklistCategoryFilter');
-            }
-
-            const filteredData = checklistMasterData.filter(item => {
-                if (!stageFilter.includes('all') && !stageFilter.includes(item.진행단계 || '')) return false;
-                if (!categoryFilter.includes('all') && !categoryFilter.includes(item.category || '')) return false;
-                return true;
-            });
-
-            const total = filteredData.length; // 필터된 항목 수
-            const customerChecklistData = getCurrentCustomerChecklistData();
-
-            // 필터된 항목 중 체크된 것만 카운트
-            const completed = filteredData.filter(item => customerChecklistData[item.번호] === true).length;
-            const inProgress = total - completed;
-            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-            document.getElementById('checklistTotalCount').textContent = total;
-            document.getElementById('checklistCompletedCount').textContent = completed;
-            document.getElementById('checklistInProgressCount').textContent = inProgress;
-            document.getElementById('checklistProgressRate').textContent = rate + '%';
-        }
-
-        // 체크리스트 인쇄
-        function printChecklist() {
-            const element = document.querySelector('#panel-checklist .document-wrapper');
-            if (!element) {
-                showToast('체크리스트 영역을 찾을 수 없습니다.', 'error');
-                return;
-            }
-
-            // Clone element
-            const clonedElement = element.cloneNode(true);
-
-            // Remove elements marked as no-print, buttons, and emoji icons
-            clonedElement.querySelectorAll('.no-print, .btn, .notion-export-btn, .emoji-icon, button').forEach(el => el.remove());
-
-            // Checkbox/Input handling
-            const originalInputs = element.querySelectorAll('input, select, textarea');
-            const clonedInputs = clonedElement.querySelectorAll('input, select, textarea');
-
-            originalInputs.forEach((inp, i) => {
-                if (clonedInputs[i]) {
-                    if (inp.type === 'checkbox' || inp.type === 'radio') {
-                        // Replace checkbox with symbol
-                        const span = document.createElement('span');
-                        span.textContent = inp.checked ? '☑' : '☐';
-                        span.style.cssText = 'font-weight:bold; font-size:14px; margin-right:5px;';
-                        if (clonedInputs[i].parentNode) {
-                            clonedInputs[i].parentNode.replaceChild(span, clonedInputs[i]);
-                        }
-                    } else if (inp.tagName === 'SELECT') {
-                        const span = document.createElement('span');
-                        span.textContent = inp.options[inp.selectedIndex]?.text || '';
-                        if (clonedInputs[i].parentNode) clonedInputs[i].parentNode.replaceChild(span, clonedInputs[i]);
-                    } else {
-                        const span = document.createElement('span');
-                        span.textContent = inp.value;
-                        if (clonedInputs[i].parentNode) clonedInputs[i].parentNode.replaceChild(span, clonedInputs[i]);
-                    }
-                }
-            });
-
-            // Open print window
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -9980,540 +9980,540 @@
                 </body>
                 </html>
             `);
-            printWindow.document.close();
+    printWindow.document.close();
+}
+
+// 체크리스트 탭 열릴 때 자동으로 렌더링
+const originalShowCustomerTab = showCustomerTab;
+showCustomerTab = function (tabId) {
+    originalShowCustomerTab(tabId);
+
+    if (tabId === 'checklist') {
+        // 마스터 데이터가 없으면 불러오기
+        if (checklistMasterData.length === 0) {
+            // 자동으로 불러오지 않고 사용자가 버튼을 클릭하도록 유도
+            updateChecklistStats();
+        } else {
+            renderChecklistItems();
         }
+    }
 
-        // 체크리스트 탭 열릴 때 자동으로 렌더링
-        const originalShowCustomerTab = showCustomerTab;
-        showCustomerTab = function (tabId) {
-            originalShowCustomerTab(tabId);
+    // 통계 탭 활성화 시 데이터 업데이트
+    if (tabId === 'stats') {
+        updateSettlementStats();
+        updateProfitStats();
+        updateEditHistory();
+    }
+};
 
-            if (tabId === 'checklist') {
-                // 마스터 데이터가 없으면 불러오기
-                if (checklistMasterData.length === 0) {
-                    // 자동으로 불러오지 않고 사용자가 버튼을 클릭하도록 유도
-                    updateChecklistStats();
-                } else {
-                    renderChecklistItems();
-                }
-            }
+// ============================================
+// 노션 내보내기 관련 함수들
+// ============================================
 
-            // 통계 탭 활성화 시 데이터 업데이트
-            if (tabId === 'stats') {
-                updateSettlementStats();
-                updateProfitStats();
-                updateEditHistory();
-            }
+
+/**
+ * 노션으로 데이터 내보내기
+ * @param {string} type - 'customer', 'schedule', 'checklist'
+ */
+window.exportToNotion = async function (type, event) {
+    console.log('🚀 노션 내보내기 시작 - 타입:', type);
+
+    // 이벤트 객체 확보 & 기본 동작 방지 (폼 제출 방지 등)
+    const evt = event || window.event;
+    if (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+    }
+
+    // currentCustomer 대신 currentData 사용 (호환성)
+    const targetData = currentData || currentCustomer;
+
+    if (!targetData || !currentCustomerId) {
+        showToast('고객을 먼저 선택해주세요', 'error');
+        return;
+    }
+
+    // 시작 알림 (토스트)
+    showToast('노션 내보내기를 시작합니다...', 'info');
+
+    let btn = null;
+    let originalHTML = '';
+
+    if (evt && evt.target) {
+        btn = evt.target.closest('button');
+        if (btn) {
+            originalHTML = btn.innerHTML;
+            btn.innerHTML = '⏳ 내보내는 중...';
+            btn.disabled = true;
+        }
+    }
+
+    try {
+        let requestData = {
+            action: 'exportToNotion',
+            type: type,
+            customerId: currentCustomerId // currentCustomer.id -> currentCustomerId
         };
 
-        // ============================================
-        // 노션 내보내기 관련 함수들
-        // ============================================
+        // 날짜 및 기간 정보 추출 (yyyy.MM.dd -> yyyy-MM-dd 정규화)
+        const normalizeDate = (d) => d ? d.replace(/\./g, '-') : '';
+        const startDateVal = normalizeDate(document.getElementById('constructionStartInput')?.value || targetData.startDate || '');
+        const endDateVal = normalizeDate(document.getElementById('constructionEndInput')?.value || targetData.endDate || '');
+        const periodVal = document.getElementById('hiddenConstructionPeriod')?.value || targetData.constructionPeriod || '';
 
+        // 타입별 데이터 준비 (Backend update_apps_script.js와 키 일치시킴)
+        if (type === 'customer') {
+            // 스케줄 데이터 준비
+            const scheduleData = targetData.schedules || [];
+            const scheduleRows = scheduleData.map((item, idx) => ({
+                category: item.category || '',
+                process: item.name || '',
+                startDate: normalizeDate(item.start || ''),
+                endDate: normalizeDate(item.end || ''),
+                status: item.checkPoint || '',
+                manager: item.inCharge || ''
+            }));
 
-        /**
-         * 노션으로 데이터 내보내기
-         * @param {string} type - 'customer', 'schedule', 'checklist'
-         */
-        window.exportToNotion = async function (type, event) {
-            console.log('🚀 노션 내보내기 시작 - 타입:', type);
+            requestData.data = {
+                '성명': targetData.clientName || '',
+                '연락처': targetData.clientPhone || '',
+                '이메일': targetData.clientEmail || '',
+                '주소': targetData.clientAddress || '',
+                '현장주소': targetData.siteAddress || '',
 
-            // 이벤트 객체 확보 & 기본 동작 방지 (폼 제출 방지 등)
-            const evt = event || window.event;
-            if (evt) {
-                evt.preventDefault();
-                evt.stopPropagation();
-            }
+                '배우자 성명': targetData.spouseName || '',
+                '배우자 연락처': targetData.spousePhone || '',
 
-            // currentCustomer 대신 currentData 사용 (호환성)
-            const targetData = currentData || currentCustomer;
+                '평수': targetData.area || '',
+                '건물유형': targetData.buildingType || '',
+                '유입경로': targetData.clientSource || '',
 
-            if (!targetData || !currentCustomerId) {
-                showToast('고객을 먼저 선택해주세요', 'error');
-                return;
-            }
+                '공사기간': periodVal,
+                '착공일': startDateVal,
+                '준공일': endDateVal,
+                '이사날짜': targetData.movingDate || '',
+                '잔금일': targetData.finalPaymentDate || '',
+                '계약일': targetData.contractDate || '',
+                '공사명': targetData.projectName || '',
 
-            // 시작 알림 (토스트)
-            showToast('노션 내보내기를 시작합니다...', 'info');
+                '공사 담당자': targetData.manager || '',
+                '총계약금액': targetData.totalAmount || '',
 
-            let btn = null;
-            let originalHTML = '';
+                '고객 요청사항': targetData.customerRequest || '',
+                '내부 메모': targetData.internalMemo || '',
+                '특약사항': targetData.specialNote || '',
+                'A/S 기간': targetData.asEndDate || '', // A/S 종료일
 
-            if (evt && evt.target) {
-                btn = evt.target.closest('button');
-                if (btn) {
-                    originalHTML = btn.innerHTML;
-                    btn.innerHTML = '⏳ 내보내는 중...';
-                    btn.disabled = true;
-                }
-            }
+                // 유의사항 (스케줄/A/S)
+                '공사 유의사항': getScheduleGuidelinesText(),
+                'A/S 유의사항': getASGuidelinesText(),
 
-            try {
-                let requestData = {
-                    action: 'exportToNotion',
-                    type: type,
-                    customerId: currentCustomerId // currentCustomer.id -> currentCustomerId
+                // 스케줄 데이터 포함
+                scheduleRows: scheduleRows
+            };
+
+        } else if (type === 'all') {
+            // [통합] 전체 데이터 내보내기
+
+            // 1. Customer (기존 customer 로직 재사용)
+            const customerData = {
+                '성명': targetData.clientName || '',
+                '연락처': targetData.clientPhone || '',
+                '이메일': targetData.clientEmail || '',
+                '주소': targetData.clientAddress || '',
+                '현장주소': targetData.siteAddress || '',
+                '배우자 성명': targetData.spouseName || '',
+                '배우자 연락처': targetData.spousePhone || '',
+                '고객 요청사항': targetData.clientNeeds || '',
+                '내부 메모': targetData.internalNote || '',
+                '특약사항': targetData.specialContract || '',
+                '공사 담당자': targetData.constructionManager || '',
+                '건물유형': targetData.buildingType || '',
+                '유입경로': targetData.funnel || '',
+                '총 계약금액 (VAT 포함)': typeof calculateTotalAmount === 'function' ? calculateTotalAmount() : 0,
+                '평수': document.getElementById('pyeongInput')?.value || targetData.area || 0,
+                '이사날짜': targetData.moveDate || '',
+                '계약일': targetData.contractDate || '',
+                '착공일': startDateVal,
+                '준공일': endDateVal,
+                '잔금일': targetData.balanceDate || '',
+                'A/S 기간': targetData.asEndDate || '',
+                '공사 유의사항': getScheduleGuidelinesText(),
+                'A/S 유의사항': getASGuidelinesText()
+            };
+
+            // 2. Schedule
+            // 전역 scheduleRows 우선 사용, 없으면 저장된 데이터 fallback
+            const sData = (typeof scheduleRows !== 'undefined' && scheduleRows.length > 0) ? scheduleRows : (targetData.schedules || []);
+            let scheduleData = null;
+            if (sData.length > 0) {
+                scheduleData = {
+                    'guidelines': getScheduleGuidelinesArray(),
+                    '공정목록': sData.map(item => ({
+                        공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
+                        시작일: item.start || '',
+                        종료일: item.end || '',
+                        담당자: item.inCharge || '',
+                        상태: item.checkPoint || '',
+                        비고: item.memo || ''
+                    }))
                 };
+            }
 
-                // 날짜 및 기간 정보 추출 (yyyy.MM.dd -> yyyy-MM-dd 정규화)
-                const normalizeDate = (d) => d ? d.replace(/\./g, '-') : '';
-                const startDateVal = normalizeDate(document.getElementById('constructionStartInput')?.value || targetData.startDate || '');
-                const endDateVal = normalizeDate(document.getElementById('constructionEndInput')?.value || targetData.endDate || '');
-                const periodVal = document.getElementById('hiddenConstructionPeriod')?.value || targetData.constructionPeriod || '';
+            // 3. Checklist
+            let checklistData = null;
+            if (checklistMasterData && checklistMasterData.length > 0) {
+                const customerChecklistData = getCurrentCustomerChecklistData();
 
-                // 타입별 데이터 준비 (Backend update_apps_script.js와 키 일치시킴)
-                if (type === 'customer') {
-                    // 스케줄 데이터 준비
-                    const scheduleData = targetData.schedules || [];
-                    const scheduleRows = scheduleData.map((item, idx) => ({
-                        category: item.category || '',
-                        process: item.name || '',
-                        startDate: normalizeDate(item.start || ''),
-                        endDate: normalizeDate(item.end || ''),
-                        status: item.checkPoint || '',
-                        manager: item.inCharge || ''
-                    }));
+                // 고객이 선택한 항목 번호
+                const selectedItemNumbers = Object.keys(customerChecklistData);
 
-                    requestData.data = {
-                        '성명': targetData.clientName || '',
-                        '연락처': targetData.clientPhone || '',
-                        '이메일': targetData.clientEmail || '',
-                        '주소': targetData.clientAddress || '',
-                        '현장주소': targetData.siteAddress || '',
+                // 고객이 선택한 항목만 필터링
+                const customerItems = checklistMasterData.filter(item =>
+                    selectedItemNumbers.includes(String(item.번호))
+                );
 
-                        '배우자 성명': targetData.spouseName || '',
-                        '배우자 연락처': targetData.spousePhone || '',
-
-                        '평수': targetData.area || '',
-                        '건물유형': targetData.buildingType || '',
-                        '유입경로': targetData.clientSource || '',
-
-                        '공사기간': periodVal,
-                        '착공일': startDateVal,
-                        '준공일': endDateVal,
-                        '이사날짜': targetData.movingDate || '',
-                        '잔금일': targetData.finalPaymentDate || '',
-                        '계약일': targetData.contractDate || '',
-                        '공사명': targetData.projectName || '',
-
-                        '공사 담당자': targetData.manager || '',
-                        '총계약금액': targetData.totalAmount || '',
-
-                        '고객 요청사항': targetData.customerRequest || '',
-                        '내부 메모': targetData.internalMemo || '',
-                        '특약사항': targetData.specialNote || '',
-                        'A/S 기간': targetData.asEndDate || '', // A/S 종료일
-
-                        // 유의사항 (스케줄/A/S)
-                        '공사 유의사항': getScheduleGuidelinesText(),
-                        'A/S 유의사항': getASGuidelinesText(),
-
-                        // 스케줄 데이터 포함
-                        scheduleRows: scheduleRows
-                    };
-
-                } else if (type === 'all') {
-                    // [통합] 전체 데이터 내보내기
-
-                    // 1. Customer (기존 customer 로직 재사용)
-                    const customerData = {
-                        '성명': targetData.clientName || '',
-                        '연락처': targetData.clientPhone || '',
-                        '이메일': targetData.clientEmail || '',
-                        '주소': targetData.clientAddress || '',
-                        '현장주소': targetData.siteAddress || '',
-                        '배우자 성명': targetData.spouseName || '',
-                        '배우자 연락처': targetData.spousePhone || '',
-                        '고객 요청사항': targetData.clientNeeds || '',
-                        '내부 메모': targetData.internalNote || '',
-                        '특약사항': targetData.specialContract || '',
-                        '공사 담당자': targetData.constructionManager || '',
-                        '건물유형': targetData.buildingType || '',
-                        '유입경로': targetData.funnel || '',
-                        '총 계약금액 (VAT 포함)': typeof calculateTotalAmount === 'function' ? calculateTotalAmount() : 0,
-                        '평수': document.getElementById('pyeongInput')?.value || targetData.area || 0,
-                        '이사날짜': targetData.moveDate || '',
-                        '계약일': targetData.contractDate || '',
-                        '착공일': startDateVal,
-                        '준공일': endDateVal,
-                        '잔금일': targetData.balanceDate || '',
-                        'A/S 기간': targetData.asEndDate || '',
-                        '공사 유의사항': getScheduleGuidelinesText(),
-                        'A/S 유의사항': getASGuidelinesText()
-                    };
-
-                    // 2. Schedule
-                    // 전역 scheduleRows 우선 사용, 없으면 저장된 데이터 fallback
-                    const sData = (typeof scheduleRows !== 'undefined' && scheduleRows.length > 0) ? scheduleRows : (targetData.schedules || []);
-                    let scheduleData = null;
-                    if (sData.length > 0) {
-                        scheduleData = {
-                            'guidelines': getScheduleGuidelinesArray(),
-                            '공정목록': sData.map(item => ({
-                                공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
-                                시작일: item.start || '',
-                                종료일: item.end || '',
-                                담당자: item.inCharge || '',
-                                상태: item.checkPoint || '',
-                                비고: item.memo || ''
-                            }))
+                checklistData = {
+                    '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
+                    '전체항목수': customerItems.length,
+                    '체크리스트': customerItems.map(item => {
+                        const isChecked = !!customerChecklistData[item.번호];
+                        return {
+                            번호: item.번호,
+                            항목: item.항목 || '',
+                            내용: item.내용 || '',
+                            진행단계: item.진행단계 || '',
+                            카테고리: item.category || '',
+                            비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
+                            isChecked: isChecked
                         };
-                    }
+                    })
+                };
+            }
 
-                    // 3. Checklist
-                    let checklistData = null;
-                    if (checklistMasterData && checklistMasterData.length > 0) {
-                        const customerChecklistData = getCurrentCustomerChecklistData();
+            // 4. A/S List
+            let asListData = null;
+            const aData = (typeof asListRows !== 'undefined' && asListRows.length > 0) ? asListRows : [];
+            if (aData.length > 0) {
+                asListData = {
+                    manager: targetData.manager || '',
+                    period: targetData.warrantyPeriod || '',
+                    guidelines: getASGuidelinesArray(),
+                    items: aData
+                };
+            }
 
-                        // 고객이 선택한 항목 번호
-                        const selectedItemNumbers = Object.keys(customerChecklistData);
+            requestData.data = {
+                customer: customerData,
+                schedule: scheduleData,
+                checklist: checklistData,
+                asList: asListData
+            };
 
-                        // 고객이 선택한 항목만 필터링
-                        const customerItems = checklistMasterData.filter(item =>
-                            selectedItemNumbers.includes(String(item.번호))
-                        );
+        } else if (type === 'schedule') {
+            const scheduleData = targetData.schedules || [];
 
-                        checklistData = {
-                            '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
-                            '전체항목수': customerItems.length,
-                            '체크리스트': customerItems.map(item => {
-                                const isChecked = !!customerChecklistData[item.번호];
-                                return {
-                                    번호: item.번호,
-                                    항목: item.항목 || '',
-                                    내용: item.내용 || '',
-                                    진행단계: item.진행단계 || '',
-                                    카테고리: item.category || '',
-                                    비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
-                                    isChecked: isChecked
-                                };
-                            })
-                        };
-                    }
+            requestData.data = {
+                '성명': targetData.clientName || '',
+                '현장주소': targetData.siteAddress || '',
+                '착공일': startDateVal,
+                '준공일': endDateVal,
+                'guidelines': getScheduleGuidelinesArray(), // [추가] 유의사항 배열
+                '공정목록': scheduleData.map(item => ({
+                    공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
+                    시작일: normalizeDate(item.start || ''),
+                    종료일: normalizeDate(item.end || ''),
+                    담당자: item.inCharge || '',
+                    상태: item.checkPoint || '',
+                    비고: item.memo || ''
+                }))
+            };
+        } else if (type === 'checklist') {
+            const customerChecklistData = getCurrentCustomerChecklistData();
 
-                    // 4. A/S List
-                    let asListData = null;
-                    const aData = (typeof asListRows !== 'undefined' && asListRows.length > 0) ? asListRows : [];
-                    if (aData.length > 0) {
-                        asListData = {
-                            manager: targetData.manager || '',
-                            period: targetData.warrantyPeriod || '',
-                            guidelines: getASGuidelinesArray(),
-                            items: aData
-                        };
-                    }
+            // 고객이 선택한 항목 번호
+            const selectedItemNumbers = Object.keys(customerChecklistData);
 
-                    requestData.data = {
-                        customer: customerData,
-                        schedule: scheduleData,
-                        checklist: checklistData,
-                        asList: asListData
+            // 고객이 선택한 항목만 필터링
+            const customerItems = checklistMasterData.filter(item =>
+                selectedItemNumbers.includes(String(item.번호))
+            );
+
+            // [변경] 고객이 선택한 항목만 내보내기 (체크 여부 포함)
+            requestData.data = {
+                '성명': targetData.clientName || '',
+                '현장주소': targetData.siteAddress || '',
+                '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
+                '전체항목수': customerItems.length,
+                '체크리스트': customerItems.map(item => {
+                    const isChecked = !!customerChecklistData[item.번호];
+                    return {
+                        번호: item.번호,
+                        항목: item.항목 || '',
+                        내용: item.내용 || '',
+                        진행단계: item.진행단계 || '',
+                        카테고리: item.category || '',
+                        // 체크된 항목은 비고 앞에 [완료] 표시
+                        비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
+                        isChecked: isChecked
                     };
+                })
+            };
 
-                } else if (type === 'schedule') {
-                    const scheduleData = targetData.schedules || [];
-
-                    requestData.data = {
-                        '성명': targetData.clientName || '',
-                        '현장주소': targetData.siteAddress || '',
-                        '착공일': startDateVal,
-                        '준공일': endDateVal,
-                        'guidelines': getScheduleGuidelinesArray(), // [추가] 유의사항 배열
-                        '공정목록': scheduleData.map(item => ({
-                            공정: (item.category ? item.category + ' - ' : '') + (item.name || ''),
-                            시작일: normalizeDate(item.start || ''),
-                            종료일: normalizeDate(item.end || ''),
-                            담당자: item.inCharge || '',
-                            상태: item.checkPoint || '',
-                            비고: item.memo || ''
-                        }))
-                    };
-                } else if (type === 'checklist') {
-                    const customerChecklistData = getCurrentCustomerChecklistData();
-
-                    // 고객이 선택한 항목 번호
-                    const selectedItemNumbers = Object.keys(customerChecklistData);
-
-                    // 고객이 선택한 항목만 필터링
-                    const customerItems = checklistMasterData.filter(item =>
-                        selectedItemNumbers.includes(String(item.번호))
-                    );
-
-                    // [변경] 고객이 선택한 항목만 내보내기 (체크 여부 포함)
-                    requestData.data = {
-                        '성명': targetData.clientName || '',
-                        '현장주소': targetData.siteAddress || '',
-                        '완료항목수': Object.values(customerChecklistData).filter(v => v).length,
-                        '전체항목수': customerItems.length,
-                        '체크리스트': customerItems.map(item => {
-                            const isChecked = !!customerChecklistData[item.번호];
-                            return {
-                                번호: item.번호,
-                                항목: item.항목 || '',
-                                내용: item.내용 || '',
-                                진행단계: item.진행단계 || '',
-                                카테고리: item.category || '',
-                                // 체크된 항목은 비고 앞에 [완료] 표시
-                                비고: (isChecked ? '[완료] ' : '') + (item.비고 || ''),
-                                isChecked: isChecked
-                            };
-                        })
-                    };
-
-                    // [Validation] 내보낼 항목이 없으면 중단
-                    if (requestData.data.체크리스트.length === 0) {
-                        showToast('선택된 체크리스트 항목이 없습니다.\n먼저 체크리스트에서 항목을 선택해주세요.', 'warning');
-                        if (btn) {
-                            btn.innerHTML = originalHTML;
-                            btn.disabled = false;
-                        }
-                        return;
-                    }
-                }
-
-                console.log('📤 노션 내보내기 요청:', requestData);
-
-                // data 객체를 JSON 문자열로 변환
-                const formData = new URLSearchParams();
-                formData.append('action', requestData.action);
-                formData.append('type', requestData.type);
-                formData.append('customerId', requestData.customerId);
-                formData.append('data', JSON.stringify(requestData.data));
-
-                const response = await fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('서버 응답 오류: ' + response.status + ' ' + response.statusText);
-                }
-
-                const responseText = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch (e) {
-                    throw new Error('응답 파싱 실패: ' + e.message);
-                }
-
-                if (result.success) {
-                    if (type === 'all' && result.details) {
-                        let lines = [];
-                        lines.push('<b>[노션 통합 내보내기 결과]</b>');
-                        const map = { customer: '고객정보', schedule: '공사스케줄', checklist: '체크리스트', asList: 'A/S 관리 리스트' };
-
-                        ['customer', 'schedule', 'checklist', 'asList'].forEach(k => {
-                            const d = result.details[k];
-                            if (d) {
-                                if (d.message === '데이터 없음') {
-                                    lines.push(`${map[k]}: <span style="opacity:0.7">⚪️ 빈 상태</span>`);
-                                } else if (d.success) {
-                                    lines.push(`${map[k]}: <b>✅ 성공</b>`);
-                                } else {
-                                    lines.push(`${map[k]}: ❌ 실패 (${d.message})`);
-                                }
-                            }
-                        });
-                        showToast(lines.join('<br>'), 'info', 5000);
-                    } else {
-                        showToast('✅ 노션으로 내보내기 완료!', 'success');
-                    }
-                    // 성공 로그 (타입별 상세 내용)
-                    const typeNameMap = { 'customer': '고객 정보', 'schedule': '공사 스케줄', 'checklist': '체크리스트', 'all': '전체 데이터' };
-                    const tName = typeNameMap[type] || type;
-                    logUserAction('노션 내보내기', (targetData.clientName || targetData.projectName || '고객') + ' ' + tName + ' 내보내기');
-                } else {
-                    throw new Error(result.message || '내보내기 실패');
-                }
-            } catch (error) {
-                console.error('❌ 노션 내보내기 실패:', error);
-                let errMsg = '알 수 없는 오류';
-                if (typeof error === 'string') errMsg = error;
-                else if (error.message) errMsg = error.message;
-                else if (error.toString) errMsg = error.toString();
-
-                showToast('노션 내보내기 실패: ' + errMsg, 'error');
-            } finally {
+            // [Validation] 내보낼 항목이 없으면 중단
+            if (requestData.data.체크리스트.length === 0) {
+                showToast('선택된 체크리스트 항목이 없습니다.\n먼저 체크리스트에서 항목을 선택해주세요.', 'warning');
                 if (btn) {
                     btn.innerHTML = originalHTML;
                     btn.disabled = false;
                 }
+                return;
             }
-        };
-
-        // ============================================
-        // 통계 탭 관련 함수들
-        // ============================================
-
-        let processChartInstance = null; // Chart.js 인스턴스 저장
-
-        // 정산 현황 통계 업데이트
-        function updateSettlementStats() {
-            if (!currentCustomer) return;
-
-            const settlementData = currentCustomer.settlementData || [];
-            const totalContract = parseFloat(currentCustomer.totalAmount) || 0;
-
-            // 정산 완료 금액 계산 (입금완료 항목들의 합)
-            let settled = 0;
-            settlementData.forEach(item => {
-                if (item['입금여부'] === '완료' || item['입금여부'] === '입금완료') {
-                    settled += parseFloat(item['금액']) || 0;
-                }
-            });
-
-            const outstanding = totalContract - settled;
-            const rate = totalContract > 0 ? ((settled / totalContract) * 100).toFixed(1) : 0;
-
-            // UI 업데이트
-            document.getElementById('stats-total-contract').textContent = formatCurrency(totalContract);
-            document.getElementById('stats-settled').textContent = formatCurrency(settled);
-            document.getElementById('stats-outstanding').textContent = formatCurrency(outstanding);
-            document.getElementById('stats-settlement-rate').textContent = rate + '%';
         }
 
-        // 수익성 통계 업데이트 및 차트 생성
-        function updateProfitStats() {
-            if (!currentCustomer) return;
+        console.log('📤 노션 내보내기 요청:', requestData);
 
-            const costData = currentCustomer.costData || [];
-            let totalEstimate = 0;
-            let totalCost = 0;
-            const processData = {};
+        // data 객체를 JSON 문자열로 변환
+        const formData = new URLSearchParams();
+        formData.append('action', requestData.action);
+        formData.append('type', requestData.type);
+        formData.append('customerId', requestData.customerId);
+        formData.append('data', JSON.stringify(requestData.data));
 
-            // 공정별 데이터 집계
-            costData.forEach(item => {
-                const process = item['공정'] || '기타';
-                const estimate = parseFloat(item['견적금액']) || 0;
-                const cost = parseFloat(item['원가']) || 0;
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        });
 
-                totalEstimate += estimate;
-                totalCost += cost;
-
-                if (!processData[process]) {
-                    processData[process] = { estimate: 0, cost: 0 };
-                }
-                processData[process].estimate += estimate;
-                processData[process].cost += cost;
-            });
-
-            const totalProfit = totalEstimate - totalCost;
-            const profitRate = totalEstimate > 0 ? ((totalProfit / totalEstimate) * 100).toFixed(1) : 0;
-
-            // 수익성 요약 업데이트
-            document.getElementById('stats-total-estimate').textContent = formatCurrency(totalEstimate);
-            document.getElementById('stats-total-cost').textContent = formatCurrency(totalCost);
-            document.getElementById('stats-total-profit').textContent = formatCurrency(totalProfit);
-            document.getElementById('stats-profit-rate').textContent = profitRate + '%';
-
-            // 차트 그리기
-            drawProcessChart(processData);
+        if (!response.ok) {
+            throw new Error('서버 응답 오류: ' + response.status + ' ' + response.statusText);
         }
 
-        // 공정별 차트 그리기 (Chart.js)
-        function drawProcessChart(processData) {
-            const canvas = document.getElementById('processChart');
-            if (!canvas) return;
+        const responseText = await response.text();
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error('응답 파싱 실패: ' + e.message);
+        }
 
-            const ctx = canvas.getContext('2d');
+        if (result.success) {
+            if (type === 'all' && result.details) {
+                let lines = [];
+                lines.push('<b>[노션 통합 내보내기 결과]</b>');
+                const map = { customer: '고객정보', schedule: '공사스케줄', checklist: '체크리스트', asList: 'A/S 관리 리스트' };
 
-            // 기존 차트 삭제
-            if (processChartInstance) {
-                processChartInstance.destroy();
-            }
-
-            const processes = Object.keys(processData);
-            const estimates = processes.map(p => processData[p].estimate);
-            const costs = processes.map(p => processData[p].cost);
-            const profits = processes.map((p, i) => estimates[i] - costs[i]);
-
-            processChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: processes,
-                    datasets: [
-                        {
-                            label: '견적금액',
-                            data: estimates,
-                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: '원가',
-                            data: costs,
-                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: '이익',
-                            data: profits,
-                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
+                ['customer', 'schedule', 'checklist', 'asList'].forEach(k => {
+                    const d = result.details[k];
+                    if (d) {
+                        if (d.message === '데이터 없음') {
+                            lines.push(`${map[k]}: <span style="opacity:0.7">⚪️ 빈 상태</span>`);
+                        } else if (d.success) {
+                            lines.push(`${map[k]}: <b>✅ 성공</b>`);
+                        } else {
+                            lines.push(`${map[k]}: ❌ 실패 (${d.message})`);
                         }
-                    ]
+                    }
+                });
+                showToast(lines.join('<br>'), 'info', 5000);
+            } else {
+                showToast('✅ 노션으로 내보내기 완료!', 'success');
+            }
+            // 성공 로그 (타입별 상세 내용)
+            const typeNameMap = { 'customer': '고객 정보', 'schedule': '공사 스케줄', 'checklist': '체크리스트', 'all': '전체 데이터' };
+            const tName = typeNameMap[type] || type;
+            logUserAction('노션 내보내기', (targetData.clientName || targetData.projectName || '고객') + ' ' + tName + ' 내보내기');
+        } else {
+            throw new Error(result.message || '내보내기 실패');
+        }
+    } catch (error) {
+        console.error('❌ 노션 내보내기 실패:', error);
+        let errMsg = '알 수 없는 오류';
+        if (typeof error === 'string') errMsg = error;
+        else if (error.message) errMsg = error.message;
+        else if (error.toString) errMsg = error.toString();
+
+        showToast('노션 내보내기 실패: ' + errMsg, 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    }
+};
+
+// ============================================
+// 통계 탭 관련 함수들
+// ============================================
+
+let processChartInstance = null; // Chart.js 인스턴스 저장
+
+// 정산 현황 통계 업데이트
+function updateSettlementStats() {
+    if (!currentCustomer) return;
+
+    const settlementData = currentCustomer.settlementData || [];
+    const totalContract = parseFloat(currentCustomer.totalAmount) || 0;
+
+    // 정산 완료 금액 계산 (입금완료 항목들의 합)
+    let settled = 0;
+    settlementData.forEach(item => {
+        if (item['입금여부'] === '완료' || item['입금여부'] === '입금완료') {
+            settled += parseFloat(item['금액']) || 0;
+        }
+    });
+
+    const outstanding = totalContract - settled;
+    const rate = totalContract > 0 ? ((settled / totalContract) * 100).toFixed(1) : 0;
+
+    // UI 업데이트
+    document.getElementById('stats-total-contract').textContent = formatCurrency(totalContract);
+    document.getElementById('stats-settled').textContent = formatCurrency(settled);
+    document.getElementById('stats-outstanding').textContent = formatCurrency(outstanding);
+    document.getElementById('stats-settlement-rate').textContent = rate + '%';
+}
+
+// 수익성 통계 업데이트 및 차트 생성
+function updateProfitStats() {
+    if (!currentCustomer) return;
+
+    const costData = currentCustomer.costData || [];
+    let totalEstimate = 0;
+    let totalCost = 0;
+    const processData = {};
+
+    // 공정별 데이터 집계
+    costData.forEach(item => {
+        const process = item['공정'] || '기타';
+        const estimate = parseFloat(item['견적금액']) || 0;
+        const cost = parseFloat(item['원가']) || 0;
+
+        totalEstimate += estimate;
+        totalCost += cost;
+
+        if (!processData[process]) {
+            processData[process] = { estimate: 0, cost: 0 };
+        }
+        processData[process].estimate += estimate;
+        processData[process].cost += cost;
+    });
+
+    const totalProfit = totalEstimate - totalCost;
+    const profitRate = totalEstimate > 0 ? ((totalProfit / totalEstimate) * 100).toFixed(1) : 0;
+
+    // 수익성 요약 업데이트
+    document.getElementById('stats-total-estimate').textContent = formatCurrency(totalEstimate);
+    document.getElementById('stats-total-cost').textContent = formatCurrency(totalCost);
+    document.getElementById('stats-total-profit').textContent = formatCurrency(totalProfit);
+    document.getElementById('stats-profit-rate').textContent = profitRate + '%';
+
+    // 차트 그리기
+    drawProcessChart(processData);
+}
+
+// 공정별 차트 그리기 (Chart.js)
+function drawProcessChart(processData) {
+    const canvas = document.getElementById('processChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // 기존 차트 삭제
+    if (processChartInstance) {
+        processChartInstance.destroy();
+    }
+
+    const processes = Object.keys(processData);
+    const estimates = processes.map(p => processData[p].estimate);
+    const costs = processes.map(p => processData[p].cost);
+    const profits = processes.map((p, i) => estimates[i] - costs[i]);
+
+    processChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: processes,
+            datasets: [
+                {
+                    label: '견적금액',
+                    data: estimates,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function (value) {
-                                    return '₩' + (value / 10000).toFixed(0) + '만';
-                                }
-                            }
+                {
+                    label: '원가',
+                    data: costs,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: '이익',
+                    data: profits,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
                         }
                     }
                 }
-            });
-        }
-
-        // 편집 이력 관리 (Phase 2: In-memory 전용)
-        let editHistoryRows = [];
-
-        // 편집 이력 업데이트
-        function updateEditHistory() {
-            const timeline = document.getElementById('edit-history-timeline');
-            if (!timeline) return;
-
-            // In-memory에서 편집 이력 가져오기
-            const history = editHistoryRows;
-
-            if (history.length === 0) {
-                timeline.innerHTML = '<div style="text-align: center; color: #8e8e93; padding: 40px;">편집 이력이 없습니다.</div>';
-                return;
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return '₩' + (value / 10000).toFixed(0) + '만';
+                        }
+                    }
+                }
             }
+        }
+    });
+}
 
-            // 최신순으로 정렬
-            history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+// 편집 이력 관리 (Phase 2: In-memory 전용)
+let editHistoryRows = [];
 
-            // 타임라인 HTML 생성
-            let html = '';
-            history.slice(0, 50).forEach(item => {
-                const date = new Date(item.timestamp);
-                const dateStr = date.toLocaleString('ko-KR');
+// 편집 이력 업데이트
+function updateEditHistory() {
+    const timeline = document.getElementById('edit-history-timeline');
+    if (!timeline) return;
 
-                html += `
+    // In-memory에서 편집 이력 가져오기
+    const history = editHistoryRows;
+
+    if (history.length === 0) {
+        timeline.innerHTML = '<div style="text-align: center; color: #8e8e93; padding: 40px;">편집 이력이 없습니다.</div>';
+        return;
+    }
+
+    // 최신순으로 정렬
+    history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // 타임라인 HTML 생성
+    let html = '';
+    history.slice(0, 50).forEach(item => {
+        const date = new Date(item.timestamp);
+        const dateStr = date.toLocaleString('ko-KR');
+
+        html += `
                     <div style="border-left: 3px solid #007aff; padding-left: 16px; margin-bottom: 20px; position: relative;">
                         <div style="position: absolute; left: -7px; top: 5px; width: 10px; height: 10px; background: #007aff; border-radius: 50%;"></div>
                         <div style="font-size: 12px; color: #8e8e93; margin-bottom: 4px;">${dateStr}</div>
@@ -10530,112 +10530,112 @@
                         </div>
                     </div>
                 `;
-            });
+    });
 
-            timeline.innerHTML = html;
+    timeline.innerHTML = html;
+}
+
+// 편집 이력 저장 함수 (다른 곳에서 호출)
+function saveEditHistory(menu, item, field, oldValue, newValue) {
+    const history = editHistoryRows;
+
+    const entry = {
+        timestamp: new Date().toISOString(),
+        userId: currentUser?.id || 'unknown',
+        userName: currentUser?.name || '알 수 없음',
+        menu: menu,
+        item: item,
+        field: field,
+        oldValue: oldValue,
+        newValue: newValue
+    };
+
+    history.unshift(entry);
+    if (history.length > 100) history.splice(100);
+    editHistoryRows = history;
+    // Phase 2: 업무 데이터 로컬 저장 금지
+
+}
+// ==========================================
+// 새 기능: 현재 고객 데이터 내보내기 및 통합 인쇄
+// ==========================================
+
+function exportCurrentCustomerData() {
+    if (!currentData || !currentData.customerId) {
+        showToast('선택된 고객이 없습니다.', 'error');
+        return;
+    }
+
+    // 현재 고객 객체만 추출
+    const dataToExport = {
+        customer: currentData,
+        exportDate: new Date().toISOString(),
+        type: 'single_customer_export'
+    };
+
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `디자인지그_${currentData.customerName || '고객'}_데이터.json`;
+    a.click();
+    showToast('현재 고객 데이터가 저장되었습니다.', 'success');
+}
+
+function printCurrentCustomerAll() {
+    if (!currentData || !currentData.customerId) {
+        showToast('선택된 고객이 없습니다.', 'error');
+        return;
+    }
+
+    // 인쇄할 섹션 정의 (사용자 요청 항목)
+    const sections = [
+        { id: 'customerInfoDoc', title: '고객 정보' },
+        { id: 'contractDoc', title: '도급계약서' },
+        { id: 'coverDoc', title: '표지계약서' },
+        { id: 'estimateDoc', title: '계약견적서' },
+        { id: 'costDoc', title: '원가관리표' },
+        { id: 'scheduleDoc', title: '공사 스케줄' },
+        { id: 'asListDoc', title: 'A/S 관리 리스트' }
+    ];
+
+    const printContainer = document.createElement('div');
+    let hasContent = false;
+
+    sections.forEach((section, index) => {
+        const originalEl = document.getElementById(section.id);
+        if (!originalEl) return;
+
+        hasContent = true;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'print-section';
+        // 마지막 페이지가 아니면 페이지 넘김
+        if (index < sections.length - 1) {
+            wrapper.style.pageBreakAfter = 'always';
         }
+        wrapper.style.marginBottom = '40px'; // 섹션 간 간격 (화면상에서 잘 보이게)
 
-        // 편집 이력 저장 함수 (다른 곳에서 호출)
-        function saveEditHistory(menu, item, field, oldValue, newValue) {
-            const history = editHistoryRows;
+        const clonedEl = originalEl.cloneNode(true);
 
-            const entry = {
-                timestamp: new Date().toISOString(),
-                userId: currentUser?.id || 'unknown',
-                userName: currentUser?.name || '알 수 없음',
-                menu: menu,
-                item: item,
-                field: field,
-                oldValue: oldValue,
-                newValue: newValue
-            };
+        // 입력 필드값을 텍스트로 변환 (원본 엘리먼트 참조하여 값 가져오기)
+        convertInputsToTextForPrint(originalEl, clonedEl);
 
-            history.unshift(entry);
-            if (history.length > 100) history.splice(100);
-            editHistoryRows = history;
-            // Phase 2: 업무 데이터 로컬 저장 금지
+        // 불필요한 요소 제거 (버튼, no-print 클래스)
+        clonedEl.querySelectorAll('button, .no-print').forEach(el => el.remove());
 
-        }
-        // ==========================================
-        // 새 기능: 현재 고객 데이터 내보내기 및 통합 인쇄
-        // ==========================================
+        wrapper.appendChild(clonedEl);
+        printContainer.appendChild(wrapper);
+    });
 
-        function exportCurrentCustomerData() {
-            if (!currentData || !currentData.customerId) {
-                showToast('선택된 고객이 없습니다.', 'error');
-                return;
-            }
+    if (!hasContent) {
+        showToast('인쇄할 데이터가 없습니다.', 'error');
+        return;
+    }
 
-            // 현재 고객 객체만 추출
-            const dataToExport = {
-                customer: currentData,
-                exportDate: new Date().toISOString(),
-                type: 'single_customer_export'
-            };
-
-            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `디자인지그_${currentData.customerName || '고객'}_데이터.json`;
-            a.click();
-            showToast('현재 고객 데이터가 저장되었습니다.', 'success');
-        }
-
-        function printCurrentCustomerAll() {
-            if (!currentData || !currentData.customerId) {
-                showToast('선택된 고객이 없습니다.', 'error');
-                return;
-            }
-
-            // 인쇄할 섹션 정의 (사용자 요청 항목)
-            const sections = [
-                { id: 'customerInfoDoc', title: '고객 정보' },
-                { id: 'contractDoc', title: '도급계약서' },
-                { id: 'coverDoc', title: '표지계약서' },
-                { id: 'estimateDoc', title: '계약견적서' },
-                { id: 'costDoc', title: '원가관리표' },
-                { id: 'scheduleDoc', title: '공사 스케줄' },
-                { id: 'asListDoc', title: 'A/S 관리 리스트' }
-            ];
-
-            const printContainer = document.createElement('div');
-            let hasContent = false;
-
-            sections.forEach((section, index) => {
-                const originalEl = document.getElementById(section.id);
-                if (!originalEl) return;
-
-                hasContent = true;
-                const wrapper = document.createElement('div');
-                wrapper.className = 'print-section';
-                // 마지막 페이지가 아니면 페이지 넘김
-                if (index < sections.length - 1) {
-                    wrapper.style.pageBreakAfter = 'always';
-                }
-                wrapper.style.marginBottom = '40px'; // 섹션 간 간격 (화면상에서 잘 보이게)
-
-                const clonedEl = originalEl.cloneNode(true);
-
-                // 입력 필드값을 텍스트로 변환 (원본 엘리먼트 참조하여 값 가져오기)
-                convertInputsToTextForPrint(originalEl, clonedEl);
-
-                // 불필요한 요소 제거 (버튼, no-print 클래스)
-                clonedEl.querySelectorAll('button, .no-print').forEach(el => el.remove());
-
-                wrapper.appendChild(clonedEl);
-                printContainer.appendChild(wrapper);
-            });
-
-            if (!hasContent) {
-                showToast('인쇄할 데이터가 없습니다.', 'error');
-                return;
-            }
-
-            const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', '_blank');
 
 
-            // 기본 HTML 구조 작성 (스타일 제외)
-            printWindow.document.write(`
+    // 기본 HTML 구조 작성 (스타일 제외)
+    printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -10683,372 +10683,372 @@
                 </html>
             `);
 
-            // 스타일 태그 복사 (스크립트 에러 방지용)
-            // document.head.innerHTML을 템플릿 리터럴에 넣으면 백틱 문제로 에러가 발생할 수 있음
-            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-            styles.forEach(style => {
-                printWindow.document.head.appendChild(style.cloneNode(true));
-            });
+    // 스타일 태그 복사 (스크립트 에러 방지용)
+    // document.head.innerHTML을 템플릿 리터럴에 넣으면 백틱 문제로 에러가 발생할 수 있음
+    const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+    styles.forEach(style => {
+        printWindow.document.head.appendChild(style.cloneNode(true));
+    });
 
-            // 스크립트 실행 (인쇄)
-            const script = printWindow.document.createElement('script');
-            script.textContent = `
+    // 스크립트 실행 (인쇄)
+    const script = printWindow.document.createElement('script');
+    script.textContent = `
                 window.onload = function() {
                     setTimeout(function() {
                         window.print();
                     }, 1000);
                 };
             `;
-            printWindow.document.body.appendChild(script);
+    printWindow.document.body.appendChild(script);
 
-            printWindow.document.close();
+    printWindow.document.close();
+}
+
+// 입력 필드를 텍스트로 변환하는 헬퍼 함수
+function convertInputsToTextForPrint(originParent, clonedParent) {
+    const originInputs = originParent.querySelectorAll('input, textarea, select');
+    const clonedInputs = clonedParent.querySelectorAll('input, textarea, select');
+
+    for (let i = 0; i < originInputs.length; i++) {
+        const origin = originInputs[i];
+        const clone = clonedInputs[i];
+        if (!clone) continue;
+
+        let val = '';
+        if (origin.tagName === 'SELECT') {
+            if (origin.selectedIndex >= 0) val = origin.options[origin.selectedIndex].text;
+            // '선택' 같은 건 빈칸 처리
+            if (val.includes('선택')) val = '';
+        } else if (origin.type === 'checkbox' || origin.type === 'radio') {
+            val = origin.checked ? '☑' : '☐';
+        } else {
+            val = origin.value;
         }
 
-        // 입력 필드를 텍스트로 변환하는 헬퍼 함수
-        function convertInputsToTextForPrint(originParent, clonedParent) {
-            const originInputs = originParent.querySelectorAll('input, textarea, select');
-            const clonedInputs = clonedParent.querySelectorAll('input, textarea, select');
+        const span = document.createElement('span');
+        span.className = 'print-text-val';
+        span.textContent = val;
 
-            for (let i = 0; i < originInputs.length; i++) {
-                const origin = originInputs[i];
-                const clone = clonedInputs[i];
-                if (!clone) continue;
-
-                let val = '';
-                if (origin.tagName === 'SELECT') {
-                    if (origin.selectedIndex >= 0) val = origin.options[origin.selectedIndex].text;
-                    // '선택' 같은 건 빈칸 처리
-                    if (val.includes('선택')) val = '';
-                } else if (origin.type === 'checkbox' || origin.type === 'radio') {
-                    val = origin.checked ? '☑' : '☐';
-                } else {
-                    val = origin.value;
-                }
-
-                const span = document.createElement('span');
-                span.className = 'print-text-val';
-                span.textContent = val;
-
-                if (origin.type !== 'checkbox' && origin.type !== 'radio') {
-                    span.style.whiteSpace = 'pre-wrap';
-                } else {
-                    span.style.fontSize = '14px';
-                    span.style.marginRight = '4px';
-                }
-
-                if (clone.parentNode) {
-                    clone.parentNode.replaceChild(span, clone);
-                }
-            }
+        if (origin.type !== 'checkbox' && origin.type !== 'radio') {
+            span.style.whiteSpace = 'pre-wrap';
+        } else {
+            span.style.fontSize = '14px';
+            span.style.marginRight = '4px';
         }
 
-        // ==========================================
-        // 멀티 셀렉트 (Multi-Select) 헬퍼 함수들
-        // ==========================================
-        const multiSelectState = {
-            checklistStageFilter: ['all'],
-            checklistCategoryFilter: ['all']
-        };
+        if (clone.parentNode) {
+            clone.parentNode.replaceChild(span, clone);
+        }
+    }
+}
 
-        // 드롭다운 초기화
-        function initMultiSelect(elementId, options) {
-            const dropdown = document.getElementById(elementId + 'Dropdown');
-            if (!dropdown) return;
+// ==========================================
+// 멀티 셀렉트 (Multi-Select) 헬퍼 함수들
+// ==========================================
+const multiSelectState = {
+    checklistStageFilter: ['all'],
+    checklistCategoryFilter: ['all']
+};
 
-            // 기존 상태 유지하면서 옵션 재생성
-            const currentState = multiSelectState[elementId];
+// 드롭다운 초기화
+function initMultiSelect(elementId, options) {
+    const dropdown = document.getElementById(elementId + 'Dropdown');
+    if (!dropdown) return;
 
-            let html = '';
-            // 전체 보기 항목
-            const isAllChecked = currentState.includes('all');
-            html += `<div class="multi-select-option">
+    // 기존 상태 유지하면서 옵션 재생성
+    const currentState = multiSelectState[elementId];
+
+    let html = '';
+    // 전체 보기 항목
+    const isAllChecked = currentState.includes('all');
+    html += `<div class="multi-select-option">
                         <label>
                             <input type="checkbox" value="all" ${isAllChecked ? 'checked' : ''} onchange="handleMultiSelectChange('${elementId}', this)">
                             전체 보기
                         </label>
                      </div>`;
 
-            // 개별 항목들
-            options.forEach(opt => {
-                const isChecked = currentState.includes(opt);
-                html += `<div class="multi-select-option">
+    // 개별 항목들
+    options.forEach(opt => {
+        const isChecked = currentState.includes(opt);
+        html += `<div class="multi-select-option">
                             <label>
                                 <input type="checkbox" value="${opt}" ${isChecked ? 'checked' : ''} onchange="handleMultiSelectChange('${elementId}', this)">
                                 ${opt}
                             </label>
                          </div>`;
+    });
+
+    dropdown.innerHTML = html;
+    updateMultiSelectLabel(elementId);
+}
+
+// 체크박스 변경 처리
+function handleMultiSelectChange(elementId, input) {
+    const value = input.value;
+    const isChecked = input.checked;
+    const checkboxes = document.querySelectorAll(`#${elementId}Dropdown input[type="checkbox"]`);
+
+    if (value === 'all') {
+        if (isChecked) {
+            // 전체 선택 시 -> 나머지 해제
+            checkboxes.forEach(cb => {
+                if (cb.value !== 'all') cb.checked = false;
             });
-
-            dropdown.innerHTML = html;
-            updateMultiSelectLabel(elementId);
+            multiSelectState[elementId] = ['all'];
+        } else {
+            // 전체 해제 시 -> 빈 상태 (허용)
+            multiSelectState[elementId] = [];
+        }
+    } else {
+        // 개별 선택 시
+        if (isChecked) {
+            // 전체 체크박스 해제
+            const allCb = document.querySelector(`#${elementId}Dropdown input[value="all"]`);
+            if (allCb) allCb.checked = false;
         }
 
-        // 체크박스 변경 처리
-        function handleMultiSelectChange(elementId, input) {
-            const value = input.value;
-            const isChecked = input.checked;
-            const checkboxes = document.querySelectorAll(`#${elementId}Dropdown input[type="checkbox"]`);
-
-            if (value === 'all') {
-                if (isChecked) {
-                    // 전체 선택 시 -> 나머지 해제
-                    checkboxes.forEach(cb => {
-                        if (cb.value !== 'all') cb.checked = false;
-                    });
-                    multiSelectState[elementId] = ['all'];
-                } else {
-                    // 전체 해제 시 -> 빈 상태 (허용)
-                    multiSelectState[elementId] = [];
-                }
-            } else {
-                // 개별 선택 시
-                if (isChecked) {
-                    // 전체 체크박스 해제
-                    const allCb = document.querySelector(`#${elementId}Dropdown input[value="all"]`);
-                    if (allCb) allCb.checked = false;
-                }
-
-                // 체크된 항목들 수집
-                const selected = [];
-                checkboxes.forEach(cb => {
-                    if (cb.value !== 'all' && cb.checked) {
-                        selected.push(cb.value);
-                    }
-                });
-
-                if (selected.length === 0) {
-                    // 모두 해제되면 자동으로 '전체'로 복귀
-                    const allCb = document.querySelector(`#${elementId}Dropdown input[value="all"]`);
-                    if (allCb) allCb.checked = true;
-                    multiSelectState[elementId] = ['all'];
-                } else {
-                    multiSelectState[elementId] = selected;
-                }
-            }
-
-            updateMultiSelectLabel(elementId);
-
-            // [추가] 진행단계 필터가 변경되면 카테고리 필터 옵션을 갱신 (Dependent Dropdown)
-            if (elementId === 'checklistStageFilter') {
-                updateCategoryOptionsBasedOnStage();
-            }
-
-            renderChecklistItems();
-        }
-
-        // [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
-        function updateCategoryOptionsBasedOnStage() {
-            const selectedStages = multiSelectState['checklistStageFilter'];
-            console.log('[Filter Logic] Selected Stages:', selectedStages);
-
-            if (!checklistMasterData || checklistMasterData.length === 0) {
-                console.warn('[Filter Logic] No master data available for filtering');
-                return;
-            }
-
-            let validCategories = [];
-
-            if (selectedStages.includes('all') || selectedStages.length === 0) {
-                // 전체 선택 시 -> 모든 카테고리 표시
-                validCategories = [...new Set(checklistMasterData.map(item => (item.category || '').trim()).filter(Boolean))].sort();
-            } else {
-                // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
-                const filteredItems = checklistMasterData.filter(item => {
-                    const itemStage = (item.진행단계 || '').trim();
-                    // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
-                    // To be safe, we rely on exact values from options. 
-                    // But here we just used item.진행단계 to build options, so it should match.
-                    return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
-                });
-                validCategories = [...new Set(filteredItems.map(item => (item.category || '').trim()).filter(Boolean))].sort();
-            }
-
-            console.log('[Filter Logic] Valid Categories:', validCategories);
-
-            // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
-            const currentCategoryState = multiSelectState['checklistCategoryFilter'];
-
-            if (!currentCategoryState.includes('all')) {
-                const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
-                // 하나도 없으면 'all'로 리셋
-                multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
-            } else {
-                // If it was 'all', keep it 'all' unless validCategories is empty? 
-                // 'all' is always valid if validCategories has items.
-            }
-
-            // 카테고리 필터 옵션 재생성
-            initMultiSelect('checklistCategoryFilter', validCategories);
-        }
-
-        // 라벨 업데이트
-        function updateMultiSelectLabel(elementId) {
-            const label = document.getElementById(elementId + 'Label');
-            if (!label) return;
-
-            const state = multiSelectState[elementId];
-            if (state.includes('all') || state.length === 0) {
-                label.innerText = '전체 보기';
-                label.style.fontWeight = 'normal';
-                label.style.color = 'inherit';
-            } else {
-                // 선택된 항목 이름 표시 (너무 길면 줄임)
-                let text = state.join(', ');
-                if (text.length > 20) {
-                    text = state[0] + (state.length > 1 ? ` 외 ${state.length - 1}개` : '');
-                }
-                label.innerText = text;
-                label.style.fontWeight = '600';
-                label.style.color = '#0071e3';
-            }
-        }
-
-        // 드롭다운 토글
-        function toggleMultiSelect(elementId, event) {
-            // [Fix] 드롭다운 내부 클릭 시 닫히지 않도록 이벤트 전파 방지
-            if (event && event.target.closest('.multi-select-dropdown')) return;
-
-            const dropdown = document.getElementById(elementId + 'Dropdown');
-            if (!dropdown) return;
-
-            const isVisible = dropdown.style.display === 'block';
-
-            // 다른 드롭다운 닫기
-            document.querySelectorAll('.multi-select-dropdown').forEach(d => {
-                if (d.id !== elementId + 'Dropdown') d.style.display = 'none';
-            });
-
-            dropdown.style.display = isVisible ? 'none' : 'block';
-
-            // [Fix] 이벤트 버블링 방지 (필요 시)
-            if (event) event.stopPropagation();
-        }
-
-        function getMultiSelectValues(elementId) {
-            const val = multiSelectState[elementId];
-            if (!val || val.length === 0) return ['all'];
-            return val;
-        }
-
-        // 외부 클릭 시 드롭다운 닫기
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.multi-select-wrapper')) {
-                document.querySelectorAll('.multi-select-dropdown').forEach(d => {
-                    d.style.display = 'none';
-                });
+        // 체크된 항목들 수집
+        const selected = [];
+        checkboxes.forEach(cb => {
+            if (cb.value !== 'all' && cb.checked) {
+                selected.push(cb.value);
             }
         });
 
-        // ============================
-        // [신규] 현황 및 작업기록 (System Action Log)
-        // ============================
-        // 서버 연동 방식으로 변경됨
-
-        // 로그 기록 함수 (서버 전송)
-        async function logUserAction(actionType, detailText) {
-            const adminId = (currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown';
-
-            // UI에 즉시 반영을 위해 로컬 호출 (선택적)
-            // renderAuditLog(); // 서버에서 다시 불러오는 것이 정확함
-
-            try {
-                // 비동기 전송 (결과 기다리지 않음)
-                fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'logUserAction',
-                        adminId: adminId,
-                        actionType: actionType,
-                        detail: detailText
-                    })
-                }).then(res => res.json())
-                    .then(data => {
-                        console.log('Log saved:', data);
-                        // 현재 작업기록 탭을 보고 있다면 갱신
-                        if (document.getElementById('panel-stats') &&
-                            (document.getElementById('panel-stats').style.display === 'block' ||
-                                document.getElementById('panel-stats').classList.contains('active'))) {
-                            renderActionLog();
-                        }
-                    })
-                    .catch(err => console.error('Log save error:', err));
-            } catch (e) {
-                console.error('Log error:', e);
-            }
+        if (selected.length === 0) {
+            // 모두 해제되면 자동으로 '전체'로 복귀
+            const allCb = document.querySelector(`#${elementId}Dropdown input[value="all"]`);
+            if (allCb) allCb.checked = true;
+            multiSelectState[elementId] = ['all'];
+        } else {
+            multiSelectState[elementId] = selected;
         }
+    }
 
-        // [신규] 로그 상세내용 포맷터
-        function formatLogDetail(detail) {
-            if (!detail) return '';
-            let parsed = null;
-            let isJson = false;
+    updateMultiSelectLabel(elementId);
 
-            if (typeof detail === 'string' && detail.trim().startsWith('{')) {
-                try {
-                    parsed = JSON.parse(detail);
-                    isJson = true;
-                } catch (e) { }
-            }
+    // [추가] 진행단계 필터가 변경되면 카테고리 필터 옵션을 갱신 (Dependent Dropdown)
+    if (elementId === 'checklistStageFilter') {
+        updateCategoryOptionsBasedOnStage();
+    }
 
-            if (isJson && parsed) {
-                // {type:"ExcelExport", scope:"single", customerName:"..."}
-                if (parsed.type === 'ExcelExport') {
-                    const scope = (parsed.scope === 'single' || parsed.scope === 'current') ? '1명 고객' : '전체 고객';
-                    const name = parsed.customerName ? ` · ${parsed.customerName}` : '';
-                    return `Excel 내보내기 · ${scope}${name}`;
-                }
-                // {module:"expenses", action:"load"}
-                if (parsed.module) {
-                    const modName = parsed.module === 'expenses' ? '운영비 시트' : (parsed.module === 'fixed' ? '고정지출 설정' : parsed.module);
-                    const actName = parsed.action === 'load' ? '불러오기' : (parsed.action === 'save' ? '저장' : parsed.action);
-                    return `${modName} ${actName}`;
-                }
-                // Fallback
-                return Object.entries(parsed).map(([k, v]) => `${k}:${v}`).join(' · ');
-            }
+    renderChecklistItems();
+}
 
-            // Plain text (Truncate)
-            let str = String(detail);
-            return str.length > 200 ? str.slice(0, 200) + '...' : str;
+// [추가] 진행단계 선택에 따른 카테고리 필터 옵션 갱신
+function updateCategoryOptionsBasedOnStage() {
+    const selectedStages = multiSelectState['checklistStageFilter'];
+    console.log('[Filter Logic] Selected Stages:', selectedStages);
+
+    if (!checklistMasterData || checklistMasterData.length === 0) {
+        console.warn('[Filter Logic] No master data available for filtering');
+        return;
+    }
+
+    let validCategories = [];
+
+    if (selectedStages.includes('all') || selectedStages.length === 0) {
+        // 전체 선택 시 -> 모든 카테고리 표시
+        validCategories = [...new Set(checklistMasterData.map(item => (item.category || '').trim()).filter(Boolean))].sort();
+    } else {
+        // 특정 단계 선택 시 -> 해당 단계에 포함된 카테고리만 추출
+        const filteredItems = checklistMasterData.filter(item => {
+            const itemStage = (item.진행단계 || '').trim();
+            // selectedStages could have untrimmed values if init was untrimmed, but typically they match.
+            // To be safe, we rely on exact values from options. 
+            // But here we just used item.진행단계 to build options, so it should match.
+            return selectedStages.some(stage => stage === item.진행단계 || stage === itemStage);
+        });
+        validCategories = [...new Set(filteredItems.map(item => (item.category || '').trim()).filter(Boolean))].sort();
+    }
+
+    console.log('[Filter Logic] Valid Categories:', validCategories);
+
+    // 기존 선택된 카테고리 중 유효하지 않은 것은 제거 (UX 개선)
+    const currentCategoryState = multiSelectState['checklistCategoryFilter'];
+
+    if (!currentCategoryState.includes('all')) {
+        const newCategoryState = currentCategoryState.filter(cat => validCategories.includes(cat));
+        // 하나도 없으면 'all'로 리셋
+        multiSelectState['checklistCategoryFilter'] = newCategoryState.length > 0 ? newCategoryState : ['all'];
+    } else {
+        // If it was 'all', keep it 'all' unless validCategories is empty? 
+        // 'all' is always valid if validCategories has items.
+    }
+
+    // 카테고리 필터 옵션 재생성
+    initMultiSelect('checklistCategoryFilter', validCategories);
+}
+
+// 라벨 업데이트
+function updateMultiSelectLabel(elementId) {
+    const label = document.getElementById(elementId + 'Label');
+    if (!label) return;
+
+    const state = multiSelectState[elementId];
+    if (state.includes('all') || state.length === 0) {
+        label.innerText = '전체 보기';
+        label.style.fontWeight = 'normal';
+        label.style.color = 'inherit';
+    } else {
+        // 선택된 항목 이름 표시 (너무 길면 줄임)
+        let text = state.join(', ');
+        if (text.length > 20) {
+            text = state[0] + (state.length > 1 ? ` 외 ${state.length - 1}개` : '');
         }
+        label.innerText = text;
+        label.style.fontWeight = '600';
+        label.style.color = '#0071e3';
+    }
+}
 
-        // 로그 렌더링 함수 (서버 조회)
-        async function renderActionLog(targetId) {
-            const reqId = targetId || currentCustomerId;
-            let tbody = document.getElementById('auditLogTableBody');
+// 드롭다운 토글
+function toggleMultiSelect(elementId, event) {
+    // [Fix] 드롭다운 내부 클릭 시 닫히지 않도록 이벤트 전파 방지
+    if (event && event.target.closest('.multi-select-dropdown')) return;
 
-            if (!tbody) {
-                const panel = document.getElementById('panel-stats');
-                if (panel) {
-                    const tbl = panel.querySelector('tbody');
-                    if (tbl) tbody = tbl;
+    const dropdown = document.getElementById(elementId + 'Dropdown');
+    if (!dropdown) return;
+
+    const isVisible = dropdown.style.display === 'block';
+
+    // 다른 드롭다운 닫기
+    document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+        if (d.id !== elementId + 'Dropdown') d.style.display = 'none';
+    });
+
+    dropdown.style.display = isVisible ? 'none' : 'block';
+
+    // [Fix] 이벤트 버블링 방지 (필요 시)
+    if (event) event.stopPropagation();
+}
+
+function getMultiSelectValues(elementId) {
+    const val = multiSelectState[elementId];
+    if (!val || val.length === 0) return ['all'];
+    return val;
+}
+
+// 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.multi-select-wrapper')) {
+        document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+            d.style.display = 'none';
+        });
+    }
+});
+
+// ============================
+// [신규] 현황 및 작업기록 (System Action Log)
+// ============================
+// 서버 연동 방식으로 변경됨
+
+// 로그 기록 함수 (서버 전송)
+async function logUserAction(actionType, detailText) {
+    const adminId = (currentAdmin && currentAdmin.id) ? currentAdmin.id : 'unknown';
+
+    // UI에 즉시 반영을 위해 로컬 호출 (선택적)
+    // renderAuditLog(); // 서버에서 다시 불러오는 것이 정확함
+
+    try {
+        // 비동기 전송 (결과 기다리지 않음)
+        fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'logUserAction',
+                adminId: adminId,
+                actionType: actionType,
+                detail: detailText
+            })
+        }).then(res => res.json())
+            .then(data => {
+                console.log('Log saved:', data);
+                // 현재 작업기록 탭을 보고 있다면 갱신
+                if (document.getElementById('panel-stats') &&
+                    (document.getElementById('panel-stats').style.display === 'block' ||
+                        document.getElementById('panel-stats').classList.contains('active'))) {
+                    renderActionLog();
                 }
+            })
+            .catch(err => console.error('Log save error:', err));
+    } catch (e) {
+        console.error('Log error:', e);
+    }
+}
+
+// [신규] 로그 상세내용 포맷터
+function formatLogDetail(detail) {
+    if (!detail) return '';
+    let parsed = null;
+    let isJson = false;
+
+    if (typeof detail === 'string' && detail.trim().startsWith('{')) {
+        try {
+            parsed = JSON.parse(detail);
+            isJson = true;
+        } catch (e) { }
+    }
+
+    if (isJson && parsed) {
+        // {type:"ExcelExport", scope:"single", customerName:"..."}
+        if (parsed.type === 'ExcelExport') {
+            const scope = (parsed.scope === 'single' || parsed.scope === 'current') ? '1명 고객' : '전체 고객';
+            const name = parsed.customerName ? ` · ${parsed.customerName}` : '';
+            return `Excel 내보내기 · ${scope}${name}`;
+        }
+        // {module:"expenses", action:"load"}
+        if (parsed.module) {
+            const modName = parsed.module === 'expenses' ? '운영비 시트' : (parsed.module === 'fixed' ? '고정지출 설정' : parsed.module);
+            const actName = parsed.action === 'load' ? '불러오기' : (parsed.action === 'save' ? '저장' : parsed.action);
+            return `${modName} ${actName}`;
+        }
+        // Fallback
+        return Object.entries(parsed).map(([k, v]) => `${k}:${v}`).join(' · ');
+    }
+
+    // Plain text (Truncate)
+    let str = String(detail);
+    return str.length > 200 ? str.slice(0, 200) + '...' : str;
+}
+
+// 로그 렌더링 함수 (서버 조회)
+async function renderActionLog(targetId) {
+    const reqId = targetId || currentCustomerId;
+    let tbody = document.getElementById('auditLogTableBody');
+
+    if (!tbody) {
+        const panel = document.getElementById('panel-stats');
+        if (panel) {
+            const tbl = panel.querySelector('tbody');
+            if (tbl) tbody = tbl;
+        }
+    }
+
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">로딩 중...</td></tr>';
+
+    try {
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=action_log&action=getLogs`);
+        const result = await response.json();
+
+        // [Guard] Check if customer changed during fetch
+        if (reqId && reqId !== currentCustomerId) return;
+
+        if (result.success && result.logs) {
+            if (result.logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">편집 이력이 없습니다.</td></tr>';
+                return;
             }
 
-            if (!tbody) return;
+            // 최근 200건 제한
+            const displayLogs = result.logs.slice(0, 200);
 
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">로딩 중...</td></tr>';
-
-            try {
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=action_log&action=getLogs`);
-                const result = await response.json();
-
-                // [Guard] Check if customer changed during fetch
-                if (reqId && reqId !== currentCustomerId) return;
-
-                if (result.success && result.logs) {
-                    if (result.logs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">편집 이력이 없습니다.</td></tr>';
-                        return;
-                    }
-
-                    // 최근 200건 제한
-                    const displayLogs = result.logs.slice(0, 200);
-
-                    let html = '';
-                    displayLogs.forEach(log => {
-                        const formattedDetail = formatLogDetail(log.detail);
-                        html += `
+            let html = '';
+            displayLogs.forEach(log => {
+                const formattedDetail = formatLogDetail(log.detail);
+                html += `
                             <tr style="border-bottom: 1px solid #eee;">
                                 <td style="padding: 8px 10px; color:#666; font-size:12px; white-space:nowrap;">${log.timestamp}</td>
                                 <td style="padding: 8px 10px; font-weight:600; font-size:12px; color:#0071e3;">${log.adminId}</td>
@@ -11058,101 +11058,101 @@
                                 </td>
                             </tr>
                         `;
-                    });
-                    tbody.innerHTML = html;
-
-                    // 요약 정보 업데이트
-                    const countEl = document.getElementById('logEditCount');
-                    if (countEl) countEl.textContent = result.logs.length + '건';
-
-                    const nameEl = document.getElementById('logCustomerName');
-                    if (nameEl) nameEl.textContent = '전체 시스템';
-
-                    const statusEl = document.getElementById('logCustomerStatus');
-                    if (statusEl) statusEl.textContent = 'Active';
-
-                    const amountEl = document.getElementById('logCustomerAmount');
-                    if (amountEl) amountEl.textContent = '-';
-
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:red;">불러오기 실패</td></tr>';
-                }
-            } catch (e) {
-                console.error('Log fetch error:', e);
-                // 에러 발생 시에도 안전하게 메시지 출력
-                if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">오류 발생</td></tr>';
-            }
-        }
-
-        // renderAuditLog (구버전 호환)
-        const renderAuditLog = renderActionLog;
-
-
-        // ============================
-        // [신규] 운영비 관리 (Operating Expenses) & 뷰 스위칭
-        // ============================
-        let expensesRows = [];
-        let fixedExpenseItems = []; // 고정지출 설정 항목
-        const EXPENSE_CATEGORIES = ['인건비', '차량운영비', '임대료', '운영비', '마케팅/영업', '세금/금융', '기타'];
-
-        // Phase 2: 초기 로드 (로컬 스토리지 사용 금지)
-
-        // 현재 월 필터 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            const monthFilter = document.getElementById('expenseMonthFilter');
-            if (monthFilter) {
-                const now = new Date();
-                monthFilter.value = now.toISOString().slice(0, 7); // YYYY-MM
-            }
-        });
-
-        // 고정지출 설정 패널 토글
-        function toggleFixedExpenseSettings() {
-            const panel = document.getElementById('fixedExpenseSettingsPanel');
-            if (panel) {
-                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-                if (panel.style.display === 'block') {
-                    renderFixedExpenseTable();
-                }
-            }
-        }
-
-        // 고정지출 항목 추가
-        function addFixedExpenseItem() {
-            fixedExpenseItems.push({
-                category: '',
-                detail: '', // 항목명 -> 상세내역
-                amount: 0,
-                payMethod: '',
-                receipt: '', // 증빙자료 추가
-                active: true
             });
+            tbody.innerHTML = html;
+
+            // 요약 정보 업데이트
+            const countEl = document.getElementById('logEditCount');
+            if (countEl) countEl.textContent = result.logs.length + '건';
+
+            const nameEl = document.getElementById('logCustomerName');
+            if (nameEl) nameEl.textContent = '전체 시스템';
+
+            const statusEl = document.getElementById('logCustomerStatus');
+            if (statusEl) statusEl.textContent = 'Active';
+
+            const amountEl = document.getElementById('logCustomerAmount');
+            if (amountEl) amountEl.textContent = '-';
+
+        } else {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:red;">불러오기 실패</td></tr>';
+        }
+    } catch (e) {
+        console.error('Log fetch error:', e);
+        // 에러 발생 시에도 안전하게 메시지 출력
+        if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">오류 발생</td></tr>';
+    }
+}
+
+// renderAuditLog (구버전 호환)
+const renderAuditLog = renderActionLog;
+
+
+// ============================
+// [신규] 운영비 관리 (Operating Expenses) & 뷰 스위칭
+// ============================
+let expensesRows = [];
+let fixedExpenseItems = []; // 고정지출 설정 항목
+const EXPENSE_CATEGORIES = ['인건비', '차량운영비', '임대료', '운영비', '마케팅/영업', '세금/금융', '기타'];
+
+// Phase 2: 초기 로드 (로컬 스토리지 사용 금지)
+
+// 현재 월 필터 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    const monthFilter = document.getElementById('expenseMonthFilter');
+    if (monthFilter) {
+        const now = new Date();
+        monthFilter.value = now.toISOString().slice(0, 7); // YYYY-MM
+    }
+});
+
+// 고정지출 설정 패널 토글
+function toggleFixedExpenseSettings() {
+    const panel = document.getElementById('fixedExpenseSettingsPanel');
+    if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'block') {
             renderFixedExpenseTable();
         }
+    }
+}
 
-        // 고정지출 항목 삭제
-        function removeFixedExpenseItem(index) {
-            fixedExpenseItems.splice(index, 1);
-            renderFixedExpenseTable();
-        }
+// 고정지출 항목 추가
+function addFixedExpenseItem() {
+    fixedExpenseItems.push({
+        category: '',
+        detail: '', // 항목명 -> 상세내역
+        amount: 0,
+        payMethod: '',
+        receipt: '', // 증빙자료 추가
+        active: true
+    });
+    renderFixedExpenseTable();
+}
 
-        // 고정지출 항목 수정
-        function updateFixedExpenseItem(index, field, value) {
-            if (field === 'active') {
-                fixedExpenseItems[index][field] = value;
-            } else if (field === 'amount') {
-                fixedExpenseItems[index][field] = parseNumber(value);
-            } else {
-                fixedExpenseItems[index][field] = value;
-            }
-        }
+// 고정지출 항목 삭제
+function removeFixedExpenseItem(index) {
+    fixedExpenseItems.splice(index, 1);
+    renderFixedExpenseTable();
+}
 
-        // 고정지출 설정 테이블 렌더링
-        function renderFixedExpenseTable() {
-            const tbody = document.getElementById('fixedExpenseTableBody');
-            if (!tbody) return;
+// 고정지출 항목 수정
+function updateFixedExpenseItem(index, field, value) {
+    if (field === 'active') {
+        fixedExpenseItems[index][field] = value;
+    } else if (field === 'amount') {
+        fixedExpenseItems[index][field] = parseNumber(value);
+    } else {
+        fixedExpenseItems[index][field] = value;
+    }
+}
 
-            tbody.innerHTML = fixedExpenseItems.map((item, index) => `
+// 고정지출 설정 테이블 렌더링
+function renderFixedExpenseTable() {
+    const tbody = document.getElementById('fixedExpenseTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = fixedExpenseItems.map((item, index) => `
                 <tr>
                     <td style="text-align:center; padding:8px;">
                         <button onclick="removeFixedExpenseItem(${index})" style="color:#dc2626; border:none; background:none; cursor:pointer; font-size:14px;">🗑️</button>
@@ -11172,153 +11172,153 @@
                     </td>
                 </tr>
             `).join('');
+}
+
+// 고정지출 저장 (클라우드)
+async function saveFixedExpensesToCloud() {
+    const btn = document.getElementById('btnSaveFixed');
+    const originalText = btn?.innerText || '💾 저장';
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = '저장 중...';
         }
 
-        // 고정지출 저장 (클라우드)
-        async function saveFixedExpensesToCloud() {
-            const btn = document.getElementById('btnSaveFixed');
-            const originalText = btn?.innerText || '💾 저장';
+        const payload = {
+            action: 'updateExpenses',
+            fixedExpenses: fixedExpenseItems.map(item => ({
+                category: item.category || '',
+                detail: item.detail || item.itemName || '',
+                amount: parseNumber(item.amount),
+                payMethod: item.payMethod || '',
+                receipt: item.receipt || '',
+                active: item.active !== false
+            }))
+        };
 
-            try {
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = '저장 중...';
-                }
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
 
-                const payload = {
-                    action: 'updateExpenses',
-                    fixedExpenses: fixedExpenseItems.map(item => ({
-                        category: item.category || '',
-                        detail: item.detail || item.itemName || '',
-                        amount: parseNumber(item.amount),
-                        payMethod: item.payMethod || '',
-                        receipt: item.receipt || '',
-                        active: item.active !== false
-                    }))
-                };
+        if (result.result === 'success') {
+            // 로컬에도 저장
+            // Phase 2: 업무 데이터 로컬 저장 금지
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            showToast(`저장 완료 ${timeStr}`, 'success');
+            renderExpensesTable();
+            logUserAction('저장', '고정지출 설정 저장');
+        } else {
+            throw new Error(result.error || '저장 실패');
+        }
+    } catch (err) {
+        console.error('고정지출 저장 오류:', err);
+        showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    }
+}
 
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
+// 고정지출 불러오기 (클라우드)
+async function loadFixedExpensesFromCloud() {
+    const btn = document.getElementById('btnLoadFixed');
+    const originalText = btn?.innerText || '🔄 불러오기';
 
-                if (result.result === 'success') {
-                    // 로컬에도 저장
-                    // Phase 2: 업무 데이터 로컬 저장 금지
-                    const now = new Date();
-                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                    showToast(`저장 완료 ${timeStr}`, 'success');
-                    renderExpensesTable();
-                    logUserAction('저장', '고정지출 설정 저장');
-                } else {
-                    throw new Error(result.error || '저장 실패');
-                }
-            } catch (err) {
-                console.error('고정지출 저장 오류:', err);
-                showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }
-            }
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = '불러오는 중...';
         }
 
-        // 고정지출 불러오기 (클라우드)
-        async function loadFixedExpensesFromCloud() {
-            const btn = document.getElementById('btnLoadFixed');
-            const originalText = btn?.innerText || '🔄 불러오기';
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=expenses`);
+        const result = await response.json();
 
-            try {
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = '불러오는 중...';
-                }
+        if (result.result === 'success') {
+            // 고정지출 데이터만 불러오기
+            if (result.fixedExpenses && result.fixedExpenses.length > 0) {
+                fixedExpenseItems = result.fixedExpenses.map(f => ({
+                    category: f.category || '',
+                    detail: f.detail || f.itemName || '',
+                    amount: f.amount || 0,
+                    payMethod: f.payMethod || '',
+                    receipt: f.receipt || '',
+                    active: f.active !== false
+                }));
+                // Phase 2: 업무 데이터 로컬 저장 금지
 
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=expenses`);
-                const result = await response.json();
-
-                if (result.result === 'success') {
-                    // 고정지출 데이터만 불러오기
-                    if (result.fixedExpenses && result.fixedExpenses.length > 0) {
-                        fixedExpenseItems = result.fixedExpenses.map(f => ({
-                            category: f.category || '',
-                            detail: f.detail || f.itemName || '',
-                            amount: f.amount || 0,
-                            payMethod: f.payMethod || '',
-                            receipt: f.receipt || '',
-                            active: f.active !== false
-                        }));
-                        // Phase 2: 업무 데이터 로컬 저장 금지
-
-                        renderFixedExpenseTable();
-                        renderExpensesTable();
-                        showToast(`고정지출 ${result.fixedExpenses.length}건 불러옴`, 'success');
-                        logUserAction('불러오기', '고정지출 설정 불러오기');
-                    } else {
-                        showToast('저장된 고정지출이 없습니다.', 'info');
-                    }
-                } else {
-                    throw new Error(result.error || '불러오기 실패');
-                }
-            } catch (err) {
-                console.error('고정지출 불러오기 오류:', err);
-                showToast('불러오기 실패: ' + err.message, 'error');
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }
-            }
-        }
-
-        function showMainView(viewName) {
-            const mainContent = document.getElementById('mainContent');
-            const mainBoardView = document.getElementById('mainBoardView');
-            const customerView = document.getElementById('customerView');
-            const expensesView = document.getElementById('view-expenses');
-
-            // 초기화 - 모든 뷰 숨기기
-            if (mainBoardView) mainBoardView.style.display = 'none';
-            if (customerView) customerView.style.display = 'none';
-            if (expensesView) expensesView.style.display = 'none';
-
-            if (viewName === 'expenses') {
-                if (expensesView) expensesView.style.display = 'block';
-                // 사이드바 선택 해제
-                document.querySelectorAll('.customer-item').forEach(el => el.classList.remove('active'));
+                renderFixedExpenseTable();
                 renderExpensesTable();
-            } else if (viewName === 'customer') {
-                if (customerView) customerView.style.display = 'block';
+                showToast(`고정지출 ${result.fixedExpenses.length}건 불러옴`, 'success');
+                logUserAction('불러오기', '고정지출 설정 불러오기');
             } else {
-                // Default: Main Board
-                if (mainBoardView) {
-                    mainBoardView.style.display = 'block';
-                    if (typeof renderMainBoard === 'function') renderMainBoard();
-                }
+                showToast('저장된 고정지출이 없습니다.', 'info');
             }
+        } else {
+            throw new Error(result.error || '불러오기 실패');
         }
+    } catch (err) {
+        console.error('고정지출 불러오기 오류:', err);
+        showToast('불러오기 실패: ' + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    }
+}
 
-        function renderExpensesTable() {
-            const tbody = document.getElementById('expensesTableBody');
-            if (!tbody) return;
+function showMainView(viewName) {
+    const mainContent = document.getElementById('mainContent');
+    const mainBoardView = document.getElementById('mainBoardView');
+    const customerView = document.getElementById('customerView');
+    const expensesView = document.getElementById('view-expenses');
 
-            // 현재 선택된 월 가져오기
-            const monthFilter = document.getElementById('expenseMonthFilter');
-            const selectedMonth = monthFilter?.value || new Date().toISOString().slice(0, 7);
+    // 초기화 - 모든 뷰 숨기기
+    if (mainBoardView) mainBoardView.style.display = 'none';
+    if (customerView) customerView.style.display = 'none';
+    if (expensesView) expensesView.style.display = 'none';
 
-            let fixedTotal = 0;
-            let variableTotal = 0;
-            let rows = [];
+    if (viewName === 'expenses') {
+        if (expensesView) expensesView.style.display = 'block';
+        // 사이드바 선택 해제
+        document.querySelectorAll('.customer-item').forEach(el => el.classList.remove('active'));
+        renderExpensesTable();
+    } else if (viewName === 'customer') {
+        if (customerView) customerView.style.display = 'block';
+    } else {
+        // Default: Main Board
+        if (mainBoardView) {
+            mainBoardView.style.display = 'block';
+            if (typeof renderMainBoard === 'function') renderMainBoard();
+        }
+    }
+}
 
-            // 1. 활성화된 고정지출 항목을 행으로 추가 (읽기 전용)
-            const activeFixed = fixedExpenseItems.filter(f => f.active);
-            activeFixed.forEach((item, idx) => {
-                const amt = parseNumber(item.amount);
-                fixedTotal += amt;
-                const detailText = item.detail || item.itemName || '-';
-                rows.push(`
+function renderExpensesTable() {
+    const tbody = document.getElementById('expensesTableBody');
+    if (!tbody) return;
+
+    // 현재 선택된 월 가져오기
+    const monthFilter = document.getElementById('expenseMonthFilter');
+    const selectedMonth = monthFilter?.value || new Date().toISOString().slice(0, 7);
+
+    let fixedTotal = 0;
+    let variableTotal = 0;
+    let rows = [];
+
+    // 1. 활성화된 고정지출 항목을 행으로 추가 (읽기 전용)
+    const activeFixed = fixedExpenseItems.filter(f => f.active);
+    activeFixed.forEach((item, idx) => {
+        const amt = parseNumber(item.amount);
+        fixedTotal += amt;
+        const detailText = item.detail || item.itemName || '-';
+        rows.push(`
                     <tr style="border-bottom:1px solid #fcd34d; background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
                         <td style="text-align:center; padding:10px; color:#92400e; font-weight:600;">
                             ${idx + 1}
@@ -11339,16 +11339,16 @@
                         <td style="padding:8px; color:#92400e; font-size:11px;">매월 자동 반영</td>
                     </tr>
                 `);
-            });
+    });
 
-            // 2. 변동지출 항목 (선택된 월과 일치하는 것만)
-            expensesRows.forEach((row, index) => {
-                const rowMonth = (row.date || '').substring(0, 7);
-                if (rowMonth !== selectedMonth && selectedMonth !== 'all') return;
+    // 2. 변동지출 항목 (선택된 월과 일치하는 것만)
+    expensesRows.forEach((row, index) => {
+        const rowMonth = (row.date || '').substring(0, 7);
+        if (rowMonth !== selectedMonth && selectedMonth !== 'all') return;
 
-                const amt = parseNumber(row.amount);
-                variableTotal += amt;
-                rows.push(`
+        const amt = parseNumber(row.amount);
+        variableTotal += amt;
+        rows.push(`
                     <tr style="border-bottom:1px solid #eee;">
                         <td style="text-align:center; padding:10px;">
                             <button onclick="removeExpenseRow(${index})" style="color:#ff3b30;border:none;background:none;cursor:pointer;">🗑️</button>
@@ -11368,279 +11368,279 @@
                         <td style="padding:4px;"><input type="text" value="${row.note || row.memo || ''}" onchange="updateExpenseRow(${index}, 'note', this.value)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;"></td>
                     </tr>
                 `);
-            });
+    });
 
-            tbody.innerHTML = rows.join('');
+    tbody.innerHTML = rows.join('');
 
-            // 합계 표시 (고정 + 변동)
-            const totalAmount = fixedTotal + variableTotal;
-            const footer = document.getElementById('totalExpenseFooter');
-            if (footer) {
-                footer.innerHTML = `
+    // 합계 표시 (고정 + 변동)
+    const totalAmount = fixedTotal + variableTotal;
+    const footer = document.getElementById('totalExpenseFooter');
+    if (footer) {
+        footer.innerHTML = `
                     <span style="font-size:12px; color:#64748b; margin-right:12px;">
                         고정: ₩${formatNumber(fixedTotal)} / 변동: ₩${formatNumber(variableTotal)}
                     </span>
                     <span style="color:#dc2626; font-weight:700; font-size:16px;">₩${formatNumber(totalAmount)}</span>
                 `;
-            }
+    }
+}
+
+function addExpenseRow() {
+    expensesRows.push({
+        date: new Date().toISOString().split('T')[0],
+        category: '',
+        detail: '',
+        amount: 0,
+        method: '',
+        proof: '',
+        note: ''
+    });
+    renderExpensesTable();
+    saveExpensesLocal();
+}
+
+function removeExpenseRow(index) {
+    if (!confirm('삭제하시겠습니까?')) return;
+    expensesRows.splice(index, 1);
+    renderExpensesTable();
+    saveExpensesLocal();
+}
+
+function updateExpenseRow(index, field, value) {
+    if (field === 'amount') {
+        // 콤마 제거 후 숫자 저장
+        value = parseNumber(value);
+    }
+    expensesRows[index][field] = value;
+    if (field === 'amount') renderExpensesTable();
+    saveExpensesLocal();
+}
+
+function saveExpensesLocal() {
+    // Phase 2: 업무 데이터 로컬 저장 금지
+}
+
+async function saveExpensesToCloud() {
+    const btn = document.getElementById('btnSaveExpenses') || event?.target;
+    const originalText = btn?.innerText || '☁️ 저장하기';
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = '저장 중...';
         }
 
-        function addExpenseRow() {
-            expensesRows.push({
-                date: new Date().toISOString().split('T')[0],
-                category: '',
-                detail: '',
-                amount: 0,
-                method: '',
-                proof: '',
-                note: ''
-            });
-            renderExpensesTable();
-            saveExpensesLocal();
-        }
+        const payload = {
+            action: 'updateExpenses',
+            expenses: expensesRows.map((row, idx) => ({
+                no: idx + 1,
+                date: row.date || '',
+                category: row.category || '',
+                detail: row.detail || '',
+                amount: parseNumber(row.amount),
+                payMethod: row.payMethod || row.method || '',
+                receipt: row.receipt || row.proof || '',
+                memo: row.memo || row.note || ''
+            }))
+        };
 
-        function removeExpenseRow(index) {
-            if (!confirm('삭제하시겠습니까?')) return;
-            expensesRows.splice(index, 1);
-            renderExpensesTable();
-            saveExpensesLocal();
-        }
-
-        function updateExpenseRow(index, field, value) {
-            if (field === 'amount') {
-                // 콤마 제거 후 숫자 저장
-                value = parseNumber(value);
-            }
-            expensesRows[index][field] = value;
-            if (field === 'amount') renderExpensesTable();
-            saveExpensesLocal();
-        }
-
-        function saveExpensesLocal() {
-            // Phase 2: 업무 데이터 로컬 저장 금지
-        }
-
-        async function saveExpensesToCloud() {
-            const btn = document.getElementById('btnSaveExpenses') || event?.target;
-            const originalText = btn?.innerText || '☁️ 저장하기';
-
-            try {
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = '저장 중...';
-                }
-
-                const payload = {
-                    action: 'updateExpenses',
-                    expenses: expensesRows.map((row, idx) => ({
-                        no: idx + 1,
-                        date: row.date || '',
-                        category: row.category || '',
-                        detail: row.detail || '',
-                        amount: parseNumber(row.amount),
-                        payMethod: row.payMethod || row.method || '',
-                        receipt: row.receipt || row.proof || '',
-                        memo: row.memo || row.note || ''
-                    }))
-                };
-
-                const response = await fetch(CUSTOMER_SYNC_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-
-                if (result.result === 'success') {
-                    saveExpensesLocal(); // 로컬에도 저장
-                    const now = new Date();
-                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                    showToast(`저장 완료 ${timeStr}`, 'success');
-                    logUserAction('저장', '운영비 시트 저장');
-                } else {
-                    throw new Error(result.error || '저장 실패');
-                }
-            } catch (err) {
-                console.error('운영비 저장 오류:', err);
-                showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
-                saveExpensesLocal(); // 실패해도 로컬에는 저장
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }
-            }
-        }
-
-        async function syncExpensesFromCloud() {
-            const btn = document.getElementById('btnLoadExpenses') || event?.target;
-            const originalText = btn?.innerText || '🔄 불러오기';
-
-            try {
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = '불러오는 중...';
-                }
-
-                const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=expenses`);
-                const result = await response.json();
-
-                console.log('[운영비 불러오기] API 응답:', result);
-
-                if (result.result === 'success') {
-                    let loadedCount = 0;
-
-                    // 변동 운영비 불러오기
-                    if (result.expenses && result.expenses.length > 0) {
-                        expensesRows = result.expenses.map(exp => ({
-                            date: exp.date || '',
-                            category: exp.category || '',
-                            detail: exp.detail || '',
-                            amount: exp.amount || 0,
-                            method: exp.payMethod || '',
-                            proof: exp.receipt || '',
-                            note: exp.memo || ''
-                        }));
-                        saveExpensesLocal();
-                        loadedCount = result.expenses.length;
-                    }
-
-                    // 고정지출 설정 불러오기
-                    if (result.fixedExpenses && result.fixedExpenses.length > 0) {
-                        fixedExpenseItems = result.fixedExpenses.map(f => ({
-                            category: f.category || '',
-                            detail: f.detail || f.itemName || '',
-                            amount: f.amount || 0,
-                            payMethod: f.payMethod || '',
-                            receipt: f.receipt || '',
-                            active: f.active !== false
-                        }));
-                        // Phase 2: 업무 데이터 로컬 저장 금지
-
-                    }
-
-                    renderExpensesTable();
-                    renderFixedExpenseTable();
-
-                    const fixedCount = result.fixedExpenses?.length || 0;
-                    if (loadedCount > 0 || fixedCount > 0) {
-                        showToast(`운영비 ${loadedCount}건, 고정지출 ${fixedCount}건 불러옴`, 'success');
-                        logUserAction('불러오기', '운영비 시트 불러오기');
-                    } else {
-                        showToast('저장된 데이터가 없습니다.', 'info');
-                    }
-                    return true;
-                } else {
-                    throw new Error(result.error || '불러오기 실패');
-                }
-            } catch (err) {
-                console.error('운영비 불러오기 오류:', err);
-                console.error('API URL:', `${CUSTOMER_SYNC_URL}?sheet=expenses`);
-                showToast('운영비 불러오기 실패: ' + err.message, 'error');
-                return false;
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                }
-            }
-        }
-
-
-        function switchStatsTab(tabName) {
-            // 버튼 활성화
-            document.querySelectorAll('.stats-tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.style.background = 'white';
-                btn.style.color = '#888';
-            });
-            const activeBtn = document.getElementById('tab-' + tabName);
-            if (activeBtn) {
-                activeBtn.classList.add('active');
-                activeBtn.style.background = '#f5f5f7';
-                activeBtn.style.color = '#333';
-            }
-
-            // 뷰 전환
-            document.querySelectorAll('.stats-view-content').forEach(view => view.style.display = 'none');
-            const targetView = document.getElementById('view-stats-' + tabName);
-            if (targetView) {
-                targetView.style.display = 'block';
-            }
-
-            // 차트 크기 강제 재조정
-            if (typeof Chart !== 'undefined') {
-                Object.values(chartInstances).forEach(chart => {
-                    if (chart && typeof chart.resize === 'function') chart.resize();
-                });
-            }
-        }
-
-        // [추가] 탭 전환 감지 및 작업기록 갱신 (MutationObserver)
-        document.addEventListener('DOMContentLoaded', () => {
-            const statsPanel = document.getElementById('panel-stats');
-            if (statsPanel) {
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.attributeName === 'class') {
-                            if (statsPanel.classList.contains('active')) {
-                                renderActionLog();
-                            }
-                        }
-                        if (mutation.attributeName === 'style') {
-                            if (statsPanel.style.display === 'block' && statsPanel.style.display !== 'none') {
-                                renderActionLog();
-                            }
-                        }
-                    });
-                });
-                observer.observe(statsPanel, { attributes: true });
-            }
+        const response = await fetch(CUSTOMER_SYNC_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
         });
+        const result = await response.json();
 
-
-        // [Task 3] Stability Logic
-        let isAppBusy = false;
-        function setAppBusy(busy, message = '데이터 처리 중...') {
-            isAppBusy = busy;
-            let overlay = document.getElementById('globalLoadingOverlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'globalLoadingOverlay';
-                overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:column; justify-content:center; align-items:center;';
-                overlay.innerHTML = '<div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:15px;"></div><div id="loadingMessage" style="font-size:18px; font-weight:600; color:#333;">데이터 처리 중...</div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
-                document.body.appendChild(overlay);
-            }
-            const msgEl = overlay.querySelector('#loadingMessage');
-            if (msgEl) msgEl.textContent = message;
-            overlay.style.display = busy ? 'flex' : 'none';
-            document.body.style.pointerEvents = busy ? 'none' : 'auto';
-            if (overlay) overlay.style.pointerEvents = 'auto';
+        if (result.result === 'success') {
+            saveExpensesLocal(); // 로컬에도 저장
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            showToast(`저장 완료 ${timeStr}`, 'success');
+            logUserAction('저장', '운영비 시트 저장');
+        } else {
+            throw new Error(result.error || '저장 실패');
         }
-        // PWA Service Worker 등록
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
+    } catch (err) {
+        console.error('운영비 저장 오류:', err);
+        showToast('저장 실패: ' + (err.message || '알 수 없는 오류'), 'error');
+        saveExpensesLocal(); // 실패해도 로컬에는 저장
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    }
+}
+
+async function syncExpensesFromCloud() {
+    const btn = document.getElementById('btnLoadExpenses') || event?.target;
+    const originalText = btn?.innerText || '🔄 불러오기';
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = '불러오는 중...';
+        }
+
+        const response = await fetch(`${CUSTOMER_SYNC_URL}?sheet=expenses`);
+        const result = await response.json();
+
+        console.log('[운영비 불러오기] API 응답:', result);
+
+        if (result.result === 'success') {
+            let loadedCount = 0;
+
+            // 변동 운영비 불러오기
+            if (result.expenses && result.expenses.length > 0) {
+                expensesRows = result.expenses.map(exp => ({
+                    date: exp.date || '',
+                    category: exp.category || '',
+                    detail: exp.detail || '',
+                    amount: exp.amount || 0,
+                    method: exp.payMethod || '',
+                    proof: exp.receipt || '',
+                    note: exp.memo || ''
+                }));
+                saveExpensesLocal();
+                loadedCount = result.expenses.length;
+            }
+
+            // 고정지출 설정 불러오기
+            if (result.fixedExpenses && result.fixedExpenses.length > 0) {
+                fixedExpenseItems = result.fixedExpenses.map(f => ({
+                    category: f.category || '',
+                    detail: f.detail || f.itemName || '',
+                    amount: f.amount || 0,
+                    payMethod: f.payMethod || '',
+                    receipt: f.receipt || '',
+                    active: f.active !== false
+                }));
+                // Phase 2: 업무 데이터 로컬 저장 금지
+
+            }
+
+            renderExpensesTable();
+            renderFixedExpenseTable();
+
+            const fixedCount = result.fixedExpenses?.length || 0;
+            if (loadedCount > 0 || fixedCount > 0) {
+                showToast(`운영비 ${loadedCount}건, 고정지출 ${fixedCount}건 불러옴`, 'success');
+                logUserAction('불러오기', '운영비 시트 불러오기');
+            } else {
+                showToast('저장된 데이터가 없습니다.', 'info');
+            }
+            return true;
+        } else {
+            throw new Error(result.error || '불러오기 실패');
+        }
+    } catch (err) {
+        console.error('운영비 불러오기 오류:', err);
+        console.error('API URL:', `${CUSTOMER_SYNC_URL}?sheet=expenses`);
+        showToast('운영비 불러오기 실패: ' + err.message, 'error');
+        return false;
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    }
+}
+
+
+function switchStatsTab(tabName) {
+    // 버튼 활성화
+    document.querySelectorAll('.stats-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'white';
+        btn.style.color = '#888';
+    });
+    const activeBtn = document.getElementById('tab-' + tabName);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.background = '#f5f5f7';
+        activeBtn.style.color = '#333';
+    }
+
+    // 뷰 전환
+    document.querySelectorAll('.stats-view-content').forEach(view => view.style.display = 'none');
+    const targetView = document.getElementById('view-stats-' + tabName);
+    if (targetView) {
+        targetView.style.display = 'block';
+    }
+
+    // 차트 크기 강제 재조정
+    if (typeof Chart !== 'undefined') {
+        Object.values(chartInstances).forEach(chart => {
+            if (chart && typeof chart.resize === 'function') chart.resize();
+        });
+    }
+}
+
+// [추가] 탭 전환 감지 및 작업기록 갱신 (MutationObserver)
+document.addEventListener('DOMContentLoaded', () => {
+    const statsPanel = document.getElementById('panel-stats');
+    if (statsPanel) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    if (statsPanel.classList.contains('active')) {
+                        renderActionLog();
+                    }
+                }
+                if (mutation.attributeName === 'style') {
+                    if (statsPanel.style.display === 'block' && statsPanel.style.display !== 'none') {
+                        renderActionLog();
+                    }
+                }
             });
-        }
+        });
+        observer.observe(statsPanel, { attributes: true });
+    }
+});
 
-        // ==========================================
-        // [New] 노션 고객 공유 URL 생성
-        // ==========================================
-        function openNotionShareModal() {
-            if (!currentData || !currentData.customerId) {
-                showToast('고객을 먼저 선택해주세요.', 'error');
-                return;
-            }
 
-            // Modal HTML Injection (Lazy Load)
-            if (!document.getElementById('notionShareModal')) {
-                const modalHtml = `
+// [Task 3] Stability Logic
+let isAppBusy = false;
+function setAppBusy(busy, message = '데이터 처리 중...') {
+    isAppBusy = busy;
+    let overlay = document.getElementById('globalLoadingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'globalLoadingOverlay';
+        overlay.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:99999; flex-direction:column; justify-content:center; align-items:center;';
+        overlay.innerHTML = '<div style="width:50px; height:50px; border:5px solid #f3f3f3; border-top:5px solid #3498db; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:15px;"></div><div id="loadingMessage" style="font-size:18px; font-weight:600; color:#333;">데이터 처리 중...</div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>';
+        document.body.appendChild(overlay);
+    }
+    const msgEl = overlay.querySelector('#loadingMessage');
+    if (msgEl) msgEl.textContent = message;
+    overlay.style.display = busy ? 'flex' : 'none';
+    document.body.style.pointerEvents = busy ? 'none' : 'auto';
+    if (overlay) overlay.style.pointerEvents = 'auto';
+}
+// PWA Service Worker 등록
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+                console.log('ServiceWorker registration successful');
+            })
+            .catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+    });
+}
+
+// ==========================================
+// [New] 노션 고객 공유 URL 생성
+// ==========================================
+function openNotionShareModal() {
+    if (!currentData || !currentData.customerId) {
+        showToast('고객을 먼저 선택해주세요.', 'error');
+        return;
+    }
+
+    // Modal HTML Injection (Lazy Load)
+    if (!document.getElementById('notionShareModal')) {
+        const modalHtml = `
                 <div id="notionShareModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center;">
                     <div class="modal-content" style="background:#fff; border-radius:16px; width:90%; max-width:500px; max-height:80vh; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
                         <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -11673,119 +11673,119 @@
                         </div>
                     </div>
                 </div>`;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-            }
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
 
-            document.getElementById('notionShareUrlInput').value = '';
-            document.getElementById('notionShareModal').style.display = 'flex';
-        }
+    document.getElementById('notionShareUrlInput').value = '';
+    document.getElementById('notionShareModal').style.display = 'flex';
+}
 
-        function generateNotionShareMessage() {
-            const notionUrl = document.getElementById('notionShareUrlInput').value.trim();
-            if (!notionUrl) {
-                showToast('노션 URL을 입력해주세요.', 'error');
-                return;
-            }
+function generateNotionShareMessage() {
+    const notionUrl = document.getElementById('notionShareUrlInput').value.trim();
+    if (!notionUrl) {
+        showToast('노션 URL을 입력해주세요.', 'error');
+        return;
+    }
 
-            // 고객 정보 수집
-            const customerName = currentData.customerName || '';
-            const customerPhone = currentData.phone || '';
-            const spouseName = currentData.spouseName || '';
-            const spousePhone = currentData.spousePhone || '';
-            const siteAddress = currentData.siteAddress || '';
-            const constructionStart = currentData.constructionStart || '';
-            const constructionEnd = currentData.constructionEnd || '';
-            const movingDate = currentData.movingDate || '';
-            const gatePw = currentData.gatePw || '';
-            const doorPw = currentData.doorPw || '';
+    // 고객 정보 수집
+    const customerName = currentData.customerName || '';
+    const customerPhone = currentData.phone || '';
+    const spouseName = currentData.spouseName || '';
+    const spousePhone = currentData.spousePhone || '';
+    const siteAddress = currentData.siteAddress || '';
+    const constructionStart = currentData.constructionStart || '';
+    const constructionEnd = currentData.constructionEnd || '';
+    const movingDate = currentData.movingDate || '';
+    const gatePw = currentData.gatePw || '';
+    const doorPw = currentData.doorPw || '';
 
-            // 고객명 표시 형식: 성명(연락처) | 배우자 성명(배우자 연락처)
-            let customerDisplayStr = customerName;
-            if (customerPhone) customerDisplayStr += `(${customerPhone})`;
-            if (spouseName) {
-                customerDisplayStr += ` | ${spouseName}`;
-                if (spousePhone) customerDisplayStr += `(${spousePhone})`;
-            }
+    // 고객명 표시 형식: 성명(연락처) | 배우자 성명(배우자 연락처)
+    let customerDisplayStr = customerName;
+    if (customerPhone) customerDisplayStr += `(${customerPhone})`;
+    if (spouseName) {
+        customerDisplayStr += ` | ${spouseName}`;
+        if (spousePhone) customerDisplayStr += `(${spousePhone})`;
+    }
 
-            // 공사기간 표시
-            let periodStr = '';
-            if (constructionStart && constructionEnd) {
-                periodStr = `${constructionStart} ~ ${constructionEnd}`;
-            } else if (constructionStart) {
-                periodStr = constructionStart;
-            }
+    // 공사기간 표시
+    let periodStr = '';
+    if (constructionStart && constructionEnd) {
+        periodStr = `${constructionStart} ~ ${constructionEnd}`;
+    } else if (constructionStart) {
+        periodStr = constructionStart;
+    }
 
-            // 프록시 URL 생성
-            const encodedName = encodeURIComponent(customerName);
-            const encodedUrl = encodeURIComponent(notionUrl);
-            const proxyUrl = `https://www.designjig.com/api/notion?name=${encodedName}&url=${encodedUrl}`;
+    // 프록시 URL 생성
+    const encodedName = encodeURIComponent(customerName);
+    const encodedUrl = encodeURIComponent(notionUrl);
+    const proxyUrl = `https://www.designjig.com/api/notion?name=${encodedName}&url=${encodedUrl}`;
 
-            // 현장 담당자 정보
-            const managerInput = document.querySelector('input[data-field="manager"]');
-            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-4650-7013)');
+    // 현장 담당자 정보
+    const managerInput = document.querySelector('input[data-field="manager"]');
+    const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 소장 (010-7653-5386)');
 
-            // 메시지 생성
-            let message = `안녕하세요. 디자인지그입니다.\n\n`;
-            message += `공사 진행과 관련하여 아래 내용 안내드립니다.\n`;
-            message += `공사 기간 중 필요하실 때 언제든 다시 확인해 주세요.\n\n`;
-            message += `━━━━━━━━━━━━━━\n\n`;
-            message += `📌 기본 현장 정보\n\n`;
-            message += `• 고객명 : ${customerDisplayStr}\n`;
-            message += `• 현장주소 : ${siteAddress}\n`;
-            message += `• 공사기간 : ${periodStr}\n`;
-            message += `• 비밀번호\n`;
-            message += `  - 공동현관 : ${gatePw || '없음'}\n`;
-            message += `  - 세대현관 : ${doorPw || '없음'}\n\n`;
-            message += `━━━━━━━━━━━━━━\n\n`;
-            message += `👷 현장 담당자\n\n`;
-            message += `• 현장소장 : ${projectManager}\n`;
-            message += `• 연락가능 : 평일 09:00~17:00\n\n`;
-            message += `━━━━━━━━━━━━━━\n\n`;
-            message += `📋 공사 안내문 (노션)\n\n`;
-            message += `공사 스케줄 / 체크리스트 / 자재 정보 / A/S / FAQ 안내를\n`;
-            message += `한 번에 확인하실 수 있습니다.\n\n`;
-            message += `👉 바로가기\n${proxyUrl}\n\n`;
-            message += `━━━━━━━━━━━━━━\n\n`;
-            message += `🏠 디자인지그 공식 채널\n\n`;
-            message += `• 홈페이지\nhttps://www.designjig.com\n\n`;
-            message += `• 블로그\nhttps://blog.naver.com/sweet00700\n\n`;
-            message += `• 카페\nhttps://cafe.naver.com/supermanhome\n\n`;
-            message += `• 인스타그램\nhttps://www.instagram.com/design__jig\n\n`;
-            message += `━━━━━━━━━━━━━━\n\n`;
-            message += `문의사항은 언제든 편하게 연락 주세요.\n`;
-            message += `공사 진행 중에도 지속적으로 안내드리겠습니다.\n`;
-            message += `감사합니다.\n\n`;
-            message += `━━━━━━━━━━━━━━\n\n`;
-            message += `디자인지그\n`;
-            message += `화려함보다 본질을 선택합니다.\n`;
-            message += `Pro. Beyond.`;
+    // 메시지 생성
+    let message = `안녕하세요. 디자인지그입니다.\n\n`;
+    message += `공사 진행과 관련하여 아래 내용 안내드립니다.\n`;
+    message += `공사 기간 중 필요하실 때 언제든 다시 확인해 주세요.\n\n`;
+    message += `━━━━━━━━━━━━━━\n\n`;
+    message += `📌 기본 현장 정보\n\n`;
+    message += `• 고객명 : ${customerDisplayStr}\n`;
+    message += `• 현장주소 : ${siteAddress}\n`;
+    message += `• 공사기간 : ${periodStr}\n`;
+    message += `• 비밀번호\n`;
+    message += `  - 공동현관 : ${gatePw || '없음'}\n`;
+    message += `  - 세대현관 : ${doorPw || '없음'}\n\n`;
+    message += `━━━━━━━━━━━━━━\n\n`;
+    message += `👷 현장 담당자\n\n`;
+    message += `• 현장소장 : ${projectManager}\n`;
+    message += `• 연락가능 : 평일 09:00~17:00\n\n`;
+    message += `━━━━━━━━━━━━━━\n\n`;
+    message += `📋 공사 안내문 (노션)\n\n`;
+    message += `공사 스케줄 / 체크리스트 / 자재 정보 / A/S / FAQ 안내를\n`;
+    message += `한 번에 확인하실 수 있습니다.\n\n`;
+    message += `👉 바로가기\n${proxyUrl}\n\n`;
+    message += `━━━━━━━━━━━━━━\n\n`;
+    message += `🏠 디자인지그 공식 채널\n\n`;
+    message += `• 홈페이지\nhttps://www.designjig.com\n\n`;
+    message += `• 블로그\nhttps://blog.naver.com/sweet00700\n\n`;
+    message += `• 카페\nhttps://cafe.naver.com/supermanhome\n\n`;
+    message += `• 인스타그램\nhttps://www.instagram.com/design__jig\n\n`;
+    message += `━━━━━━━━━━━━━━\n\n`;
+    message += `문의사항은 언제든 편하게 연락 주세요.\n`;
+    message += `공사 진행 중에도 지속적으로 안내드리겠습니다.\n`;
+    message += `감사합니다.\n\n`;
+    message += `━━━━━━━━━━━━━━\n\n`;
+    message += `디자인지그\n`;
+    message += `화려함보다 본질을 선택합니다.\n`;
+    message += `Pro. Beyond.`;
 
-            document.getElementById('notionShareResultText').value = message;
-            document.getElementById('notionShareModal').style.display = 'none';
-            document.getElementById('notionShareResultModal').style.display = 'flex';
-        }
+    document.getElementById('notionShareResultText').value = message;
+    document.getElementById('notionShareModal').style.display = 'none';
+    document.getElementById('notionShareResultModal').style.display = 'flex';
+}
 
-        function copyNotionShareMessage() {
-            const text = document.getElementById('notionShareResultText').value;
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('📋 메시지가 클립보드에 복사되었습니다!', 'success');
-            }).catch(err => {
-                showToast('복사 실패: ' + err.message, 'error');
-            });
-        }
+function copyNotionShareMessage() {
+    const text = document.getElementById('notionShareResultText').value;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 메시지가 클립보드에 복사되었습니다!', 'success');
+    }).catch(err => {
+        showToast('복사 실패: ' + err.message, 'error');
+    });
+}
 
-        // ==========================================
-        // [New] Schedule Message Generation
-        // ==========================================
-        function openScheduleMessageModal() {
-            if (!scheduleRows || scheduleRows.length === 0) {
-                showToast('생성할 스케줄 메시지가 없습니다.', 'error');
-                return;
-            }
+// ==========================================
+// [New] Schedule Message Generation
+// ==========================================
+function openScheduleMessageModal() {
+    if (!scheduleRows || scheduleRows.length === 0) {
+        showToast('생성할 스케줄 메시지가 없습니다.', 'error');
+        return;
+    }
 
-            // Modal HTML Injection (Lazy Load)
-            if (!document.getElementById('messageModal')) {
-                const modalHtml = `
+    // Modal HTML Injection (Lazy Load)
+    if (!document.getElementById('messageModal')) {
+        const modalHtml = `
             <div id="messageModal" class="modal-overlay" style="display:none; z-index: 10000; justify-content: center; align-items: center;">
                 <div class="modal-content" style="width: 95%; max-width: 1600px; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
                     <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff;">
@@ -11804,31 +11804,31 @@
                 </div>
             </div>
         `;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-            }
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
 
-            const messageList = document.getElementById('messageList');
-            const messages = generateScheduleMessages();
+    const messageList = document.getElementById('messageList');
+    const messages = generateScheduleMessages();
 
-            // Update Total Count
-            const countEl = document.getElementById('msgTotalCount');
-            if (countEl) countEl.textContent = messages.length;
+    // Update Total Count
+    const countEl = document.getElementById('msgTotalCount');
+    if (countEl) countEl.textContent = messages.length;
 
-            if (messages.length === 0) {
-                messageList.innerHTML = '<div style="grid-column: 1 / -1; width:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column; padding: 40px;"><span style="font-size:48px; margin-bottom:16px;">📭</span><span>담당자가 지정된 스케줄이 없습니다.</span></div>';
-            } else {
-                messageList.innerHTML = messages.map(msg => {
-                    const isSent = msg.isSent;
-                    const cardClass = isSent ? 'message-card copied-card' : 'message-card';
-                    const cardStyle = isSent
-                        ? 'display: flex; flex-direction: column; background: #f1f8e9; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 2px solid #4cd964; position: relative; overflow: hidden; height: 100%;'
-                        : 'display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;';
-                    const badgeStyle = isSent
-                        ? 'font-size: 11px; background: #4cd964; color: #fff; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;'
-                        : 'font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;';
-                    const badgeText = isSent ? '복사완료' : '복사하기';
+    if (messages.length === 0) {
+        messageList.innerHTML = '<div style="grid-column: 1 / -1; width:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column; padding: 40px;"><span style="font-size:48px; margin-bottom:16px;">📭</span><span>담당자가 지정된 스케줄이 없습니다.</span></div>';
+    } else {
+        messageList.innerHTML = messages.map(msg => {
+            const isSent = msg.isSent;
+            const cardClass = isSent ? 'message-card copied-card' : 'message-card';
+            const cardStyle = isSent
+                ? 'display: flex; flex-direction: column; background: #f1f8e9; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 2px solid #4cd964; position: relative; overflow: hidden; height: 100%;'
+                : 'display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;';
+            const badgeStyle = isSent
+                ? 'font-size: 11px; background: #4cd964; color: #fff; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;'
+                : 'font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;';
+            const badgeText = isSent ? '복사완료' : '복사하기';
 
-                    return `
+            return `
             <div class="${cardClass}" onclick="copyMessageToClipboard(this)" 
                 data-copytext="${msg.fullText.replace(/"/g, '&quot;')}" 
                 data-manager="${msg.manager.replace(/"/g, '&quot;')}"
@@ -11846,80 +11846,80 @@
                 <div class="hover-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.02); opacity: 0; transition: opacity 0.2s; pointer-events: none;"></div>
             </div>
         `;
-                }).join('');
-            }
+        }).join('');
+    }
 
-            // Modal Styling Fix (ensure flex display)
-            const modal = document.getElementById('messageModal');
-            modal.style.display = 'flex';
+    // Modal Styling Fix (ensure flex display)
+    const modal = document.getElementById('messageModal');
+    modal.style.display = 'flex';
+}
+
+function generateScheduleMessages() {
+    const grouped = {};
+
+    scheduleRows.forEach(row => {
+        if (!row.inCharge || !row.start) return;
+        const manager = row.inCharge.trim();
+        if (!grouped[manager]) {
+            grouped[manager] = {
+                rows: [],
+                startDates: [],
+                endDates: []
+            };
+        }
+        grouped[manager].rows.push(row);
+        grouped[manager].startDates.push(new Date(row.start));
+        if (row.end) grouped[manager].endDates.push(new Date(row.end));
+        else grouped[manager].endDates.push(new Date(row.start));
+    });
+
+    const results = [];
+    const siteAddress = currentData.siteAddress || '주소 미입력';
+
+    const gatePwInput = document.querySelector('input[data-field="gatePw"]');
+    const doorPwInput = document.querySelector('input[data-field="doorPw"]');
+    const gatePw = gatePwInput ? gatePwInput.value : (currentData.gatePw || '');
+    const doorPw = doorPwInput ? doorPwInput.value : (currentData.doorPw || '');
+
+    const managerInput = document.querySelector('input[data-field="manager"]');
+    const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-7653-5386)');
+
+    Object.keys(grouped).forEach(manager => {
+        const data = grouped[manager];
+
+        // Sort rows by start date to find the earliest process
+        data.rows.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        // Determine Title
+        const earliestProcessName = data.rows[0].name;
+        const managerNameOnly = manager.split('(')[0].trim();
+        const cardTitle = `${earliestProcessName} - ${managerNameOnly}`;
+
+        // Calculate Overall Range
+        const minStart = new Date(Math.min(...data.startDates)).toISOString().split('T')[0];
+        const maxEnd = new Date(Math.max(...data.endDates)).toISOString().split('T')[0];
+
+        // Date Logic
+        const dateRangeDisplay = (minStart === maxEnd) ? minStart : `${minStart} ~ ${maxEnd}`;
+
+        // Build Process List
+        let processSection = "";
+        if (data.rows.length > 1) {
+            const processList = data.rows.map(r => {
+                const rStart = r.start;
+                const rEnd = r.end || r.start;
+                const rRange = (rStart === rEnd) ? rStart : `${rStart} ~ ${rEnd}`;
+                return `- ${r.name} : ${rRange}`;
+            }).join('\n');
+            processSection = `\n■ 공정 일정\n${processList}\n`;
         }
 
-        function generateScheduleMessages() {
-            const grouped = {};
+        const managerName = managerNameOnly;
 
-            scheduleRows.forEach(row => {
-                if (!row.inCharge || !row.start) return;
-                const manager = row.inCharge.trim();
-                if (!grouped[manager]) {
-                    grouped[manager] = {
-                        rows: [],
-                        startDates: [],
-                        endDates: []
-                    };
-                }
-                grouped[manager].rows.push(row);
-                grouped[manager].startDates.push(new Date(row.start));
-                if (row.end) grouped[manager].endDates.push(new Date(row.end));
-                else grouped[manager].endDates.push(new Date(row.start));
-            });
+        // Determine 'sent' status
+        const isSent = data.rows.some(r => r.messageSent === true);
 
-            const results = [];
-            const siteAddress = currentData.siteAddress || '주소 미입력';
-
-            const gatePwInput = document.querySelector('input[data-field="gatePw"]');
-            const doorPwInput = document.querySelector('input[data-field="doorPw"]');
-            const gatePw = gatePwInput ? gatePwInput.value : (currentData.gatePw || '');
-            const doorPw = doorPwInput ? doorPwInput.value : (currentData.doorPw || '');
-
-            const managerInput = document.querySelector('input[data-field="manager"]');
-            const projectManager = managerInput ? managerInput.value : (currentData.manager || '원프로 (010-4650-7013)');
-
-            Object.keys(grouped).forEach(manager => {
-                const data = grouped[manager];
-
-                // Sort rows by start date to find the earliest process
-                data.rows.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-                // Determine Title
-                const earliestProcessName = data.rows[0].name;
-                const managerNameOnly = manager.split('(')[0].trim();
-                const cardTitle = `${earliestProcessName} - ${managerNameOnly}`;
-
-                // Calculate Overall Range
-                const minStart = new Date(Math.min(...data.startDates)).toISOString().split('T')[0];
-                const maxEnd = new Date(Math.max(...data.endDates)).toISOString().split('T')[0];
-
-                // Date Logic
-                const dateRangeDisplay = (minStart === maxEnd) ? minStart : `${minStart} ~ ${maxEnd}`;
-
-                // Build Process List
-                let processSection = "";
-                if (data.rows.length > 1) {
-                    const processList = data.rows.map(r => {
-                        const rStart = r.start;
-                        const rEnd = r.end || r.start;
-                        const rRange = (rStart === rEnd) ? rStart : `${rStart} ~ ${rEnd}`;
-                        return `- ${r.name} : ${rRange}`;
-                    }).join('\n');
-                    processSection = `\n■ 공정 일정\n${processList}\n`;
-                }
-
-                const managerName = managerNameOnly;
-
-                // Determine 'sent' status
-                const isSent = data.rows.some(r => r.messageSent === true);
-
-                const fullText = `안녕하세요.
+        const fullText = `안녕하세요.
 디자인지그입니다.
 현장 일정 및 내용을 안내드립니다.
 **일정 확인 후 반드시 회신 부탁드립니다.**
@@ -11950,104 +11950,104 @@ ${processSection}
 현장이 편해야 결과도 좋아진다고 믿습니다.
 디자인지그는 감이 아닌 기준으로 일합니다.`;
 
-                results.push({
-                    cardTitle: cardTitle,
-                    manager: manager,
-                    fullText: fullText,
-                    previewText: fullText,
-                    count: data.rows.length,
-                    isSent: isSent // [New] Pass sent status to UI
-                });
-            });
+        results.push({
+            cardTitle: cardTitle,
+            manager: manager,
+            fullText: fullText,
+            previewText: fullText,
+            count: data.rows.length,
+            isSent: isSent // [New] Pass sent status to UI
+        });
+    });
 
-            return results;
+    return results;
+}
+
+function copyMessageToClipboard(element) {
+    // Toggle Logic
+    if (element.classList.contains('copied-card')) {
+        // If already copied/active, revert to normal
+        element.classList.remove('copied-card');
+        element.style.backgroundColor = '#fff';
+        element.style.outline = '1px solid transparent';
+
+        const badge = element.querySelector('.copy-badge');
+        if (badge) {
+            badge.style.backgroundColor = '#e8f5e9';
+            badge.style.color = '#2e7d32';
+            badge.textContent = '복사하기';
+        }
+        return; // Stop here, do not copy again
+    }
+
+    // Normal State -> Copy & Activate
+    const text = element.getAttribute('data-copytext');
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('문자가 복사되었습니다.', 'success');
+
+        // Visual Feedback: Active State (Green)
+        element.classList.add('copied-card');
+        element.style.backgroundColor = '#f1f8e9'; // Light Green Background
+        element.style.outline = '2px solid #4cd964'; // Green Outline
+
+        const badge = element.querySelector('.copy-badge');
+        if (badge) {
+            badge.style.backgroundColor = '#4cd964';
+            badge.style.color = '#fff';
+            badge.textContent = '복사완료';
         }
 
-        function copyMessageToClipboard(element) {
-            // Toggle Logic
-            if (element.classList.contains('copied-card')) {
-                // If already copied/active, revert to normal
-                element.classList.remove('copied-card');
-                element.style.backgroundColor = '#fff';
-                element.style.outline = '1px solid transparent';
-
-                const badge = element.querySelector('.copy-badge');
-                if (badge) {
-                    badge.style.backgroundColor = '#e8f5e9';
-                    badge.style.color = '#2e7d32';
-                    badge.textContent = '복사하기';
+        // [New] Update Schedule Rows marked as sent
+        const manager = element.getAttribute('data-manager');
+        if (manager) {
+            let updateCount = 0;
+            scheduleRows.forEach(row => {
+                if (row.inCharge && row.inCharge.trim() === manager) {
+                    row.messageSent = true;
+                    row.messageSentAt = new Date().toISOString();
+                    updateCount++;
                 }
-                return; // Stop here, do not copy again
+            });
+            if (updateCount > 0) {
+                saveScheduleToCustomer(); // Persist to currentData in memory
+                console.log(`[Schedule] Marked ${updateCount} rows as sent for manager: ${manager}`);
             }
 
-            // Normal State -> Copy & Activate
-            const text = element.getAttribute('data-copytext');
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('문자가 복사되었습니다.', 'success');
-
-                // Visual Feedback: Active State (Green)
-                element.classList.add('copied-card');
-                element.style.backgroundColor = '#f1f8e9'; // Light Green Background
-                element.style.outline = '2px solid #4cd964'; // Green Outline
-
-                const badge = element.querySelector('.copy-badge');
-                if (badge) {
-                    badge.style.backgroundColor = '#4cd964';
-                    badge.style.color = '#fff';
-                    badge.textContent = '복사완료';
-                }
-
-                // [New] Update Schedule Rows marked as sent
-                const manager = element.getAttribute('data-manager');
-                if (manager) {
-                    let updateCount = 0;
-                    scheduleRows.forEach(row => {
-                        if (row.inCharge && row.inCharge.trim() === manager) {
-                            row.messageSent = true;
-                            row.messageSentAt = new Date().toISOString();
-                            updateCount++;
-                        }
-                    });
-                    if (updateCount > 0) {
-                        saveScheduleToCustomer(); // Persist to currentData in memory
-                        console.log(`[Schedule] Marked ${updateCount} rows as sent for manager: ${manager}`);
+            // [New] Log to Notion Share Sheet (Backend)
+            // 메시지 복사 시 자동으로 시트에 저장
+            fetch(CUSTOMER_SYNC_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'logNotionShare',
+                    customerId: currentData.customerId,
+                    message: text,
+                    manager: manager
+                })
+            }).then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Message logged to sheet:', data);
+                        showToast('메시지가 시트에 저장되었습니다.', 'success');
+                    } else {
+                        console.error('Failed to log message:', data.error);
                     }
-
-                    // [New] Log to Notion Share Sheet (Backend)
-                    // 메시지 복사 시 자동으로 시트에 저장
-                    fetch(CUSTOMER_SYNC_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            action: 'logNotionShare',
-                            customerId: currentData.customerId,
-                            message: text,
-                            manager: manager
-                        })
-                    }).then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                console.log('Message logged to sheet:', data);
-                                showToast('메시지가 시트에 저장되었습니다.', 'success');
-                            } else {
-                                console.error('Failed to log message:', data.error);
-                            }
-                        })
-                        .catch(err => console.error('Error logging message:', err));
-                }
-
-            }).catch(err => {
-                console.error('복사 실패:', err);
-                showToast('복사에 실패했습니다.', 'error');
-            });
+                })
+                .catch(err => console.error('Error logging message:', err));
         }
-        // 디버깅용 스크립트 추가
-        const originalShowToast = window.showToast;
-        window.showToast = function (message, type, duration) {
-            console.log('showToast 호출:', { message, type, duration });
-            if (originalShowToast) originalShowToast(message, type, duration);
-        };
 
-        document.addEventListener('submit', function (e) {
-            console.log('폼 제출 감지:', e.target);
-            // e.preventDefault(); // 디버깅용: 제출 막기 (필요시 주석 해제)
-        });
+    }).catch(err => {
+        console.error('복사 실패:', err);
+        showToast('복사에 실패했습니다.', 'error');
+    });
+}
+// 디버깅용 스크립트 추가
+const originalShowToast = window.showToast;
+window.showToast = function (message, type, duration) {
+    console.log('showToast 호출:', { message, type, duration });
+    if (originalShowToast) originalShowToast(message, type, duration);
+};
+
+document.addEventListener('submit', function (e) {
+    console.log('폼 제출 감지:', e.target);
+    // e.preventDefault(); // 디버깅용: 제출 막기 (필요시 주석 해제)
+});
