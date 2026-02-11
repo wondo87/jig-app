@@ -5804,6 +5804,11 @@
                                     title="노션 고객 공유 URL 생성">
                                     📋 노션 고객 공유
                                 </button>
+                                <button class="sample-btn no-print" onclick="openSampleScheduleModal()"
+                                    style="background: #ff9500; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="샘플 스케줄">
+                                    📋 샘플
+                                </button>
                                 <button class="notion-export-btn" onclick="openScheduleMessageModal()"
                                     style="background: linear-gradient(135deg, #34C759 0%, #30B753 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="스케줄 문자 보내기">
@@ -8971,24 +8976,37 @@
         }
 
         // [New] Dropdown Toggle Helper (Portal Version)
-        window.toggleScheduleDropdown = function (btn, event) {
+        // [New] Dropdown Toggle Helper (Portal Version with Viewport Check)
+        window.toggleScheduleDropdown = function (triggerElement, event) {
             if (event) {
                 event.stopPropagation();
                 event.preventDefault();
             }
 
+            // Identify the wrapper and button
+            let wrapper, btn;
+            if (triggerElement.classList.contains('editable-cell-wrapper')) {
+                wrapper = triggerElement;
+                btn = wrapper.querySelector('.dropdown-toggle-btn');
+            } else {
+                btn = triggerElement;
+                wrapper = btn.parentElement;
+            }
+
+            if (!btn) return;
+
             // Close existing portal if any
             const existingPortal = document.querySelector('.custom-dropdown-portal');
             if (existingPortal) {
                 existingPortal.remove();
-                // If clicking the same button, just close it
+                // If clicking the same trigger (or its child), just close it and return
                 if (existingPortal.dataset.triggerId === btn.id) return;
             }
 
             // Generate unique ID for button if not exists
             if (!btn.id) btn.id = 'dropdown-btn-' + Date.now() + Math.random().toString(36).substr(2, 9);
 
-            const hiddenList = btn.nextElementSibling;
+            const hiddenList = wrapper.querySelector('.custom-dropdown-list-source');
             if (!hiddenList) {
                 console.warn('Dropdown list source not found');
                 return;
@@ -9000,21 +9018,65 @@
             portal.dataset.triggerId = btn.id;
             portal.innerHTML = hiddenList.innerHTML;
 
-            // Style Portal
-            const rect = btn.getBoundingClientRect();
+            // Style Portal & Viewport Check
+            const rect = wrapper.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            // Default to opening down
+            let openUpwards = false;
+            let maxHeight = spaceBelow - 20; // 20px buffer
+
+            // If insufficient space below (less than 200px) and more space above, open upwards
+            if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+                openUpwards = true;
+                maxHeight = spaceAbove - 20;
+            }
+
+            // Cap maxHeight at 300px but ensure at least 100px if possible
+            const finalMaxHeight = Math.max(100, Math.min(maxHeight, 300));
+
             Object.assign(portal.style, {
-                top: (rect.bottom + 2) + 'px', // Add slight gap
                 left: rect.left + 'px',
-                minWidth: Math.max(rect.width, 140) + 'px', // Ensure minimum width
-                display: 'block'
+                minWidth: Math.max(rect.width, 140) + 'px',
+                display: 'block',
+                position: 'fixed',
+                zIndex: '9999',
+                background: '#fff',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                overflowY: 'auto',
+                maxHeight: finalMaxHeight + 'px'
             });
 
+            if (openUpwards) {
+                portal.style.bottom = (viewportHeight - rect.top + 2) + 'px';
+                portal.style.top = 'auto';
+            } else {
+                portal.style.top = (rect.bottom + 2) + 'px';
+                portal.style.bottom = 'auto';
+            }
+
             document.body.appendChild(portal);
+
+            // Add outside click listener to close
+            const closeHandler = (e) => {
+                if (!portal.contains(e.target) && !wrapper.contains(e.target)) {
+                    portal.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            // Small timeout to prevent immediate closing
+            setTimeout(() => {
+                document.addEventListener('click', closeHandler);
+            }, 0);
         };
 
         // Global click handler to close dropdown portal
         document.addEventListener('mousedown', function (e) {
-            if (!e.target.closest('.custom-dropdown-portal') && !e.target.closest('.dropdown-toggle-btn')) {
+            if (!e.target.closest('.custom-dropdown-portal') && !e.target.closest('.dropdown-toggle-btn') && !e.target.closest('.editable-cell-wrapper')) {
                 const portal = document.querySelector('.custom-dropdown-portal');
                 if (portal) portal.remove();
             }
@@ -9120,15 +9182,20 @@
                     ).join('');
 
                     return `
-                        <div class="editable-cell-wrapper">
+                        <div class="editable-cell-wrapper" onmousedown="toggleScheduleDropdown(this, event)">
                             <div contenteditable="false" class="text-formattable editable-content" 
                                  style="text-align:center;"
                                  ondblclick="this.contentEditable=true;this.focus();"
-                                 onkeydown="if(event.key==='Escape'){this.contentEditable=false;this.blur();}"
+                                 onkeydown="if(event.key==='Escape'){
+                                     this.contentEditable=false;
+                                     this.blur();
+                                     const btn = this.parentElement.querySelector('.dropdown-toggle-btn');
+                                     if(btn) toggleScheduleDropdown(btn, event);
+                                 }"
                                  oninput="updateScheduleRowContent(this, ${index}, '${fieldName}')"
                                  onblur="this.contentEditable=false;saveScheduleToCustomer()"
                                  placeholder="${placeholder}">${value || ''}</div>
-                            <button class="dropdown-toggle-btn no-print" onmousedown="toggleScheduleDropdown(this, event)">▼</button>
+                            <button class="dropdown-toggle-btn no-print">▼</button>
                             <div class="custom-dropdown-list-source" style="display:none;">
                                 ${listHtml}
                             </div>
@@ -16152,6 +16219,157 @@
             }
         }
 
+        // =====================
+        // 샘플 스케줄 기능
+        // =====================
+
+        // 샘플 스케줄 모달 열기
+        function openSampleScheduleModal() {
+            document.getElementById('sampleScheduleModal').style.display = 'flex';
+            document.getElementById('sampleScheduleTitle').value = '';
+            loadSampleScheduleList();
+        }
+
+        // 샘플 스케줄 모달 닫기
+        function closeSampleScheduleModal() {
+            document.getElementById('sampleScheduleModal').style.display = 'none';
+        }
+
+        // 샘플 스케줄 목록 로드
+        async function loadSampleScheduleList() {
+            const listContainer = document.getElementById('sampleScheduleList');
+            listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">로딩 중...</div>';
+
+            try {
+                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleSchedules`);
+                const result = await response.json();
+
+                if (result.success && result.samples && result.samples.length > 0) {
+                    listContainer.innerHTML = result.samples.map(sample => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 4px;">${sample.title}</div>
+                                <div style="font-size: 11px; color: #999;">📅 ${sample.createdAt} | 👤 ${sample.createdBy || '-'}</div>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick="loadSampleSchedule('${sample.id}')" 
+                                    style="background: #007aff; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">불러오기</button>
+                                <button onclick="deleteSampleSchedule('${sample.id}', '${sample.title}')" 
+                                    style="background: #ff3b30; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">✕</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">저장된 샘플이 없습니다</div>';
+                }
+            } catch (error) {
+                console.error('샘플 목록 로드 실패:', error);
+                listContainer.innerHTML = '<div style="text-align: center; color: #ff3b30; padding: 20px;">목록을 불러오지 못했습니다</div>';
+            }
+        }
+
+        // 현재 스케줄을 샘플로 저장
+        async function saveSampleSchedule() {
+            const title = document.getElementById('sampleScheduleTitle').value.trim();
+            if (!title) {
+                showToast('샘플 제목을 입력하세요', 'error');
+                return;
+            }
+
+            // 현재 스케줄 데이터가 없는 경우 경고
+            if (!scheduleRows || scheduleRows.length === 0) {
+                showToast('저장할 스케줄 데이터가 없습니다', 'error');
+                return;
+            }
+
+            const sampleData = {
+                action: 'saveSampleSchedule',
+                title: title,
+                scheduleData: scheduleRows, // 현재 스케줄 데이터
+                createdBy: currentAdmin?.id || 'unknown',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                showToast('저장 중...', 'info');
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(sampleData)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`샘플 "${title}" 저장 완료!`, 'success');
+                    document.getElementById('sampleScheduleTitle').value = '';
+                    loadSampleScheduleList();
+                } else {
+                    showToast('저장 실패: ' + (result.message || '알 수 없는 오류'), 'error');
+                }
+            } catch (error) {
+                console.error('샘플 저장 실패:', error);
+                showToast('저장 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        // 샘플 스케줄 불러오기
+        async function loadSampleSchedule(sampleId) {
+            if (!confirm('현재 스케줄이 모두 삭제되고 선택한 샘플로 대체됩니다. 계속하시겠습니까?')) return;
+
+            try {
+                showToast('불러오는 중...', 'info');
+                const response = await fetch(`${GOOGLE_SHEET_URL}?action=getSampleSchedule&id=${sampleId}`);
+                const result = await response.json();
+
+                if (result.success && result.sample) {
+                    const sample = result.sample;
+
+                    if (sample.scheduleData && Array.isArray(sample.scheduleData)) {
+                        scheduleRows = sample.scheduleData; // 스케줄 데이터 교체
+                        renderScheduleTable(); // 테이블 다시 렌더링
+                        saveScheduleToCustomer(); // 고객 데이터에 자동 저장
+
+                        closeSampleScheduleModal();
+                        showToast(`샘플 "${sample.title}" 적용 완료!`, 'success');
+                    } else {
+                        showToast('유효하지 않은 샘플 데이터입니다', 'error');
+                    }
+                } else {
+                    showToast('샘플을 불러올 수 없습니다', 'error');
+                }
+            } catch (error) {
+                console.error('샘플 불러오기 실패:', error);
+                showToast('불러오기 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        // 샘플 스케줄 삭제
+        async function deleteSampleSchedule(sampleId, sampleTitle) {
+            if (!confirm(`"${sampleTitle}" 샘플을 삭제하시겠습니까?`)) return;
+
+            try {
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'deleteSampleSchedule',
+                        id: sampleId
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('샘플이 삭제되었습니다', 'success');
+                    loadSampleScheduleList();
+                } else {
+                    showToast('삭제 실패', 'error');
+                }
+            } catch (error) {
+                console.error('샘플 삭제 실패:', error);
+                showToast('삭제 중 오류가 발생했습니다', 'error');
+            }
+        }
+
         function importMasterSchedule() {
             if (scheduleRows.length > 0) {
                 if (!confirm('현재 작성된 스케줄이 모두 삭제되고, 마스터 스케줄 템플릿으로 대체됩니다. 계속하시겠습니까?')) {
@@ -16326,6 +16544,44 @@
                 <div>
                     <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">📂 저장된 샘플 불러오기</h4>
                     <div id="sampleEstimateList" style="max-height: 300px; overflow-y: auto;">
+                        <div style="text-align: center; color: #999; padding: 20px;">
+                            로딩 중...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 샘플 스케줄 모달 -->
+    <div id="sampleScheduleModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000; align-items: center; justify-content: center;">
+        <div class="modal-backdrop" onclick="closeSampleScheduleModal()"
+            style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);"></div>
+        <div class="modal-content"
+            style="max-width: 500px; width: 90%; position: relative; z-index: 10001; background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-header"
+                style="background: linear-gradient(135deg, #ff9500, #ff6600); color: white; padding: 20px; border-radius: 16px 16px 0 0;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700;">📋 샘플 스케줄</h3>
+                <button onclick="closeSampleScheduleModal()"
+                    style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <!-- 현재 스케줄 저장 -->
+                <div style="margin-bottom: 24px; padding: 16px; background: #f5f5f7; border-radius: 12px;">
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">💾 현재 스케줄을 샘플로 저장</h4>
+                    <input type="text" id="sampleScheduleTitle" placeholder="샘플 제목 입력 (예: 30평 아파트 기본 공정)"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
+                    <button onclick="saveSampleSchedule()"
+                        style="width: 100%; padding: 12px; background: #ff9500; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                        샘플로 저장
+                    </button>
+                </div>
+
+                <!-- 저장된 샘플 목록 -->
+                <div>
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #333;">📂 저장된 샘플 불러오기</h4>
+                    <div id="sampleScheduleList" style="max-height: 300px; overflow-y: auto;">
                         <div style="text-align: center; color: #999; padding: 20px;">
                             로딩 중...
                         </div>
@@ -19016,8 +19272,8 @@
                     const isSent = msg.isSent;
                     const cardClass = isSent ? 'message-card copied-card' : 'message-card';
                     const cardStyle = isSent
-                        ? 'display: flex; flex-direction: column; background: #f1f8e9; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 2px solid #4cd964; position: relative; overflow: hidden; height: 100%;'
-                        : 'display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: 100%;';
+                        ? 'display: flex; flex-direction: column; background: #f1f8e9; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 2px solid #4cd964; position: relative; overflow: hidden; height: auto;'
+                        : 'display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; outline: 1px solid transparent; position: relative; overflow: hidden; height: auto;';
                     const badgeStyle = isSent
                         ? 'font-size: 11px; background: #4cd964; color: #fff; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;'
                         : 'font-size: 11px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0;';
@@ -19034,7 +19290,7 @@
                     <span class="copy-badge" style="${badgeStyle}">${badgeText}</span>
                 </div>
                 
-                <div style="flex: 1; padding: 0; overflow-y: auto; background: #fafafa; min-height: 300px;">
+                <div style="flex: 1; padding: 0; overflow: visible; background: #fafafa;">
                     <div style="font-size: 13px; color: #333; line-height: 1.6; white-space: pre-wrap; padding: 20px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace;">${msg.previewText}</div>
                 </div>
 
