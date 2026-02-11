@@ -5656,6 +5656,12 @@
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
                                 </button>
+                                <!-- [New] 일정표 연동 버튼 -->
+                                <button class="sync-sch-btn no-print" onclick="syncChecklistFromSchedule()"
+                                    style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="일정표에 있는 공정을 체크리스트에 자동 추가합니다">
+                                    <span>📅 일정표 연동</span>
+                                </button>
                                 <button type="button" class="notion-export-btn"
                                     onclick="exportToNotion('checklist', event)"
                                     style="background: #000; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
@@ -5756,6 +5762,12 @@
                                                 항목</th>
                                             <th style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">내용
                                             </th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 90px; color: #007aff;">
+                                                시작일</th>
+                                            <th
+                                                style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 90px; color: #ff3b30;">
+                                                종료일</th>
                                             <th
                                                 style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; width: 150px;">
                                                 비고</th>
@@ -9647,6 +9659,10 @@
         function saveScheduleToCustomer() {
             currentData.schedules = [...scheduleRows];
             syncAllFields();
+            // [Sync] Refresh checklist to reflect schedule date changes
+            if (typeof renderChecklistItems === 'function') renderChecklistItems();
+            // [Auto Save] Ensure changes are persisted
+            if (typeof saveCustomers === 'function') saveCustomers();
         }
 
         // [New] A/S List Logic
@@ -16601,6 +16617,98 @@
         // Phase 2: 업무 데이터 로컬 저장 금지
 
         // 체크리스트 마스터 데이터 불러오기 (Google Sheet)
+        /** [Sync] 일정표 데이터를 기반으로 체크리스트 항목을 자동 선택/해제 */
+        function syncChecklistFromSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
+
+            // checklistMasterData 확인
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                showToast('체크리스트 데이터가 없어서 연동할 수 없습니다. 먼저 저장내용불러오기를 해주세요.', 'error');
+                return;
+            }
+
+            // 일정표 데이터 확인
+            if (!scheduleRows || scheduleRows.length === 0) {
+                if (!confirm('일정표 데이터가 비어있습니다. 체크리스트를 초기화하시겠습니까?')) return;
+            } else {
+                if (!confirm('체크리스트를 일정표 기준으로 재설정합니다. 일정표에 없는 항목은 삭제됩니다. 계속하시겠습니까?')) return;
+            }
+
+            // 현재 고객 데이터 확보
+            const currentChecklistData = currentData.checklistData || {};
+            const newChecklistData = {};
+
+            // 1. 일정표에서 유효한 공정/카테고리 키워드 추출
+            const activeKeywords = new Set();
+            scheduleRows.forEach(row => {
+                if (row.name && row.name.trim()) activeKeywords.add(row.name.trim());
+                if (row.category && row.category.trim()) activeKeywords.add(row.category.trim());
+            });
+
+            console.log('📅 [Sync] Schedule Keywords:', [...activeKeywords]);
+
+            let keptCount = 0;
+            let addedCount = 0;
+            let removedCount = 0;
+
+            // 2. 체크리스트 아이템 매칭 (Strict Mode)
+            checklistMasterData.forEach(item => {
+                const itemNo = String(item.번호);
+                const category = (item.category || '').trim();
+                const itemName = (item.항목 || '').trim();
+
+                // 매칭 로직: 키워드 포함 여부 확인
+                let isMatch = false;
+
+                // 일정표 데이터가 없으면 매칭 실패 (초기화)
+                if (activeKeywords.size > 0) {
+                    for (const keyword of activeKeywords) {
+                        // 키워드가 카테고리나 항목명에 포함되는지 확인
+                        if (category && (category.includes(keyword) || keyword.includes(category)) && category.length > 1) { isMatch = true; break; }
+                        if (itemName && (itemName.includes(keyword) || keyword.includes(itemName)) && itemName.length > 1) { isMatch = true; break; }
+                    }
+                }
+
+                if (isMatch) {
+                    // 기존 데이터가 있으면 상태 유지, 없으면 false(미완료)로 초기화
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        newChecklistData[itemNo] = currentChecklistData[itemNo];
+                        keptCount++;
+                    } else {
+                        newChecklistData[itemNo] = false;
+                        addedCount++;
+                    }
+                } else {
+                    // 매칭되지 않는 항목은 제거 (newChecklistData에 추가 안 함)
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        removedCount++;
+                    }
+                }
+            });
+
+            // 3. 데이터 업데이트
+            currentData.checklistData = newChecklistData;
+
+            // Customers 배열에도 동기화
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex !== -1) {
+                customers[customerIndex].checklistData = JSON.parse(JSON.stringify(newChecklistData));
+            }
+
+            saveCustomers(); // 저장
+            renderChecklistItems();
+
+            // 결과 알림
+            if (addedCount > 0 || removedCount > 0) {
+                showToast(`일정표 연동 완료: ${addedCount}개 추가, ${removedCount}개 제외됨`, 'success');
+            } else {
+                showToast('일정표와 체크리스트가 이미 동기화되어 있습니다.', 'info');
+            }
+        }
+
         async function syncChecklistFromCloud() {
             // Phase 2: 초기 동기화 게이트를 위해 로그인 체크 생략 (GET 전용)
             // if (!isLoggedIn()) { ... }
@@ -16968,6 +17076,61 @@
                     console.log('🔍 [Web Render] First item #' + item.번호 + ' isChecked:', isChecked, 'value:', customerChecklistData[item.번호]);
                 }
                 const categoryColor = getCategoryColor(item.category);
+
+                // [Sync] 카테고리 + 같은 단어 기반 날짜 연동
+                const itemName = (item.항목 || '').trim();
+                const itemCategory = (item.category || '').trim();
+
+                const scheduleItem = (() => {
+                    const rows = typeof scheduleRows !== 'undefined' ? scheduleRows : [];
+                    if (rows.length === 0 || !itemCategory) return null;
+
+                    // 1단계: 같은 카테고리 필터
+                    const sameCategoryRows = rows.filter(s => {
+                        const sCategory = (s.category || '').trim();
+                        return sCategory && sCategory === itemCategory;
+                    });
+                    if (sameCategoryRows.length === 0) return null;
+
+                    // 2단계: 같은 단어가 있는 항목 찾기 (세부공정명 + 체크포인트)
+                    const itemWords = itemName.split(/[\s,·\/\-()]+/).filter(w => w.length > 1);
+                    let bestMatch = null;
+                    let bestCount = 0;
+
+                    sameCategoryRows.forEach(s => {
+                        const sName = (s.name || '').trim();
+                        const sCP = (s.checkPoint || '').trim();
+
+                        // 정확히 일치하면 바로 선택
+                        if (sName === itemName) { bestMatch = s; bestCount = 999; return; }
+
+                        // 세부공정명 + 체크포인트에서 단어 추출
+                        const sWords = (sName + ' ' + sCP).split(/[\s,·\/\-()]+/).filter(w => w.length > 1);
+
+                        // 같은 단어 개수 세기
+                        let matchCount = 0;
+                        itemWords.forEach(iw => {
+                            if (sWords.some(sw => sw === iw || sw.includes(iw) || iw.includes(sw))) matchCount++;
+                        });
+
+                        if (matchCount > bestCount) {
+                            bestCount = matchCount;
+                            bestMatch = s;
+                        }
+                    });
+
+                    // 같은 단어가 1개라도 있으면 연동
+                    if (bestMatch && bestCount > 0) return bestMatch;
+
+                    // 카테고리에 항목 1개뿐이면 자동 매칭
+                    if (sameCategoryRows.length === 1) return sameCategoryRows[0];
+
+                    return null;
+                })();
+
+                const startDate = scheduleItem ? (scheduleItem.start || '-') : '-';
+                const endDate = scheduleItem ? (scheduleItem.end || '-') : '-';
+
                 return `
                     <tr draggable="true" 
                         ondragstart="handleChecklistDragStart(event, ${index})" 
@@ -16993,6 +17156,8 @@
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">${item.번호}</td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.항목 || ''}</td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.내용 || ''}</td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; font-size: 11px; color: #007aff;">${startDate}</td>
+                        <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center; font-size: 11px; color: #ff3b30;">${endDate}</td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px;">${item.비고 || ''}</td>
                         <td style="border: 1px solid #d2d2d7; padding: 12px; text-align: center;">
                             <span style="background: ${(item.진행단계 === '인테리어 시작 전') ? '#fff3e0' : '#e8f5e9'}; color: ${(item.진행단계 === '인테리어 시작 전') ? '#e65100' : '#2e7d32'}; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">

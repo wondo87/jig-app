@@ -1261,7 +1261,6 @@
             border-radius: 4px !important;
             white-space: nowrap !important;
         }
-        }
 
 
 
@@ -2034,9 +2033,7 @@
             border-color: #0071e3;
         }
 
-        .customer-list {
-            /* 전체 화면으로 표시되도록 스크롤 제거 */
-        }
+
 
         .customer-item {
             padding: 12px 14px;
@@ -3247,6 +3244,7 @@
 
         input[type=number] {
             -moz-appearance: textfield;
+            appearance: textfield;
         }
 
         #panel-cover input {
@@ -6358,6 +6356,12 @@
                                     style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
                                     title="Google Sheets에서 저장된 체크리스트 불러오기">
                                     <span>↩ 저장내용불러오기</span>
+                                </button>
+                                <!-- [New] 일정표 연동 버튼 -->
+                                <button class="sync-sch-btn no-print" onclick="syncChecklistFromSchedule()"
+                                    style="background: #007aff; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px;"
+                                    title="일정표에 있는 공정을 체크리스트에 자동 추가합니다">
+                                    📅 일정표 연동
                                 </button>
                                 <button class="notion-export-btn" onclick="exportToNotion('checklist', event)"
                                     style="background: #000; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;"
@@ -10333,6 +10337,8 @@
         function saveScheduleToCustomer() {
             currentData.schedules = [...scheduleRows];
             syncAllFields();
+            if (typeof renderChecklistItems === 'function') renderChecklistItems();
+            if (typeof saveCustomers === 'function') saveCustomers();
         }
 
         // [New] A/S List Logic
@@ -16225,6 +16231,81 @@
         // Phase 2: 업무 데이터 로컬 저장 금지
 
         // 체크리스트 데이터 불러오기 (현재 고객의 저장된 데이터만)
+        /** [Sync] 일정표 데이터를 기반으로 체크리스트 항목을 자동 선택/해제 */
+        function syncChecklistFromSchedule() {
+            if (!currentCustomerId) {
+                showToast('고객을 먼저 선택하세요', 'error');
+                return;
+            }
+
+            // checklistMasterData 확인
+            if (!checklistMasterData || checklistMasterData.length === 0) {
+                showToast('데이터가 없습니다. 먼저 저장내용불러오기를 해주세요.', 'error');
+                return;
+            }
+
+            // 일정표 데이터 확인
+            if (!scheduleRows || scheduleRows.length === 0) {
+                if (!confirm('일정표 데이터가 비어있습니다. 체크리스트를 초기화하시겠습니까?')) return;
+            } else {
+                if (!confirm('체크리스트를 일정표 기준으로 재설정합니다. 계속하시겠습니까?')) return;
+            }
+
+            const currentChecklistData = currentData.checklistData || {};
+            const newChecklistData = {};
+
+            const activeKeywords = new Set();
+            scheduleRows.forEach(row => {
+                if (row.name && row.name.trim()) activeKeywords.add(row.name.trim());
+                if (row.category && row.category.trim()) activeKeywords.add(row.category.trim());
+            });
+
+            let addedCount = 0;
+            let removedCount = 0;
+
+            checklistMasterData.forEach(item => {
+                const itemNo = String(item.번호);
+                const category = (item.카테고리 || '').trim();
+                const itemName = (item.항목 || '').trim();
+
+                let isMatch = false;
+                if (activeKeywords.size > 0) {
+                    for (const keyword of activeKeywords) {
+                        if (category && (category.includes(keyword) || keyword.includes(category)) && category.length > 0) { isMatch = true; break; }
+                        if (itemName && (itemName.includes(keyword) || keyword.includes(itemName)) && itemName.length > 0) { isMatch = true; break; }
+                    }
+                }
+
+                if (isMatch) {
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        newChecklistData[itemNo] = currentChecklistData[itemNo];
+                    } else {
+                        newChecklistData[itemNo] = false;
+                        addedCount++;
+                    }
+                } else {
+                    if (currentChecklistData.hasOwnProperty(itemNo)) {
+                        removedCount++;
+                    }
+                }
+            });
+
+            currentData.checklistData = newChecklistData;
+            const customerIndex = customers.findIndex(c => c.customerId === currentCustomerId);
+            if (customerIndex !== -1) {
+                customers[customerIndex].checklistData = JSON.parse(JSON.stringify(newChecklistData));
+            }
+
+            saveCustomers();
+            renderChecklistItems();
+
+            if (addedCount > 0 || removedCount > 0) {
+                showToast(`일정표 연동 완료: ${addedCount}개 추가, ${removedCount}개 제외됨`, 'success');
+            } else {
+                showToast('변화가 없습니다.', 'info');
+            }
+        }
+
         async function syncChecklistFromCloud() {
             const btn = document.querySelector('button[onclick="syncChecklistFromCloud()"]');
             const originalHTML = btn ? btn.innerHTML : '🔄 불러오기';
@@ -16656,8 +16737,61 @@
                                 userRemarks = undefined;
                             }
 
-                            // Date Logic from Schedule (Linked by Name)
-                            const relatedSchedule = (typeof scheduleRows !== 'undefined') ? scheduleRows.find(s => s.name === item.항목) : null;
+                            // [Sync] 카테고리 + 같은 단어 기반 날짜 연동
+                            const itemName = (item.항목 || '').trim();
+                            const itemCategory = (item.카테고리 || '').trim();
+
+                            const relatedSchedule = (() => {
+                                // scheduleRows 또는 currentData.schedules fallback
+                                let rows = (typeof scheduleRows !== 'undefined' && scheduleRows.length > 0) ? scheduleRows : [];
+                                if (rows.length === 0 && typeof currentData !== 'undefined' && currentData && currentData.schedules) {
+                                    rows = currentData.schedules;
+                                }
+                                if (rows.length === 0 || !itemCategory) return null;
+
+                                // 1단계: 같은 카테고리 필터
+                                const sameCategoryRows = rows.filter(s => {
+                                    const sCategory = (s.category || '').trim();
+                                    return sCategory && sCategory === itemCategory;
+                                });
+                                if (sameCategoryRows.length === 0) return null;
+
+                                // 2단계: 같은 단어가 있는 항목 찾기 (세부공정명 + 체크포인트)
+                                const itemWords = itemName.split(/[\s,·\/\-()]+/).filter(w => w.length > 1);
+                                let bestMatch = null;
+                                let bestCount = 0;
+
+                                sameCategoryRows.forEach(s => {
+                                    const sName = (s.name || '').trim();
+                                    const sCP = (s.checkPoint || '').trim();
+
+                                    // 정확히 일치하면 바로 선택
+                                    if (sName === itemName) { bestMatch = s; bestCount = 999; return; }
+
+                                    // 세부공정명 + 체크포인트에서 단어 추출
+                                    const sWords = (sName + ' ' + sCP).split(/[\s,·\/\-()]+/).filter(w => w.length > 1);
+
+                                    // 같은 단어 개수 세기
+                                    let matchCount = 0;
+                                    itemWords.forEach(iw => {
+                                        if (sWords.some(sw => sw === iw || sw.includes(iw) || iw.includes(sw))) matchCount++;
+                                    });
+
+                                    if (matchCount > bestCount) {
+                                        bestCount = matchCount;
+                                        bestMatch = s;
+                                    }
+                                });
+
+                                // 같은 단어가 1개라도 있으면 연동
+                                if (bestMatch && bestCount > 0) return bestMatch;
+
+                                // 카테고리에 항목 1개뿐이면 자동 매칭
+                                if (sameCategoryRows.length === 1) return sameCategoryRows[0];
+
+                                return null;
+                            })();
+
                             const dateStr = relatedSchedule ? formatMobileDateRange(relatedSchedule.start, relatedSchedule.end) : '';
                             const catColor = getCategoryColor(item.카테고리);
 
@@ -16691,8 +16825,8 @@
                                         ${checkBtn}
                                         <div class="mobile-card-title">${titleCheck}${item.항목}</div>
                                     </div>
-                                    <div class="mobile-date-text">${dateStr}</div>
                                 </div>
+                                ${dateStr ? `<div style="margin-left:34px; margin-bottom:4px; font-size:12px; color:#007aff; font-weight:500;">📅 ${dateStr}</div>` : ''}
 
                                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; margin-left: 34px;">
                                     <div class="mobile-chip chip-category" style="background:${catColor.bg}; color:${catColor.text};">${item.카테고리 || '미분류'}</div>
@@ -19079,15 +19213,14 @@
             </svg>
             <span>체크리스트</span>
         </button>
-        <button onclick="navigateToEstimate()">
+        <button onclick="navigateToSchedule()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <span>견적서</span>
+            <span>공사일정</span>
         </button>
         <button class="success" onclick="if(typeof syncChecklistToCloud==='function')syncChecklistToCloud();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
