@@ -17606,7 +17606,8 @@
 
             if (isMobile()) {
                 const checklistPanel = document.getElementById('panel-checklist');
-                if (checklistPanel && checklistPanel.style.display === 'none') {
+                // Allow customer and schedule exports from any panel
+                if (type === 'checklist' && checklistPanel && checklistPanel.style.display === 'none') {
                     showToast('노션 연동은 체크리스트 화면에서만 가능합니다.', 'warning');
                     return;
                 }
