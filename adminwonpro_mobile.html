@@ -9798,7 +9798,11 @@
         // [Mobile Helper] Date Formatter
         function formatMobileDate(dateStr) {
             if (!dateStr) return '';
-            const d = new Date(dateStr);
+            // [Fix] Handle YYYY.MM.DD format for mobile compatibility
+            const normalizedDate = String(dateStr).replace(/\./g, '-');
+            const d = new Date(normalizedDate);
+            if (isNaN(d.getTime())) return dateStr; // Fallback
+
             const now = new Date();
             const isToday = d.toDateString() === now.toDateString();
 
@@ -12096,6 +12100,13 @@
             document.getElementById('headerCustomerId').textContent = currentCustomerId;
             loadCostData();
             loadEstimateData();
+
+            // [Fix] Schedule Data Sync for Checklist Dates
+            if (currentData.schedules && Array.isArray(currentData.schedules)) {
+                scheduleRows = [...currentData.schedules];
+            } else {
+                scheduleRows = [];
+            }
 
             // [Data Consistency] Atomic switch for all modular datasets
             if (typeof loadScheduleForCustomer === 'function') loadScheduleForCustomer(currentCustomerId);
@@ -16819,10 +16830,12 @@
                                 }
                                 if (rows.length === 0 || !itemCategory) return null;
 
-                                // 1단계: 같은 카테고리 필터
+                                // 1단계: 같은 카테고리 필터 (느슨한 매칭: 공백 제거, '공사' 접미사 무시)
                                 const sameCategoryRows = rows.filter(s => {
-                                    const sCategory = (s.category || '').trim();
-                                    return sCategory && sCategory === itemCategory;
+                                    const sCategory = (s.category || '').trim().replace(/\s+/g, '').replace(/공사$/, '');
+                                    const iCategory = itemCategory.replace(/\s+/g, '').replace(/공사$/, '');
+                                    // 한쪽이 다른 쪽을 포함하거나 같으면 매칭 (예: '목공' == '목공공사')
+                                    return sCategory && iCategory && (sCategory === iCategory || sCategory.includes(iCategory) || iCategory.includes(sCategory));
                                 });
                                 if (sameCategoryRows.length === 0) return null;
 
