@@ -682,7 +682,15 @@ function exportCustomerToNotion(customerId, data) {
     let siteTitle = '';
 
     // [수정] 현장명은 심플하게, 상세 내용은 본문으로 이동 (중복 방지)
-    siteTitle = '공사 안내문';
+    // siteTitle = '공사 안내문';
+    // [2026-02-12] 사용자 요청: 성명 | 배우자 성명 | 현장명 (또는 성명 | 현장명)
+    const projectName = (data['공사명'] || '').trim();
+    if (spouseName) {
+        siteTitle = `${clientName} | ${spouseName} | ${projectName}`;
+    } else {
+        siteTitle = `${clientName} | ${projectName}`;
+    }
+
     const customerGreeting = spouseName ? `${clientName}·${spouseName} 고객님` : `${clientName} 고객님`;
 
     const properties = {
